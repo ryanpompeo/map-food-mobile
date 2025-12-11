@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
-import 'package:map_food/ui/widgets/chat_input.dart';
-import 'package:map_food/ui/widgets/food_category_carousel.dart';
+import 'package:map_food/widgets/chat_input.dart';
+import 'package:map_food/widgets/food_category_carousel.dart';
 
-class NoLogin extends StatelessWidget {
-  NoLogin({super.key});
+
+class UserHome extends StatelessWidget {
+  UserHome({super.key});
   final TextEditingController controller = TextEditingController();
 
   @override
@@ -14,37 +15,7 @@ class NoLogin extends StatelessWidget {
       backgroundColor: ColorsPalette.branco,
 
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Row(
-          children: [
-            Icon(
-              LucideIcons.mapPin,
-              size: 28,
-              color: ColorsPalette.roxoVivo.withOpacity(0.95),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "Limeira - SP",
-              style: TextStyle(
-                color: ColorsPalette.cinzaBg.withOpacity(0.75),
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: IconButton(
-              onPressed: () {},
-              icon: Icon(LucideIcons.settings, size: 22),
-              color: Colors.black.withOpacity(0.75),
-            ),
-          ),
-        ],
+      
       ),
 
       body: SafeArea(

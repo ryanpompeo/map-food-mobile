@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "664997133986",
+    "project_id": "spotty-616a0",
+    "storage_bucket": "spotty-616a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:664997133986:android:e1770d358960e18f3fe1fb",
+        "android_client_info": {
+          "package_name": "com.example.map_food"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1cnZJmDKZcHpddUeQ61iklM_C7omlWsQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
