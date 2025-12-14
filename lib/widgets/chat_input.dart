@@ -12,65 +12,69 @@ class ChatInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 32),
+      margin: const EdgeInsets.symmetric(vertical: 24),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
+
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+
             decoration: BoxDecoration(
-              color: ColorsPalette.cinzaBg.withOpacity(0.90),
-              borderRadius: BorderRadius.circular(25),
+              borderRadius: BorderRadius.circular(18),
+
+              // CINZA LEITOSO TRANSLÚCIDO
+              color: ColorsPalette.cinzaBg,
             ),
+
             child: Row(
               children: [
-                Icon(
-                  LucideIcons.atom,
-                  color: ColorsPalette.branco.withOpacity(0.98),
-                  size: 25,
-                ),
-                const SizedBox(width: 20),
+                Icon(LucideIcons.search, color: ColorsPalette.branco, size: 22),
+
+                const SizedBox(width: 14),
+
                 Expanded(
                   child: TextField(
                     controller: controller,
-
-                    // MATA underline de vez
                     autocorrect: false,
                     enableSuggestions: false,
                     spellCheckConfiguration:
                         const SpellCheckConfiguration.disabled(),
 
-                    style: const TextStyle(
-                      color: ColorsPalette.brancoOff,
-                      decoration: TextDecoration.none,
-                    ),
+                    style: TextStyle(color: Colors.black.withOpacity(0.82)),
 
-                    cursorColor: ColorsPalette.branco,
-                    cursorWidth: 2.5,
-                    cursorOpacityAnimates: true,
+                    cursorColor: ColorsPalette.brancoOff,
+                    cursorWidth: 2,
 
                     decoration: InputDecoration(
                       isCollapsed: true,
                       border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-
-                      hintText: "Tire suas dúvidas...",
+                      hintText: "Buscar...",
                       hintStyle: TextStyle(
-                        color: ColorsPalette.brancoOff.withOpacity(0.70),
+                        color: ColorsPalette.brancoOff.withOpacity(0.75),
                       ),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    LucideIcons.chevronRight,
-                    color: ColorsPalette.branco.withOpacity(0.90),
+
+                const SizedBox(width: 6),
+
+                GestureDetector(
+                  onTap: onSend,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: ColorsPalette.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      LucideIcons.chevronRight,
+                      color: ColorsPalette.branco,
+                      size: 20,
+                    ),
                   ),
-                  onPressed: onSend,
                 ),
               ],
             ),

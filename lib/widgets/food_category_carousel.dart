@@ -3,60 +3,66 @@ import 'package:map_food/core/theme/colors_palette.dart';
 
 class FoodCategoryCarousel extends StatelessWidget {
   final List<Map<String, dynamic>> categorias = [
-    {"nome": "Promoções", "icon": Icons.local_offer, "cor": Colors.redAccent},
-    {"nome": "Lanches", "icon": Icons.fastfood, "cor": Colors.orange},
-    {"nome": "Japonesa", "icon": Icons.rice_bowl, "cor": Colors.pinkAccent},
-    {
-      "nome": "Pizza",
-      "icon": Icons.local_pizza,
-      "cor": Colors.deepOrangeAccent,
-    },
-    {"nome": "Mercado", "icon": Icons.storefront, "cor": Colors.greenAccent},
+    {"nome": "Promoções", "emoji": "🔥", "cor": Colors.redAccent},
+    {"nome": "Lanches", "emoji": "🍔", "cor": Colors.orange},
+    {"nome": "Japonesa", "emoji": "🍣", "cor": Colors.pinkAccent},
+    {"nome": "Pizza", "emoji": "🍕", "cor": Colors.deepOrangeAccent},
+    {"nome": "Mercado", "emoji": "🛒", "cor": Colors.greenAccent},
   ];
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.only(left: 16),
-      itemCount: categorias.length,
-      itemBuilder: (context, index) {
-        final item = categorias[index];
-        final Color cor = item["cor"];
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-        return Padding(
-          padding: const EdgeInsets.only(right: 14),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+    return SizedBox(
+      height: screenHeight * 0.1,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(left: 16),
+        itemCount: categorias.length,
+        itemBuilder: (context, index) {
+          final item = categorias[index];
+          final cor = item["cor"];
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
             child: Container(
-              width: 160,
+              width: screenWidth * 0.36,
               decoration: BoxDecoration(
-                color: ColorsPalette.brancoOff.withOpacity(0.85),
-                borderRadius: BorderRadius.circular(22),
+                color: ColorsPalette.branco,
+                borderRadius: BorderRadius.circular(18),
               ),
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.04,
+                vertical: 12,
+              ),
               child: Row(
                 children: [
-                  Icon(item["icon"], size: 30, color: cor.withOpacity(0.9)),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  Text(
+                    item["emoji"],
+                    style: TextStyle(fontSize: screenWidth * 0.07),
+                  ),
+
+                  SizedBox(width: screenWidth * 0.03),
+
+                  Flexible(
                     child: Text(
                       item["nome"],
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: cor.withOpacity(0.95),
+                        fontSize: screenWidth * 0.045,
+                        fontWeight: FontWeight.bold,
+                        color: cor.withOpacity(0.9),
                       ),
-                      overflow: TextOverflow.fade,
-                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

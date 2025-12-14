@@ -10,7 +10,7 @@ class ColorsPalette {
   static const title = Color(0xFF8A3DD6);
   static const branco = Colors.white;
   static const transparent = Colors.transparent;
-  static const brancoOff = Color(0xFFEDEFF1);
+  static const brancoOff = Color.fromARGB(255, 243, 244, 245);
   static const cinzaBg = Color(0xff202123);
   static const cinzaComponents = Color.fromARGB(255, 59, 61, 64);
 }
