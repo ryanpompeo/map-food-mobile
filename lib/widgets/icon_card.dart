@@ -25,8 +25,8 @@ class IconCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        splashColor: Colors.blue.withOpacity(0.12),
-        highlightColor: Colors.blue.withOpacity(0.06),
+        splashColor: ColorsPalette.roxoVivo.withOpacity(0.45),
+
         child: SizedBox(
           width: screenWidth * 0.22, // tamanho do quadrado
           child: AspectRatio(
@@ -43,7 +43,6 @@ class IconCard extends StatelessWidget {
                     color: ColorsPalette.cinzaBg,
                   ),
 
-                  // TEXTO ADAPTÁVEL + ACESSÍVEL
                   Text(
                     label,
                     maxLines: 2,

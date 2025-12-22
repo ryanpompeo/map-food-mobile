@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:map_food/pages/home_final.dart';
 import 'package:map_food/pages/user_home.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:map_food/services/firebase_options.dart';
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(fontFamily: 'google'),
 
-      home: UserHome(),
+      home: HomeFinal(),
     );
   }
 }

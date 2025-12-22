@@ -6,13 +6,19 @@ import 'package:map_food/core/theme/colors_palette.dart';
 class ChatInput extends StatelessWidget {
   final TextEditingController controller;
   final void Function() onSend;
+  final FocusNode focusNode;
 
-  const ChatInput({super.key, required this.controller, required this.onSend});
+  const ChatInput({
+    super.key,
+    required this.controller,
+    required this.onSend,
+    required this.focusNode,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 24),
+      margin: const EdgeInsets.only(bottom: 0, top: 24),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
 
@@ -26,12 +32,16 @@ class ChatInput extends StatelessWidget {
               borderRadius: BorderRadius.circular(18),
 
               // CINZA LEITOSO TRANSLÚCIDO
-              color: ColorsPalette.cinzaBg,
+              color: ColorsPalette.branco,
             ),
 
             child: Row(
               children: [
-                Icon(LucideIcons.search, color: ColorsPalette.branco, size: 22),
+                Icon(
+                  LucideIcons.search,
+                  color: ColorsPalette.roxoVivo,
+                  size: 22,
+                ),
 
                 const SizedBox(width: 14),
 
@@ -43,9 +53,9 @@ class ChatInput extends StatelessWidget {
                     spellCheckConfiguration:
                         const SpellCheckConfiguration.disabled(),
 
-                    style: TextStyle(color: Colors.black.withOpacity(0.82)),
+                    style: TextStyle(color: Colors.white.withOpacity(0.82)),
 
-                    cursorColor: ColorsPalette.brancoOff,
+                    cursorColor: ColorsPalette.roxoEscuro,
                     cursorWidth: 2,
 
                     decoration: InputDecoration(
@@ -53,7 +63,7 @@ class ChatInput extends StatelessWidget {
                       border: InputBorder.none,
                       hintText: "Buscar...",
                       hintStyle: TextStyle(
-                        color: ColorsPalette.brancoOff.withOpacity(0.75),
+                        color: ColorsPalette.cinzaComponents.withOpacity(0.75),
                       ),
                     ),
                   ),
@@ -71,7 +81,7 @@ class ChatInput extends StatelessWidget {
                     ),
                     child: Icon(
                       LucideIcons.chevronRight,
-                      color: ColorsPalette.branco,
+                      color: ColorsPalette.roxoVivo,
                       size: 20,
                     ),
                   ),
