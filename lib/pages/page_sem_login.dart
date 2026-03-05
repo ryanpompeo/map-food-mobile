@@ -5,14 +5,14 @@ import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/widgets/chat_input.dart';
 import 'package:map_food/widgets/icon_card.dart';
 
-class UserHome extends StatefulWidget {
-  const UserHome({super.key});
+class PageSemLogin extends StatefulWidget {
+  const PageSemLogin({super.key});
 
   @override
-  State<UserHome> createState() => _UserHomeState();
+  State<PageSemLogin> createState() => _PageSemLogin();
 }
 
-class _UserHomeState extends State<UserHome> {
+class _PageSemLogin extends State<PageSemLogin> {
   final TextEditingController controller = TextEditingController();
   final FocusNode chatFocus = FocusNode();
 
@@ -31,9 +31,7 @@ class _UserHomeState extends State<UserHome> {
     final List<Map<String, dynamic>> items = [
       {"icon": LucideIcons.messageSquare, "label": "Assistente"},
       {"icon": LucideIcons.user, "label": "Criar Perfil"},
-      {"icon": LucideIcons.heart, "label": "Favoritos"},
       {"icon": LucideIcons.map, "label": "Mapa"},
-
       {"icon": LucideIcons.settings, "label": "Ajustes"},
     ];
 
@@ -63,15 +61,15 @@ class _UserHomeState extends State<UserHome> {
                           onSend: () {},
                         ),
                       ),
-                      IconButton(
-                        padding: const EdgeInsets.only(top: 24),
-                        onPressed: () {},
-                        icon: Icon(
-                          Icons.notifications_none_rounded,
-                          size: size.width * 0.07,
-                          color: ColorsPalette.cinzaBg,
-                        ),
-                      ),
+                      // IconButton(
+                      //   padding: const EdgeInsets.only(top: 24),
+                      //   onPressed: () {},
+                      //   icon: Icon(
+                      //     Icons.notifications_none_rounded,
+                      //     size: size.width * 0.07,
+                      //     color: ColorsPalette.cinzaBg,
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
@@ -114,7 +112,6 @@ class _UserHomeState extends State<UserHome> {
                     children: [
                       Expanded(child: _fakeCard()),
                       SizedBox(width: size.width * 0.03),
-                    
                     ],
                   ),
                 ),
@@ -134,7 +131,7 @@ class _UserHomeState extends State<UserHome> {
                 padding: EdgeInsets.symmetric(horizontal: size.width * 0.04),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, __) => _fakeCard(),
+                    (_, _) => _fakeCard(),
                     childCount: 3,
                   ),
                 ),

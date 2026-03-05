@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:map_food/pages/home_final.dart';
-import 'package:map_food/pages/user_home.dart';
+import 'package:map_food/pages/home.dart';
+import 'package:map_food/pages/page_sem_login.dart';
 
 
 void main() async {
