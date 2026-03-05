@@ -13,4 +13,5 @@ class ColorsPalette {
   static const brancoOff = Color.fromARGB(255, 243, 244, 245);
   static const cinzaBg = Color(0xff202123);
   static const cinzaComponents = Color.fromARGB(255, 59, 61, 64);
+  static const vermelhoVivido = Color(0xffd6011b);
 }

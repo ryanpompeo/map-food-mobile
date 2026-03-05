@@ -23,75 +23,6 @@ class _UserHomeState extends State<UserHome> {
     super.dispose();
   }
 
-  void _openLocationSheet(BuildContext context) {
-    final textScale = MediaQuery.textScaleFactorOf(context);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) {
-        return SizedBox(
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade400,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Escolha uma localização',
-                style: TextStyle(
-                  fontSize: 18 * textScale,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView(
-                  children: [
-                    ListTile(
-                      leading: const Icon(LucideIcons.locate),
-                      title: Text(
-                        'Usar localização atual',
-                        style: TextStyle(fontSize: 14 * textScale),
-                      ),
-                      onTap: () => Navigator.pop(context),
-                    ),
-                    ListTile(
-                      leading: const Icon(LucideIcons.building2),
-                      title: Text(
-                        'São Paulo',
-                        style: TextStyle(fontSize: 14 * textScale),
-                      ),
-                      onTap: () => Navigator.pop(context),
-                    ),
-                    ListTile(
-                      leading: const Icon(LucideIcons.building2),
-                      title: Text(
-                        'Campinas',
-                        style: TextStyle(fontSize: 14 * textScale),
-                      ),
-                      onTap: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -99,10 +30,10 @@ class _UserHomeState extends State<UserHome> {
 
     final List<Map<String, dynamic>> items = [
       {"icon": LucideIcons.messageSquare, "label": "Assistente"},
-      {"icon": LucideIcons.user, "label": "Perfil"},
+      {"icon": LucideIcons.user, "label": "Criar Perfil"},
       {"icon": LucideIcons.heart, "label": "Favoritos"},
       {"icon": LucideIcons.map, "label": "Mapa"},
-      {"icon": LucideIcons.heartHandshake, "label": "Doações"},
+
       {"icon": LucideIcons.settings, "label": "Ajustes"},
     ];
 
@@ -183,40 +114,7 @@ class _UserHomeState extends State<UserHome> {
                     children: [
                       Expanded(child: _fakeCard()),
                       SizedBox(width: size.width * 0.03),
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () => _openLocationSheet(context),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: size.width * 0.04,
-                              vertical: size.height * 0.015,
-                            ),
-                            decoration: BoxDecoration(
-                              color: ColorsPalette.branco,
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  LucideIcons.mapPin,
-                                  color: ColorsPalette.roxoVivo,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    'Limeira - SP',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 14 * textScale),
-                                  ),
-                                ),
-                                const Icon(LucideIcons.chevronDown, size: 16),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                    
                     ],
                   ),
                 ),
@@ -245,9 +143,7 @@ class _UserHomeState extends State<UserHome> {
               const SliverToBoxAdapter(child: SizedBox(height: 80)),
             ],
           ),
-        )
-      ,
-      
+        ),
       ),
     );
   }
