@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:map_food/pages/home_final.dart';
 import 'package:map_food/pages/user_home.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:map_food/services/firebase_options.dart';
+
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+ 
 
   runApp(const MyApp());
 }

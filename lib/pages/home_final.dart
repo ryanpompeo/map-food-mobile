@@ -30,7 +30,7 @@ class _HomeFinalState extends State<HomeFinal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.brancoOff,
+      backgroundColor: ColorsPalette.title,
       // PageView permite o deslize lateral
       body: PageView(
         controller: _pageController,
@@ -64,7 +64,7 @@ class _HomeFinalState extends State<HomeFinal> {
               child: SizedBox(
                 height: 60,
                 child: BottomNavigationBar(
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.blueAccent,
                   elevation: 0,
                   currentIndex: _currentIndex,
                   onTap: (index) {
