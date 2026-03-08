@@ -15,7 +15,7 @@ class _HomeFinalState extends State<HomeFinal> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorsPalette.brancoOff,
-      body: const SafeArea(child: MapTeste()),
+      body: const SafeArea(child: PageSemLogin()),
     );
   }
 }

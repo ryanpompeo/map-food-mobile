@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:map_food/controller/comerciante_controller.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 
 import 'package:map_food/widgets/chat_input.dart';
 import 'package:map_food/widgets/icon_card.dart';
+import 'package:provider/provider.dart';
 
 class PageSemLogin extends StatefulWidget {
   const PageSemLogin({super.key});
@@ -110,7 +113,74 @@ class _PageSemLogin extends State<PageSemLogin> {
                 sliver: SliverToBoxAdapter(
                   child: Row(
                     children: [
-                      Expanded(child: _fakeCard()),
+                      Expanded(
+                        child: ChangeNotifierProvider(
+                          create: (_) => ComercianteController(),
+                          child: Builder(
+                            builder: (context) {
+                              final controller =
+                                  Provider.of<ComercianteController>(context);
+                              return Center(
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.6),
+                                      borderRadius: BorderRadius.circular(22),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.06),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Expanded(
+                                      child: GoogleMap(
+                                        initialCameraPosition: CameraPosition(
+                                          target: LatLng(
+                                            controller.latitue,
+                                            controller.longitude,
+                                          ),
+                                          zoom: 15,
+                                        ),
+                                        zoomControlsEnabled: false,
+                                        myLocationEnabled: true,
+                                        scrollGesturesEnabled: false,
+                                        onTap: (argument) {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => Scaffold(
+                                                appBar: AppBar(
+                                                  title: const Text('Mapa'),
+                                                ),
+                                                body: GoogleMap(
+                                                  initialCameraPosition:
+                                                      CameraPosition(
+                                                        target: LatLng(
+                                                          controller.latitue,
+                                                          controller.longitude,
+                                                        ),
+                                                        zoom: 15,
+                                                      ),
+                                                  zoomControlsEnabled: false,
+                                                  myLocationEnabled: true,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                       SizedBox(width: size.width * 0.03),
                     ],
                   ),
