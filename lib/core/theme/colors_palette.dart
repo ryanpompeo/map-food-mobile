@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 
 class ColorsPalette {
-  static const roxoClaro = Color(0xFFB8A3C7);
-  static const roxoVivo = Color(0xFF8400FF);
-  static const roxoMedio = Color(0xFF744397);
-  static const roxoEscuro = Color(0xFF5C2891);
-  static const roxoProfundo = Color(0xFF4C1E76);
   static const preto = Colors.black;
-  static const title = Color(0xFF8A3DD6);
   static const branco = Colors.white;
   static const transparent = Colors.transparent;
-  static const brancoOff = Color.fromARGB(255, 243, 244, 245);
-  static const cinzaBg = Color(0xff202123);
+  static const brancoBackground = Color.fromARGB(255, 243, 244, 245);
+  static const cinzaBackground = Color(0xff202123);
   static const cinzaComponents = Color.fromARGB(255, 59, 61, 64);
-  static const vermelhoVivido = Color(0xffd6011b);
+  static const vermelhoComponents = Color(0xffd6011b);
+
+  //Cores atuais de componentes
+  static const pretoComponents = Color(0xff12172A);
+
+  //Cores degrade: Modo white
+  static const pretoDegrade1 = Color(0xff2E2A3A);
+  static const marromDegrade2 = Color(0xff6B3137);
+  static const vermelhoDegrade3 = Color(0xffC33B35);
 }

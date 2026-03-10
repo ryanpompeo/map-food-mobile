@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
@@ -34,7 +33,7 @@ class ChatInput extends StatelessWidget {
             children: [
               Icon(
                 LucideIcons.search,
-                color: ColorsPalette.vermelhoVivido,
+                color: ColorsPalette.vermelhoComponents,
                 size: 22,
               ),
 
@@ -48,7 +47,7 @@ class ChatInput extends StatelessWidget {
                   enableSuggestions: false,
                   spellCheckConfiguration: SpellCheckConfiguration.disabled(),
                   style: TextStyle(color: Colors.black.withOpacity(0.82)),
-                  cursorColor: ColorsPalette.vermelhoVivido,
+                  cursorColor: ColorsPalette.vermelhoComponents,
                   cursorWidth: 2,
 
                   decoration: InputDecoration(
@@ -76,7 +75,7 @@ class ChatInput extends StatelessWidget {
                   ),
                   child: Icon(
                     LucideIcons.chevronRight,
-                    color: ColorsPalette.vermelhoVivido,
+                    color: ColorsPalette.vermelhoComponents,
                     size: 20,
                   ),
                 ),
