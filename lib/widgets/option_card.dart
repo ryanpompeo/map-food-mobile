@@ -115,6 +115,10 @@ Widget OptionCard({
                 child: ElevatedButton(
                   onPressed: onTap,
                   style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl.w,
+                      vertical: AppSpacing.md.h,
+                    ),
                     backgroundColor: isDark
                         ? ColorsPalette.pretoComponents
                         : ColorsPalette.vermelhoComponents,
