@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:map_food/core/theme/colors_palette.dart';
-import 'package:map_food/pages/tipo_conta.dart';
-import 'package:map_food/widgets/chat_input.dart';
 
 class PageSemLogin extends StatefulWidget {
   const PageSemLogin({super.key});
