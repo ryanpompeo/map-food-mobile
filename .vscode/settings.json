@@ -1,0 +1,33 @@
+{
+    "folder-color.pathColors": [
+        {
+            "folderPath": "spotty-mobile\\lib\\core\\",
+            "color": "foldercolorizer.color_ff3366"
+        },
+        {
+            "folderPath": "spotty-mobile\\lib\\pages\\",
+            "color": "foldercolorizer.color_00cccc"
+        },
+        {
+            "folderPath": "spotty-mobile\\lib\\pages\\logins\\",
+            "color": "foldercolorizer.color_0000ff"
+        },
+        {
+            "folderPath": "spotty-mobile\\lib\\validators\\",
+            "color": "foldercolorizer.color_ccff00"
+        },
+        {
+            "folderPath": "spotty-mobile\\lib\\widgets\\",
+            "color": "foldercolorizer.color_00ff33"
+        },
+        {
+            "folderPath": "spotty-mobile\\lib\\widgets\\form_fields\\",
+            "color": "foldercolorizer.color_00ff66",
+            "badge": "FR"
+        },
+        {
+            "folderPath": "spotty-mobile\\lib\\main.dart\\",
+            "color": "foldercolorizer.color_ffffff"
+        }
+    ]
+}

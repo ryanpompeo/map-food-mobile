@@ -6,7 +6,6 @@ import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/theme/icon_size.dart';
 import 'package:map_food/core/theme/radius.dart';
 import 'package:map_food/core/theme/spacing.dart';
-import 'package:map_food/validators/form_validator.dart';
 import 'package:map_food/widgets/app_button.dart';
 import 'package:map_food/widgets/form_fields/confirmar_senha_field.dart';
 import 'package:map_food/widgets/form_fields/cpf_field.dart';
@@ -16,14 +15,16 @@ import 'package:map_food/widgets/form_fields/senha_field.dart';
 import 'package:map_food/widgets/form_fields/telefone_field.dart';
 import 'package:map_food/widgets/google_button.dart';
 
-class PageCadastroUsuario extends StatefulWidget {
-  const PageCadastroUsuario({super.key});
+class PageCadastroContaComercial extends StatefulWidget {
+  const PageCadastroContaComercial({super.key});
 
   @override
-  State<PageCadastroUsuario> createState() => _PageCadastroUsuarioState();
+  State<PageCadastroContaComercial> createState() =>
+      _PageCadastroContaComercialState();
 }
 
-class _PageCadastroUsuarioState extends State<PageCadastroUsuario> {
+class _PageCadastroContaComercialState
+    extends State<PageCadastroContaComercial> {
   final _formKey = GlobalKey<FormState>();
   int forcaSenha = 0;
   final nomeController = TextEditingController();
@@ -32,7 +33,7 @@ class _PageCadastroUsuarioState extends State<PageCadastroUsuario> {
   final senhaController = TextEditingController();
   final confirmarSenhaController = TextEditingController();
   final cpfController = TextEditingController();
-  bool comercio = false;
+  bool comercio = true;
   @override
   void dispose() {
     nomeController.dispose();
@@ -83,6 +84,7 @@ class _PageCadastroUsuarioState extends State<PageCadastroUsuario> {
           ),
         ),
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -114,13 +116,13 @@ class _PageCadastroUsuarioState extends State<PageCadastroUsuario> {
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Icon(
-                          LucideIcons.radar,
+                          LucideIcons.shoppingBag,
                           color: ColorsPalette.vermelhoComponents,
                           size: AppIconSize.large.sp,
                         ),
                       ),
                       SizedBox(width: AppSpacing.md.w),
-                      Text("Conta Comum", style: AppText.corpo(context)),
+                      Text("Conta Comercial", style: AppText.corpo(context)),
                     ],
                   ),
                   SizedBox(height: AppSpacing.lg.h),

@@ -5,6 +5,8 @@ import 'package:map_food/core/theme/icon_size.dart';
 import 'package:map_food/core/theme/spacing.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
+import 'package:map_food/pages/logins/page_cadastro_conta_comercial.dart';
+import 'package:map_food/pages/logins/page_cadastro_usuario.dart';
 import 'package:map_food/widgets/option_card.dart';
 
 class TipoConta extends StatelessWidget {
@@ -12,16 +14,32 @@ class TipoConta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textScale = MediaQuery.of(context).textScaleFactor.clamp(0.9, 1.2);
     return Scaffold(
       backgroundColor: ColorsPalette.brancoBackground,
-
+      appBar: AppBar(
+        backgroundColor: ColorsPalette.brancoBackground,
+        elevation: 0,
+        foregroundColor: ColorsPalette.brancoBackground,
+        surfaceTintColor: ColorsPalette.brancoBackground,
+        centerTitle: true,
+        title: Text(
+          "SELECIONE SEU PERFIL",
+          style: AppText.corpo(context).copyWith(fontWeight: FontWeight.bold),
+        ),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Icon(
+            LucideIcons.chevronLeft,
+            color: ColorsPalette.vermelhoComponents,
+            size: AppIconSize.normal.sp,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
-
+          physics: const BouncingScrollPhysics(),
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: AppSpacing.lg.w,
@@ -30,62 +48,7 @@ class TipoConta extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: AppSpacing.md.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-
-                      icon: Icon(
-                        LucideIcons.chevronLeft,
-                        color: ColorsPalette.preto,
-                        size: AppIconSize.normal.sp,
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          "Selecionar conta",
-                          style: AppText.subtitulo(context),
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(width: AppSpacing.xxl.w),
-                  ],
-                ),
-                SizedBox(height: 32.h),
-                Text(
-                  "Comece sua experiência conosco",
-                  textAlign: TextAlign.center,
-                  textScaleFactor: textScale,
-                  style: AppText.display(context).copyWith(
-                    foreground: Paint()
-                      ..shader = LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          ColorsPalette.pretoDegrade1,
-                          ColorsPalette.marromDegrade2,
-                          ColorsPalette.vermelhoDegrade3,
-                        ],
-                      ).createShader(Rect.fromLTWH(0, 0, 280.w, 50.h)),
-                  ),
-                ),
-
-                SizedBox(height: 16.h),
-
-                Text(
-                  'Junte-se à comunidade e descubra novas experiências gastronômicas',
-                  textAlign: TextAlign.center,
-                  textScaleFactor: textScale,
-                  style: AppText.corpo(context),
-                ),
-
-                SizedBox(height: AppSpacing.xxl.h),
+                SizedBox(height: AppSpacing.lg.h),
 
                 OptionCard(
                   icon: Icon(
@@ -95,23 +58,30 @@ class TipoConta extends StatelessWidget {
                   ),
                   title: 'Explorador',
                   description: 'Descubra lojas incríveis perto de você',
-                  benefits: const [
+                  benefits: [
                     'Localize comércios próximos',
                     'Avalie e salve favoritos',
                     'Receba recomendações personalizadas',
                   ],
                   buttonText: 'Entrar como Cliente',
                   isDark: true,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PageCadastroUsuario(),
+                      ),
+                    );
+                  },
                 ),
 
-                SizedBox(height: 24.h),
+                SizedBox(height: AppSpacing.lg.h),
 
                 OptionCard(
                   icon: const Icon(
                     LucideIcons.shoppingBag,
-                    color: Color(0xFFE33E33),
-                    size: 32,
+                    color: ColorsPalette.vermelhoComponentsIcon,
+                    size: AppIconSize.large,
                   ),
                   title: 'Estabelecimento',
                   description:
@@ -123,10 +93,18 @@ class TipoConta extends StatelessWidget {
                   ],
                   buttonText: 'Entrar como Vendedor',
                   isDark: false,
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const PageCadastroContaComercial(),
+                      ),
+                    );
+                  },
                 ),
 
-                SizedBox(height: 32.h),
+                SizedBox(height: AppSpacing.xxl.h),
               ],
             ),
           ),

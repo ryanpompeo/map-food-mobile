@@ -5,6 +5,7 @@ import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/theme/radius.dart';
 import 'package:map_food/core/theme/spacing.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:map_food/widgets/app_button.dart';
 
 Widget OptionCard({
   required String title,
@@ -17,7 +18,7 @@ Widget OptionCard({
 }) {
   return Builder(
     builder: (context) {
-      final textScale = MediaQuery.of(context).textScaleFactor.clamp(0.9, 1.2);
+      final textScale = MediaQuery.of(context).textScaleFactor.clamp(0.9, 1.5);
 
       return ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -109,44 +110,7 @@ Widget OptionCard({
               SizedBox(height: AppSpacing.lg),
 
               /// BUTTON
-              SizedBox(
-                width: double.infinity.w,
-                height: AppSpacing.xxxl.h,
-                child: ElevatedButton(
-                  onPressed: onTap,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl.w,
-                      vertical: AppSpacing.md.h,
-                    ),
-                    backgroundColor: isDark
-                        ? ColorsPalette.pretoComponents
-                        : ColorsPalette.vermelhoComponents,
-                    foregroundColor: ColorsPalette.branco,
-
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg.r),
-                    ),
-                    elevation: 5,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          buttonText,
-                          textScaleFactor: textScale,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.secundario(context).copyWith(
-                            color: ColorsPalette.branco,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              AppButton(text: buttonText, onPressed: onTap, isDark: isDark),
             ],
           ),
         ),

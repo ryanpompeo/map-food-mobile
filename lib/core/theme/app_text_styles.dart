@@ -53,4 +53,14 @@ class AppText {
       letterSpacing: 1,
     );
   }
+
+  // texto de botão
+  static TextStyle botao(BuildContext context) {
+    return Theme.of(context).textTheme.labelLarge!.copyWith(
+      fontSize: 16.sp,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.5,
+      color: Colors.white,
+    );
+  }
 }

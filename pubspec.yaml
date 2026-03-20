@@ -39,6 +39,10 @@ dependencies:
   google_fonts: ^8.0.2
   flutter_screenutil: ^5.7.0
   responsive_framework: ^1.5.1
+  font_awesome_icon_class: ^0.0.6
+
+  cpf_cnpj_validator: 2.0.0-nullsafety
+  mask_text_input_formatter: ^2.9.0
 
 dev_dependencies:
   flutter_test:
