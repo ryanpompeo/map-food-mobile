@@ -35,10 +35,8 @@ class AppButton extends StatelessWidget {
             horizontal: AppSpacing.md.w,
             vertical: AppSpacing.sm.h,
           ),
-          backgroundColor: isDark
-              ? ColorsPalette.pretoComponents
-              : ColorsPalette.vermelhoComponents,
-          foregroundColor: ColorsPalette.branco,
+
+          backgroundColor: ColorsPalette.brancoBackground,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg.r),
           ),
@@ -49,7 +47,12 @@ class AppButton extends StatelessWidget {
           textScaleFactor: textScale,
           overflow: TextOverflow.visible,
 
-          style: AppText.botao(context),
+          style: AppText.botao(context).copyWith(
+            color: isDark
+                ? ColorsPalette.pretoComponents
+                : ColorsPalette.vermelhoComponents,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

@@ -25,8 +25,8 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
 
           theme: ThemeData(
-            textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-            pageTransitionsTheme: PageTransitionsTheme(
+            textTheme: GoogleFonts.poppinsTextTheme(),
+            pageTransitionsTheme: const PageTransitionsTheme(
               builders: {
                 TargetPlatform.android: CupertinoPageTransitionsBuilder(),
                 TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),

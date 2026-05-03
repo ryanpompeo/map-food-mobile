@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:map_food/core/theme/icon_size.dart';
+import 'package:map_food/core/theme/image_size.dart';
 import 'package:map_food/core/theme/spacing.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
@@ -51,12 +52,13 @@ class TipoConta extends StatelessWidget {
                 SizedBox(height: AppSpacing.lg.h),
 
                 OptionCard(
-                  icon: Icon(
-                    LucideIcons.radar,
-                    color: ColorsPalette.vermelhoComponents,
-                    size: AppIconSize.large,
+                  isCustomer: true,
+                  media: Image.asset(
+                    'assets/images/customer.png',
+                    width: ImageSize.lg.w,
+                    height: ImageSize.lg.h,
                   ),
-                  title: 'Explorador',
+                  title: 'Cliente',
                   description: 'Descubra lojas incríveis perto de você',
                   benefits: [
                     'Localize comércios próximos',
@@ -78,20 +80,21 @@ class TipoConta extends StatelessWidget {
                 SizedBox(height: AppSpacing.lg.h),
 
                 OptionCard(
-                  icon: const Icon(
-                    LucideIcons.shoppingBag,
-                    color: ColorsPalette.vermelhoComponentsIcon,
-                    size: AppIconSize.large,
+                  isCustomer: false,
+                  media: Image.asset(
+                    'assets/images/cart.png',
+                    width: ImageSize.lg.w,
+                    height: ImageSize.lg.h,
                   ),
-                  title: 'Estabelecimento',
+                  title: 'Comerciante',
                   description:
                       'Gerencie seu restaurante e alcance mais clientes.',
                   benefits: const [
-                    'Divulgue seu restaurante',
-                    'Gerencie cardápio e informações',
+                    'Divulgue seu estabelecimento',
+                    'Gerencie  e informações',
                     'Acompanhe avaliações',
                   ],
-                  buttonText: 'Entrar como Vendedor',
+                  buttonText: 'Entrar como Comerciante',
                   isDark: false,
                   onTap: () {
                     Navigator.push(

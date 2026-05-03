@@ -40,7 +40,6 @@ dependencies:
   flutter_screenutil: ^5.7.0
   responsive_framework: ^1.5.1
   font_awesome_icon_class: ^0.0.6
-
   cpf_cnpj_validator: 2.0.0-nullsafety
   mask_text_input_formatter: ^2.9.0
 
@@ -67,9 +66,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - 
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
