@@ -53,11 +53,7 @@ class TipoConta extends StatelessWidget {
 
                 OptionCard(
                   isCustomer: true,
-                  media: Image.asset(
-                    'assets/images/customer.png',
-                    width: ImageSize.lg.w,
-                    height: ImageSize.lg.h,
-                  ),
+
                   title: 'Cliente',
                   description: 'Descubra lojas incríveis perto de você',
                   benefits: [
@@ -81,16 +77,11 @@ class TipoConta extends StatelessWidget {
 
                 OptionCard(
                   isCustomer: false,
-                  media: Image.asset(
-                    'assets/images/cart.png',
-                    width: ImageSize.lg.w,
-                    height: ImageSize.lg.h,
-                  ),
+
                   title: 'Comerciante',
-                  description:
-                      'Gerencie seu restaurante e alcance mais clientes.',
+                  description: 'Gerencie seu negócio e alcance mais clientes',
                   benefits: const [
-                    'Divulgue seu estabelecimento',
+                    'Divulgue sua marca',
                     'Gerencie  e informações',
                     'Acompanhe avaliações',
                   ],

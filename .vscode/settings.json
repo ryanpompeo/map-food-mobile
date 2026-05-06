@@ -28,6 +28,14 @@
         {
             "folderPath": "spotty-mobile\\lib\\main.dart\\",
             "color": "foldercolorizer.color_ffffff"
+        },
+        {
+            "filePath": "spotty-mobile\\lib\\pages\\logins\\page_cadastro_conta_comercial.dart",
+            "color": "foldercolorizer.color_d7af00"
+        },
+        {
+            "filePath": "spotty-mobile\\lib\\pages\\logins\\page_login_conta_comercial.dart",
+            "color": "foldercolorizer.color_d7af00"
         }
     ]
 }

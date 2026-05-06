@@ -1,4 +1,5 @@
 import 'package:cpf_cnpj_validator/cpf_validator.dart';
+import 'package:cpf_cnpj_validator/cnpj_validator.dart';
 
 class FormValidator {
   // =============================
@@ -38,7 +39,7 @@ class FormValidator {
       return "Nome muito longo";
     }
 
-    final regex = RegExp(r"^[a-zA-ZÀ-ÿ\s]+$");
+    final regex = RegExp(r"^[a-zA-ZÀ-ÿ\s\'\-]+$");
 
     if (!regex.hasMatch(nome)) {
       return "Nome deve conter apenas letras";
@@ -83,8 +84,31 @@ class FormValidator {
     return null;
   }
 
+  static String? telefoneOpcional(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return telefone(value);
+  }
+
   // =============================
-  // CPF
+  // CEP
+  // =============================
+
+  static String? cep(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "CEP é obrigatório";
+    }
+
+    final numbersOnly = value.replaceAll(RegExp(r'\D'), '');
+
+    if (numbersOnly.length != 8) {
+      return "CEP inválido";
+    }
+
+    return null;
+  }
+
+  // =============================
+  // CPF E CNPJ
   // =============================
 
   static String? cpf(String? value) {
@@ -92,36 +116,29 @@ class FormValidator {
       return "CPF obrigatório";
     }
 
-    final cpf = CPFValidator.isValid(value);
-
-    if (!cpf) {
+    if (!CPFValidator.isValid(value)) {
       return "CPF inválido";
     }
 
     return null;
   }
 
-  // =============================
-  // CNPJ
-  // =============================
-
   static String? cnpj(String? value) {
     if (value == null || value.isEmpty) {
       return "CNPJ obrigatório";
     }
 
-    final cnpj = value.replaceAll(RegExp(r'\D'), '');
-
-    if (cnpj.length != 14) {
+    if (!CNPJValidator.isValid(value)) {
       return "CNPJ inválido";
     }
 
     return null;
   }
 
-  // =============================
-  // CPF OU CNPJ
-  // =============================
+  static String? cnpjOpcional(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return cnpj(value);
+  }
 
   static String? cpfCnpj(String? value) {
     if (value == null || value.isEmpty) {
@@ -130,15 +147,11 @@ class FormValidator {
 
     final numbers = value.replaceAll(RegExp(r'\D'), '');
 
-    if (numbers.length == 11) {
+    if (numbers.length <= 11) {
       return cpf(value);
-    }
-
-    if (numbers.length == 14) {
+    } else {
       return cnpj(value);
     }
-
-    return "CPF ou CNPJ inválido";
   }
 
   // =============================
@@ -151,20 +164,20 @@ class FormValidator {
     }
 
     if (value.length < 8) {
-      return "Senha deve ter no mínimo 8 caracteres";
+      return "Mínimo de 8 caracteres";
     }
 
     final hasNumber = RegExp(r'[0-9]');
     final hasLetter = RegExp(r'[A-Za-z]');
 
     if (!hasNumber.hasMatch(value) || !hasLetter.hasMatch(value)) {
-      return "Senha deve conter letras e números";
+      return "Deve conter letras e números";
     }
 
     return null;
   }
 
-  int calcularForcaSenha(String senha) {
+  static int calcularForcaSenha(String senha) {
     int score = 0;
 
     if (senha.length >= 8) score++;
@@ -174,10 +187,6 @@ class FormValidator {
 
     return score; // 0 até 4
   }
-
-  // =============================
-  // CONFIRMAR SENHA
-  // =============================
 
   static String? confirmarSenha(String? value, String senhaOriginal) {
     if (value == null || value.isEmpty) {

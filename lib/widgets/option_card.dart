@@ -17,7 +17,7 @@ Widget OptionCard({
   required String buttonText,
   required bool isDark,
   required VoidCallback onTap,
-  required Widget? media,
+
   required bool isCustomer,
 }) {
   return Builder(
@@ -51,7 +51,7 @@ Widget OptionCard({
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isCustomer ? "PERFIL CLIENTE" : "PERFIL AUTÔNOMO",
+                  isCustomer ? "PERFIL COMUM" : "PERFIL COMERCIAL",
                   textScaleFactor: textScale,
                   style: AppText.legenda(context).copyWith(
                     color: ColorsPalette.branco.withOpacity(0.8),
@@ -65,11 +65,11 @@ Widget OptionCard({
                     vertical: AppSpacing.xs.h,
                   ),
                   decoration: BoxDecoration(
-                    color: ColorsPalette.branco.withOpacity(0.15),
+                    color: ColorsPalette.transparent,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isCustomer ? LucideIcons.user : LucideIcons.store,
+                    isCustomer ? LucideIcons.user2 : LucideIcons.store,
                     color: Colors.white,
                     size: AppIconSize.medium.sp,
                   ),
@@ -107,24 +107,26 @@ Widget OptionCard({
               return Padding(
                 padding: EdgeInsets.only(bottom: AppSpacing.sm.h),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.only(top: AppSpacing.xs.h),
-                      child: Icon(
-                        LucideIcons.checkCircle2,
-                        color: ColorsPalette.branco.withOpacity(0.6),
-                        size: 16,
-                      ),
+                    Icon(
+                      LucideIcons.checkCircle2,
+                      color: ColorsPalette.branco.withOpacity(0.6),
+                      size: AppIconSize.small.sp,
                     ),
+
                     SizedBox(width: AppSpacing.sm.w),
+
                     Expanded(
                       child: Text(
                         b,
                         textScaleFactor: textScale,
+                        textAlign: TextAlign.left,
                         style: AppText.legenda(context).copyWith(
                           color: Colors.white.withOpacity(0.6),
                           fontWeight: FontWeight.w500,
+                          height:
+                              1.2, // Mantém a altura da linha compacta para alinhar melhor
                         ),
                       ),
                     ),
