@@ -1,23 +1,19 @@
 {
     "folder-color.pathColors": [
         {
-            "folderPath": "spotty-mobile\\lib\\core\\",
-            "color": "foldercolorizer.color_ff3366"
-        },
-        {
             "folderPath": "spotty-mobile\\lib\\pages\\",
             "color": "foldercolorizer.color_00cccc"
         },
         {
-            "folderPath": "spotty-mobile\\lib\\pages\\logins\\",
+            "folderPath": "spotty-mobile\\lib\\pages\\auth",
             "color": "foldercolorizer.color_0000ff"
         },
         {
-            "folderPath": "spotty-mobile\\lib\\validators\\",
+            "folderPath": "spotty-mobile\\lib\\core\\validators",
             "color": "foldercolorizer.color_ccff00"
         },
         {
-            "folderPath": "spotty-mobile\\lib\\widgets\\",
+            "folderPath": "spotty-mobile\\lib\\core\\widgets",
             "color": "foldercolorizer.color_00ff33"
         },
         {

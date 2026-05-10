@@ -1,24 +1,23 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:map_food/core/theme/app_icon_size.dart';
+import 'package:map_food/core/theme/app_radius.dart';
+import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
-import 'package:map_food/core/theme/icon_size.dart';
-import 'package:map_food/validators/form_validator.dart';
-import 'package:map_food/widgets/app_form_field.dart';
+import 'package:map_food/core/validators/form_validator.dart';
+import 'package:map_food/core/widgets/app_form_field.dart';
 
-class PageCadastroContaComercial extends StatefulWidget {
-  const PageCadastroContaComercial({super.key});
+class MerchantRegisterPage extends StatefulWidget {
+  const MerchantRegisterPage({super.key});
 
   @override
-  State<PageCadastroContaComercial> createState() =>
-      _PageCadastroContaComercialState();
+  State<MerchantRegisterPage> createState() => _MerchantRegisterPageSizeState();
 }
 
-class _PageCadastroContaComercialState
-    extends State<PageCadastroContaComercial> {
+class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   final _formKey = GlobalKey<FormState>();
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
@@ -94,30 +93,29 @@ class _PageCadastroContaComercialState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.brancoBackground,
+      backgroundColor: ColorsPalette.whiteBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.brancoBackground,
-        foregroundColor: ColorsPalette.brancoBackground,
-        surfaceTintColor: ColorsPalette.brancoBackground,
+        backgroundColor: ColorsPalette.whiteBackground,
+        foregroundColor: ColorsPalette.whiteBackground,
+        surfaceTintColor: ColorsPalette.whiteBackground,
         elevation: 0,
         centerTitle: true,
-        title: Text(
-          "",
-          style: AppText.corpo(context).copyWith(fontWeight: FontWeight.bold),
-        ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
             LucideIcons.chevronLeft,
-            color: ColorsPalette.vermelhoComponents,
-            size: AppIconSize.normal.sp,
+            color: ColorsPalette.redComponents,
+            size: AppIconSize.lg,
           ),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -126,30 +124,29 @@ class _PageCadastroContaComercialState
                 Text(
                   "Seja um Parceiro",
                   style: AppText.display(context).copyWith(
-                    letterSpacing: -1,
-                    color: ColorsPalette.vermelhoComponents,
+                    letterSpacing: -1.0,
+                    color: ColorsPalette.redComponents,
                   ),
                 ),
-                SizedBox(height: 8.h),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   "Cadastre seu negócio e aumente suas vendas alcançando mais clientes",
                   style: AppText.secundario(
                     context,
-                  ).copyWith(fontSize: 15.sp, height: 1.4),
+                  ).copyWith(fontSize: 15.0, height: 1.4),
                 ),
-                SizedBox(height: 32.h),
+                const SizedBox(height: AppSpacing.xl),
 
-     
                 AppFormField(
                   controller: _nomeController,
-                  label: "Nome Completo ou Razão Social",
-                  hint: "João da Silva / João Lanches",
+                  label: "Nome Completo",
+                  hint: "João da Silva",
                   icon: LucideIcons.user,
                   keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
                   validator: FormValidator.nome,
                 ),
-                SizedBox(height: 20.h),
+                const SizedBox(height: AppSpacing.md),
 
                 AppFormField(
                   controller: _emailController,
@@ -159,9 +156,8 @@ class _PageCadastroContaComercialState
                   keyboardType: TextInputType.emailAddress,
                   validator: FormValidator.email,
                 ),
-                SizedBox(height: 20.h),
+                const SizedBox(height: AppSpacing.md),
 
-       
                 AppFormField(
                   controller: _cpfController,
                   label: "CPF",
@@ -171,7 +167,7 @@ class _PageCadastroContaComercialState
                   validator: FormValidator.cpf,
                   inputFormatters: [_cpfFormatter],
                 ),
-                SizedBox(height: 20.h),
+                const SizedBox(height: AppSpacing.md),
 
                 AppFormField(
                   controller: _cnpjController,
@@ -182,9 +178,8 @@ class _PageCadastroContaComercialState
                   validator: FormValidator.cnpjOpcional,
                   inputFormatters: [_cnpjFormatter],
                 ),
-                SizedBox(height: 20.h),
+                const SizedBox(height: AppSpacing.md),
 
-           
                 AppFormField(
                   controller: _celularController,
                   label: "Celular / WhatsApp",
@@ -194,9 +189,8 @@ class _PageCadastroContaComercialState
                   validator: FormValidator.telefone,
                   inputFormatters: [_celularFormatter],
                 ),
-                SizedBox(height: 20.h),
+                const SizedBox(height: AppSpacing.md),
 
-              
                 AppFormField(
                   controller: _telefoneController,
                   label: "Telefone Fixo (Opcional)",
@@ -206,9 +200,8 @@ class _PageCadastroContaComercialState
                   validator: FormValidator.telefoneOpcional,
                   inputFormatters: [_telefoneFormatter],
                 ),
-                SizedBox(height: 20.h),
+                const SizedBox(height: AppSpacing.md),
 
-  
                 AppFormField(
                   controller: _senhaController,
                   label: "Crie uma Senha",
@@ -220,7 +213,7 @@ class _PageCadastroContaComercialState
                     icon: Icon(
                       _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
                       color: Colors.grey.shade500,
-                      size: 20,
+                      size: AppIconSize.md,
                     ),
                     onPressed: () {
                       setState(() {
@@ -230,8 +223,7 @@ class _PageCadastroContaComercialState
                   ),
                 ),
 
-                SizedBox(height: 32.h),
-
+                const SizedBox(height: AppSpacing.xl),
 
                 FormField<bool>(
                   initialValue: _aceitouTermos,
@@ -244,13 +236,13 @@ class _PageCadastroContaComercialState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
-                              height: 24.w,
-                              width: 24.w,
+                              height: 24.0,
+                              width: 24.0,
                               child: Checkbox(
                                 value: _aceitouTermos,
-                                activeColor: ColorsPalette.vermelhoComponents,
+                                activeColor: ColorsPalette.redComponents,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(6.0),
                                 ),
                                 side: BorderSide(
                                   color: state.hasError
@@ -266,7 +258,7 @@ class _PageCadastroContaComercialState
                                 },
                               ),
                             ),
-                            SizedBox(width: 12.w),
+                            const SizedBox(width: 12.0),
                             Expanded(
                               child: GestureDetector(
                                 onTap: () {
@@ -285,12 +277,11 @@ class _PageCadastroContaComercialState
                                     children: [
                                       TextSpan(
                                         text: "Termos de Parceiro",
-                                        recognizer:
-                                            _termosParceiroRecognizer, // <-- Adicionado o clique aqui
+                                        recognizer: _termosParceiroRecognizer,
                                         style: AppText.secundario(context)
                                             .copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.black,
+                                              color: ColorsPalette.black,
                                               decoration:
                                                   TextDecoration.underline,
                                             ),
@@ -305,7 +296,10 @@ class _PageCadastroContaComercialState
                         ),
                         if (state.hasError)
                           Padding(
-                            padding: EdgeInsets.only(top: 8.h, left: 36.w),
+                            padding: const EdgeInsets.only(
+                              top: 8.0,
+                              left: 36.0,
+                            ),
                             child: Text(
                               state.errorText!,
                               style: AppText.legenda(
@@ -318,18 +312,18 @@ class _PageCadastroContaComercialState
                   },
                 ),
 
-                SizedBox(height: 48.h),
+                const SizedBox(height: AppSpacing.xxl),
 
                 SizedBox(
                   width: double.infinity,
-                  height: 56.h,
+                  height: 52.0, 
                   child: ElevatedButton(
                     onPressed: _cadastrar,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorsPalette.vermelhoComponents,
+                      backgroundColor: ColorsPalette.redComponents,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       elevation: 0,
                     ),
@@ -339,7 +333,7 @@ class _PageCadastroContaComercialState
                     ),
                   ),
                 ),
-                SizedBox(height: 32.h),
+                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),

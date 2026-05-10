@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:map_food/core/theme/app_icon_size.dart';
+import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
+import 'package:map_food/core/theme/app_text_styles.dart';
 
 class AppFormField extends StatelessWidget {
   final TextEditingController controller;
@@ -35,13 +37,12 @@ class AppFormField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 4.w, bottom: 8.h),
+          padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 14.sp,
+            style: AppText.secundario(context).copyWith(
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: ColorsPalette.blackDetails,
             ),
           ),
         ),
@@ -52,39 +53,41 @@ class AppFormField extends StatelessWidget {
           textCapitalization: textCapitalization,
           validator: validator,
           inputFormatters: inputFormatters,
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
+          style: AppText.corpo(
+            context,
+          ).copyWith(fontWeight: FontWeight.w500, color: ColorsPalette.black),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(
+            hintStyle: AppText.corpo(context).copyWith(
               color: Colors.grey.shade400,
               fontWeight: FontWeight.w400,
             ),
             filled: true,
-            fillColor: ColorsPalette.branco,
-            prefixIcon: Icon(icon, color: Colors.grey.shade500, size: 20),
+            fillColor: ColorsPalette.white,
+            prefixIcon: Icon(
+              icon,
+              color: Colors.grey.shade500,
+              size: AppIconSize.md, 
+            ),
             suffixIcon: suffixIcon,
-            contentPadding: EdgeInsets.symmetric(
-              vertical: 20.h,
-              horizontal: 20.w,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16.0, 
+              horizontal: 16.0,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: const BorderSide(color: ColorsPalette.black, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
             ),
           ),

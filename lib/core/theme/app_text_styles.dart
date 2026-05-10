@@ -1,63 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:map_food/core/theme/colors_palette.dart';
 
 class AppText {
+  // Título de grande destaque
   static TextStyle display(BuildContext context) {
     return Theme.of(context).textTheme.headlineMedium!.copyWith(
-      fontSize: 32.sp,
+      fontSize: 32.0, // Absoluto
       fontWeight: FontWeight.bold,
     );
   }
 
-  // título principal da página
+  // Título principal da página
   static TextStyle titulo(BuildContext context) {
     return Theme.of(context).textTheme.titleLarge!.copyWith(
-      fontSize: 26.sp,
+      fontSize: 24.0,
       fontWeight: FontWeight.bold,
     );
   }
 
-  // subtítulo / seções
+  // Subtítulo / Seções
   static TextStyle subtitulo(BuildContext context) {
     return Theme.of(context).textTheme.titleMedium!.copyWith(
-      fontSize: 20.sp,
+      fontSize: 20.0,
       fontWeight: FontWeight.w600,
     );
   }
 
-  // texto principal
+  // Texto principal
   static TextStyle corpo(BuildContext context) {
-    return Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 16.sp);
+    return Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 16.0);
   }
 
-  // texto secundário
+  // Texto secundário
   static TextStyle secundario(BuildContext context) {
     return Theme.of(
       context,
-    ).textTheme.bodyMedium!.copyWith(fontSize: 14.sp, color: Colors.grey[700]);
+    ).textTheme.bodyMedium!.copyWith(fontSize: 14.0, color: Colors.grey[700]);
   }
 
-  // detalhes pequenos
+  // Detalhes pequenos
   static TextStyle legenda(BuildContext context) {
     return Theme.of(
       context,
-    ).textTheme.bodySmall!.copyWith(fontSize: 12.sp, color: Colors.grey[600]);
+    ).textTheme.bodySmall!.copyWith(fontSize: 12.0, color: Colors.grey[600]);
   }
 
-  // texto de destaque
+  // Texto de destaque
   static TextStyle destaque(BuildContext context) {
     return Theme.of(context).textTheme.bodyMedium!.copyWith(
-      fontSize: 14.sp,
+      fontSize: 14.0,
       fontWeight: FontWeight.w800,
-      color: const Color(0xFFE33E33),
-      letterSpacing: 1,
+      color: ColorsPalette.redComponents,
+      letterSpacing: 1.0,
     );
   }
 
-  // texto de botão
+  // Texto de botão
   static TextStyle botao(BuildContext context) {
     return Theme.of(context).textTheme.labelLarge!.copyWith(
-      fontSize: 16.sp,
+      fontSize: 16.0,
       fontWeight: FontWeight.w700,
       letterSpacing: 0.5,
       color: Colors.white,
