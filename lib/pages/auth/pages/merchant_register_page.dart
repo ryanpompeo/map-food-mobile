@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
+import 'package:map_food/pages/merchant/store_register_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
@@ -29,6 +30,9 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
   bool _obscurePassword = true;
   bool _aceitouTermos = false;
+
+
+  bool _isLoading = false;
 
   // ==========================================
   // DEFINIÇÃO DAS MÁSCARAS
@@ -61,7 +65,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
     _termosParceiroRecognizer = TapGestureRecognizer()
       ..onTap = () {
-        print("Abrir tela de Termos de Parceiro");
+        debugPrint("Abrir tela de Termos de Parceiro");
       };
   }
 
@@ -78,16 +82,37 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
     super.dispose();
   }
 
-  void _cadastrar() {
-    if (_formKey.currentState!.validate()) {
-      final dataCadastro = DateTime.now();
-      print("Formulário Vendedor válido!");
-      print("Data do Cadastro: $dataCadastro");
-      print("CPF: ${_cpfFormatter.getUnmaskedText()}");
-      if (_cnpjController.text.isNotEmpty) {
-        print("CNPJ: ${_cnpjFormatter.getUnmaskedText()}");
-      }
-    }
+ 
+  Future<void> _cadastrar() async {
+    if (!_formKey.currentState!.validate()) return;
+
+
+    setState(() => _isLoading = true);
+
+
+    final dadosComerciante = {
+      'nome': _nomeController.text.trim(),
+      'email': _emailController.text.trim(),
+      'cpf': _cpfFormatter.getUnmaskedText(),
+      'cnpj': _cnpjFormatter.getUnmaskedText(),
+      'celular': _celularFormatter.getUnmaskedText(),
+      'telefone': _telefoneFormatter.getUnmaskedText(),
+      'senha': _senhaController.text, // Apenas para debug local
+      'data_cadastro': DateTime.now().toIso8601String(),
+    };
+
+    debugPrint("=== DADOS SALVOS LOCALMENTE ===");
+    debugPrint(dadosComerciante.toString());
+
+
+    await Future.delayed(const Duration(seconds: 2));
+
+  
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const StoreRegisterPage()),
+    );
   }
 
   @override
@@ -316,21 +341,34 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
                 SizedBox(
                   width: double.infinity,
-                  height: 52.0, 
+                  height: 52.0,
                   child: ElevatedButton(
-                    onPressed: _cadastrar,
+                   
+                    onPressed: _isLoading ? null : _cadastrar,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorsPalette.redComponents,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: ColorsPalette.redComponents
+                          .withOpacity(0.6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       elevation: 0,
                     ),
-                    child: Text(
-                      "Começar a vender",
-                      style: AppText.botao(context),
-                    ),
+                  
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24.0,
+                            width: 24.0,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Text(
+                            "Começar a vender",
+                            style: AppText.botao(context),
+                          ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),

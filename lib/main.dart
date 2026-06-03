@@ -7,6 +7,7 @@ import 'package:map_food/pages/auth/pages/merchant_register_page.dart';
 import 'package:map_food/pages/auth/pages/consumer_register_page.dart';
 import 'package:map_food/pages/host/guest_home_page.dart';
 import 'package:map_food/pages/auth/pages/account_type_page.dart';
+import 'package:map_food/pages/merchant/store_register_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,13 +55,14 @@ class MyApp extends StatelessWidget {
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: '/',
+          initialRoute: '/storeRegister',
           routes: {
             '/': (context) => const GuestHomePage(),
             '/login': (context) => const LoginPage(),
             '/accountType': (context) => const AccountTypePage(),
             '/consumerRegister': (context) => const ConsumerRegisterPage(),
             '/merchantRegister': (context) => const MerchantRegisterPage(),
+            '/storeRegister': (context) => const StoreRegisterPage(),
           },
         );
       },

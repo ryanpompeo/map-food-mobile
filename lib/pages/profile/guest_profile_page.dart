@@ -20,7 +20,7 @@ class GuestProfilePage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          "PERFIL",
+          "Perfil",
           style: AppText.legenda(context).copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,

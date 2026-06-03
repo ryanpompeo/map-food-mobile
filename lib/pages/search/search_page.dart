@@ -40,7 +40,7 @@ class _SearchPageState extends State<SearchPage> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          "BUSCAR",
+          "Buscar",
           style: AppText.legenda(context).copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,
@@ -65,7 +65,7 @@ class _SearchPageState extends State<SearchPage> {
                     _buildSearchBar(context),
                     const SizedBox(height: AppSpacing.xl),
                     if (_buscasRecentes.isNotEmpty) _buildHistorico(context),
-                    const SizedBox(height: 120.0), 
+                    const SizedBox(height: 120.0),
                   ],
                 ),
               ),

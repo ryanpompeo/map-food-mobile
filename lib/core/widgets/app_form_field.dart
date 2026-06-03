@@ -16,19 +16,23 @@ class AppFormField extends StatelessWidget {
   final bool obscureText;
   final Widget? suffixIcon;
   final List<TextInputFormatter>? inputFormatters;
+  final int maxLines; // Adicionado suporte para múltiplas linhas (default 1)
+  final bool showIcon; // Nova flag para ocultar o ícone em campos compactos
 
   const AppFormField({
     super.key,
     required this.controller,
     required this.label,
     required this.hint,
-    required this.icon,
+    this.icon = Icons.text_fields,
     required this.validator,
     this.keyboardType = TextInputType.text,
     this.textCapitalization = TextCapitalization.none,
     this.obscureText = false,
     this.suffixIcon,
     this.inputFormatters,
+    this.maxLines = 1, // Mantém compatibilidade com inputs normais
+    this.showIcon = true, // Padrão verdadeiro para não quebrar telas antigas
   });
 
   @override
@@ -53,10 +57,15 @@ class AppFormField extends StatelessWidget {
           textCapitalization: textCapitalization,
           validator: validator,
           inputFormatters: inputFormatters,
+          maxLines: maxLines,
+          textAlignVertical: maxLines > 1
+              ? TextAlignVertical.top
+              : TextAlignVertical.center,
           style: AppText.corpo(
             context,
           ).copyWith(fontWeight: FontWeight.w500, color: ColorsPalette.black),
           decoration: InputDecoration(
+            isDense: true,
             hintText: hint,
             hintStyle: AppText.corpo(context).copyWith(
               color: Colors.grey.shade400,
@@ -64,14 +73,13 @@ class AppFormField extends StatelessWidget {
             ),
             filled: true,
             fillColor: ColorsPalette.white,
-            prefixIcon: Icon(
-              icon,
-              color: Colors.grey.shade500,
-              size: AppIconSize.md, 
-            ),
+            // Condicional técnica: oculta o padding do ícone se showIcon for falso
+            prefixIcon: showIcon
+                ? Icon(icon, color: Colors.grey.shade500, size: AppIconSize.md)
+                : null,
             suffixIcon: suffixIcon,
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 16.0, 
+              vertical: 14.0,
               horizontal: 16.0,
             ),
             border: OutlineInputBorder(
@@ -80,7 +88,10 @@ class AppFormField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(color: ColorsPalette.black, width: 1.5),
+              borderSide: const BorderSide(
+                color: ColorsPalette.black,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),

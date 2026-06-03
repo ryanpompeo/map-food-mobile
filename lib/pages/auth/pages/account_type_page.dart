@@ -20,7 +20,7 @@ class AccountTypePage extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
-          "SELECIONE SEU PERFIL",
+          "Selecione seu perfil",
           style: AppText.legenda(context).copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,
