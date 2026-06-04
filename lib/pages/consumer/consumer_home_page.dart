@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
-import 'package:map_food/pages/profile/guest_profile_page.dart';
-import 'package:map_food/pages/host/widgets/floating_bottom_bar.dart';
+import 'package:map_food/pages/consumer/widgets/consumer_bottom_bar.dart';
+
 import 'package:map_food/pages/search/search_page.dart';
 
-class GuestHomePage extends StatefulWidget {
-  const GuestHomePage({super.key});
+// TODO: Importar as páginas reais assim que forem criadas
+// import 'package:map_food/pages/orders/orders_page.dart';
+// import 'package:map_food/pages/profile/consumer_profile_page.dart';
+
+class ConsumerHomePage extends StatefulWidget {
+  const ConsumerHomePage({super.key});
 
   @override
-  State<GuestHomePage> createState() => _GuestHomePageState();
+  State<ConsumerHomePage> createState() => _ConsumerHomePageState();
 }
 
-class _GuestHomePageState extends State<GuestHomePage> {
+class _ConsumerHomePageState extends State<ConsumerHomePage> {
   int _selectedIndex = 0;
   String _filtroAtivo = 'Todos';
 
@@ -32,7 +36,6 @@ class _GuestHomePageState extends State<GuestHomePage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,15 +46,19 @@ class _GuestHomePageState extends State<GuestHomePage> {
             index: _selectedIndex,
             children: [
               _buildAbaInicio(),
+
               const SearchPage(),
-              const GuestProfilePage(),
+
+              const Center(child: Text("Tela de Visitas em Andamento")),
+
+              const Center(child: Text("Perfil do Consumidor Logado")),
             ],
           ),
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: FloatingBottomBar(
+            child: ConsumerBottomBar(
               selectedIndex: _selectedIndex,
               onItemTapped: _onItemTapped,
             ),
@@ -64,7 +71,6 @@ class _GuestHomePageState extends State<GuestHomePage> {
   Widget _buildAbaInicio() {
     return Column(
       children: [
-  
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
@@ -72,13 +78,9 @@ class _GuestHomePageState extends State<GuestHomePage> {
           ),
           decoration: BoxDecoration(
             color: ColorsPalette.whiteBackground,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            border: Border(
+              bottom: BorderSide(color: Colors.grey.shade200, width: 1.0),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,13 +90,13 @@ class _GuestHomePageState extends State<GuestHomePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
- 
                     GestureDetector(
-                      onTap: () => debugPrint("Abrir seletor de endereço"),
+                      onTap: () =>
+                          debugPrint("Abrir seletor de endereço (Logado)"),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12.0,
-                          vertical: 8.0,
+                          horizontal: 16.0,
+                          vertical: 10.0,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
@@ -106,36 +108,32 @@ class _GuestHomePageState extends State<GuestHomePage> {
                             const Icon(
                               LucideIcons.mapPin,
                               color: ColorsPalette.redComponents,
-                              size: 14.0,
+                              size: 16.0,
                             ),
-                            const SizedBox(width: 6.0),
+                            const SizedBox(width: 8.0),
                             Text(
-                              "Limeira, SP",
+                              "Rua Principal, 123",
                               style: AppText.legenda(context).copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black87,
+                                fontWeight: FontWeight.w800,
+                                color: ColorsPalette.black,
                               ),
                             ),
-                            const SizedBox(width: 4.0),
+                            const SizedBox(width: 6.0),
                             Icon(
                               LucideIcons.chevronDown,
-                              size: 14.0,
+                              size: 16.0,
                               color: Colors.grey.shade600,
                             ),
                           ],
                         ),
                       ),
                     ),
-                    // Ícone de Busca Condensado
                     IconButton(
-                      onPressed: () {
-                   
-                        _onItemTapped(1);
-                      },
+                      onPressed: () => _onItemTapped(1),
                       icon: const Icon(
                         LucideIcons.search,
                         color: ColorsPalette.blackDetails,
-                        size: 22.0,
+                        size: 24.0,
                       ),
                     ),
                   ],
@@ -155,22 +153,23 @@ class _GuestHomePageState extends State<GuestHomePage> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 12.0),
                       child: GestureDetector(
-                        onTap: () => (filtro),
+                        onTap: () {
+                          setState(() {
+                            _filtroAtivo = filtro;
+                          });
+                        },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 0.0,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? ColorsPalette.redComponents
+                                ? ColorsPalette.blackComponents
                                 : ColorsPalette.whiteBackground,
                             borderRadius: BorderRadius.circular(20.0),
                             border: Border.all(
                               color: isSelected
-                                  ? ColorsPalette.redComponents
+                                  ? ColorsPalette.blackComponents
                                   : Colors.grey.shade300,
                               width: 1.0,
                             ),
@@ -179,11 +178,11 @@ class _GuestHomePageState extends State<GuestHomePage> {
                             filtro,
                             style: AppText.legenda(context).copyWith(
                               fontWeight: isSelected
-                                  ? FontWeight.bold
+                                  ? FontWeight.w800
                                   : FontWeight.w600,
                               color: isSelected
                                   ? Colors.white
-                                  : Colors.grey.shade700,
+                                  : ColorsPalette.black,
                             ),
                           ),
                         ),

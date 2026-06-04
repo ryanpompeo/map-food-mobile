@@ -8,7 +8,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/validators/form_validator.dart';
-import 'package:map_food/core/widgets/app_form_field.dart';
+import 'package:map_food/pages/auth/widgets/app_form_field.dart';
 
 class ConsumerRegisterPage extends StatefulWidget {
   const ConsumerRegisterPage({super.key});

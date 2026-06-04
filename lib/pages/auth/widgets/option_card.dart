@@ -5,7 +5,7 @@ import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
-import 'package:map_food/core/widgets/app_button.dart';
+import 'package:map_food/pages/auth/widgets/app_button.dart';
 
 Widget OptionCard({
   required String title,

@@ -5,7 +5,7 @@ import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/auth/pages/login_page.dart';
 import 'package:map_food/pages/auth/pages/merchant_register_page.dart';
 import 'package:map_food/pages/auth/pages/consumer_register_page.dart';
-import 'package:map_food/pages/host/guest_home_page.dart';
+import 'package:map_food/pages/guest/guest_home_page.dart';
 import 'package:map_food/pages/auth/pages/account_type_page.dart';
 import 'package:map_food/pages/merchant/store_register_page.dart';
 

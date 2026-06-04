@@ -5,8 +5,10 @@ import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
-import 'package:map_food/core/widgets/app_form_field.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:map_food/pages/auth/widgets/app_form_field.dart';
+
+// Importe a página da Home do Comerciante (ajuste o caminho se necessário)
+import 'package:map_food/pages/merchant/merchant_home_page.dart';
 
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
@@ -18,44 +20,76 @@ class StoreRegisterPage extends StatefulWidget {
 class _StoreRegisterPageState extends State<StoreRegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
+  // Controladores Principais
   final _nomeController = TextEditingController();
   final _descricaoController = TextEditingController();
-  final _cepController = TextEditingController();
-  final _ruaController = TextEditingController();
-  final _numeroController = TextEditingController();
-  final _bairroController = TextEditingController();
-  final _cidadeController = TextEditingController();
-  final _estadoController = TextEditingController();
-  final _complementoController = TextEditingController();
 
-  bool _lojaAtiva = true;
-  bool _hasFoto = false;
+  // Controle de Fotos e Status
+  bool _statusLoja = true;
   bool _isLoading = false;
 
-  final _cepFormatter = MaskTextInputFormatter(
-    mask: '#####-###',
-    filter: {"#": RegExp(r'[0-9]')},
-  );
+  // Mock para simular o upload de múltiplas fotos (limite de 3)
+  final List<int> _fotosMock = [];
+  final int _maxFotos = 3;
+
+  // Categorias (Mock da tabela pi_categoria)
+  final List<int> _categoriasSelecionadas = [];
+  final List<Map<String, dynamic>> _categoriasBase = [
+    {'id': 1, 'nome': 'Salgados'},
+    {'id': 2, 'nome': 'Doces'},
+    {'id': 3, 'nome': 'Bebidas'},
+    {'id': 4, 'nome': 'Marmitas'},
+    {'id': 5, 'nome': 'Vegano'},
+    {'id': 6, 'nome': 'Espetinhos'},
+  ];
 
   @override
   void dispose() {
     _nomeController.dispose();
     _descricaoController.dispose();
-    _cepController.dispose();
-    _ruaController.dispose();
-    _numeroController.dispose();
-    _bairroController.dispose();
-    _cidadeController.dispose();
-    _estadoController.dispose();
-    _complementoController.dispose();
     super.dispose();
   }
 
-  void _cadastrarLoja() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
- 
+  Future<void> _cadastrarLoja() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_categoriasSelecionadas.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Selecione pelo menos uma categoria."),
+          backgroundColor: ColorsPalette.redComponents,
+        ),
+      );
+      return;
     }
+
+    setState(() => _isLoading = true);
+
+    final storePayload = {
+      "nome": _nomeController.text.trim(),
+      "descricao": _descricaoController.text.trim(),
+      "status_loja": _statusLoja,
+      "categorias_ids": _categoriasSelecionadas,
+      "fotos_adicionadas": _fotosMock.length,
+    };
+
+    debugPrint("=== ENVIANDO PARA API ===");
+    debugPrint(storePayload.toString());
+
+    // Simula o tempo de rede do Spring Boot
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    debugPrint(
+      "Loja cadastrada! Redirecionando para o Dashboard do Comerciante.",
+    );
+
+    // Navegação destrutiva para o Dashboard
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MerchantHomePage()),
+    );
   }
 
   @override
@@ -69,7 +103,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          "Registre seu negócio",
+          "Configuração da Loja",
           style: AppText.legenda(context).copyWith(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,
@@ -89,14 +123,15 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSecaoFoto(),
+                const SizedBox(height: AppSpacing.sm),
+                _buildFotoUploadMulti(),
                 const SizedBox(height: AppSpacing.xl),
 
                 _buildTituloSecao("Dados Principais"),
                 AppFormField(
                   controller: _nomeController,
-                  label: "Nome do Estabelecimento",
-                  hint: "Ex: Hamburgueria Central",
+                  label: "Nome do Comércio",
+                  hint: "Ex: Carrinho do João",
                   icon: LucideIcons.store,
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Obrigatório' : null,
@@ -104,121 +139,95 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                 const SizedBox(height: AppSpacing.md),
                 AppFormField(
                   controller: _descricaoController,
-                  label: "Descrição",
-                  hint: "Ex: Lanches e porções artesanais",
+                  label: "Breve descrição",
+                  hint: "Ex: Lanches e porções",
                   icon: LucideIcons.alignLeft,
-                  maxLines: 2,
+                  maxLines: 3,
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Obrigatório' : null,
                 ),
 
                 const SizedBox(height: AppSpacing.xl),
-                _buildTituloSecao("Endereço"),
 
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: AppFormField(
-                        controller: _cepController,
-                        label: "CEP",
-                        hint: "00000-000",
-                        icon: LucideIcons.mapPin,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [_cepFormatter],
-                        validator: (v) =>
-                            v == null || v.length < 9 ? 'Inválido' : null,
+                _buildTituloSecao("Categorias de Produtos"),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: _categoriasBase.map((cat) {
+                    final isSelected = _categoriasSelecionadas.contains(
+                      cat['id'],
+                    );
+                    return ChoiceChip(
+                      label: Text(
+                        cat['nome'],
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : ColorsPalette.black,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      flex: 1,
-                      child: AppFormField(
-                        controller: _estadoController,
-                        label: "UF",
-                        hint: "SP",
-                        textCapitalization: TextCapitalization.characters,
-                        showIcon: false,
-                        validator: (v) => v == null || v.isEmpty ? 'Er' : null,
+                      selected: isSelected,
+                      selectedColor: ColorsPalette.redComponents,
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        side: BorderSide(
+                          color: isSelected
+                              ? ColorsPalette.redComponents
+                              : Colors.grey.shade300,
+                        ),
                       ),
-                    ),
-                  ],
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _categoriasSelecionadas.add(cat['id']);
+                          } else {
+                            _categoriasSelecionadas.remove(cat['id']);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
                 ),
-                const SizedBox(height: AppSpacing.md),
-
-                AppFormField(
-                  controller: _ruaController,
-                  label: "Rua / Avenida",
-                  hint: "Ex: Avenida Laranjeiras",
-                  icon: LucideIcons.map,
-                  validator: (v) =>
-                      v == null || v.isEmpty ? 'Obrigatório' : null,
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: AppFormField(
-                        controller: _numeroController,
-                        label: "Número",
-                        hint: "123",
-                        keyboardType: TextInputType.number,
-                        showIcon: false,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Obrigatório' : null,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      flex: 3,
-                      child: AppFormField(
-                        controller: _complementoController,
-                        label: "Complemento",
-                        hint: "Ex: Sala 2 / Casa",
-                        showIcon: false,
-                        validator: (v) => null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: AppFormField(
-                        controller: _bairroController,
-                        label: "Bairro",
-                        hint: "Centro",
-                        showIcon: false,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Obrigatório' : null,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: AppFormField(
-                        controller: _cidadeController,
-                        label: "Cidade",
-                        hint: "Limeira",
-                        showIcon: false,
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Obrigatório' : null,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: AppSpacing.xl),
-                _buildStatusSwitch(),
 
                 const SizedBox(height: AppSpacing.xxl),
-                _buildBotaoSalvar(),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 52.0,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _cadastrarLoja,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorsPalette.redComponents,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: ColorsPalette.redComponents
+                          .withOpacity(0.5),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            "Concluir Configuração",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.xl),
               ],
             ),
@@ -233,109 +242,120 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Text(
         titulo,
-        style: AppText.subtitulo(
-          context,
-        ).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+          color: Colors.black,
+        ),
       ),
     );
   }
 
-  Widget _buildSecaoFoto() {
-    return Center(
-      child: GestureDetector(
-        onTap: () => setState(() => _hasFoto = !_hasFoto),
-        child: Container(
-          height: 100.0,
-          width: 100.0,
-          decoration: BoxDecoration(
-            color: _hasFoto
-                ? ColorsPalette.blackComponents
-                : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(
-              color: _hasFoto
-                  ? ColorsPalette.blackComponents
-                  : Colors.grey.shade300,
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildFotoUploadMulti() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTituloSecao("Fotos do Estabelecimento"),
+        Text(
+          "Adicione até $_maxFotos imagens para sua vitrine.",
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 14.0),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
             children: [
-              Icon(
-                _hasFoto ? LucideIcons.checkCircle : LucideIcons.camera,
-                color: _hasFoto ? Colors.white : Colors.grey.shade500,
-                size: AppIconSize.lg,
-              ),
-              if (!_hasFoto) ...[
-                const SizedBox(height: 4.0),
-                Text(
-                  "Logo",
-                  style: AppText.legenda(context).copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade500,
+              if (_fotosMock.length < _maxFotos)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _fotosMock.add(DateTime.now().millisecondsSinceEpoch);
+                    });
+                  },
+                  child: Container(
+                    height: 100.0,
+                    width: 100.0,
+                    margin: const EdgeInsets.only(right: 12.0),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: Colors.grey.shade300,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          LucideIcons.camera,
+                          color: Colors.grey.shade500,
+                          size: 28.0,
+                        ),
+                        const SizedBox(height: 4.0),
+                        Text(
+                          "Adicionar",
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
+              ..._fotosMock.map((fotoId) => _buildFotoMockItem(fotoId)),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildStatusSwitch() {
+  Widget _buildFotoMockItem(int fotoId) {
     return Container(
+      height: 100.0,
+      width: 100.0,
+      margin: const EdgeInsets.only(right: 12.0),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        color: ColorsPalette.redComponents.withOpacity(0.05),
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: ColorsPalette.redComponents, width: 1.5),
       ),
-      child: SwitchListTile(
-        title: Text(
-          "Disponível no Mapa",
-          style: AppText.corpo(
-            context,
-          ).copyWith(fontWeight: FontWeight.w700, color: ColorsPalette.black),
-        ),
-        subtitle: Text(
-          "Ativa a visibilidade imediata da loja no mapa.",
-          style: AppText.legenda(context).copyWith(color: Colors.grey.shade600),
-        ),
-        value: _lojaAtiva,
-        activeColor: ColorsPalette.whiteBackground,
-        activeTrackColor: ColorsPalette.redComponents,
-        inactiveThumbColor: Colors.grey.shade400,
-        inactiveTrackColor: Colors.grey.shade200,
-        onChanged: (bool value) => setState(() => _lojaAtiva = value),
-      ),
-    );
-  }
-
-  Widget _buildBotaoSalvar() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52.0,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _cadastrarLoja,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: ColorsPalette.redComponents,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: ColorsPalette.redComponents.withOpacity(0.6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Stack(
+        children: [
+          const Center(
+            child: Icon(
+              LucideIcons.image,
+              color: ColorsPalette.redComponents,
+              size: 32.0,
+            ),
           ),
-          elevation: 0,
-          textStyle: AppText.botao(context),
-        ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 24.0,
-                width: 24.0,
-                child: CircularProgressIndicator(
+          Positioned(
+            top: 6,
+            right: 6,
+            child: GestureDetector(
+              onTap: () {
+                setState(() => _fotosMock.remove(fotoId));
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4.0),
+                decoration: BoxDecoration(
                   color: Colors.white,
-                  strokeWidth: 2.5,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
-              )
-            : const Text("Concluir Cadastro"),
+                child: const Icon(
+                  LucideIcons.trash2,
+                  size: 14.0,
+                  color: ColorsPalette.redComponents,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
