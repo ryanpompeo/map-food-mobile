@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
+import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
@@ -23,11 +24,14 @@ class AppSearchBar extends StatelessWidget {
       child: Row(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 8.0),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.md,
+              right: AppSpacing.sm,
+            ),
             child: Icon(
               LucideIcons.search,
               color: Colors.grey.shade400,
-              size: AppIconSize.md, 
+              size: AppIconSize.md,
             ),
           ),
           Expanded(
@@ -43,19 +47,19 @@ class AppSearchBar extends StatelessWidget {
                 ).copyWith(color: Colors.grey.shade400),
                 border: InputBorder.none,
                 isDense: true,
-            
+
                 contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
               ),
             ),
           ),
           Container(
-            height: 32.0,
+            height: AppSpacing.xl,
             width: 1.0,
             color: Colors.grey.shade200,
-            margin: const EdgeInsets.symmetric(horizontal: 8.0),
+            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: IconButton(
               onPressed: onFilterTap,
               icon: Icon(

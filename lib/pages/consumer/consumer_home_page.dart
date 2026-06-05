@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/theme/app_icon_size.dart';
+import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/consumer/widgets/consumer_bottom_bar.dart';
@@ -74,7 +76,7 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
-            bottom: 16.0,
+            bottom: AppSpacing.md,
           ),
           decoration: BoxDecoration(
             color: ColorsPalette.whiteBackground,
@@ -95,7 +97,7 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
                           debugPrint("Abrir seletor de endereço (Logado)"),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
+                          horizontal: AppSpacing.md,
                           vertical: 10.0,
                         ),
                         decoration: BoxDecoration(
@@ -108,9 +110,9 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
                             const Icon(
                               LucideIcons.mapPin,
                               color: ColorsPalette.redComponents,
-                              size: 16.0,
+                              size: AppIconSize.sm,
                             ),
-                            const SizedBox(width: 8.0),
+                            const SizedBox(width: AppSpacing.sm),
                             Text(
                               "Rua Principal, 123",
                               style: AppText.legenda(context).copyWith(
@@ -133,19 +135,21 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
                       icon: const Icon(
                         LucideIcons.search,
                         color: ColorsPalette.blackDetails,
-                        size: 24.0,
+                        size: AppIconSize.lg,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16.0),
+              const SizedBox(height: AppSpacing.md),
               SizedBox(
                 height: 40.0,
                 child: ListView.builder(
                   physics: const BouncingScrollPhysics(),
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
                   itemCount: _filtrosMapa.length,
                   itemBuilder: (context, index) {
                     final filtro = _filtrosMapa[index];

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
+import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 
@@ -41,7 +42,10 @@ class AppFormField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xs,
+            bottom: AppSpacing.sm,
+          ),
           child: Text(
             label,
             style: AppText.secundario(context).copyWith(
@@ -80,7 +84,7 @@ class AppFormField extends StatelessWidget {
             suffixIcon: suffixIcon,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 14.0,
-              horizontal: 16.0,
+              horizontal: AppSpacing.md,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),

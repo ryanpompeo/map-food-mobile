@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
+import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 
 class MerchantBottomBar extends StatelessWidget {
@@ -18,8 +19,15 @@ class MerchantBottomBar extends StatelessWidget {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 24.0, left: 32.0, right: 32.0),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        margin: const EdgeInsets.only(
+          bottom: AppSpacing.lg,
+          left: AppSpacing.xl,
+          right: AppSpacing.xl,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: ColorsPalette.whiteBackground,
           borderRadius: BorderRadius.circular(50.0),
@@ -69,7 +77,6 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-   
     final color = isSelected
         ? ColorsPalette.redComponents
         : Colors.grey.shade400;
@@ -78,12 +85,15 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12.0,
+          vertical: AppSpacing.xs,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: color, size: AppIconSize.md),
-            const SizedBox(height: 4.0),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               label,
               style: TextStyle(

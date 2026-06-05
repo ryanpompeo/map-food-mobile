@@ -84,7 +84,7 @@ Widget optionCard({
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 32.0),
+        const SizedBox(height: AppSpacing.xl),
 
         /// BENEFITS
         ...benefits.map((b) {

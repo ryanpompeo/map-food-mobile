@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/guest/profile/guest_profile_page.dart';
@@ -32,7 +32,6 @@ class _GuestHomePageState extends State<GuestHomePage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,11 +63,10 @@ class _GuestHomePageState extends State<GuestHomePage> {
   Widget _buildAbaInicio() {
     return Column(
       children: [
-  
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
-            bottom: 16.0,
+            bottom: AppSpacing.md,
           ),
           decoration: BoxDecoration(
             color: ColorsPalette.whiteBackground,
@@ -84,70 +82,39 @@ class _GuestHomePageState extends State<GuestHomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
- 
                     GestureDetector(
-                      onTap: () => debugPrint("Abrir seletor de endereço"),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12.0,
-                          vertical: 8.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              LucideIcons.mapPin,
-                              color: ColorsPalette.redComponents,
-                              size: 14.0,
-                            ),
-                            const SizedBox(width: 6.0),
-                            Text(
-                              "Limeira, SP",
-                              style: AppText.legenda(context).copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(width: 4.0),
-                            Icon(
-                              LucideIcons.chevronDown,
-                              size: 14.0,
-                              color: Colors.grey.shade600,
-                            ),
-                          ],
-                        ),
+                      onTap: () {},
+                      child: Image.asset(
+                        'assets/images/app_icon_copy.png',
+                        width: 36.0,
+                        height: 36.0,
                       ),
                     ),
-                    // Ícone de Busca Condensado
-                    IconButton(
-                      onPressed: () {
-                   
-                        _onItemTapped(1);
-                      },
-                      icon: const Icon(
-                        LucideIcons.search,
-                        color: ColorsPalette.blackDetails,
-                        size: 22.0,
+                    const SizedBox(width: 6),
+                    Text(
+                      'MapFood',
+                      style: AppText.titulo(context).copyWith(
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
+                        color: ColorsPalette.black,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16.0),
+              const SizedBox(height: AppSpacing.md),
               SizedBox(
                 height: 40.0,
                 child: ListView.builder(
                   physics: const BouncingScrollPhysics(),
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
                   itemCount: _filtrosMapa.length,
                   itemBuilder: (context, index) {
                     final filtro = _filtrosMapa[index];

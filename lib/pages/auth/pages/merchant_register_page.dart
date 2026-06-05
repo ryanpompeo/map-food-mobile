@@ -85,7 +85,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
     super.dispose();
   }
 
- 
   Future<void> _cadastrar() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -118,7 +117,11 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pushReplacementNamed(context, '/login', arguments: 'COMERCIANTE');
+      Navigator.pushReplacementNamed(
+        context,
+        '/login',
+        arguments: 'COMERCIANTE',
+      );
     } on AppException catch (e) {
       final msg = e.statusCode == 409
           ? 'E-mail, CPF ou CNPJ já cadastrado.'
@@ -277,8 +280,8 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
-                              height: 24.0,
-                              width: 24.0,
+                              height: AppIconSize.lg,
+                              width: AppIconSize.lg,
                               child: Checkbox(
                                 value: _aceitouTermos,
                                 activeColor: ColorsPalette.redComponents,
@@ -338,7 +341,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                         if (state.hasError)
                           Padding(
                             padding: const EdgeInsets.only(
-                              top: 8.0,
+                              top: AppSpacing.sm,
                               left: 36.0,
                             ),
                             child: Text(
@@ -357,9 +360,9 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     _errorMessage!,
-                    style: AppText.legenda(context).copyWith(
-                      color: Colors.red.shade600,
-                    ),
+                    style: AppText.legenda(
+                      context,
+                    ).copyWith(color: Colors.red.shade600),
                   ),
                 ],
 
@@ -369,7 +372,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   width: double.infinity,
                   height: 52.0,
                   child: ElevatedButton(
-
                     onPressed: _isLoading ? null : _cadastrar,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorsPalette.redComponents,
@@ -381,11 +383,11 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                       ),
                       elevation: 0,
                     ),
-                  
+
                     child: _isLoading
                         ? const SizedBox(
-                            height: 24.0,
-                            width: 24.0,
+                            height: AppIconSize.lg,
+                            width: AppIconSize.lg,
                             child: CircularProgressIndicator(
                               color: Colors.white,
                               strokeWidth: 2.5,

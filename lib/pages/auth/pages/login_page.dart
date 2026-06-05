@@ -135,8 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () =>
-                            setState(() => _tipoLogin = 'CONSUMIDOR'),
+                        onTap: () => setState(() => _tipoLogin = 'CONSUMIDOR'),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -144,8 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                             color: _tipoLogin == 'CONSUMIDOR'
                                 ? ColorsPalette.redComponents
                                 : Colors.transparent,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.lg),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -162,8 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () =>
-                            setState(() => _tipoLogin = 'COMERCIANTE'),
+                        onTap: () => setState(() => _tipoLogin = 'COMERCIANTE'),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(vertical: 12.0),
@@ -171,8 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                             color: _tipoLogin == 'COMERCIANTE'
                                 ? ColorsPalette.redComponents
                                 : Colors.transparent,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.lg),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -225,13 +221,13 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   _errorMessage!,
-                  style: AppText.legenda(context).copyWith(
-                    color: Colors.red.shade600,
-                  ),
+                  style: AppText.legenda(
+                    context,
+                  ).copyWith(color: Colors.red.shade600),
                 ),
               ],
 
-              const SizedBox(height: 8.0),
+              const SizedBox(height: AppSpacing.sm),
 
               Align(
                 alignment: Alignment.centerRight,
@@ -260,8 +256,8 @@ class _LoginPageState extends State<LoginPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorsPalette.redComponents,
                     foregroundColor: ColorsPalette.white,
-                    disabledBackgroundColor:
-                        ColorsPalette.redComponents.withValues(alpha: 0.6),
+                    disabledBackgroundColor: ColorsPalette.redComponents
+                        .withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
@@ -269,8 +265,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: _isLoading
                       ? const SizedBox(
-                          height: 24.0,
-                          width: 24.0,
+                          height: AppIconSize.lg,
+                          width: AppIconSize.lg,
                           child: CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2.5,
@@ -286,7 +282,9 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Expanded(child: Divider(color: Colors.grey.shade200)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
                     child: Text(
                       "ou entre com",
                       style: AppText.legenda(
@@ -315,7 +313,7 @@ class _LoginPageState extends State<LoginPage> {
                     const Icon(
                       LucideIcons.globe,
                       color: ColorsPalette.blackDetails,
-                      size: 20.0,
+                      size: AppIconSize.md,
                     ),
                     const SizedBox(width: 12.0),
                     Text(

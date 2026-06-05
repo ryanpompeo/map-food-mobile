@@ -102,7 +102,11 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pushReplacementNamed(context, '/login', arguments: 'CONSUMIDOR');
+      Navigator.pushReplacementNamed(
+        context,
+        '/login',
+        arguments: 'CONSUMIDOR',
+      );
     } on AppException catch (e) {
       final msg = e.statusCode == 409
           ? 'E-mail ou CPF já cadastrado.'
@@ -240,8 +244,8 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SizedBox(
-                              height: 24.0,
-                              width: 24.0,
+                              height: AppIconSize.lg,
+                              width: AppIconSize.lg,
                               child: Checkbox(
                                 value: _aceitouTermos,
                                 activeColor: ColorsPalette.black,
@@ -312,7 +316,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                         if (state.hasError)
                           Padding(
                             padding: const EdgeInsets.only(
-                              top: 8.0,
+                              top: AppSpacing.sm,
                               left: 36.0,
                             ),
                             child: Text(
@@ -331,9 +335,9 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     _errorMessage!,
-                    style: AppText.legenda(context).copyWith(
-                      color: Colors.red.shade600,
-                    ),
+                    style: AppText.legenda(
+                      context,
+                    ).copyWith(color: Colors.red.shade600),
                   ),
                 ],
 
@@ -347,7 +351,9 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.black.withValues(alpha: 0.6),
+                      disabledBackgroundColor: Colors.black.withValues(
+                        alpha: 0.6,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
@@ -355,8 +361,8 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                            height: 24.0,
-                            width: 24.0,
+                            height: AppIconSize.lg,
+                            width: AppIconSize.lg,
                             child: CircularProgressIndicator(
                               color: Colors.white,
                               strokeWidth: 2.5,

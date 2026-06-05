@@ -96,7 +96,9 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
       if (!mounted) return;
 
-      debugPrint("Loja cadastrada! Redirecionando para o Dashboard do Comerciante.");
+      debugPrint(
+        "Loja cadastrada! Redirecionando para o Dashboard do Comerciante.",
+      );
 
       Navigator.pushReplacement(
         context,
@@ -170,8 +172,8 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
                 _buildTituloSecao("Categorias de Produtos"),
                 Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
                   children: _categoriasBase.map((cat) {
                     final isSelected = _categoriasSelecionadas.contains(
                       cat['id'],
@@ -216,10 +218,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     _errorMessage!,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 14.0,
-                    ),
+                    style: const TextStyle(color: Colors.red, fontSize: 14.0),
                   ),
                 ],
 
@@ -360,7 +359,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
             child: Icon(
               LucideIcons.image,
               color: ColorsPalette.redComponents,
-              size: 32.0,
+              size: AppSpacing.xl,
             ),
           ),
           Positioned(

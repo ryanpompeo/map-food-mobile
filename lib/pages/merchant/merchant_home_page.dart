@@ -153,7 +153,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
 
   Widget _buildLojaStatusCard() {
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: _lojaAberta ? ColorsPalette.black : Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -187,7 +187,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
               ),
             ],
           ),
-          const SizedBox(height: 8.0),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             _lojaAberta ? "Loja Aberta" : "Loja Fechada",
             style: TextStyle(
@@ -214,7 +214,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
     return Opacity(
       opacity: canActivateRonda ? 1.0 : 0.5,
       child: Container(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: _emRonda ? ColorsPalette.redComponents : Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -246,7 +246,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                 ),
               ],
             ),
-            const SizedBox(height: 8.0),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               "Em Ronda",
               style: TextStyle(
