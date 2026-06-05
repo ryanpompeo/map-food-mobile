@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import 'package:map_food/core/theme/app_icon_size.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
@@ -25,7 +24,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   final _descricaoController = TextEditingController();
 
   // Controle de Fotos e Status
-  bool _statusLoja = true;
+  final bool _statusLoja = true;
   bool _isLoading = false;
 
   // Mock para simular o upload de múltiplas fotos (limite de 3)
@@ -204,7 +203,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                       backgroundColor: ColorsPalette.redComponents,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: ColorsPalette.redComponents
-                          .withOpacity(0.5),
+                          .withValues(alpha: 0.5),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -320,7 +319,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
       width: 100.0,
       margin: const EdgeInsets.only(right: 12.0),
       decoration: BoxDecoration(
-        color: ColorsPalette.redComponents.withOpacity(0.05),
+        color: ColorsPalette.redComponents.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: ColorsPalette.redComponents, width: 1.5),
       ),

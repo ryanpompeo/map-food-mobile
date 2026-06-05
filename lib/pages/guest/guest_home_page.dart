@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/guest/profile/guest_profile_page.dart';
@@ -15,7 +15,7 @@ class GuestHomePage extends StatefulWidget {
 
 class _GuestHomePageState extends State<GuestHomePage> {
   int _selectedIndex = 0;
-  String _filtroAtivo = 'Todos';
+  final String _filtroAtivo = 'Todos';
 
   final List<String> _filtrosMapa = [
     'Todos',
@@ -74,7 +74,7 @@ class _GuestHomePageState extends State<GuestHomePage> {
             color: ColorsPalette.whiteBackground,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),

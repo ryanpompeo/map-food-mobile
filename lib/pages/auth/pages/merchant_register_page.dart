@@ -1,6 +1,6 @@
-import 'package:flutter/gestures.dart';
+﻿import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
@@ -349,7 +349,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                       backgroundColor: ColorsPalette.redComponents,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: ColorsPalette.redComponents
-                          .withOpacity(0.6),
+                          .withValues(alpha: 0.6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),

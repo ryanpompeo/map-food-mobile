@@ -1,6 +1,6 @@
-import 'package:flutter/gestures.dart';
+﻿import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
@@ -47,12 +47,12 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
     super.initState();
     _termosRecognizer = TapGestureRecognizer()
       ..onTap = () {
-        print("Abrir tela de Termos de Uso");
+        debugPrint("Abrir tela de Termos de Uso");
       };
 
     _privacidadeRecognizer = TapGestureRecognizer()
       ..onTap = () {
-        print("Abrir tela de Política de Privacidade");
+        debugPrint("Abrir tela de Política de Privacidade");
       };
   }
 
@@ -70,7 +70,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
 
   void _cadastrar() {
     if (_formKey.currentState!.validate()) {
-      print("Formulário válido!");
+      debugPrint("Formulário válido!");
     }
   }
 

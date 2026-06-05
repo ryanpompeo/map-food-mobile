@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
             scaffoldBackgroundColor: ColorsPalette.whiteBackground,
             textSelectionTheme: TextSelectionThemeData(
               cursorColor: ColorsPalette.black,
-              selectionColor: ColorsPalette.black.withOpacity(0.15),
+              selectionColor: ColorsPalette.black.withValues(alpha: 0.15),
               selectionHandleColor: ColorsPalette.black,
             ),
             pageTransitionsTheme: const PageTransitionsTheme(

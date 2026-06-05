@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
@@ -173,7 +173,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
               ),
               Switch(
                 value: _lojaAberta,
-                activeColor: ColorsPalette.whiteBackground,
+                activeThumbColor: ColorsPalette.whiteBackground,
                 activeTrackColor: ColorsPalette.redComponents,
                 inactiveThumbColor: Colors.grey.shade400,
                 inactiveTrackColor: Colors.grey.shade200,
@@ -236,7 +236,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                 ),
                 Switch(
                   value: _emRonda,
-                  activeColor: ColorsPalette.whiteBackground,
+                  activeThumbColor: ColorsPalette.whiteBackground,
                   activeTrackColor: ColorsPalette.black,
                   inactiveThumbColor: Colors.grey.shade400,
                   inactiveTrackColor: Colors.grey.shade200,

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
@@ -37,17 +37,17 @@ class GuestProfilePage extends StatelessWidget {
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
+                  color: Colors.white.withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: [
                     BoxShadow(
-                      color: ColorsPalette.black.withOpacity(0.06),
+                      color: ColorsPalette.black.withValues(alpha: 0.06),
                       blurRadius: 20,
                       spreadRadius: 2,
                       offset: const Offset(8, 8),
                     ),
                     BoxShadow(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       blurRadius: 15,
                       spreadRadius: 2,
                       offset: const Offset(-6, -6),
@@ -60,7 +60,7 @@ class GuestProfilePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     border: Border.all(
                       width: 1.5,
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                     ),
                   ),
                   child: Column(
@@ -69,7 +69,7 @@ class GuestProfilePage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
-                          color: ColorsPalette.redComponents.withOpacity(0.08),
+                          color: ColorsPalette.redComponents.withValues(alpha: 0.08),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -115,7 +115,7 @@ class GuestProfilePage extends StatelessWidget {
                             ),
                             elevation: 4,
                             shadowColor: ColorsPalette.redComponents
-                                .withOpacity(0.5),
+                                .withValues(alpha: 0.5),
                           ),
                           child: Text(
                             "Criar Conta",

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/consumer/widgets/consumer_bottom_bar.dart';

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
@@ -51,7 +51,7 @@ class AccountTypePage extends StatelessWidget {
               children: [
                 const SizedBox(height: AppSpacing.lg),
 
-                OptionCard(
+                optionCard(
                   context: context,
                   isCustomer: true,
                   title: 'Cliente',
@@ -70,7 +70,7 @@ class AccountTypePage extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                OptionCard(
+                optionCard(
                   context: context,
                   isCustomer: false,
                   title: 'Comerciante',

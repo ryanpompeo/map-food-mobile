@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
@@ -7,7 +7,7 @@ import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/auth/widgets/app_button.dart';
 
-Widget OptionCard({
+Widget optionCard({
   required String title,
   required String description,
   required List<String> benefits,
@@ -28,7 +28,7 @@ Widget OptionCard({
       borderRadius: BorderRadius.circular(AppRadius.xl),
       boxShadow: [
         BoxShadow(
-          color: cardColor.withOpacity(0.3),
+          color: cardColor.withValues(alpha: 0.3),
           blurRadius: 20,
           offset: const Offset(0, 10),
         ),
@@ -45,7 +45,7 @@ Widget OptionCard({
             Text(
               isCustomer ? "PERFIL COMUM" : "PERFIL COMERCIAL",
               style: AppText.legenda(context).copyWith(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 letterSpacing: 1.2,
                 fontWeight: FontWeight.w600,
               ),
@@ -80,7 +80,7 @@ Widget OptionCard({
         Text(
           description,
           style: AppText.secundario(context).copyWith(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -95,7 +95,7 @@ Widget OptionCard({
               children: [
                 Icon(
                   LucideIcons.checkCircle2,
-                  color: ColorsPalette.white.withOpacity(0.6),
+                  color: ColorsPalette.white.withValues(alpha: 0.6),
                   size: AppIconSize.sm,
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -104,7 +104,7 @@ Widget OptionCard({
                     b,
                     textAlign: TextAlign.left,
                     style: AppText.legenda(context).copyWith(
-                      color: ColorsPalette.white.withOpacity(0.6),
+                      color: ColorsPalette.white.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w500,
                       height: 1.2,
                     ),

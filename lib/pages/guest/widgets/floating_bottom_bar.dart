@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
@@ -27,7 +27,7 @@ class FloatingBottomBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.pill),
           boxShadow: [
             BoxShadow(
-              color: ColorsPalette.black.withOpacity(0.08),
+              color: ColorsPalette.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, 6),
             ),

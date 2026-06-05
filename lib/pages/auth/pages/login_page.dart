@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
@@ -109,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
                   onTap: () {
-                    print("Esqueci minha senha");
+                    debugPrint("Esqueci minha senha");
                   },
                   child: Text(
                     "Esqueceu a senha?",
@@ -162,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: AppSpacing.xl),
 
               OutlinedButton(
-                onPressed: () => print("Google Login"),
+                onPressed: () => debugPrint("Google Login"),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 52.0),
                   side: BorderSide(color: Colors.grey.shade300),
@@ -174,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      LucideIcons.chrome,
+                      LucideIcons.globe,
                       color: ColorsPalette.blackDetails,
                       size: 20.0,
                     ),
