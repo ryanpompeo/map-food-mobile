@@ -17,7 +17,7 @@ class AppFormField extends StatelessWidget {
   final bool obscureText;
   final Widget? suffixIcon;
   final List<TextInputFormatter>? inputFormatters;
-  final int maxLines; // Adicionado suporte para múltiplas linhas (default 1)
+  final int maxLines;
   final bool showIcon; // Nova flag para ocultar o ícone em campos compactos
 
   const AppFormField({
@@ -32,7 +32,7 @@ class AppFormField extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.inputFormatters,
-    this.maxLines = 1, // Mantém compatibilidade com inputs normais
+    this.maxLines = 1,
     this.showIcon = true, // Padrão verdadeiro para não quebrar telas antigas
   });
 

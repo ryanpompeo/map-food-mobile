@@ -31,7 +31,6 @@ class MerchantBottomBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: ColorsPalette.whiteBackground,
           borderRadius: BorderRadius.circular(50.0),
-          // Flat Design: Borda limpa em vez de sombra
           border: Border.all(color: Colors.grey.shade300, width: 1.0),
         ),
         child: Row(

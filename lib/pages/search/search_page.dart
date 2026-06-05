@@ -6,7 +6,6 @@ import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 
-// O import da página de resultados de categoria
 import 'package:map_food/pages/search/category_result_page.dart';
 
 class SearchPage extends StatefulWidget {
@@ -26,47 +25,76 @@ class _SearchPageState extends State<SearchPage> {
     'Marmita',
   ];
 
-  // Mock: Categorias baseadas na sua imagem
   final List<Map<String, dynamic>> _categorias = [
-    {'nome': 'Pizzas', 'icon': LucideIcons.pizza},
-    {'nome': 'Lanches', 'icon': LucideIcons.sandwich},
-    {'nome': 'Frango', 'icon': LucideIcons.drumstick},
-    {'nome': 'Bebidas', 'icon': LucideIcons.cupSoda},
-    {'nome': 'Carnes', 'icon': LucideIcons.beef},
-    {'nome': 'Doces', 'icon': LucideIcons.cake},
+    {
+      'nome': 'Lanches & Hot Dogs',
+      'icon': LucideIcons.sandwich,
+      'color': Colors.deepOrange,
+    },
+    {'nome': 'Espetinhos', 'icon': LucideIcons.flame, 'color': Colors.red},
+    {
+      'nome': 'Pastel & Salgados',
+      'icon': LucideIcons.croissant,
+      'color': Colors.amber.shade700,
+    },
+    {
+      'nome': 'Doces & Churros',
+      'icon': LucideIcons.cakeSlice,
+      'color': Colors.pink.shade400,
+    },
+    {
+      'nome': 'Gelados & Açaí',
+      'icon': LucideIcons.popsicle,
+      'color': Colors.purple.shade700,
+    },
+    {
+      'nome': 'Milho & Pamonha',
+      'icon': LucideIcons.wheat,
+      'color': Colors.yellow.shade800,
+    },
+    {'nome': 'Bebidas', 'icon': LucideIcons.cupSoda, 'color': Colors.blue},
+    {
+      'nome': 'Refeições',
+      'icon': LucideIcons.soup,
+      'color': Colors.green.shade700,
+    },
   ];
 
-  // Mock: Top 5 Comércios Em Alta
   final List<Map<String, dynamic>> _emAlta = [
     {
       'nome': 'Hamburgueria Central',
       'avaliacao': '4.9',
       'categoria': 'Lanches',
       'distancia': '1.2 km',
+      'isAberto': true,
     },
     {
       'nome': 'Pizza do Zé',
       'avaliacao': '4.8',
       'categoria': 'Pizzas',
       'distancia': '2.5 km',
+      'isAberto': false,
     },
     {
       'nome': 'Açaí da Praça',
       'avaliacao': '4.8',
       'categoria': 'Doces',
       'distancia': '0.8 km',
+      'isAberto': true,
     },
     {
       'nome': 'Espetinho Brasa',
       'avaliacao': '4.7',
       'categoria': 'Carnes',
       'distancia': '3.1 km',
+      'isAberto': true,
     },
     {
       'nome': 'Marmitaria Caseira',
       'avaliacao': '4.6',
       'categoria': 'Marmita',
       'distancia': '1.5 km',
+      'isAberto': false,
     },
   ];
 
@@ -105,7 +133,7 @@ class _SearchPageState extends State<SearchPage> {
                     const SizedBox(height: AppSpacing.xl),
 
                     _buildEmAlta(context),
-                    const SizedBox(height: 120.0), // Respiro para a BottomBar
+                    const SizedBox(height: 120.0),
                   ],
                 ),
               ),
@@ -120,9 +148,16 @@ class _SearchPageState extends State<SearchPage> {
     return Container(
       height: 52.0,
       decoration: BoxDecoration(
-        color: ColorsPalette.whiteBackground,
+        color: ColorsPalette.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(
+            color: ColorsPalette.black.withValues(alpha: 0.07),
+            blurRadius: 16,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: TextField(
         controller: _searchController,
@@ -131,7 +166,7 @@ class _SearchPageState extends State<SearchPage> {
         ).copyWith(fontWeight: FontWeight.w600, color: ColorsPalette.black),
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
-          hintText: "Encontre comercios",
+          hintText: "Busque por comércios...",
           hintStyle: AppText.corpo(
             context,
           ).copyWith(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
@@ -159,7 +194,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildHistorico(BuildContext context) {
-    // Mantive a sua implementação original intacta aqui
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -200,9 +234,16 @@ class _SearchPageState extends State<SearchPage> {
                   vertical: 10.0,
                 ),
                 decoration: BoxDecoration(
-                  color: ColorsPalette.whiteBackground,
+                  color: ColorsPalette.white,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: Colors.grey.shade300),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ColorsPalette.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -240,50 +281,92 @@ class _SearchPageState extends State<SearchPage> {
             context,
           ).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: AppSpacing.sm),
         SizedBox(
-          height: 110.0,
+          height: 150.0,
           child: ListView.separated(
+            clipBehavior: Clip.none,
+            padding: const EdgeInsets.only(
+              top: 16.0,
+              bottom: 24.0,
+              left: 4.0,
+              right: 8.0,
+            ),
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: _categorias.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12.0),
             itemBuilder: (context, index) {
               final cat = _categorias[index];
+              final Color catColor = cat['color'] ?? Colors.grey;
+
               return InkWell(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          CategoryResultPage(categoryName: cat['nome']),
+                      builder: (context) => CategoryResultPage(
+                        categoryName: cat['nome'],
+                        categoryColor: catColor,
+                      ),
                     ),
                   );
                 },
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: Container(
-                  width: 90.0,
+                  width: 100.0,
                   decoration: BoxDecoration(
-                    color: ColorsPalette.whiteBackground,
+                    color: catColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: Colors.grey.shade300, width: 1.0),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        cat['icon'],
-                        size: AppIconSize.xl,
-                        color: ColorsPalette.black,
-                      ),
-                      const SizedBox(height: 12.0),
-                      Text(
-                        cat['nome'],
-                        style: AppText.legenda(
-                          context,
-                        ).copyWith(fontWeight: FontWeight.w700, fontSize: 13.0),
+                    border: Border.all(color: catColor.withValues(alpha: 0.15)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: ColorsPalette.black.withValues(alpha: 0.05),
+                        blurRadius: 16,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 4),
                       ),
                     ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10.0),
+                          decoration: BoxDecoration(
+                            color: ColorsPalette.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: catColor.withValues(alpha: 0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            cat['icon'],
+                            size: AppIconSize.lg,
+                            color: catColor,
+                          ),
+                        ),
+                        const SizedBox(height: 12.0),
+                        Text(
+                          cat['nome'],
+                          textAlign: TextAlign.center,
+                          style: AppText.legenda(context).copyWith(
+                            color: ColorsPalette.blackDetails,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11.0,
+                            height: 1.1,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -318,22 +401,42 @@ class _SearchPageState extends State<SearchPage> {
         const SizedBox(height: AppSpacing.md),
         ListView.separated(
           shrinkWrap: true,
-          physics:
-              const NeverScrollableScrollPhysics(), // Scroll controlado pela CustomScrollView pai
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: _emAlta.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12.0),
           itemBuilder: (context, index) {
             final loja = _emAlta[index];
+            final bool isAberto = loja['isAberto'] ?? false;
+
             return Container(
               padding: const EdgeInsets.all(12.0),
               decoration: BoxDecoration(
-                color: ColorsPalette.whiteBackground,
+                color: ColorsPalette.white,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: Colors.grey.shade300, width: 1.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: ColorsPalette.black.withValues(alpha: 0.07),
+                    blurRadius: 16,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  // Placeholder da Imagem da Loja
+                  Container(
+                    width: 64.0,
+                    height: 64.0,
+                    decoration: BoxDecoration(
+                      color: ColorsPalette.whiteBackground,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Icon(
+                      LucideIcons.image,
+                      color: Colors.grey.shade400,
+                      size: AppIconSize.lg,
+                    ),
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
@@ -349,24 +452,75 @@ class _SearchPageState extends State<SearchPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          "${loja['categoria']} • ${loja['distancia']}",
-                          style: AppText.legenda(context).copyWith(
-                            color: ColorsPalette.greyText,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6.0,
+                                vertical: 4.0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isAberto
+                                    ? Colors.green.shade600.withValues(
+                                        alpha: 0.1,
+                                      )
+                                    : ColorsPalette.redComponents.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                borderRadius: BorderRadius.circular(100.0),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6.0,
+                                    height: 6.0,
+                                    decoration: BoxDecoration(
+                                      color: isAberto
+                                          ? Colors.green.shade700
+                                          : ColorsPalette.redComponents,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4.0),
+                                  Text(
+                                    isAberto ? "ABERTO" : "FECHADO",
+                                    style: AppText.legenda(context).copyWith(
+                                      color: isAberto
+                                          ? Colors.green.shade700
+                                          : ColorsPalette.redComponents,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 9.0,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            Expanded(
+                              child: Text(
+                                "${loja['categoria']} • ${loja['distancia']}",
+                                style: AppText.legenda(context).copyWith(
+                                  color: ColorsPalette.greyText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  // Nota / Avaliação
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
                       vertical: AppSpacing.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: ColorsPalette.black.withOpacity(0.05),
+                      color: ColorsPalette.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Row(
@@ -380,7 +534,7 @@ class _SearchPageState extends State<SearchPage> {
                         Text(
                           loja['avaliacao'],
                           style: AppText.legenda(context).copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w900,
                             color: ColorsPalette.black,
                           ),
                         ),

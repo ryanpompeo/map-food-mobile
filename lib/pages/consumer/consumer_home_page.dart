@@ -8,10 +8,6 @@ import 'package:map_food/pages/consumer/widgets/consumer_bottom_bar.dart';
 
 import 'package:map_food/pages/search/search_page.dart';
 
-// TODO: Importar as páginas reais assim que forem criadas
-// import 'package:map_food/pages/orders/orders_page.dart';
-// import 'package:map_food/pages/profile/consumer_profile_page.dart';
-
 class ConsumerHomePage extends StatefulWidget {
   const ConsumerHomePage({super.key});
 

@@ -69,14 +69,12 @@ Widget optionCard({
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        /// TÍTULO PRINCIPAL
         Text(
           title,
           style: AppText.titulo(context).copyWith(color: ColorsPalette.white),
         ),
         const SizedBox(height: AppSpacing.xs),
 
-        /// DESCRIÇÃO
         Text(
           description,
           style: AppText.secundario(context).copyWith(
@@ -86,7 +84,6 @@ Widget optionCard({
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        /// BENEFITS
         ...benefits.map((b) {
           return Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -117,7 +114,6 @@ Widget optionCard({
 
         const SizedBox(height: AppSpacing.xl),
 
-        /// BUTTON
         SizedBox(
           width: double.infinity,
           child: AppButton(text: buttonText, onPressed: onTap, isDark: isDark),

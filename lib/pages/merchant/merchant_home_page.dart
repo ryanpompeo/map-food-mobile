@@ -86,7 +86,6 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
           ),
         ),
 
-        // Controles Operacionais
         Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
@@ -98,7 +97,6 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
           ),
         ),
 
-        // Área do Mapa Local (Onde o comerciante está)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Text(

@@ -20,26 +20,18 @@ class StoreRegisterPage extends StatefulWidget {
 class _StoreRegisterPageState extends State<StoreRegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores Principais
   final _nomeController = TextEditingController();
   final _descricaoController = TextEditingController();
 
-  // Controle de Fotos e Status
   final bool _statusLoja = true;
   bool _isLoading = false;
   String? _errorMessage;
 
   final _storeService = StoreService();
-  // TODO: Confirmar os IDs reais das categorias no banco antes de homologar.
-  // Os IDs em _categoriasBase devem coincidir com os registros da tabela
-  // pi_categoria no backend: Salgados=1, Doces=2, Bebidas=3, Marmitas=4,
-  // Vegano=5, Espetinhos=6.
 
-  // Mock para simular o upload de múltiplas fotos (limite de 3)
   final List<int> _fotosMock = [];
   final int _maxFotos = 3;
 
-  // Categorias (Mock da tabela pi_categoria)
   final List<int> _categoriasSelecionadas = [];
   final List<Map<String, dynamic>> _categoriasBase = [
     {'id': 1, 'nome': 'Salgados'},
@@ -76,9 +68,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     });
 
     try {
-      // Converte os IDs de categorias selecionados para o formato da API.
-      // _categoriasSelecionadas já contém os IDs inteiros de _categoriasBase.
-      // _categoryIds é mantido como referência documentada do mapeamento nome->id.
       final request = StoreCreateRequest(
         nome: _nomeController.text.trim(),
         descricao: _descricaoController.text.trim().isEmpty
@@ -92,7 +81,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
       debugPrint(request.toJson().toString());
 
       await _storeService.create(request);
-      // Nota: fotos ignoradas intencionalmente — API não tem suporte a fotos ainda.
 
       if (!mounted) return;
 
