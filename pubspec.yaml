@@ -55,6 +55,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # Força path_provider_foundation para a última versão sem objective_c.
 # objective_c foi introduzido em 2.5.0 e causa falha de compilação
@@ -102,3 +103,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+  # pubspec.yaml
+# pubspec.yaml
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21 
+
+
+  adaptive_icon_background: "#FFFFFF" # Cor hexadecimal do fundo (branco)
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
