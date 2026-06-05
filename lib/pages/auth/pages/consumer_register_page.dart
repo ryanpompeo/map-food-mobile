@@ -1,6 +1,7 @@
-﻿import 'package:flutter/gestures.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/errors/app_exception.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
@@ -8,7 +9,9 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/validators/form_validator.dart';
+import 'package:map_food/models/consumer/consumer_register_request.dart';
 import 'package:map_food/pages/auth/widgets/app_form_field.dart';
+import 'package:map_food/services/consumer_service.dart';
 
 class ConsumerRegisterPage extends StatefulWidget {
   const ConsumerRegisterPage({super.key});
@@ -26,8 +29,12 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
   final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
 
+  final _consumerService = ConsumerService();
+
   bool _obscurePassword = true;
   bool _aceitouTermos = false;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   final _cpfFormatter = MaskTextInputFormatter(
     mask: '###.###.###-##',
@@ -68,9 +75,43 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
     super.dispose();
   }
 
-  void _cadastrar() {
-    if (_formKey.currentState!.validate()) {
-      debugPrint("Formulário válido!");
+  Future<void> _cadastrar() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final request = ConsumerRegisterRequest(
+        nome: _nomeController.text.trim(),
+        email: _emailController.text.trim(),
+        cpf: _cpfController.text.replaceAll(RegExp(r'\D'), ''),
+        celular: _telefoneController.text.replaceAll(RegExp(r'\D'), ''),
+        senha: _senhaController.text,
+      );
+
+      await _consumerService.register(request);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Conta criada com sucesso! Faça login para continuar.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/login', arguments: 'CONSUMIDOR');
+    } on AppException catch (e) {
+      final msg = e.statusCode == 409
+          ? 'E-mail ou CPF já cadastrado.'
+          : e.message;
+      setState(() => _errorMessage = msg);
+    } catch (_) {
+      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -89,7 +130,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
           icon: Icon(
             LucideIcons.chevronLeft,
             color: ColorsPalette.redComponents,
-            size: AppIconSize.lg, 
+            size: AppIconSize.lg,
           ),
         ),
       ),
@@ -131,7 +172,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   textCapitalization: TextCapitalization.words,
                   validator: FormValidator.nome,
                 ),
-                const SizedBox(height: AppSpacing.md), 
+                const SizedBox(height: AppSpacing.md),
 
                 AppFormField(
                   controller: _emailController,
@@ -176,7 +217,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                     icon: Icon(
                       _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
                       color: Colors.grey.shade500,
-                      size: AppIconSize.md, 
+                      size: AppIconSize.md,
                     ),
                     onPressed: () {
                       setState(() {
@@ -200,7 +241,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                           children: [
                             SizedBox(
                               height: 24.0,
-                              width: 24.0, 
+                              width: 24.0,
                               child: Checkbox(
                                 value: _aceitouTermos,
                                 activeColor: ColorsPalette.black,
@@ -286,22 +327,42 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   },
                 ),
 
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    _errorMessage!,
+                    style: AppText.legenda(context).copyWith(
+                      color: Colors.red.shade600,
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: AppSpacing.xxl),
 
                 SizedBox(
                   width: double.infinity,
-                  height: 52.0, 
+                  height: 52.0,
                   child: ElevatedButton(
-                    onPressed: _cadastrar,
+                    onPressed: _isLoading ? null : _cadastrar,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.black.withValues(alpha: 0.6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       elevation: 0,
                     ),
-                    child: Text("Criar conta", style: AppText.botao(context)),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24.0,
+                            width: 24.0,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Text("Criar conta", style: AppText.botao(context)),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),

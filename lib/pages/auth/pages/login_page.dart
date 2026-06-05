@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/app/router/app_routes.dart';
+import 'package:map_food/core/errors/app_exception.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/auth/widgets/app_form_field.dart';
+import 'package:map_food/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,7 +20,21 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
+  final _authService = AuthService();
+
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+  String _tipoLogin = 'CONSUMIDOR';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final arg = ModalRoute.of(context)?.settings.arguments;
+    if (arg is String && (arg == 'CONSUMIDOR' || arg == 'COMERCIANTE')) {
+      _tipoLogin = arg;
+    }
+  }
 
   @override
   void dispose() {
@@ -26,7 +43,40 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _fazerLogin() {}
+  Future<void> _fazerLogin() async {
+    final email = _emailController.text.trim();
+    final senha = _senhaController.text;
+
+    if (email.isEmpty || senha.isEmpty) {
+      setState(() => _errorMessage = 'Preencha e-mail e senha.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _authService.login(email, senha, _tipoLogin);
+
+      if (!mounted) return;
+
+      if (response.tipo == 'COMERCIANTE') {
+        Navigator.pushReplacementNamed(context, AppRoutes.merchantDashboard);
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.consumerHome);
+      }
+    } on UnauthorizedException {
+      setState(() => _errorMessage = 'E-mail ou senha incorretos.');
+    } on AppException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } catch (_) {
+      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +125,74 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: AppSpacing.xl),
 
+              // Seletor de tipo de conta
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _tipoLogin = 'CONSUMIDOR'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          decoration: BoxDecoration(
+                            color: _tipoLogin == 'CONSUMIDOR'
+                                ? ColorsPalette.redComponents
+                                : Colors.transparent,
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.lg),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Consumidor',
+                            style: AppText.legenda(context).copyWith(
+                              color: _tipoLogin == 'CONSUMIDOR'
+                                  ? Colors.white
+                                  : Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _tipoLogin = 'COMERCIANTE'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          decoration: BoxDecoration(
+                            color: _tipoLogin == 'COMERCIANTE'
+                                ? ColorsPalette.redComponents
+                                : Colors.transparent,
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.lg),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'Comerciante',
+                            style: AppText.legenda(context).copyWith(
+                              color: _tipoLogin == 'COMERCIANTE'
+                                  ? Colors.white
+                                  : Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
               AppFormField(
                 controller: _emailController,
                 label: "E-mail",
@@ -103,6 +221,16 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
+              if (_errorMessage != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  _errorMessage!,
+                  style: AppText.legenda(context).copyWith(
+                    color: Colors.red.shade600,
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 8.0),
 
               Align(
@@ -128,16 +256,27 @@ class _LoginPageState extends State<LoginPage> {
                 width: double.infinity,
                 height: 52.0,
                 child: ElevatedButton(
-                  onPressed: _fazerLogin,
+                  onPressed: _isLoading ? null : _fazerLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorsPalette.redComponents,
                     foregroundColor: ColorsPalette.white,
+                    disabledBackgroundColor:
+                        ColorsPalette.redComponents.withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     elevation: 0,
                   ),
-                  child: Text("Entrar", style: AppText.botao(context)),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24.0,
+                          width: 24.0,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                      : Text("Entrar", style: AppText.botao(context)),
                 ),
               ),
 

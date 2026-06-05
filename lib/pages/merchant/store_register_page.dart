@@ -1,13 +1,14 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/errors/app_exception.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
+import 'package:map_food/models/store/store_create_request.dart';
 import 'package:map_food/pages/auth/widgets/app_form_field.dart';
-
-// Importe a página da Home do Comerciante (ajuste o caminho se necessário)
 import 'package:map_food/pages/merchant/merchant_home_page.dart';
+import 'package:map_food/services/store_service.dart';
 
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
@@ -26,6 +27,13 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   // Controle de Fotos e Status
   final bool _statusLoja = true;
   bool _isLoading = false;
+  String? _errorMessage;
+
+  final _storeService = StoreService();
+  // TODO: Confirmar os IDs reais das categorias no banco antes de homologar.
+  // Os IDs em _categoriasBase devem coincidir com os registros da tabela
+  // pi_categoria no backend: Salgados=1, Doces=2, Bebidas=3, Marmitas=4,
+  // Vegano=5, Espetinhos=6.
 
   // Mock para simular o upload de múltiplas fotos (limite de 3)
   final List<int> _fotosMock = [];
@@ -62,33 +70,45 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    final storePayload = {
-      "nome": _nomeController.text.trim(),
-      "descricao": _descricaoController.text.trim(),
-      "status_loja": _statusLoja,
-      "categorias_ids": _categoriasSelecionadas,
-      "fotos_adicionadas": _fotosMock.length,
-    };
+    try {
+      // Converte os IDs de categorias selecionados para o formato da API.
+      // _categoriasSelecionadas já contém os IDs inteiros de _categoriasBase.
+      // _categoryIds é mantido como referência documentada do mapeamento nome->id.
+      final request = StoreCreateRequest(
+        nome: _nomeController.text.trim(),
+        descricao: _descricaoController.text.trim().isEmpty
+            ? null
+            : _descricaoController.text.trim(),
+        statusLoja: _statusLoja ? 'ATIVA' : 'INATIVA',
+        categoriaIds: List<int>.from(_categoriasSelecionadas),
+      );
 
-    debugPrint("=== ENVIANDO PARA API ===");
-    debugPrint(storePayload.toString());
+      debugPrint("=== ENVIANDO PARA API ===");
+      debugPrint(request.toJson().toString());
 
-    // Simula o tempo de rede do Spring Boot
-    await Future.delayed(const Duration(seconds: 2));
+      await _storeService.create(request);
+      // Nota: fotos ignoradas intencionalmente — API não tem suporte a fotos ainda.
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    debugPrint(
-      "Loja cadastrada! Redirecionando para o Dashboard do Comerciante.",
-    );
+      debugPrint("Loja cadastrada! Redirecionando para o Dashboard do Comerciante.");
 
-    // Navegação destrutiva para o Dashboard
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const MerchantHomePage()),
-    );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MerchantHomePage()),
+      );
+    } on AppException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } catch (_) {
+      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -191,6 +211,17 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     );
                   }).toList(),
                 ),
+
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 14.0,
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: AppSpacing.xxl),
 

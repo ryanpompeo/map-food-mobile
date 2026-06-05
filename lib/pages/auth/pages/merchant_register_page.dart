@@ -1,15 +1,17 @@
-﻿import 'package:flutter/gestures.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/errors/app_exception.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
-import 'package:map_food/pages/merchant/store_register_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/core/validators/form_validator.dart';
+import 'package:map_food/models/merchant/merchant_register_request.dart';
 import 'package:map_food/pages/auth/widgets/app_form_field.dart';
+import 'package:map_food/services/merchant_service.dart';
 
 class MerchantRegisterPage extends StatefulWidget {
   const MerchantRegisterPage({super.key});
@@ -28,11 +30,12 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
 
+  final _merchantService = MerchantService();
+
   bool _obscurePassword = true;
   bool _aceitouTermos = false;
-
-
   bool _isLoading = false;
+  String? _errorMessage;
 
   // ==========================================
   // DEFINIÇÃO DAS MÁSCARAS
@@ -86,33 +89,46 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   Future<void> _cadastrar() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    setState(() => _isLoading = true);
+    try {
+      final cnpjDigits = _cnpjFormatter.getUnmaskedText();
+      final telefoneDigits = _telefoneFormatter.getUnmaskedText();
 
+      final request = MerchantRegisterRequest(
+        nome: _nomeController.text.trim(),
+        email: _emailController.text.trim(),
+        cpf: _cpfFormatter.getUnmaskedText(),
+        cnpj: cnpjDigits.isEmpty ? null : cnpjDigits,
+        celular: _celularFormatter.getUnmaskedText(),
+        telefone: telefoneDigits.isEmpty ? null : telefoneDigits,
+        senha: _senhaController.text,
+      );
 
-    final dadosComerciante = {
-      'nome': _nomeController.text.trim(),
-      'email': _emailController.text.trim(),
-      'cpf': _cpfFormatter.getUnmaskedText(),
-      'cnpj': _cnpjFormatter.getUnmaskedText(),
-      'celular': _celularFormatter.getUnmaskedText(),
-      'telefone': _telefoneFormatter.getUnmaskedText(),
-      'senha': _senhaController.text, // Apenas para debug local
-      'data_cadastro': DateTime.now().toIso8601String(),
-    };
+      await _merchantService.register(request);
 
-    debugPrint("=== DADOS SALVOS LOCALMENTE ===");
-    debugPrint(dadosComerciante.toString());
+      if (!mounted) return;
 
-
-    await Future.delayed(const Duration(seconds: 2));
-
-  
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const StoreRegisterPage()),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cadastro realizado! Faça login para continuar.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/login', arguments: 'COMERCIANTE');
+    } on AppException catch (e) {
+      final msg = e.statusCode == 409
+          ? 'E-mail, CPF ou CNPJ já cadastrado.'
+          : e.message;
+      setState(() => _errorMessage = msg);
+    } catch (_) {
+      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -337,13 +353,23 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   },
                 ),
 
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    _errorMessage!,
+                    style: AppText.legenda(context).copyWith(
+                      color: Colors.red.shade600,
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: AppSpacing.xxl),
 
                 SizedBox(
                   width: double.infinity,
                   height: 52.0,
                   child: ElevatedButton(
-                   
+
                     onPressed: _isLoading ? null : _cadastrar,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorsPalette.redComponents,

@@ -2,21 +2,39 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:map_food/app/router/app_routes.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/auth/pages/login_page.dart';
 import 'package:map_food/pages/auth/pages/merchant_register_page.dart';
 import 'package:map_food/pages/auth/pages/consumer_register_page.dart';
+import 'package:map_food/pages/consumer/consumer_home_page.dart';
 import 'package:map_food/pages/guest/guest_home_page.dart';
 import 'package:map_food/pages/auth/pages/account_type_page.dart';
+import 'package:map_food/pages/merchant/merchant_home_page.dart';
 import 'package:map_food/pages/merchant/store_register_page.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+
+  final session = await AuthStorage.getSession();
+
+  String initialRoute;
+  if (session != null) {
+    initialRoute = session.tipo == 'COMERCIANTE'
+        ? AppRoutes.merchantDashboard
+        : AppRoutes.consumerHome;
+  } else {
+    initialRoute = AppRoutes.root;
+  }
+
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+
+  const MyApp({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -56,14 +74,16 @@ class MyApp extends StatelessWidget {
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: '/storeRegister',
+          initialRoute: initialRoute,
           routes: {
-            '/': (context) => const GuestHomePage(),
+            AppRoutes.root: (context) => const GuestHomePage(),
             '/login': (context) => const LoginPage(),
             '/accountType': (context) => const AccountTypePage(),
             '/consumerRegister': (context) => const ConsumerRegisterPage(),
             '/merchantRegister': (context) => const MerchantRegisterPage(),
             '/storeRegister': (context) => const StoreRegisterPage(),
+            AppRoutes.consumerHome: (context) => const ConsumerHomePage(),
+            AppRoutes.merchantDashboard: (context) => const MerchantHomePage(),
           },
         );
       },
