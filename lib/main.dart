@@ -75,7 +75,7 @@ class MyApp extends StatelessWidget {
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: '/howItWorks',
+          initialRoute: '/StoreRegisterPage',
           routes: {
             AppRoutes.root: (context) => const GuestHomePage(),
             '/login': (context) => const LoginPage(),

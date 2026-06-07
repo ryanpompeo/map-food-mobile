@@ -355,7 +355,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                         alpha: 0.6,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       elevation: 0,
                     ),

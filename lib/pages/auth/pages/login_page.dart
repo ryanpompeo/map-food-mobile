@@ -129,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
               Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Row(
                   children: [
@@ -143,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
                             color: _tipoLogin == 'CONSUMIDOR'
                                 ? ColorsPalette.redComponents
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -259,7 +259,7 @@ class _LoginPageState extends State<LoginPage> {
                     disabledBackgroundColor: ColorsPalette.redComponents
                         .withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     elevation: 0,
                   ),
@@ -281,49 +281,9 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 children: [
                   Expanded(child: Divider(color: Colors.grey.shade200)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                    ),
-                    child: Text(
-                      "ou entre com",
-                      style: AppText.legenda(
-                        context,
-                      ).copyWith(color: Colors.grey.shade400),
-                    ),
-                  ),
+
                   Expanded(child: Divider(color: Colors.grey.shade200)),
                 ],
-              ),
-
-              const SizedBox(height: AppSpacing.xl),
-
-              OutlinedButton(
-                onPressed: () => debugPrint("Google Login"),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 52.0),
-                  side: BorderSide(color: Colors.grey.shade300),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      LucideIcons.globe,
-                      color: ColorsPalette.blackDetails,
-                      size: AppIconSize.md,
-                    ),
-                    const SizedBox(width: 12.0),
-                    Text(
-                      "Continuar com Google",
-                      style: AppText.corpo(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: AppSpacing.xxl),

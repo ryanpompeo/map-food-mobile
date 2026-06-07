@@ -99,7 +99,7 @@ class GuestProfilePage extends StatelessWidget {
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
+                                  AppRadius.pill,
                                 ),
                               ),
                               elevation: 4,

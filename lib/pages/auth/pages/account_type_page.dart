@@ -61,7 +61,7 @@ class AccountTypePage extends StatelessWidget {
                     'Avalie e salve favoritos',
                     'Receba recomendações personalizadas',
                   ],
-                  buttonText: 'Criar conta de Cliente',
+                  buttonText: 'Seja um Cliente',
                   isDark: true,
                   onTap: () {
                     Navigator.pushNamed(context, '/consumerRegister');
@@ -80,7 +80,7 @@ class AccountTypePage extends StatelessWidget {
                     'Gerencie informações da barraca',
                     'Acompanhe avaliações',
                   ],
-                  buttonText: 'Criar conta de Parceiro',
+                  buttonText: 'Seja um Comerciante',
                   isDark: false,
                   onTap: () {
                     Navigator.pushNamed(context, '/merchantRegister');
