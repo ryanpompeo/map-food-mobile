@@ -78,10 +78,10 @@ class MyApp extends StatelessWidget {
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: '/homeMerchant',
+          initialRoute: '/',
 
           routes: {
-            AppRoutes.root: (context) => const GuestHomePage(),
+            "/": (context) => const GuestHomePage(),
             '/login': (context) => const LoginPage(),
             '/howItWorks': (context) => const HowItWorksPage(),
             '/accountType': (context) => const AccountTypePage(),
