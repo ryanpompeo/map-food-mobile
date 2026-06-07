@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
+import 'package:map_food/models/consumer/consumer_register_request.dart';
 import 'package:map_food/models/store/store_create_request.dart';
 import 'package:map_food/pages/auth/pages/login_page.dart';
 import 'package:map_food/pages/auth/pages/merchant_register_page.dart';
@@ -98,7 +99,15 @@ class MyApp extends StatelessWidget {
               fotosGaleriaIds: [],
             ),
 
-            AppRoutes.consumerHome: (context) => const ConsumerHomePage(),
+            '/consumerHome': (context) => const ConsumerHomePage(
+              requestData: ConsumerRegisterRequest(
+                nome: 'Nome Teste',
+                email: 'email@email.com',
+                cpf: '12345678910',
+                celular: '19498489',
+                senha: 'senha1234',
+              ),
+            ),
           },
         );
       },

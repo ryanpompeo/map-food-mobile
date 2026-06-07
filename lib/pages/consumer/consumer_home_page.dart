@@ -1,31 +1,38 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
+import 'package:map_food/models/consumer/consumer_register_request.dart';
+import 'package:map_food/pages/consumer/consumer_favorites_page.dart';
+import 'package:map_food/pages/consumer/consumer_profile_page.dart';
+import 'package:map_food/pages/consumer/consumer_search.dart';
 import 'package:map_food/pages/consumer/widgets/consumer_bottom_bar.dart';
-
-import 'package:map_food/pages/search/search_page.dart';
+import 'package:map_food/pages/merchant/widgets/merchant_bottom_bar.dart';
 
 class ConsumerHomePage extends StatefulWidget {
-  const ConsumerHomePage({super.key});
+  final ConsumerRegisterRequest requestData;
+
+  const ConsumerHomePage({super.key, required this.requestData});
 
   @override
-  State<ConsumerHomePage> createState() => _ConsumerHomePageState();
+  State<ConsumerHomePage> createState() => _ConsumerHomePage();
 }
 
-class _ConsumerHomePageState extends State<ConsumerHomePage> {
+class _ConsumerHomePage extends State<ConsumerHomePage> {
   int _selectedIndex = 0;
   String _filtroAtivo = 'Todos';
 
   final List<String> _filtrosMapa = [
     'Todos',
-    'Lanches',
-    'Doces',
-    'Bebidas',
-    'Saudável',
+    'Lanches e Hot Dogs',
     'Espetinhos',
+    'Pastel e Salgados',
+    'Doces e Sobremesas',
+    'Bebidas',
+    'Gelados e Açaí',
+    'Milho e Pamonha',
+    'Pipoca',
   ];
 
   void _onItemTapped(int index) {
@@ -44,12 +51,9 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
             index: _selectedIndex,
             children: [
               _buildAbaInicio(),
-
-              const SearchPage(),
-
-              const Center(child: Text("Tela de Visitas em Andamento")),
-
-              const Center(child: Text("Perfil do Consumidor Logado")),
+              ConsumerSearch(),
+              ConsumerFavoritesPage(),
+              ConsumerProfilePage(),
             ],
           ),
           Positioned(
@@ -69,6 +73,7 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
   Widget _buildAbaInicio() {
     return Column(
       children: [
+        // Header
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
@@ -76,68 +81,38 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
           ),
           decoration: BoxDecoration(
             color: ColorsPalette.whiteBackground,
-            border: Border(
-              bottom: BorderSide(color: Colors.grey.shade200, width: 1.0),
-            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    GestureDetector(
-                      onTap: () =>
-                          debugPrint("Abrir seletor de endereço (Logado)"),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: 10.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              LucideIcons.mapPin,
-                              color: ColorsPalette.redComponents,
-                              size: AppIconSize.sm,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Text(
-                              "Rua Principal, 123",
-                              style: AppText.legenda(context).copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: ColorsPalette.black,
-                              ),
-                            ),
-                            const SizedBox(width: 6.0),
-                            Icon(
-                              LucideIcons.chevronDown,
-                              size: 16.0,
-                              color: Colors.grey.shade600,
-                            ),
-                          ],
-                        ),
-                      ),
+                    const Icon(
+                      LucideIcons.mapPin,
+                      color: ColorsPalette.redComponents,
+                      size: 28.0,
                     ),
-                    IconButton(
-                      onPressed: () => _onItemTapped(1),
-                      icon: const Icon(
-                        LucideIcons.search,
-                        color: ColorsPalette.blackDetails,
-                        size: AppIconSize.lg,
-                      ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'MapFood',
+                      style: AppText.titulo(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
+              // Tags Clicáveis
               SizedBox(
                 height: 40.0,
                 child: ListView.builder(
@@ -153,36 +128,26 @@ class _ConsumerHomePageState extends State<ConsumerHomePage> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 12.0),
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _filtroAtivo = filtro;
-                          });
-                        },
+                        onTap: () => setState(() => _filtroAtivo = filtro),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? ColorsPalette.blackComponents
-                                : ColorsPalette.whiteBackground,
+                                ? ColorsPalette.black
+                                : ColorsPalette.white,
                             borderRadius: BorderRadius.circular(20.0),
-                            border: Border.all(
-                              color: isSelected
-                                  ? ColorsPalette.blackComponents
-                                  : Colors.grey.shade300,
-                              width: 1.0,
-                            ),
                           ),
                           child: Text(
                             filtro,
                             style: AppText.legenda(context).copyWith(
                               fontWeight: isSelected
-                                  ? FontWeight.w800
+                                  ? FontWeight.bold
                                   : FontWeight.w600,
                               color: isSelected
                                   ? Colors.white
-                                  : ColorsPalette.black,
+                                  : Colors.grey.shade700,
                             ),
                           ),
                         ),

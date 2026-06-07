@@ -8,13 +8,12 @@ import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/pages/consumer/consumer_favorites_page.dart';
 import 'package:map_food/pages/guest/guest_home_page.dart';
 import 'package:map_food/pages/guest/profile/how_it_works_page.dart';
-import 'package:map_food/pages/merchant/merchant_how_it_works.dart';
 
-class MerchantProfilePage extends StatelessWidget {
+class ConsumerProfilePage extends StatelessWidget {
   final String userName;
   final String userEmail;
 
-  const MerchantProfilePage({
+  const ConsumerProfilePage({
     super.key,
     this.userName = 'Nome do Usuária',
     this.userEmail = 'usuario@email.com',
@@ -277,6 +276,34 @@ class MerchantProfilePage extends StatelessWidget {
                 subtitle: "Altere seus dados e senha",
                 onTap: () {},
               ),
+              buildListTile(
+                context: context,
+                icon: LucideIcons.heart,
+                title: "Meus Favoritos",
+                subtitle: "Lojas que você salvou",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ConsumerFavoritesPage(),
+                    ),
+                  );
+                },
+              ),
+              buildListTile(
+                context: context,
+                icon: LucideIcons.star,
+                title: "Minhas avaliações",
+                subtitle: "Lojas que você avaliou",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ConsumerFavoritesPage(),
+                    ),
+                  );
+                },
+              ),
 
               const SizedBox(height: AppSpacing.md),
               Divider(
@@ -340,9 +367,7 @@ class MerchantProfilePage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const MerchantHowItWorksPage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const HowItWorksPage()),
                   );
                 },
               ),
