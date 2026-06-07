@@ -5,6 +5,7 @@ import 'package:map_food/core/errors/app_exception.dart';
 import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
+import 'package:map_food/pages/consumer/consumer_home_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
@@ -92,20 +93,26 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
         senha: _senhaController.text,
       );
 
+      // ... código anterior ...
       await _consumerService.register(request);
+
+      // ... código do cadastro (await _consumerService.register(request))
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Conta criada com sucesso! Faça login para continuar.'),
+          content: Text('Conta criada com sucesso! Bem-vindo ao MapFood.'),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pushReplacementNamed(
+
+      Navigator.pushAndRemoveUntil(
         context,
-        '/login',
-        arguments: 'CONSUMIDOR',
+        MaterialPageRoute(
+          builder: (context) => ConsumerHomePage(requestData: request),
+        ),
+        (route) => false,
       );
     } on AppException catch (e) {
       final msg = e.statusCode == 409

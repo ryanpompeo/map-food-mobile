@@ -5,7 +5,9 @@ import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
+import 'package:map_food/pages/consumer/consumer_edit_profile.dart';
 import 'package:map_food/pages/consumer/consumer_favorites_page.dart';
+import 'package:map_food/pages/consumer/consumer_review_page.dart';
 import 'package:map_food/pages/guest/guest_home_page.dart';
 import 'package:map_food/pages/guest/profile/how_it_works_page.dart';
 
@@ -15,8 +17,8 @@ class ConsumerProfilePage extends StatelessWidget {
 
   const ConsumerProfilePage({
     super.key,
-    this.userName = 'Nome do Usuária',
-    this.userEmail = 'usuario@email.com',
+    required this.userName,
+    required this.userEmail,
   });
   void _logout(BuildContext context) {
     showDialog(
@@ -274,22 +276,16 @@ class ConsumerProfilePage extends StatelessWidget {
                 icon: LucideIcons.userCog,
                 title: "Editar Perfil",
                 subtitle: "Altere seus dados e senha",
-                onTap: () {},
-              ),
-              buildListTile(
-                context: context,
-                icon: LucideIcons.heart,
-                title: "Meus Favoritos",
-                subtitle: "Lojas que você salvou",
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ConsumerFavoritesPage(),
+                      builder: (context) => ConsumerEditProfile(),
                     ),
                   );
                 },
               ),
+
               buildListTile(
                 context: context,
                 icon: LucideIcons.star,
@@ -299,7 +295,7 @@ class ConsumerProfilePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ConsumerFavoritesPage(),
+                      builder: (context) => ConsumerReviewPage(),
                     ),
                   );
                 },

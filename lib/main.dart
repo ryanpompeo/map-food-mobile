@@ -15,7 +15,6 @@ import 'package:map_food/pages/guest/guest_home_page.dart';
 import 'package:map_food/pages/auth/pages/account_type_page.dart';
 import 'package:map_food/pages/guest/profile/how_it_works_page.dart';
 import 'package:map_food/pages/merchant/merchant_home_page.dart';
-import 'package:map_food/pages/merchant/working_page.dart';
 import 'package:map_food/pages/merchant/store_register_page.dart';
 
 void main() async {
@@ -29,7 +28,7 @@ void main() async {
         ? AppRoutes.merchantDashboard
         : AppRoutes.consumerHome;
   } else {
-    initialRoute = AppRoutes.root;
+    initialRoute = AppRoutes.root; // Assume-se que isso retorna '/'
   }
 
   runApp(MyApp(initialRoute: initialRoute));
@@ -65,7 +64,6 @@ class MyApp extends StatelessWidget {
               },
             ),
           ),
-
           builder: (context, widget) {
             final media = MediaQuery.of(context);
             final limitedMedia = media.copyWith(
@@ -78,7 +76,7 @@ class MyApp extends StatelessWidget {
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: '/',
+          initialRoute: initialRoute,
 
           routes: {
             "/": (context) => const GuestHomePage(),
@@ -88,13 +86,14 @@ class MyApp extends StatelessWidget {
             '/consumerRegister': (context) => const ConsumerRegisterPage(),
             '/merchantRegister': (context) => const MerchantRegisterPage(),
             '/storeRegister': (context) => const StoreRegisterPage(),
+
+            // Aqui estamos utilizando valores default se a rota for chamada via pushNamed e nenhum parâmetro extra foi passado.
             '/homeMerchant': (context) => const MerchantHomePage(
               requestData: StoreCreateRequest(
                 nome: 'Teste',
                 statusLoja: 'ATIVO',
                 categoriaIds: [1, 2, 3],
               ),
-
               fotoDestaqueId: 0,
               fotosGaleriaIds: [],
             ),
@@ -111,7 +110,6 @@ class MyApp extends StatelessWidget {
           },
         );
       },
-      //76aje
     );
   }
 }

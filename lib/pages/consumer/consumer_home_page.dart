@@ -53,7 +53,10 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
               _buildAbaInicio(),
               ConsumerSearch(),
               ConsumerFavoritesPage(),
-              ConsumerProfilePage(),
+              ConsumerProfilePage(
+                userName: widget.requestData.nome,
+                userEmail: widget.requestData.email,
+              ),
             ],
           ),
           Positioned(
