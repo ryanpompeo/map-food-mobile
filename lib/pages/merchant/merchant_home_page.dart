@@ -1,13 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
+import 'package:map_food/models/store/store_create_request.dart';
+import 'package:map_food/pages/merchant/merchant_dashboard.dart';
+import 'package:map_food/pages/merchant/merchant_profile_page.dart';
+import 'package:map_food/pages/merchant/merchant_search.dart';
 import 'package:map_food/pages/merchant/widgets/merchant_bottom_bar.dart';
+import 'package:map_food/pages/merchant/working_page.dart';
 
 class MerchantHomePage extends StatefulWidget {
-  const MerchantHomePage({super.key});
+  final StoreCreateRequest requestData;
+  final int fotoDestaqueId;
+  final List<int> fotosGaleriaIds;
+
+  const MerchantHomePage({
+    super.key,
+    required this.requestData,
+    required this.fotoDestaqueId,
+    required this.fotosGaleriaIds,
+  });
 
   @override
   State<MerchantHomePage> createState() => _MerchantHomePageState();
@@ -15,9 +28,19 @@ class MerchantHomePage extends StatefulWidget {
 
 class _MerchantHomePageState extends State<MerchantHomePage> {
   int _selectedIndex = 0;
+  String _filtroAtivo = 'Todos';
 
-  bool _lojaAberta = false;
-  bool _emRonda = false;
+  final List<String> _filtrosMapa = [
+    'Todos',
+    'Lanches e Hot Dogs',
+    'Espetinhos',
+    'Pastel e Salgados',
+    'Doces e Sobremesas',
+    'Bebidas',
+    'Gelados e Açaí',
+    'Milho e Pamonha',
+    'Pipoca',
+  ];
 
   void _onItemTapped(int index) {
     if (_selectedIndex != index) {
@@ -34,14 +57,22 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
           IndexedStack(
             index: _selectedIndex,
             children: [
-              _buildDashboard(),
-
-              const Center(child: Text("Gestão de Avaliações")),
-
-              const Center(child: Text("Perfil e Dados da Loja")),
+              _buildAbaInicio(),
+              const MerchantSearch(),
+              WorkingPage(
+                requestData: widget.requestData,
+                fotoDestaqueId: widget.fotoDestaqueId,
+                fotosGaleriaIds: widget.fotosGaleriaIds,
+              ),
+              MerchantDashboard(
+                categoriasIds: [...?widget.requestData.categoriaIds],
+                requestData: widget.requestData,
+                fotoDestaqueId: widget.fotoDestaqueId,
+                fotosGaleriaIds: widget.fotosGaleriaIds,
+              ),
+              MerchantProfilePage(),
             ],
           ),
-
           Positioned(
             bottom: 0,
             left: 0,
@@ -56,213 +87,96 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
     );
   }
 
-  Widget _buildDashboard() {
+  Widget _buildAbaInicio() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Header
         Container(
-          width: double.infinity,
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + AppSpacing.lg,
-            left: AppSpacing.lg,
-            right: AppSpacing.lg,
+            top: MediaQuery.of(context).padding.top + 12.0,
             bottom: AppSpacing.md,
           ),
           decoration: BoxDecoration(
             color: ColorsPalette.whiteBackground,
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Hamburgueria do Zé",
-                style: AppText.titulo(context).copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: ColorsPalette.redComponents,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              Expanded(child: _buildLojaStatusCard()),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: _buildRondaStatusCard()),
-            ],
-          ),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Text(
-            "Sua Localização Atual",
-            style: AppText.subtitulo(
-              context,
-            ).copyWith(fontWeight: FontWeight.w800),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _emRonda
-                        ? LucideIcons.radioReceiver
-                        : LucideIcons.mapPinOff,
-                    size: 48.0,
-                    color: _emRonda
-                        ? ColorsPalette.redComponents
-                        : Colors.grey.shade400,
-                  ),
-                  const SizedBox(height: 12.0),
-                  Text(
-                    _emRonda
-                        ? "Transmitindo GPS ao vivo..."
-                        : "Mapa inativo. Inicie a ronda para rastrear.",
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w600,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Row(
+                  children: [
+                    const Icon(
+                      LucideIcons.mapPin,
+                      color: ColorsPalette.redComponents,
+                      size: 28.0,
                     ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'MapFood',
+                      style: AppText.titulo(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // Tags Clicáveis
+              SizedBox(
+                height: 40.0,
+                child: ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 100.0),
-      ],
-    );
-  }
-
-  Widget _buildLojaStatusCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: _lojaAberta ? ColorsPalette.black : Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: _lojaAberta ? ColorsPalette.black : Colors.grey.shade300,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(
-                LucideIcons.store,
-                color: _lojaAberta ? Colors.white : ColorsPalette.black,
-              ),
-              Switch(
-                value: _lojaAberta,
-                activeThumbColor: ColorsPalette.whiteBackground,
-                activeTrackColor: ColorsPalette.redComponents,
-                inactiveThumbColor: Colors.grey.shade400,
-                inactiveTrackColor: Colors.grey.shade200,
-                onChanged: (val) {
-                  setState(() {
-                    _lojaAberta = val;
-
-                    if (!val) _emRonda = false;
-                  });
-                },
+                  itemCount: _filtrosMapa.length,
+                  itemBuilder: (context, index) {
+                    final filtro = _filtrosMapa[index];
+                    final bool isSelected = _filtroAtivo == filtro;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _filtroAtivo = filtro),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? ColorsPalette.black
+                                : ColorsPalette.white,
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                          child: Text(
+                            filtro,
+                            style: AppText.legenda(context).copyWith(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.grey.shade700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            _lojaAberta ? "Loja Aberta" : "Loja Fechada",
-            style: TextStyle(
-              fontSize: 16.0,
-              fontWeight: FontWeight.w800,
-              color: _lojaAberta ? Colors.white : ColorsPalette.black,
-            ),
-          ),
-          Text(
-            _lojaAberta ? "Recebendo clientes" : "Invisível no mapa",
-            style: TextStyle(
-              fontSize: 12.0,
-              color: _lojaAberta ? Colors.grey.shade400 : Colors.grey.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRondaStatusCard() {
-    final bool canActivateRonda = _lojaAberta;
-
-    return Opacity(
-      opacity: canActivateRonda ? 1.0 : 0.5,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: _emRonda ? ColorsPalette.redComponents : Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: _emRonda
-                ? ColorsPalette.redComponents
-                : Colors.grey.shade300,
-          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(
-                  LucideIcons.navigation,
-                  color: _emRonda ? Colors.white : ColorsPalette.black,
-                ),
-                Switch(
-                  value: _emRonda,
-                  activeThumbColor: ColorsPalette.whiteBackground,
-                  activeTrackColor: ColorsPalette.black,
-                  inactiveThumbColor: Colors.grey.shade400,
-                  inactiveTrackColor: Colors.grey.shade200,
-                  onChanged: canActivateRonda
-                      ? (val) => setState(() => _emRonda = val)
-                      : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              "Em Ronda",
-              style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w800,
-                color: _emRonda ? Colors.white : ColorsPalette.black,
-              ),
-            ),
-            Text(
-              _emRonda ? "GPS Ativado" : "GPS Pausado",
-              style: TextStyle(
-                fontSize: 12.0,
-                color: _emRonda ? Colors.white70 : Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 }

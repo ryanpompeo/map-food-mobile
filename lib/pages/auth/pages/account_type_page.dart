@@ -20,12 +20,10 @@ class AccountTypePage extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
-          "Selecione seu perfil",
-          style: AppText.legenda(context).copyWith(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
-            color: ColorsPalette.black,
-          ),
+          "Selecione o tipo de conta",
+          style: AppText.subtitulo(
+            context,
+          ).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
         ),
         leading: IconButton(
           onPressed: () {

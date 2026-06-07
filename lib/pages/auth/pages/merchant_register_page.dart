@@ -166,8 +166,9 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Seja um Parceiro",
+                  "Crie sua conta",
                   style: AppText.display(context).copyWith(
+                    fontWeight: FontWeight.w800,
                     letterSpacing: -1.0,
                     color: ColorsPalette.redComponents,
                   ),

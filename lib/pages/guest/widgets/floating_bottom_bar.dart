@@ -21,7 +21,6 @@ class FloatingBottomBar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: 32.0, left: 24.0, right: 24.0),
         child: Container(
-          // 1. A SOMBRA VAI AQUI POR FORA (Se ficar dentro do ClipRRect, ela é cortada)
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(100.0),
             boxShadow: [
@@ -36,7 +35,6 @@ class FloatingBottomBar extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(100.0),
             child: BackdropFilter(
-              // 2. BLUR MAIS ALTO PARA O EFEITO FROSTED GLASS (Estética iOS)
               filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -44,7 +42,6 @@ class FloatingBottomBar extends StatelessWidget {
                   vertical: 8.0,
                 ),
                 decoration: BoxDecoration(
-                  // 3. GRADIENTE PARA SIMULAR A REFRAÇÃO DA LUZ
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -54,7 +51,7 @@ class FloatingBottomBar extends StatelessWidget {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(100.0),
-                  // 4. BORDA FINA PARA O "GLARE" (Brilho da borda do vidro)
+
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.4),
                     width: 1.0,
@@ -112,23 +109,7 @@ class _NavItem extends StatelessWidget {
         curve: Curves.easeOutCubic,
         width: 56,
         height: 56,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          // O item selecionado ganha um fundo branco sólido para dar contraste extremo
-          color: isSelected
-              ? Colors.white.withValues(alpha: 0.95)
-              : Colors.transparent,
-          // Sombra interna leve apenas no item ativo para criar elevação
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
+        decoration: BoxDecoration(shape: BoxShape.circle),
         child: Center(
           child: Icon(
             icon,

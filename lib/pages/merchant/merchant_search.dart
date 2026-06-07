@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
@@ -7,14 +7,14 @@ import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/models/store/store_dto.dart';
 import 'package:map_food/pages/search/more_info_store.dart';
 
-class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+class MerchantSearch extends StatefulWidget {
+  const MerchantSearch({super.key});
 
   @override
-  State<SearchPage> createState() => _SearchPageState();
+  State<MerchantSearch> createState() => _MerchantSearchPage();
 }
 
-class _SearchPageState extends State<SearchPage> {
+class _MerchantSearchPage extends State<MerchantSearch> {
   final TextEditingController _searchController = TextEditingController();
   int _selectedFilterIndex = 0;
 
@@ -47,7 +47,7 @@ class _SearchPageState extends State<SearchPage> {
       statusLoja: 'ATIVA',
       nome: 'Bebidas Refrescantes do Zé',
       descricao:
-          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia.',
+          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia',
       categoria: 'Bebidas',
       imagens: [
         'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
@@ -366,26 +366,6 @@ class DestaqueCardWidget extends StatelessWidget {
                           color: Colors.grey.shade300,
                         ),
                 ),
-                Positioned(
-                  top: 12.0,
-                  right: 12.0,
-                  child: Container(
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      shape: BoxShape.circle,
-                    ),
-                    child: GestureDetector(
-                      onTap: () =>
-                          LoginWallHelper.showLoginWallBottomSheet(context),
-                      child: const Icon(
-                        LucideIcons.heart,
-                        color: ColorsPalette.white,
-                        size: 18.0,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -571,13 +551,6 @@ class StoreListItemWidget extends StatelessWidget {
                   const SizedBox(height: 6.0),
                 ],
               ),
-            ),
-            IconButton(
-              icon: const Icon(LucideIcons.heart, color: Colors.grey),
-              onPressed: () =>
-                  LoginWallHelper.showLoginWallBottomSheet(context),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
             ),
           ],
         ),
@@ -806,9 +779,9 @@ class LoginWallHelper {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorsPalette.redComponents,
-                    foregroundColor: ColorsPalette.white,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     elevation: 0,
                   ),

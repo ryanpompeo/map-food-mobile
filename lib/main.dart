@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
+import 'package:map_food/models/store/store_create_request.dart';
 import 'package:map_food/pages/auth/pages/login_page.dart';
 import 'package:map_food/pages/auth/pages/merchant_register_page.dart';
 import 'package:map_food/pages/auth/pages/consumer_register_page.dart';
@@ -13,6 +14,7 @@ import 'package:map_food/pages/guest/guest_home_page.dart';
 import 'package:map_food/pages/auth/pages/account_type_page.dart';
 import 'package:map_food/pages/guest/profile/how_it_works_page.dart';
 import 'package:map_food/pages/merchant/merchant_home_page.dart';
+import 'package:map_food/pages/merchant/working_page.dart';
 import 'package:map_food/pages/merchant/store_register_page.dart';
 
 void main() async {
@@ -75,7 +77,8 @@ class MyApp extends StatelessWidget {
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: '/StoreRegisterPage',
+          initialRoute: '/homeMerchant',
+
           routes: {
             AppRoutes.root: (context) => const GuestHomePage(),
             '/login': (context) => const LoginPage(),
@@ -84,8 +87,18 @@ class MyApp extends StatelessWidget {
             '/consumerRegister': (context) => const ConsumerRegisterPage(),
             '/merchantRegister': (context) => const MerchantRegisterPage(),
             '/storeRegister': (context) => const StoreRegisterPage(),
+            '/homeMerchant': (context) => const MerchantHomePage(
+              requestData: StoreCreateRequest(
+                nome: 'Teste',
+                statusLoja: 'ATIVO',
+                categoriaIds: [1, 2, 3],
+              ),
+
+              fotoDestaqueId: 0,
+              fotosGaleriaIds: [],
+            ),
+
             AppRoutes.consumerHome: (context) => const ConsumerHomePage(),
-            AppRoutes.merchantDashboard: (context) => const MerchantHomePage(),
           },
         );
       },

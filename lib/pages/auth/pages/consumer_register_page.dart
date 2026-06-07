@@ -160,7 +160,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  "Preencha seus dados para começar a pedir as melhores comidas da região.",
+                  "Preencha seus dados para começar a pedir as melhores comidas da região",
                   style: AppText.secundario(
                     context,
                   ).copyWith(fontSize: 15.0, height: 1.4),

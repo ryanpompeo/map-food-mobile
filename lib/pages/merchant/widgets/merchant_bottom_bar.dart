@@ -1,6 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
 
@@ -18,43 +18,82 @@ class MerchantBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.bottomCenter,
-      child: Container(
-        margin: const EdgeInsets.only(
-          bottom: AppSpacing.lg,
-          left: AppSpacing.xl,
-          right: AppSpacing.xl,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: ColorsPalette.whiteBackground,
-          borderRadius: BorderRadius.circular(50.0),
-          border: Border.all(color: Colors.grey.shade300, width: 1.0),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _NavItem(
-              icon: LucideIcons.layoutDashboard,
-              label: "Painel",
-              isSelected: selectedIndex == 0,
-              onTap: () => onItemTapped(0),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 32.0, left: 24.0, right: 24.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 32,
+                spreadRadius: 0,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(100.0),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8.0,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.5),
+                      Colors.white.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(100.0),
+
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.4),
+                    width: 1.0,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _NavItem(
+                      icon: LucideIcons.house,
+                      isSelected: selectedIndex == 0,
+                      onTap: () => onItemTapped(0),
+                    ),
+                    const SizedBox(width: 4),
+                    _NavItem(
+                      icon: LucideIcons.search,
+                      isSelected: selectedIndex == 1,
+                      onTap: () => onItemTapped(1),
+                    ),
+                    const SizedBox(width: 4.0),
+                    _NavItem(
+                      icon: LucideIcons.navigation,
+                      isSelected: selectedIndex == 2,
+                      onTap: () => onItemTapped(2),
+                    ),
+                    const SizedBox(width: 4.0),
+                    _NavItem(
+                      icon: LucideIcons.store,
+                      isSelected: selectedIndex == 3,
+                      onTap: () => onItemTapped(3),
+                    ),
+                    const SizedBox(width: 4.0),
+                    _NavItem(
+                      icon: LucideIcons.user,
+                      isSelected: selectedIndex == 4,
+                      onTap: () => onItemTapped(4),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            _NavItem(
-              icon: LucideIcons.star,
-              label: "Avaliações",
-              isSelected: selectedIndex == 1,
-              onTap: () => onItemTapped(1),
-            ),
-            _NavItem(
-              icon: LucideIcons.user,
-              label: "Perfil",
-              isSelected: selectedIndex == 2,
-              onTap: () => onItemTapped(2),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -63,46 +102,38 @@ class MerchantBottomBar extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
-  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
-    required this.label,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected
-        ? ColorsPalette.redComponents
-        : Colors.grey.shade400;
-
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12.0,
-          vertical: AppSpacing.xs,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+
+          color: isSelected ? ColorsPalette.transparent : Colors.transparent,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: AppIconSize.md),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                fontSize: 10.0,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
+        child: Center(
+          child: Icon(
+            icon,
+            size: 24.0,
+            color: isSelected
+                ? ColorsPalette.redComponents
+                : ColorsPalette.black.withValues(alpha: 0.6),
+          ),
         ),
       ),
     );
