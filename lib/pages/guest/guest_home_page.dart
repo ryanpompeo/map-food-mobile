@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
@@ -15,15 +16,20 @@ class GuestHomePage extends StatefulWidget {
 
 class _GuestHomePageState extends State<GuestHomePage> {
   int _selectedIndex = 0;
-  final String _filtroAtivo = 'Todos';
+
+  // Agora mutável
+  String _filtroAtivo = 'Todos';
 
   final List<String> _filtrosMapa = [
     'Todos',
-    'Lanches',
-    'Doces',
-    'Bebidas',
-    'Saudável',
+    'Lanches e Hot Dogs',
     'Espetinhos',
+    'Pastel e Salgados',
+    'Doces e Sobremesas',
+    'Bebidas',
+    'Gelados e Açaí',
+    'Milho e Pamonha',
+    'Pipoca',
   ];
 
   void _onItemTapped(int index) {
@@ -63,6 +69,7 @@ class _GuestHomePageState extends State<GuestHomePage> {
   Widget _buildAbaInicio() {
     return Column(
       children: [
+        // Header
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
@@ -84,29 +91,24 @@ class _GuestHomePageState extends State<GuestHomePage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    GestureDetector(
-                      onTap: () {},
-                      child: Image.asset(
-                        'assets/images/app_icon_copy.png',
-                        width: 36.0,
-                        height: 36.0,
-                      ),
+                    const Icon(
+                      LucideIcons.mapPin,
+                      color: ColorsPalette.redComponents,
+                      size: 28.0,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'MapFood',
-                      style: AppText.titulo(context).copyWith(
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.bold,
-                        color: ColorsPalette.black,
-                      ),
+                      style: AppText.titulo(
+                        context,
+                      ).copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
+              // Tags Clicáveis
               SizedBox(
                 height: 40.0,
                 child: ListView.builder(
@@ -122,25 +124,16 @@ class _GuestHomePageState extends State<GuestHomePage> {
                     return Padding(
                       padding: const EdgeInsets.only(right: 12.0),
                       child: GestureDetector(
-                        onTap: () => (filtro),
+                        onTap: () => setState(() => _filtroAtivo = filtro),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 0.0,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? ColorsPalette.redComponents
-                                : ColorsPalette.whiteBackground,
+                                ? ColorsPalette.black
+                                : ColorsPalette.white,
                             borderRadius: BorderRadius.circular(20.0),
-                            border: Border.all(
-                              color: isSelected
-                                  ? ColorsPalette.redComponents
-                                  : Colors.grey.shade300,
-                              width: 1.0,
-                            ),
                           ),
                           child: Text(
                             filtro,
@@ -162,7 +155,31 @@ class _GuestHomePageState extends State<GuestHomePage> {
             ],
           ),
         ),
+        // Conteúdo Condicional
+        Expanded(child: _buildConteudo()),
       ],
+    );
+  }
+
+  Widget _buildConteudo() {
+    // Exibição condicional baseada no filtro selecionado
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(LucideIcons.locateFixed, size: 48, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          Text("Categoria: $_filtroAtivo", style: AppText.subtitulo(context)),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              "Aqui você verá o mapa somente de $_filtroAtivo",
+              style: AppText.corpo(context).copyWith(color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

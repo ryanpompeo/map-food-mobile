@@ -14,7 +14,22 @@ class StoreService {
     return StoreDto.fromJson(data);
   }
 
+  Future<void> updateStatus(int storeId, String status) async {
+    await _client.put<dynamic>(
+      '${ApiConstants.lojas}/$storeId/status',
+      data: {'status': status},
+    );
+  }
+
+  Future<void> updateRonda(int storeId, bool active) async {
+    await _client.put<dynamic>(
+      '${ApiConstants.lojas}/$storeId/ronda',
+      data: {'active': active},
+    );
+  }
+
   Future<List<StoreDto>> getAll() async {
+
     final data = await _client.get<List<dynamic>>(ApiConstants.lojas);
     return data.map((e) => StoreDto.fromJson(e as Map<String, dynamic>)).toList();
   }

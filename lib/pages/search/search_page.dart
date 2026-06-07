@@ -1,12 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-import 'package:map_food/core/theme/app_icon_size.dart';
 import 'package:map_food/core/theme/app_radius.dart';
 import 'package:map_food/core/theme/app_spacing.dart';
 import 'package:map_food/core/theme/app_text_styles.dart';
 import 'package:map_food/core/theme/colors_palette.dart';
-
-import 'package:map_food/pages/search/category_result_page.dart';
+import 'package:map_food/models/store/store_dto.dart';
+import 'package:map_food/pages/search/more_info_store.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -17,86 +16,88 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
+  int _selectedFilterIndex = 0;
 
-  final List<String> _buscasRecentes = [
-    'Hambúrguer artesanal',
-    'Açaí',
-    'Pizza',
-    'Marmita',
+  final List<String> _filtros = [
+    'Todos',
+    'Lanches e Hot Dogs',
+    'Espetinhos',
+    'Pastel e Salgados',
+    'Doces e Sobremesas',
+    'Bebidas',
+    'Gelados e Açaí',
+    'Milho e Pamonha',
+    'Pipoca',
   ];
 
-  final List<Map<String, dynamic>> _categorias = [
-    {
-      'nome': 'Lanches & Hot Dogs',
-      'icon': LucideIcons.sandwich,
-      'color': Colors.deepOrange,
-    },
-    {'nome': 'Espetinhos', 'icon': LucideIcons.flame, 'color': Colors.red},
-    {
-      'nome': 'Pastel & Salgados',
-      'icon': LucideIcons.croissant,
-      'color': Colors.amber.shade700,
-    },
-    {
-      'nome': 'Doces & Churros',
-      'icon': LucideIcons.cakeSlice,
-      'color': Colors.pink.shade400,
-    },
-    {
-      'nome': 'Gelados & Açaí',
-      'icon': LucideIcons.popsicle,
-      'color': Colors.purple.shade700,
-    },
-    {
-      'nome': 'Milho & Pamonha',
-      'icon': LucideIcons.wheat,
-      'color': Colors.yellow.shade800,
-    },
-    {'nome': 'Bebidas', 'icon': LucideIcons.cupSoda, 'color': Colors.blue},
-    {
-      'nome': 'Refeições',
-      'icon': LucideIcons.soup,
-      'color': Colors.green.shade700,
-    },
+  final Map<String, int> _categoryMapping = {
+    'Lanches e Hot Dogs': 1,
+    'Espetinhos': 6,
+    'Pastel e Salgados': 2,
+    'Doces e Sobremesas': 3,
+    'Bebidas': 4,
+    'Gelados e Açaí': 5,
+    'Milho e Pamonha': 7,
+    'Pipoca': 8,
+  };
+
+  final List<StoreDto> _mockDatabase = [
+    StoreDto(
+      id: 1,
+      statusLoja: 'ATIVA',
+      nome: 'Bebidas Refrescantes do Zé',
+      descricao:
+          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia.',
+      categoria: 'Bebidas',
+      imagens: [
+        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      ],
+      avaliacao: 4.5,
+    ),
   ];
 
-  final List<Map<String, dynamic>> _emAlta = [
-    {
-      'nome': 'Hamburgueria Central',
-      'avaliacao': '4.9',
-      'categoria': 'Lanches',
-      'distancia': '1.2 km',
-      'isAberto': true,
-    },
-    {
-      'nome': 'Pizza do Zé',
-      'avaliacao': '4.8',
-      'categoria': 'Pizzas',
-      'distancia': '2.5 km',
-      'isAberto': false,
-    },
-    {
-      'nome': 'Açaí da Praça',
-      'avaliacao': '4.8',
-      'categoria': 'Doces',
-      'distancia': '0.8 km',
-      'isAberto': true,
-    },
-    {
-      'nome': 'Espetinho Brasa',
-      'avaliacao': '4.7',
-      'categoria': 'Carnes',
-      'distancia': '3.1 km',
-      'isAberto': true,
-    },
-    {
-      'nome': 'Marmitaria Caseira',
-      'avaliacao': '4.6',
-      'categoria': 'Marmita',
-      'distancia': '1.5 km',
-      'isAberto': false,
-    },
-  ];
+  List<StoreDto> _destaques = [];
+  List<StoreDto> _populares = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStores();
+  }
+
+  void _loadStores({int? categoryId, String? query}) {
+    List<StoreDto> results = _mockDatabase;
+
+    if (query != null && query.isNotEmpty) {
+      results = results
+          .where(
+            (store) => store.nome.toLowerCase().contains(query.toLowerCase()),
+          )
+          .toList();
+    } else if (categoryId != null) {
+
+      final categoryName = _categoryMapping.entries
+          .firstWhere(
+            (entry) => entry.value == categoryId,
+            orElse: () => const MapEntry('', 0),
+          )
+          .key;
+
+      if (categoryName.isNotEmpty) {
+        results = results
+            .where((store) => store.categoria == categoryName)
+            .toList();
+      }
+    }
+
+    setState(() {
+      _destaques = results;
+      _populares = results.take(3).toList();
+    });
+  }
 
   @override
   void dispose() {
@@ -106,6 +107,15 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedCategory = _filtros[_selectedFilterIndex];
+    final bool isTodos = selectedCategory == 'Todos';
+
+    final itemsToDisplay = isTodos
+        ? _destaques
+        : _destaques
+              .where((item) => item?.categoria == selectedCategory)
+              .toList();
+
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       body: SafeArea(
@@ -114,259 +124,610 @@ class _SearchPageState extends State<SearchPage> {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSearchBar(context),
+                    SearchFieldWidget(
+                      controller: _searchController,
+                      onSearch: (val) => _loadStores(query: val),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    CategoryFiltersWidget(
+                      filtros: _filtros,
+                      selectedIndex: _selectedFilterIndex,
+                      onFilterChanged: (index) {
+                        setState(() {
+                          _selectedFilterIndex = index;
+                        });
+                        final category = _filtros[index];
+                        final id = _categoryMapping[category];
+                        _loadStores(categoryId: id);
+                      },
+                    ),
                     const SizedBox(height: AppSpacing.xl),
-
-                    if (_buscasRecentes.isNotEmpty) ...[
-                      _buildHistorico(context),
-                      const SizedBox(height: AppSpacing.xl),
-                    ],
-
-                    _buildCategorias(context),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    _buildEmAlta(context),
-                    const SizedBox(height: 120.0),
                   ],
                 ),
               ),
             ),
+            if (isTodos)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                  child: HorizontalDestaqueListWidget(items: itemsToDisplay),
+                ),
+              )
+            else
+              VerticalDestaqueSliverWidget(items: itemsToDisplay),
+            if (isTodos)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 120.0),
+                  child: PopularesSectionWidget(populares: _populares),
+                ),
+              )
+            else
+              const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildSearchBar(BuildContext context) {
-    return Container(
-      height: 52.0,
-      decoration: BoxDecoration(
-        color: ColorsPalette.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: ColorsPalette.black.withValues(alpha: 0.07),
-            blurRadius: 16,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        style: AppText.corpo(
-          context,
-        ).copyWith(fontWeight: FontWeight.w600, color: ColorsPalette.black),
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: "Busque por comércios...",
-          hintStyle: AppText.corpo(
+class SearchFieldWidget extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onSearch;
+
+  const SearchFieldWidget({
+    super.key,
+    required this.controller,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Container(
+        height: 54.0,
+        decoration: BoxDecoration(
+          color: ColorsPalette.white,
+          borderRadius: BorderRadius.circular(100.0),
+          boxShadow: [
+            BoxShadow(
+              color: ColorsPalette.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: TextField(
+          controller: controller,
+          style: AppText.corpo(
             context,
-          ).copyWith(color: Colors.grey.shade500, fontWeight: FontWeight.w500),
-          prefixIcon: const Icon(
-            LucideIcons.search,
-            color: ColorsPalette.redComponents,
-            size: AppIconSize.md,
+          ).copyWith(fontWeight: FontWeight.w500, color: ColorsPalette.black),
+          decoration: InputDecoration(
+            hintText: "Buscar por comércios...",
+            hintStyle: AppText.corpo(
+              context,
+            ).copyWith(color: Colors.grey.shade400),
+            prefixIcon: const Icon(
+              LucideIcons.search,
+              color: ColorsPalette.redComponents,
+              size: 20.0,
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
           ),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    LucideIcons.x,
-                    color: Colors.grey.shade400,
-                    size: AppIconSize.md,
-                  ),
-                  onPressed: () => setState(() => _searchController.clear()),
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          onSubmitted: onSearch,
         ),
-        onChanged: (value) => setState(() {}),
       ),
     );
   }
+}
 
-  Widget _buildHistorico(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Pesquisas recentes",
-              style: AppText.subtitulo(context).copyWith(
-                fontWeight: FontWeight.w800,
-                color: ColorsPalette.black,
+class CategoryFiltersWidget extends StatelessWidget {
+  final List<String> filtros;
+  final int selectedIndex;
+  final ValueChanged<int> onFilterChanged;
+
+  const CategoryFiltersWidget({
+    super.key,
+    required this.filtros,
+    required this.selectedIndex,
+    required this.onFilterChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 12.0,
+        children: List.generate(filtros.length, (index) {
+          final isSelected = index == selectedIndex;
+          return GestureDetector(
+            onTap: () => onFilterChanged(index),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 10.0,
               ),
-            ),
-            GestureDetector(
-              onTap: () => setState(() => _buscasRecentes.clear()),
+              decoration: BoxDecoration(
+                color: isSelected ? ColorsPalette.black : ColorsPalette.white,
+                borderRadius: BorderRadius.circular(100.0),
+              ),
               child: Text(
-                "Limpar",
-                style: AppText.legenda(context).copyWith(
-                  color: ColorsPalette.blackDetails,
-                  fontWeight: FontWeight.bold,
-                  decoration: TextDecoration.underline,
+                filtros[index],
+                style: AppText.corpo(context).copyWith(
+                  color: isSelected ? Colors.white : ColorsPalette.greyText,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  fontSize: 13.0,
                 ),
               ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class HorizontalDestaqueListWidget extends StatelessWidget {
+  final List<StoreDto> items;
+
+  const HorizontalDestaqueListWidget({super.key, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 280.0,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 16.0),
+        itemBuilder: (context, index) {
+          return SizedBox(
+            width: 280.0,
+            child: DestaqueCardWidget(destaque: items[index]),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class DestaqueCardWidget extends StatelessWidget {
+  final StoreDto destaque;
+
+  const DestaqueCardWidget({super.key, required this.destaque});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MoreInfoStorePage(store: destaque),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(24.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: ColorsPalette.white,
+          borderRadius: BorderRadius.circular(24.0),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: ColorsPalette.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.md),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: _buscasRecentes.map((termo) {
-            return InkWell(
-              onTap: () => setState(() => _searchController.text = termo),
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: 10.0,
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 160.0,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child:
+                      destaque.imagens != null && destaque.imagens!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16.0),
+                          child: Image.network(
+                            destaque.imagens![0],
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              LucideIcons.image,
+                              size: 48.0,
+                              color: Colors.grey.shade300,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          LucideIcons.image,
+                          size: 48.0,
+                          color: Colors.grey.shade300,
+                        ),
                 ),
-                decoration: BoxDecoration(
-                  color: ColorsPalette.white,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  boxShadow: [
-                    BoxShadow(
-                      color: ColorsPalette.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 2),
+                Positioned(
+                  top: 12.0,
+                  right: 12.0,
+                  child: Container(
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      shape: BoxShape.circle,
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      LucideIcons.history,
-                      size: AppIconSize.sm,
-                      color: Colors.grey.shade500,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      termo,
-                      style: AppText.legenda(context).copyWith(
-                        color: ColorsPalette.black,
-                        fontWeight: FontWeight.w600,
+                    child: GestureDetector(
+                      onTap: () =>
+                          LoginWallHelper.showLoginWallBottomSheet(context),
+                      child: const Icon(
+                        LucideIcons.heart,
+                        color: ColorsPalette.white,
+                        size: 18.0,
                       ),
                     ),
-                  ],
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Text(
+                destaque.nome,
+                style: AppText.subtitulo(context).copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: ColorsPalette.black,
+                  fontSize: 18.0,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            );
-          }).toList(),
+            ),
+            const SizedBox(height: 4.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.star,
+                    color: Colors.amber.shade500,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${destaque.avaliacao ?? 'Novo'} • ${destaque.categoria ?? 'Geral'}",
+                    style: AppText.legenda(context).copyWith(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildCategorias(BuildContext context) {
+class VerticalDestaqueSliverWidget extends StatelessWidget {
+  final List<StoreDto> items;
+
+  const VerticalDestaqueSliverWidget({super.key, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.xl,
+          ),
+          child: Center(
+            child: Text(
+              "Nenhum comércio encontrado para esta categoria.",
+              style: AppText.corpo(
+                context,
+              ).copyWith(color: ColorsPalette.greyText),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: StoreListItemWidget(store: items[index]),
+          );
+        }, childCount: items.length),
+      ),
+    );
+  }
+}
+
+class StoreListItemWidget extends StatelessWidget {
+  final StoreDto store;
+
+  const StoreListItemWidget({super.key, required this.store});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MoreInfoStorePage(store: store),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16.0),
+      child: Container(
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 72.0,
+              height: 72.0,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12.0),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: store.imagens != null && store.imagens!.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12.0),
+                      child: Image.network(
+                        store.imagens![0],
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          LucideIcons.image,
+                          size: 24.0,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      LucideIcons.image,
+                      size: 24.0,
+                      color: Colors.grey.shade400,
+                    ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    store.nome,
+                    style: AppText.corpo(context).copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: ColorsPalette.black,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4.0),
+                  Row(
+                    children: [
+                      Icon(
+                        LucideIcons.star,
+                        color: Colors.amber.shade500,
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${store.avaliacao ?? 'Novo'} • ${store.categoria ?? 'Geral'}",
+                        style: AppText.legenda(context).copyWith(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6.0),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(LucideIcons.heart, color: Colors.grey),
+              onPressed: () =>
+                  LoginWallHelper.showLoginWallBottomSheet(context),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PopularesSectionWidget extends StatelessWidget {
+  final List<StoreDto> populares;
+
+  const PopularesSectionWidget({super.key, required this.populares});
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Categorias",
-          style: AppText.subtitulo(
-            context,
-          ).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Mais populares",
+                style: AppText.subtitulo(context).copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: ColorsPalette.black,
+                ),
+              ),
+              Text(
+                "ver todas",
+                style: AppText.legenda(context).copyWith(
+                  color: ColorsPalette.greyText,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.md),
         SizedBox(
-          height: 150.0,
+          height: 200.0,
           child: ListView.separated(
-            clipBehavior: Clip.none,
-            padding: const EdgeInsets.only(
-              top: 16.0,
-              bottom: 24.0,
-              left: 4.0,
-              right: 8.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            itemCount: _categorias.length,
+            itemCount: populares.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12.0),
             itemBuilder: (context, index) {
-              final cat = _categorias[index];
-              final Color catColor = cat['color'] ?? Colors.grey;
-
-              return InkWell(
+              final item = populares[index];
+              return GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CategoryResultPage(
-                        categoryName: cat['nome'],
-                        categoryColor: catColor,
-                      ),
+                      builder: (context) => MoreInfoStorePage(store: item),
                     ),
                   );
                 },
-                borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: Container(
-                  width: 100.0,
+                  width: 150.0,
                   decoration: BoxDecoration(
-                    color: catColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: catColor.withValues(alpha: 0.15)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorsPalette.black.withValues(alpha: 0.05),
-                        blurRadius: 16,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(20.0),
+                    color: Colors.grey.shade300,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10.0),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20.0),
+                        child: item.imagens != null && item.imagens!.isNotEmpty
+                            ? Image.network(
+                                item.imagens![0],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    ColoredBox(color: Colors.grey.shade200),
+                              )
+                            : ColoredBox(color: Colors.grey.shade200),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20.0),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.8),
+                            ],
+                            stops: const [0.5, 1.0],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 10.0,
+                        right: 10.0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8.0,
+                            vertical: 4.0,
+                          ),
                           decoration: BoxDecoration(
-                            color: ColorsPalette.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: catColor.withValues(alpha: 0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                            color: Colors.black.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(100.0),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.star,
+                                color: Colors.white,
+                                size: 10.0,
+                              ),
+                              const SizedBox(width: 4.0),
+                              Text(
+                                "${item.avaliacao ?? 'Novo'}",
+                                style: AppText.legenda(context).copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10.0,
+                                ),
                               ),
                             ],
                           ),
-                          child: Icon(
-                            cat['icon'],
-                            size: AppIconSize.lg,
-                            color: catColor,
-                          ),
                         ),
-                        const SizedBox(height: 12.0),
-                        Text(
-                          cat['nome'],
-                          textAlign: TextAlign.center,
-                          style: AppText.legenda(context).copyWith(
-                            color: ColorsPalette.blackDetails,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11.0,
-                            height: 1.1,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                      ),
+                      Positioned(
+                        bottom: 12.0,
+                        left: 12.0,
+                        right: 12.0,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.nome,
+                              style: AppText.corpo(context).copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13.0,
+                                height: 1.2,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4.0),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -376,177 +737,113 @@ class _SearchPageState extends State<SearchPage> {
       ],
     );
   }
+}
 
-  Widget _buildEmAlta(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(
-              LucideIcons.trendingUp,
-              color: ColorsPalette.redComponents,
-              size: AppIconSize.lg,
+class LoginWallHelper {
+  static void showLoginWallBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext bc) {
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(AppRadius.xl),
+              topRight: Radius.circular(AppRadius.xl),
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              "Em Alta",
-              style: AppText.subtitulo(context).copyWith(
-                fontWeight: FontWeight.w900,
-                color: ColorsPalette.black,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40.0,
+                height: 4.0,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _emAlta.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12.0),
-          itemBuilder: (context, index) {
-            final loja = _emAlta[index];
-            final bool isAberto = loja['isAberto'] ?? false;
-
-            return Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: ColorsPalette.white,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                boxShadow: [
-                  BoxShadow(
-                    color: ColorsPalette.black.withValues(alpha: 0.07),
-                    blurRadius: 16,
-                    spreadRadius: 0,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: ColorsPalette.redComponents.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  LucideIcons.heart,
+                  color: ColorsPalette.redComponents,
+                  size: 32.0,
+                ),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 64.0,
-                    height: 64.0,
-                    decoration: BoxDecoration(
-                      color: ColorsPalette.whiteBackground,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Icon(
-                      LucideIcons.image,
-                      color: Colors.grey.shade400,
-                      size: AppIconSize.lg,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          loja['nome'],
-                          style: AppText.corpo(context).copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: ColorsPalette.black,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6.0,
-                                vertical: 4.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isAberto
-                                    ? Colors.green.shade600.withValues(
-                                        alpha: 0.1,
-                                      )
-                                    : ColorsPalette.redComponents.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                borderRadius: BorderRadius.circular(100.0),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6.0,
-                                    height: 6.0,
-                                    decoration: BoxDecoration(
-                                      color: isAberto
-                                          ? Colors.green.shade700
-                                          : ColorsPalette.redComponents,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4.0),
-                                  Text(
-                                    isAberto ? "ABERTO" : "FECHADO",
-                                    style: AppText.legenda(context).copyWith(
-                                      color: isAberto
-                                          ? Colors.green.shade700
-                                          : ColorsPalette.redComponents,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 9.0,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8.0),
-                            Expanded(
-                              child: Text(
-                                "${loja['categoria']} • ${loja['distancia']}",
-                                style: AppText.legenda(context).copyWith(
-                                  color: ColorsPalette.greyText,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ColorsPalette.black.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.star,
-                          color: Colors.amber,
-                          size: 14.0,
-                        ),
-                        const SizedBox(width: 4.0),
-                        Text(
-                          loja['avaliacao'],
-                          style: AppText.legenda(context).copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: ColorsPalette.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                "Salve seus comércios favoritos!",
+                textAlign: TextAlign.center,
+                style: AppText.subtitulo(context).copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: ColorsPalette.black,
+                  letterSpacing: -0.5,
+                ),
               ),
-            );
-          },
-        ),
-      ],
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                "Crie uma conta gratuita em segundos para salvar, avaliar e denunciar comércios na sua cidade.",
+                textAlign: TextAlign.center,
+                style: AppText.corpo(
+                  context,
+                ).copyWith(color: ColorsPalette.greyText, height: 1.3),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              SizedBox(
+                width: double.infinity,
+                height: 52.0,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/accountType');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorsPalette.redComponents,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Criar Conta Gratuita",
+                    style: AppText.botao(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/login');
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Text(
+                    "Já tenho uma conta",
+                    style: AppText.legenda(context).copyWith(
+                      color: ColorsPalette.blackDetails,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
+          ),
+        );
+      },
     );
   }
 }

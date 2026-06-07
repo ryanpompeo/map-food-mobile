@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/theme/app_icon_size.dart';
+import 'package:map_food/core/theme/app_spacing.dart';
+import 'package:map_food/core/theme/app_text_styles.dart';
+import 'package:map_food/core/theme/colors_palette.dart';
 
 class HowItWorksPage extends StatelessWidget {
   const HowItWorksPage({super.key});
@@ -6,178 +11,212 @@ class HowItWorksPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Como Funciona')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Bem-vindo ao Spotty',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'O Spotty facilita a descoberta de estabelecimentos, serviços e negócios próximos, reunindo informações importantes em um único lugar.',
-              style: TextStyle(fontSize: 16),
-            ),
+      backgroundColor: ColorsPalette.whiteBackground,
 
-            const SizedBox(height: 32),
-
-            _buildSection(
-              context,
-              icon: Icons.search,
-              title: 'Encontrando Estabelecimentos',
-              content: [
-                'Pesquise por nome ou categoria.',
-                'Visualize empresas no mapa.',
-                'Filtre resultados conforme sua necessidade.',
-                'Acesse informações detalhadas rapidamente.',
-              ],
-            ),
-
-            _buildSection(
-              context,
-              icon: Icons.map,
-              title: 'Utilizando o Mapa',
-              content: [
-                'Visualize estabelecimentos próximos.',
-                'Navegue livremente pela região.',
-                'Toque nos marcadores para ver detalhes.',
-                'Abra rotas em aplicativos de navegação.',
-              ],
-            ),
-
-            _buildSection(
-              context,
-              icon: Icons.store,
-              title: 'Cadastro de Negócios',
-              content: [
-                'Crie uma conta.',
-                'Cadastre seu estabelecimento.',
-                'Adicione fotos e informações.',
-                'Publique seu negócio na plataforma.',
-              ],
-            ),
-
-            _buildSection(
-              context,
-              icon: Icons.edit,
-              title: 'Gerenciamento das Informações',
-              content: [
-                'Atualize horários de funcionamento.',
-                'Altere contatos.',
-                'Adicione novas imagens.',
-                'Mantenha seus dados sempre atualizados.',
-              ],
-            ),
-
-            _buildSection(
-              context,
-              icon: Icons.security,
-              title: 'Segurança e Confiabilidade',
-              content: [
-                'Cadastros podem ser revisados periodicamente.',
-                'Informações incorretas podem ser corrigidas.',
-                'Contas que violem as regras podem ser suspensas.',
-              ],
-            ),
-
-            _buildSection(
-              context,
-              icon: Icons.tips_and_updates,
-              title: 'Dicas para uma Melhor Experiência',
-              content: [
-                'Mantenha o aplicativo atualizado.',
-                'Autorize a localização para resultados próximos.',
-                'Reporte informações incorretas.',
-              ],
-            ),
-
-            const SizedBox(height: 32),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Suporte',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Caso tenha dúvidas ou encontre algum problema, entre em contato com nossa equipe através dos canais disponíveis no aplicativo.',
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Center(
-              child: Text(
-                'Versão 1.0 • Junho de 2026',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSection(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required List<String> content,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Card(
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 80,
+                pinned: true,
+                backgroundColor: ColorsPalette.whiteBackground,
+                foregroundColor: ColorsPalette.whiteBackground,
+                surfaceTintColor: ColorsPalette.whiteBackground,
+                elevation: 0,
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: ColorsPalette.whiteBackground,
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        LucideIcons.chevronLeft,
+                        color: ColorsPalette.redComponents,
                       ),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ),
-                ],
+                ),
               ),
-              const SizedBox(height: 12),
-              ...content.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('• '),
-                      Expanded(child: Text(item)),
+                      Text(
+                        "Como o MapFood funciona?",
+                        style: AppText.titulo(context).copyWith(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 28.0,
+                          color: ColorsPalette.black,
+                          height: 1.1,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        "Descubra os melhores comércios e vendedores de rua da sua cidade em 3 passos simples.",
+                        style: AppText.corpo(
+                          context,
+                        ).copyWith(color: ColorsPalette.greyText, height: 1.4),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+
+                      _buildStepCard(
+                        context,
+                        stepNumber: "1",
+                        title: "Explore o Mapa",
+                        description:
+                            "Navegue pelo mapa interativo e encontre vendedores de rua próximos a você em tempo real.",
+                        icon: LucideIcons.mapPin,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+
+                      _buildStepCard(
+                        context,
+                        stepNumber: "2",
+                        title: "Escolha sua Categoria",
+                        description:
+                            "Use os filtros inteligentes para encontrar exatamente o que deseja: de espetinhos e lanches até doces e açaí.",
+                        icon: LucideIcons.slidersHorizontal,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+
+                      _buildStepCard(
+                        context,
+                        stepNumber: "3",
+                        title: "Siga a Rota",
+                        description:
+                            "Toque em 'Visualizar no mapa' para traçar a rota exata até o comércio escolhido e aproveite.",
+                        icon: LucideIcons.navigation,
+                      ),
+
+                      const SizedBox(height: 140.0),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-        ),
+
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                bottom: AppSpacing.xl,
+                left: AppSpacing.lg,
+                right: AppSpacing.lg,
+              ),
+              child: Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(100.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ColorsPalette.redComponents.withValues(alpha: 0.3),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorsPalette.redComponents,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100.0),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Center(
+                    child: Text(
+                      "Começar a explorar",
+                      style: AppText.botao(context).copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepCard(
+    BuildContext context, {
+    required String stepNumber,
+    required String title,
+    required String description,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24.0),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48.0,
+            height: 48.0,
+            decoration: BoxDecoration(
+              color: ColorsPalette.redComponents.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                color: ColorsPalette.redComponents,
+                size: AppIconSize.lg,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppText.subtitulo(context).copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: ColorsPalette.black,
+                    fontSize: 18.0,
+                  ),
+                ),
+                const SizedBox(height: 6.0),
+                Text(
+                  description,
+                  style: AppText.corpo(
+                    context,
+                  ).copyWith(color: ColorsPalette.greyText, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

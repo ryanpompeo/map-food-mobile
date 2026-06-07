@@ -11,6 +11,7 @@ import 'package:map_food/pages/auth/pages/consumer_register_page.dart';
 import 'package:map_food/pages/consumer/consumer_home_page.dart';
 import 'package:map_food/pages/guest/guest_home_page.dart';
 import 'package:map_food/pages/auth/pages/account_type_page.dart';
+import 'package:map_food/pages/guest/profile/how_it_works_page.dart';
 import 'package:map_food/pages/merchant/merchant_home_page.dart';
 import 'package:map_food/pages/merchant/store_register_page.dart';
 
@@ -67,17 +68,18 @@ class MyApp extends StatelessWidget {
             final limitedMedia = media.copyWith(
               textScaler: media.textScaler.clamp(
                 minScaleFactor: 0.9,
-                maxScaleFactor: 1.15,
+                maxScaleFactor: 1.11,
               ),
             );
 
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: initialRoute,
+          initialRoute: '/howItWorks',
           routes: {
             AppRoutes.root: (context) => const GuestHomePage(),
             '/login': (context) => const LoginPage(),
+            '/howItWorks': (context) => const HowItWorksPage(),
             '/accountType': (context) => const AccountTypePage(),
             '/consumerRegister': (context) => const ConsumerRegisterPage(),
             '/merchantRegister': (context) => const MerchantRegisterPage(),
@@ -87,6 +89,7 @@ class MyApp extends StatelessWidget {
           },
         );
       },
+      //76aje
     );
   }
 }

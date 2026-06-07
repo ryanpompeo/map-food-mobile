@@ -8,7 +8,6 @@ import 'package:map_food/core/theme/colors_palette.dart';
 import 'package:map_food/models/store/store_create_request.dart';
 import 'package:map_food/pages/auth/widgets/app_form_field.dart';
 import 'package:map_food/pages/merchant/merchant_home_page.dart';
-import 'package:map_food/services/store_service.dart';
 
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
@@ -26,8 +25,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   final bool _statusLoja = true;
   bool _isLoading = false;
   String? _errorMessage;
-
-  final _storeService = StoreService();
 
   final List<int> _fotosMock = [];
   final int _maxFotos = 3;
@@ -79,8 +76,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
       debugPrint("=== ENVIANDO PARA API ===");
       debugPrint(request.toJson().toString());
-
-      await _storeService.create(request);
 
       if (!mounted) return;
 
