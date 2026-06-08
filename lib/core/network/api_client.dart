@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:map_food/core/network/api_constants.dart';
-import 'package:map_food/core/network/auth_interceptor.dart';
-import 'package:map_food/core/network/error_interceptor.dart';
-import 'package:map_food/core/errors/app_exception.dart';
+import 'package:map_food/core/network/interceptors/auth_interceptor.dart';
+import 'package:map_food/core/network/interceptors/error_interceptor.dart';
+import 'package:map_food/core/errors/exception.dart';
 
 class ApiClient {
   static ApiClient? _instance;

@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:map_food/models/auth/auth_response.dart';
+import 'package:map_food/features/auth/data/models/auth_response.dart';
 
 class AuthStorage {
   static const _keyToken = 'auth_token';
