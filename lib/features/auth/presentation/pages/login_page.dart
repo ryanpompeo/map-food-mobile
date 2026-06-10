@@ -24,13 +24,16 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   String _tipoLogin = 'CONSUMIDOR';
+  bool _tipoInicializado = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_tipoInicializado) return;
     final arg = ModalRoute.of(context)?.settings.arguments;
     if (arg is String && (arg == 'CONSUMIDOR' || arg == 'COMERCIANTE')) {
       _tipoLogin = arg;
+      _tipoInicializado = true;
     }
   }
 
@@ -42,11 +45,17 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _fazerLogin() async {
-    final email = _emailController.text.trim();
+    if (_isLoading) return;
+
+    final email = _emailController.text.trim().toLowerCase();
     final senha = _senhaController.text;
 
     if (email.isEmpty || senha.isEmpty) {
       setState(() => _errorMessage = 'Preencha e-mail e senha.');
+      return;
+    }
+    if (!email.contains('@') || !email.contains('.')) {
+      setState(() => _errorMessage = 'Digite um e-mail válido.');
       return;
     }
 
@@ -69,8 +78,8 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _errorMessage = 'E-mail ou senha incorretos.');
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);
-    } catch (_) {
-      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+    } catch (e) {
+      setState(() => _errorMessage = 'Erro: ${e.runtimeType} — $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -231,7 +240,11 @@ class _LoginPageState extends State<LoginPage> {
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
                   onTap: () {
-                    debugPrint("Esqueci minha senha");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Recuperação de senha em breve.'),
+                      ),
+                    );
                   },
                   child: Text(
                     "Esqueceu a senha?",

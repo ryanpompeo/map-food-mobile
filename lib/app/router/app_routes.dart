@@ -4,14 +4,14 @@ class AppRoutes {
   static const root = '/';
   static const startup = '/startup';
 
-  static const login = '/auth/login';
-  static const register = '/auth/register';
+  static const login = '/login';
+  static const register = '/accountType';
 
   static const guestHome = '/guest';
   static const guestSearch = '/guest/search';
   static const guestProfile = '/guest/profile';
 
-  static const consumerHome = '/consumer';
+  static const consumerHome = '/consumerHome';
   static const consumerFavorites = '/consumer/favorites';
   static const consumerOrders = '/consumer/orders';
   static const consumerReviews = '/consumer/reviews';

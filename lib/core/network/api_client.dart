@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/core/network/interceptors/auth_interceptor.dart';
@@ -15,6 +16,7 @@ class ApiClient {
         connectTimeout: ApiConstants.connectTimeout,
         receiveTimeout: ApiConstants.receiveTimeout,
         headers: {'Content-Type': 'application/json'},
+        responseType: ResponseType.json,
       ),
     );
     _dio.interceptors.addAll([AuthInterceptor(), ErrorInterceptor()]);
@@ -22,10 +24,29 @@ class ApiClient {
 
   static ApiClient get instance => _instance ??= ApiClient._();
 
+  /// Converte [data] para o tipo [T] de forma segura.
+  /// Quando o Dio retorna String em vez de Map (ocorre em Flutter Web com
+  /// alguns servidores), faz o parse manual do JSON antes do cast.
+  /// Body vazio (null ou string vazia) é tratado como resposta válida sem
+  /// payload — evita FormatException em endpoints que retornam 200/201 sem body.
+  T _parseResponse<T>(dynamic data) {
+    if (data == null || (data is String && data.trim().isEmpty)) {
+      return null as T;
+    }
+    if (data is T) return data;
+    if (data is String) {
+      try {
+        final decoded = jsonDecode(data);
+        if (decoded is T) return decoded;
+      } catch (_) {}
+    }
+    return data as T;
+  }
+
   Future<T> get<T>(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio.get(path, queryParameters: queryParameters);
-      return response.data as T;
+      return _parseResponse<T>(response.data);
     } on DioException catch (e) {
       throw (e.error is AppException) ? e.error as AppException : const NetworkException();
     }
@@ -34,7 +55,7 @@ class ApiClient {
   Future<T> post<T>(String path, {dynamic data}) async {
     try {
       final response = await _dio.post(path, data: data);
-      return response.data as T;
+      return _parseResponse<T>(response.data);
     } on DioException catch (e) {
       throw (e.error is AppException) ? e.error as AppException : const NetworkException();
     }
@@ -43,7 +64,7 @@ class ApiClient {
   Future<T> put<T>(String path, {dynamic data}) async {
     try {
       final response = await _dio.put(path, data: data);
-      return response.data as T;
+      return _parseResponse<T>(response.data);
     } on DioException catch (e) {
       throw (e.error is AppException) ? e.error as AppException : const NetworkException();
     }

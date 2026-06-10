@@ -57,7 +57,7 @@ class FormValidator {
       return "Email é obrigatório";
     }
 
-    final regex = RegExp(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$');
+    final regex = RegExp(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,}$');
 
     if (!regex.hasMatch(value)) {
       return "Email inválido";
@@ -163,15 +163,8 @@ class FormValidator {
       return "Senha obrigatória";
     }
 
-    if (value.length < 8) {
-      return "Mínimo de 8 caracteres";
-    }
-
-    final hasNumber = RegExp(r'[0-9]');
-    final hasLetter = RegExp(r'[A-Za-z]');
-
-    if (!hasNumber.hasMatch(value) || !hasLetter.hasMatch(value)) {
-      return "Deve conter letras e números";
+    if (value.length < 6) {
+      return "Mínimo de 6 caracteres";
     }
 
     return null;

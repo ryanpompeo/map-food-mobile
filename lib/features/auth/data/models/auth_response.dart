@@ -12,9 +12,9 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) => AuthResponse(
-        token: json['token'] as String,
-        tipo: json['tipo'] as String,
-        id: json['id'] as int,
-        nome: json['nome'] as String,
+        token: json['token'].toString(),
+        tipo: json['tipo'].toString(),
+        id: (json['id'] as num).toInt(),
+        nome: json['nome'].toString(),
       );
 }

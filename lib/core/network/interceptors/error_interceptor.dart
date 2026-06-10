@@ -40,7 +40,7 @@ class ErrorInterceptor extends Interceptor {
   }
 
   String? _extractMessage(dynamic data) {
-    if (data is Map) return data['message']?.toString() ?? data['error']?.toString();
+    if (data is Map) return data['message']?.toString() ?? data['error']?.toString() ?? data['erro']?.toString();
     if (data is String && data.isNotEmpty) return data;
     return null;
   }
@@ -63,6 +63,13 @@ class ErrorInterceptor extends Interceptor {
         }
       }
     }
+
+    // API retorna mapa simples { "campo": "mensagem" }
+    if (data is Map && data.isNotEmpty) {
+      final first = data.values.first;
+      if (first != null) return first.toString();
+    }
+
     return null;
   }
 }

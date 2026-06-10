@@ -7,7 +7,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/core/ui/validators/form_validator.dart';
+import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/features/merchant/data/models/merchant_register_request.dart';
 
 import 'package:map_food/features/merchant/data/services/merchant_service.dart';
@@ -85,8 +85,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   }
 
   Future<void> _cadastrar() async {
-    if (!_formKey.currentState!.validate()) return;
-
+    if (_isLoading) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -110,15 +109,9 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cadastro realizado! Faça login para continuar.'),
-          backgroundColor: Colors.green,
-        ),
-      );
       Navigator.pushReplacementNamed(
         context,
-        '/login',
+        AppRoutes.login,
         arguments: 'COMERCIANTE',
       );
     } on AppException catch (e) {
@@ -126,7 +119,9 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
           ? 'E-mail, CPF ou CNPJ já cadastrado.'
           : e.message;
       setState(() => _errorMessage = msg);
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('Erro no cadastro de comerciante: $e');
+      debugPrint('$st');
       setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -188,7 +183,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   icon: LucideIcons.user,
                   keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
-                  validator: FormValidator.nome,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -198,7 +192,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "contato@exemplo.com",
                   icon: LucideIcons.mail,
                   keyboardType: TextInputType.emailAddress,
-                  validator: FormValidator.email,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -208,7 +201,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "000.000.000-00",
                   icon: LucideIcons.creditCard,
                   keyboardType: TextInputType.number,
-                  validator: FormValidator.cpf,
                   inputFormatters: [_cpfFormatter],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -219,7 +211,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "00.000.000/0000-00",
                   icon: LucideIcons.building,
                   keyboardType: TextInputType.number,
-                  validator: FormValidator.cnpjOpcional,
                   inputFormatters: [_cnpjFormatter],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -230,7 +221,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "(11) 90000-0000",
                   icon: LucideIcons.smartphone,
                   keyboardType: TextInputType.phone,
-                  validator: FormValidator.telefone,
                   inputFormatters: [_celularFormatter],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -241,7 +231,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "(11) 4000-0000",
                   icon: LucideIcons.phone,
                   keyboardType: TextInputType.phone,
-                  validator: FormValidator.telefoneOpcional,
                   inputFormatters: [_telefoneFormatter],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -249,10 +238,9 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                 AppFormField(
                   controller: _senhaController,
                   label: "Crie uma Senha",
-                  hint: "Mínimo 8 caracteres",
+                  hint: "Mínimo 6 caracteres",
                   icon: LucideIcons.lock,
                   obscureText: _obscurePassword,
-                  validator: FormValidator.senha,
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
@@ -271,7 +259,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
                 FormField<bool>(
                   initialValue: _aceitouTermos,
-                  validator: FormValidator.termos,
                   builder: (FormFieldState<bool> state) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,9 +276,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                                   borderRadius: BorderRadius.circular(6.0),
                                 ),
                                 side: BorderSide(
-                                  color: state.hasError
-                                      ? Colors.red
-                                      : Colors.grey.shade400,
+                                  color: Colors.grey.shade400,
                                   width: 1.5,
                                 ),
                                 onChanged: (value) {
@@ -338,19 +323,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                             ),
                           ],
                         ),
-                        if (state.hasError)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              top: AppSpacing.sm,
-                              left: 36.0,
-                            ),
-                            child: Text(
-                              state.errorText!,
-                              style: AppText.legenda(
-                                context,
-                              ).copyWith(color: Colors.red.shade400),
-                            ),
-                          ),
                       ],
                     );
                   },

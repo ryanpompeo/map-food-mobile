@@ -88,7 +88,7 @@ class MyApp extends StatelessWidget {
             '/storeRegister': (context) => const StoreRegisterPage(),
 
             // Aqui estamos utilizando valores default se a rota for chamada via pushNamed e nenhum parâmetro extra foi passado.
-            '/homeMerchant': (context) => const MerchantHomePage(
+            AppRoutes.merchantDashboard: (context) => const MerchantHomePage(
               requestData: StoreCreateRequest(
                 nome: 'Teste',
                 statusLoja: 'ATIVO',
