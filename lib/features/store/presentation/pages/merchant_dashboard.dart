@@ -24,10 +24,10 @@ class MerchantDashboard extends StatefulWidget {
 }
 
 class _MerchantDashboardState extends State<MerchantDashboard> {
-  // Controle de Modo de Tela
+
   bool _isEditing = false;
 
-  // Controladores de Edição
+
   late TextEditingController _nomeController;
   late TextEditingController _descricaoController;
   late List<int> _categoriasSelecionadas;
@@ -47,7 +47,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     {'id': 8, 'nome': 'Pipoca'},
   ];
 
-  // Mock de Avaliações para testar o visual
+ 
   final List<Map<String, dynamic>> _avaliacoesMock = [
     {
       'nome': 'Carlos Silva',
@@ -182,7 +182,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   }
 
   void _efetivarSalvamento() {
-    // Aqui você implementará a chamada para a API no futuro
+    
     setState(() {
       _isEditing = false;
     });
@@ -197,7 +197,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   void _cancelarEdicao() {
     setState(() {
       _isEditing = false;
-      _inicializarDados(); // Reseta para os dados originais
+      _inicializarDados(); 
     });
   }
 
@@ -215,7 +215,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            // Header: Título e Botão de Editar
+        
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -273,11 +273,10 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // SEÇÃO 1: FOTOS
             _buildSecaoFotos(),
             const SizedBox(height: AppSpacing.xl),
 
-            // SEÇÃO 2: DADOS DE TEXTO
+       
             _buildCampoTexto(
               "Nome do Comércio",
               _nomeController,
@@ -290,17 +289,17 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // SEÇÃO 3: CATEGORIAS
+            
             _buildCategoriasSection(),
 
             const SizedBox(height: AppSpacing.xxl),
             const Divider(thickness: 0.5),
             const SizedBox(height: AppSpacing.lg),
 
-            // SEÇÃO 4: AVALIAÇÕES DOS CLIENTES (Apenas exibição)
+          
             _buildAvaliacoesSection(),
 
-            const SizedBox(height: 120), // Respiro para a BottomBar
+            const SizedBox(height: 120), 
           ],
         ),
       ),
@@ -334,7 +333,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     );
   }
 
-  // --- WIDGETS AUXILIARES ---
+
 
   Widget _buildSecaoFotos() {
     return Column(
@@ -601,7 +600,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           children: _categoriasBase.map((cat) {
             final isSelected = _categoriasSelecionadas.contains(cat['id']);
 
-            // Se não estiver editando, oculta as tags que não foram selecionadas
+   
             if (!_isEditing && !isSelected) return const SizedBox.shrink();
 
             return GestureDetector(

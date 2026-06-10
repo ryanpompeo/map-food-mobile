@@ -130,8 +130,8 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                     const SizedBox(width: AppSpacing.sm),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // Fecha o modal
-                        _efetivarEnvio(); // Salva os dados
+                        Navigator.pop(context); 
+                        _efetivarEnvio(); 
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorsPalette.black,
@@ -156,7 +156,7 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
     );
   }
 
-  // Executa o salvamento no objeto após a confirmação do modal
+
   void _efetivarEnvio() {
     final review = UserReview(
       userName: "Consumidor Teste",
@@ -169,7 +169,7 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
       _minhaAvaliacao = review;
     });
 
-    // Salva globalmente no repositório simulado
+
     ReviewRepository.salvarAvaliacao(widget.store.nome, review);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -638,7 +638,7 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                       const Divider(thickness: 0.2),
                       const SizedBox(height: AppSpacing.lg),
 
-                      // Renderização Condicional da Seção de Avaliação
+            
                       if (_minhaAvaliacao == null)
                         _buildFormularioAvaliacao()
                       else
@@ -652,7 +652,7 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
             ],
           ),
 
-          // Botão Flutuante (Visualizar no mapa)
+          //(Visualizar no mapa)
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(

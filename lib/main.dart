@@ -28,7 +28,7 @@ void main() async {
         ? AppRoutes.merchantDashboard
         : AppRoutes.consumerHome;
   } else {
-    initialRoute = AppRoutes.root; // Assume-se que isso retorna '/'
+    initialRoute = AppRoutes.root;
   }
 
   runApp(MyApp(initialRoute: initialRoute));
@@ -87,7 +87,7 @@ class MyApp extends StatelessWidget {
             '/merchantRegister': (context) => const MerchantRegisterPage(),
             '/storeRegister': (context) => const StoreRegisterPage(),
 
-            // Aqui estamos utilizando valores default se a rota for chamada via pushNamed e nenhum parâmetro extra foi passado.
+   
             AppRoutes.merchantDashboard: (context) => const MerchantHomePage(
               requestData: StoreCreateRequest(
                 nome: 'Teste',

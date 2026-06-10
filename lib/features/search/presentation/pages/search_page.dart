@@ -3,6 +3,7 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/search/presentation/pages/view_most_popular.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
@@ -447,7 +448,7 @@ class VerticalDestaqueSliverWidget extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              "Nenhum comércio encontrado para esta categoria.",
+              "Nenhum comércio encontrado para esta categoria",
               style: AppText.corpo(
                 context,
               ).copyWith(color: ColorsPalette.greyText),
@@ -607,11 +608,19 @@ class PopularesSectionWidget extends StatelessWidget {
                   color: ColorsPalette.black,
                 ),
               ),
-              Text(
-                "ver todas",
-                style: AppText.legenda(context).copyWith(
-                  color: ColorsPalette.greyText,
-                  fontWeight: FontWeight.w600,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ViewMostPopular()),
+                  );
+                },
+                child: Text(
+                  "ver todas",
+                  style: AppText.legenda(context).copyWith(
+                    color: ColorsPalette.greyText,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

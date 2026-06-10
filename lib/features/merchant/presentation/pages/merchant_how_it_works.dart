@@ -99,7 +99,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
             ],
           ),
 
-          // Botão de Ação
+       
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(

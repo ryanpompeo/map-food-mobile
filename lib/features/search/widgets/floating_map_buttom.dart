@@ -20,7 +20,7 @@ class FloatingMapButton extends StatelessWidget {
           onTap: onTap,
           child: Container(
             height: 64,
-            // Sombra externa para dar profundidade (flutuação)
+      
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(100.0),
               boxShadow: [
@@ -38,7 +38,7 @@ class FloatingMapButton extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   decoration: BoxDecoration(
-                    // Gradiente que cria o efeito de vidro (refração)
+                   
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,

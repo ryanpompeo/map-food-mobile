@@ -427,7 +427,7 @@ class VerticalDestaqueSliverWidget extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              "Nenhum comércio encontrado para esta categoria.",
+              "Nenhum comércio encontrado para esta categoria",
               style: AppText.corpo(
                 context,
               ).copyWith(color: ColorsPalette.greyText),

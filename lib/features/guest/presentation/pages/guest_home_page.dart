@@ -17,7 +17,7 @@ class GuestHomePage extends StatefulWidget {
 class _GuestHomePageState extends State<GuestHomePage> {
   int _selectedIndex = 0;
 
-  // Agora mutável
+
   String _filtroAtivo = 'Todos';
 
   final List<String> _filtrosMapa = [
@@ -69,7 +69,7 @@ class _GuestHomePageState extends State<GuestHomePage> {
   Widget _buildAbaInicio() {
     return Column(
       children: [
-        // Header
+  
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
@@ -108,7 +108,7 @@ class _GuestHomePageState extends State<GuestHomePage> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              // Tags Clicáveis
+              // Tags
               SizedBox(
                 height: 40.0,
                 child: ListView.builder(
@@ -155,14 +155,14 @@ class _GuestHomePageState extends State<GuestHomePage> {
             ],
           ),
         ),
-        // Conteúdo Condicional
+      
         Expanded(child: _buildConteudo()),
       ],
     );
   }
 
   Widget _buildConteudo() {
-    // Exibição condicional baseada no filtro selecionado
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -90,7 +90,6 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   Widget _buildAbaInicio() {
     return Column(
       children: [
-        // Header
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
@@ -129,7 +128,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              // Tags Clicáveis
+              // Tags
               SizedBox(
                 height: 40.0,
                 child: ListView.builder(

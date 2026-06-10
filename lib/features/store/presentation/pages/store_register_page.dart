@@ -8,8 +8,6 @@ import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_home_page.dart';
 import 'package:map_food/features/store/presentation/pages/working_page.dart';
 
-// TODO: Importar a sua próxima página aqui para substituir o placeholder do Navigator
-// import 'package:map_food/pages/merchant/store_address_page.dart';
 
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
@@ -58,12 +56,12 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_fotoDestaqueMock == null) {
-      _mostrarErro("Adicione uma Foto Destaque para o seu comércio.");
+      _mostrarErro("Adicione uma Foto Destaque para o seu comércio");
       return;
     }
 
     if (_categoriasSelecionadas.isEmpty) {
-      _mostrarErro("Selecione pelo menos uma categoria.");
+      _mostrarErro("Selecione pelo menos uma categoria");
       return;
     }
 
@@ -257,7 +255,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
                 const SizedBox(height: AppSpacing.xxl),
 
-                // CTA posicionado no final da árvore de scroll vertical
+        
                 Container(
                   width: double.infinity,
                   height: 56.0,

@@ -27,7 +27,6 @@ class _WorkingPageState extends State<WorkingPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Usar Scaffold aqui dentro garante que a aba tenha estrutura, fundo branco e AppBar próprios
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       appBar: AppBar(
@@ -132,7 +131,6 @@ class _WorkingPageState extends State<WorkingPage> {
             ),
           ),
 
-          // Preenchimento para a BottomBar do MerchantHomePage não cobrir o mapa
           const SizedBox(height: 120.0),
         ],
       ),
