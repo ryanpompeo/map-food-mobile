@@ -37,7 +37,6 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
     super.dispose();
   }
 
-
   void _confirmarAvaliacao() {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,15 +129,15 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                     const SizedBox(width: AppSpacing.sm),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); 
-                        _efetivarEnvio(); 
+                        Navigator.pop(context);
+                        _efetivarEnvio();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorsPalette.black,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                       ),
                       child: const Text(
@@ -156,7 +155,6 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
     );
   }
 
-
   void _efetivarEnvio() {
     final review = UserReview(
       userName: "Consumidor Teste",
@@ -168,7 +166,6 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
     setState(() {
       _minhaAvaliacao = review;
     });
-
 
     ReviewRepository.salvarAvaliacao(widget.store.nome, review);
 
@@ -386,7 +383,9 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                                 vertical: 12,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.pill,
+                                ),
                               ),
                             ),
                             child: const Text(
@@ -638,7 +637,6 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                       const Divider(thickness: 0.2),
                       const SizedBox(height: AppSpacing.lg),
 
-            
                       if (_minhaAvaliacao == null)
                         _buildFormularioAvaliacao()
                       else

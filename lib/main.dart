@@ -76,7 +76,7 @@ class MyApp extends StatelessWidget {
             return MediaQuery(data: limitedMedia, child: widget!);
           },
 
-          initialRoute: initialRoute,
+          initialRoute: '/',
 
           routes: {
             "/": (context) => const GuestHomePage(),
@@ -87,7 +87,6 @@ class MyApp extends StatelessWidget {
             '/merchantRegister': (context) => const MerchantRegisterPage(),
             '/storeRegister': (context) => const StoreRegisterPage(),
 
-   
             AppRoutes.merchantDashboard: (context) => const MerchantHomePage(
               requestData: StoreCreateRequest(
                 nome: 'Teste',
