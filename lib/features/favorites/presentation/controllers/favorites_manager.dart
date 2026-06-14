@@ -15,7 +15,7 @@ class FavoritesManager extends ChangeNotifier {
   }
 
   void toggle(StoreDto store) {
-    final exists = isFavorite(store.id!);
+    final exists = isFavorite(store.id);
 
     if (exists) {
       _favorites.removeWhere((item) => item.id == store.id);

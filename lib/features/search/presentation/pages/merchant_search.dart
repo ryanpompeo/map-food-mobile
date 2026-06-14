@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
 class MerchantSearch extends StatefulWidget {
@@ -15,7 +17,11 @@ class MerchantSearch extends StatefulWidget {
 
 class _MerchantSearchPage extends State<MerchantSearch> {
   final TextEditingController _searchController = TextEditingController();
+  final StoreService _storeService = StoreService();
+
   int _selectedFilterIndex = 0;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   final List<String> _filtros = [
     'Todos',
@@ -40,24 +46,6 @@ class _MerchantSearchPage extends State<MerchantSearch> {
     'Pipoca': 8,
   };
 
-  final List<StoreDto> _mockDatabase = [
-    StoreDto(
-      id: 1,
-      statusLoja: 'ATIVA',
-      nome: 'Bebidas Refrescantes do Zé',
-      descricao:
-          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia',
-      categoria: 'Bebidas',
-      imagens: [
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      ],
-      avaliacao: 4.5,
-    ),
-  ];
-
   List<StoreDto> _destaques = [];
   List<StoreDto> _populares = [];
 
@@ -67,34 +55,52 @@ class _MerchantSearchPage extends State<MerchantSearch> {
     _loadStores();
   }
 
-  void _loadStores({int? categoryId, String? query}) {
-    List<StoreDto> results = _mockDatabase;
-
-    if (query != null && query.isNotEmpty) {
-      results = results
-          .where(
-            (store) => store.nome.toLowerCase().contains(query.toLowerCase()),
-          )
-          .toList();
-    } else if (categoryId != null) {
-      final categoryName = _categoryMapping.entries
-          .firstWhere(
-            (entry) => entry.value == categoryId,
-            orElse: () => const MapEntry('', 0),
-          )
-          .key;
-
-      if (categoryName.isNotEmpty) {
-        results = results
-            .where((store) => store.categoria == categoryName)
-            .toList();
-      }
-    }
+  Future<void> _loadStores({int? categoryId, String? query}) async {
+    if (_isLoading) return;
 
     setState(() {
-      _destaques = results;
-      _populares = results.take(3).toList();
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      List<StoreDto> results;
+
+      if (query != null && query.trim().isNotEmpty) {
+        results = await _storeService.searchByName(query.trim());
+      } else if (categoryId != null) {
+        results = await _storeService.getByCategory(categoryId);
+      } else {
+        // Comerciante vê todos os estabelecimentos cadastrados (ativos e inativos)
+        results = await _storeService.getAll();
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _destaques = results;
+        _populares = results.take(5).toList();
+      });
+    } on NetworkException {
+      if (!mounted) return;
+      setState(() => _errorMessage = 'Sem conexão. Verifique sua internet.');
+    } on AppException catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _onSearchSubmit(String val) async {
+    if (val.trim().isEmpty) {
+      setState(() => _selectedFilterIndex = 0);
+      await _loadStores();
+    } else {
+      await _loadStores(query: val);
+    }
   }
 
   @override
@@ -110,62 +116,203 @@ class _MerchantSearchPage extends State<MerchantSearch> {
 
     final itemsToDisplay = isTodos
         ? _destaques
-        : _destaques
-              .where((item) => item?.categoria == selectedCategory)
-              .toList();
+        : _destaques.where((item) => item.categoria == selectedCategory).toList();
 
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SearchFieldWidget(
-                      controller: _searchController,
-                      onSearch: (val) => _loadStores(query: val),
+        child: RefreshIndicator(
+          color: ColorsPalette.redComponents,
+          onRefresh: () => _loadStores(
+            categoryId: _selectedFilterIndex == 0
+                ? null
+                : _categoryMapping[_filtros[_selectedFilterIndex]],
+          ),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MerchantSearchField(
+                        controller: _searchController,
+                        onSearch: _onSearchSubmit,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      _MerchantCategoryFilters(
+                        filtros: _filtros,
+                        selectedIndex: _selectedFilterIndex,
+                        onFilterChanged: (index) {
+                          setState(() => _selectedFilterIndex = index);
+                          _searchController.clear();
+                          final category = _filtros[index];
+                          final id = _categoryMapping[category];
+                          _loadStores(categoryId: id);
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Estado: Carregando
+              if (_isLoading)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _MerchantLoadingState(),
+                )
+
+              // Estado: Erro
+              else if (_errorMessage != null)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _MerchantErrorState(
+                    message: _errorMessage!,
+                    onRetry: () => _loadStores(
+                      categoryId: _selectedFilterIndex == 0
+                          ? null
+                          : _categoryMapping[_filtros[_selectedFilterIndex]],
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    CategoryFiltersWidget(
-                      filtros: _filtros,
-                      selectedIndex: _selectedFilterIndex,
-                      onFilterChanged: (index) {
-                        setState(() {
-                          _selectedFilterIndex = index;
-                        });
-                        final category = _filtros[index];
-                        final id = _categoryMapping[category];
-                        _loadStores(categoryId: id);
-                      },
+                  ),
+                )
+
+              // Estado: Vazio
+              else if (_destaques.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: _MerchantEmptyState(
+                    message: _searchController.text.trim().isNotEmpty
+                        ? 'Nenhum comércio encontrado para "${_searchController.text.trim()}"'
+                        : 'Nenhum estabelecimento cadastrado ainda.',
+                  ),
+                )
+
+              // Estado: Com dados
+              else ...[
+                if (isTodos)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                      child: _MerchantHorizontalList(items: itemsToDisplay),
                     ),
-                    const SizedBox(height: AppSpacing.xl),
-                  ],
+                  )
+                else
+                  _MerchantVerticalList(items: itemsToDisplay),
+
+                if (isTodos)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 120.0),
+                      child: _MerchantPopularesSection(populares: _populares),
+                    ),
+                  )
+                else
+                  const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Widgets de estado
+// ---------------------------------------------------------------------------
+
+class _MerchantLoadingState extends StatelessWidget {
+  const _MerchantLoadingState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            color: ColorsPalette.redComponents,
+            strokeWidth: 2.5,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Buscando comércios...',
+            style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MerchantErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _MerchantErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: ColorsPalette.redComponents.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.wifiOff,
+                size: 36.0,
+                color: ColorsPalette.redComponents,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Ops! Algo deu errado',
+              style: AppText.subtitulo(context).copyWith(
+                fontWeight: FontWeight.w800,
+                color: ColorsPalette.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              style: AppText.corpo(context).copyWith(
+                color: ColorsPalette.greyText,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(LucideIcons.refreshCw, size: 16.0),
+              label: const Text('Tentar novamente'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorsPalette.redComponents,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xl,
+                  vertical: AppSpacing.md,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               ),
             ),
-            if (isTodos)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                  child: HorizontalDestaqueListWidget(items: itemsToDisplay),
-                ),
-              )
-            else
-              VerticalDestaqueSliverWidget(items: itemsToDisplay),
-            if (isTodos)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 120.0),
-                  child: PopularesSectionWidget(populares: _populares),
-                ),
-              )
-            else
-              const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
           ],
         ),
       ),
@@ -173,12 +320,52 @@ class _MerchantSearchPage extends State<MerchantSearch> {
   }
 }
 
-class SearchFieldWidget extends StatelessWidget {
+class _MerchantEmptyState extends StatelessWidget {
+  final String message;
+
+  const _MerchantEmptyState({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(LucideIcons.store, size: 36.0, color: Colors.grey.shade400),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              message,
+              style: AppText.corpo(context).copyWith(
+                color: ColorsPalette.greyText,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Campo de Busca
+// ---------------------------------------------------------------------------
+
+class _MerchantSearchField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onSearch;
 
-  const SearchFieldWidget({
-    super.key,
+  const _MerchantSearchField({
     required this.controller,
     required this.onSearch,
   });
@@ -202,14 +389,11 @@ class SearchFieldWidget extends StatelessWidget {
         ),
         child: TextField(
           controller: controller,
-          style: AppText.corpo(
-            context,
-          ).copyWith(fontWeight: FontWeight.w500, color: ColorsPalette.black),
+          style: AppText.corpo(context)
+              .copyWith(fontWeight: FontWeight.w500, color: ColorsPalette.black),
           decoration: InputDecoration(
-            hintText: "Buscar por comércios...",
-            hintStyle: AppText.corpo(
-              context,
-            ).copyWith(color: Colors.grey.shade400),
+            hintText: 'Buscar por comércios...',
+            hintStyle: AppText.corpo(context).copyWith(color: Colors.grey.shade400),
             prefixIcon: const Icon(
               LucideIcons.search,
               color: ColorsPalette.redComponents,
@@ -218,6 +402,7 @@ class SearchFieldWidget extends StatelessWidget {
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
           ),
+          textInputAction: TextInputAction.search,
           onSubmitted: onSearch,
         ),
       ),
@@ -225,13 +410,16 @@ class SearchFieldWidget extends StatelessWidget {
   }
 }
 
-class CategoryFiltersWidget extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Filtros de Categoria
+// ---------------------------------------------------------------------------
+
+class _MerchantCategoryFilters extends StatelessWidget {
   final List<String> filtros;
   final int selectedIndex;
   final ValueChanged<int> onFilterChanged;
 
-  const CategoryFiltersWidget({
-    super.key,
+  const _MerchantCategoryFilters({
     required this.filtros,
     required this.selectedIndex,
     required this.onFilterChanged,
@@ -248,11 +436,9 @@ class CategoryFiltersWidget extends StatelessWidget {
           final isSelected = index == selectedIndex;
           return GestureDetector(
             onTap: () => onFilterChanged(index),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 10.0,
-              ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               decoration: BoxDecoration(
                 color: isSelected ? ColorsPalette.black : ColorsPalette.white,
                 borderRadius: BorderRadius.circular(100.0),
@@ -273,48 +459,72 @@ class CategoryFiltersWidget extends StatelessWidget {
   }
 }
 
-class HorizontalDestaqueListWidget extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Lista Horizontal de Destaques
+// ---------------------------------------------------------------------------
+
+class _MerchantHorizontalList extends StatelessWidget {
   final List<StoreDto> items;
 
-  const HorizontalDestaqueListWidget({super.key, required this.items});
+  const _MerchantHorizontalList({required this.items});
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
 
-    return SizedBox(
-      height: 280.0,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16.0),
-        itemBuilder: (context, index) {
-          return SizedBox(
-            width: 280.0,
-            child: DestaqueCardWidget(destaque: items[index]),
-          );
-        },
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Text(
+            'Todos os comércios',
+            style: AppText.subtitulo(context).copyWith(
+              fontWeight: FontWeight.w800,
+              color: ColorsPalette.black,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          height: 280.0,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16.0),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: 280.0,
+                child: _MerchantDestaqueCard(destaque: items[index]),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
 
-class DestaqueCardWidget extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Card de Destaque (versão comerciante — sem botão de favorito, mostra status)
+// ---------------------------------------------------------------------------
+
+class _MerchantDestaqueCard extends StatelessWidget {
   final StoreDto destaque;
 
-  const DestaqueCardWidget({super.key, required this.destaque});
+  const _MerchantDestaqueCard({required this.destaque});
 
   @override
   Widget build(BuildContext context) {
+    final bool isAtiva = destaque.statusLoja.toUpperCase() == 'ATIVA';
+
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => MoreInfoStorePage(store: destaque),
-          ),
+          MaterialPageRoute(builder: (context) => MoreInfoStorePage(store: destaque)),
         );
       },
       borderRadius: BorderRadius.circular(24.0),
@@ -345,8 +555,7 @@ class DestaqueCardWidget extends StatelessWidget {
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(16.0),
                   ),
-                  child:
-                      destaque.imagens != null && destaque.imagens!.isNotEmpty
+                  child: destaque.imagens != null && destaque.imagens!.isNotEmpty
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(16.0),
                           child: Image.network(
@@ -359,11 +568,41 @@ class DestaqueCardWidget extends StatelessWidget {
                             ),
                           ),
                         )
-                      : Icon(
-                          LucideIcons.image,
-                          size: 48.0,
-                          color: Colors.grey.shade300,
+                      : Icon(LucideIcons.image, size: 48.0, color: Colors.grey.shade300),
+                ),
+                // Badge de status
+                Positioned(
+                  top: 12.0,
+                  left: 12.0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                    decoration: BoxDecoration(
+                      color: (isAtiva ? Colors.green : Colors.grey).withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(100.0),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
                         ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isAtiva ? 'Aberto' : 'Fechado',
+                          style: AppText.legenda(context).copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -386,14 +625,10 @@ class DestaqueCardWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Row(
                 children: [
-                  Icon(
-                    LucideIcons.star,
-                    color: Colors.amber.shade500,
-                    size: 14,
-                  ),
+                  Icon(LucideIcons.star, color: Colors.amber.shade500, size: 14),
                   const SizedBox(width: 4),
                   Text(
-                    "${destaque.avaliacao ?? 'Novo'} • ${destaque.categoria ?? 'Geral'}",
+                    '${destaque.avaliacao != null ? destaque.avaliacao!.toStringAsFixed(1) : 'Novo'} • ${destaque.categoria}',
                     style: AppText.legenda(context).copyWith(
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.w600,
@@ -411,10 +646,14 @@ class DestaqueCardWidget extends StatelessWidget {
   }
 }
 
-class VerticalDestaqueSliverWidget extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Lista Vertical (por categoria)
+// ---------------------------------------------------------------------------
+
+class _MerchantVerticalList extends StatelessWidget {
   final List<StoreDto> items;
 
-  const VerticalDestaqueSliverWidget({super.key, required this.items});
+  const _MerchantVerticalList({required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -427,10 +666,8 @@ class VerticalDestaqueSliverWidget extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              "Nenhum comércio encontrado para esta categoria",
-              style: AppText.corpo(
-                context,
-              ).copyWith(color: ColorsPalette.greyText),
+              'Nenhum comércio encontrado para esta categoria',
+              style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
             ),
           ),
         ),
@@ -440,31 +677,36 @@ class VerticalDestaqueSliverWidget extends StatelessWidget {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       sliver: SliverList(
-        delegate: SliverChildBuilderDelegate((context, index) {
-          return Padding(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: StoreListItemWidget(store: items[index]),
-          );
-        }, childCount: items.length),
+            child: _MerchantStoreListItem(store: items[index]),
+          ),
+          childCount: items.length,
+        ),
       ),
     );
   }
 }
 
-class StoreListItemWidget extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Item de lista de loja (linha) — versão comerciante
+// ---------------------------------------------------------------------------
+
+class _MerchantStoreListItem extends StatelessWidget {
   final StoreDto store;
 
-  const StoreListItemWidget({super.key, required this.store});
+  const _MerchantStoreListItem({required this.store});
 
   @override
   Widget build(BuildContext context) {
+    final bool isAtiva = store.statusLoja.toUpperCase() == 'ATIVA';
+
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => MoreInfoStorePage(store: store),
-          ),
+          MaterialPageRoute(builder: (context) => MoreInfoStorePage(store: store)),
         );
       },
       borderRadius: BorderRadius.circular(16.0),
@@ -505,11 +747,7 @@ class StoreListItemWidget extends StatelessWidget {
                         ),
                       ),
                     )
-                  : Icon(
-                      LucideIcons.image,
-                      size: 24.0,
-                      color: Colors.grey.shade400,
-                    ),
+                  : Icon(LucideIcons.image, size: 24.0, color: Colors.grey.shade400),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -529,26 +767,42 @@ class StoreListItemWidget extends StatelessWidget {
                   const SizedBox(height: 4.0),
                   Row(
                     children: [
-                      Icon(
-                        LucideIcons.star,
-                        color: Colors.amber.shade500,
-                        size: 12,
-                      ),
+                      Icon(LucideIcons.star, color: Colors.amber.shade500, size: 12),
                       const SizedBox(width: 4),
-                      Text(
-                        "${store.avaliacao ?? 'Novo'} • ${store.categoria ?? 'Geral'}",
-                        style: AppText.legenda(context).copyWith(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          '${store.avaliacao != null ? store.avaliacao!.toStringAsFixed(1) : 'Novo'} • ${store.categoria}',
+                          style: AppText.legenda(context).copyWith(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                   const SizedBox(height: 6.0),
                 ],
+              ),
+            ),
+            // Badge de status (em vez do coração)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              decoration: BoxDecoration(
+                color: isAtiva
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(100.0),
+              ),
+              child: Text(
+                isAtiva ? 'Aberto' : 'Fechado',
+                style: AppText.legenda(context).copyWith(
+                  color: isAtiva ? Colors.green.shade700 : Colors.grey.shade600,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11.0,
+                ),
               ),
             ),
           ],
@@ -558,13 +812,19 @@ class StoreListItemWidget extends StatelessWidget {
   }
 }
 
-class PopularesSectionWidget extends StatelessWidget {
+// ---------------------------------------------------------------------------
+// Seção "Populares" (primeiros da lista da API)
+// ---------------------------------------------------------------------------
+
+class _MerchantPopularesSection extends StatelessWidget {
   final List<StoreDto> populares;
 
-  const PopularesSectionWidget({super.key, required this.populares});
+  const _MerchantPopularesSection({required this.populares});
 
   @override
   Widget build(BuildContext context) {
+    if (populares.isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -574,14 +834,14 @@ class PopularesSectionWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Mais populares",
+                'Mais cadastrados',
                 style: AppText.subtitulo(context).copyWith(
                   fontWeight: FontWeight.w800,
                   color: ColorsPalette.black,
                 ),
               ),
               Text(
-                "ver todas",
+                'ver todos',
                 style: AppText.legenda(context).copyWith(
                   color: ColorsPalette.greyText,
                   fontWeight: FontWeight.w600,
@@ -601,6 +861,8 @@ class PopularesSectionWidget extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(width: 12.0),
             itemBuilder: (context, index) {
               final item = populares[index];
+              final bool isAtiva = item.statusLoja.toUpperCase() == 'ATIVA';
+
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -636,10 +898,7 @@ class PopularesSectionWidget extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.8),
-                            ],
+                            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                             stops: const [0.5, 1.0],
                           ),
                         ),
@@ -648,31 +907,19 @@ class PopularesSectionWidget extends StatelessWidget {
                         top: 10.0,
                         right: 10.0,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8.0,
-                            vertical: 4.0,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.4),
+                            color: (isAtiva ? Colors.green : Colors.grey)
+                                .withValues(alpha: 0.85),
                             borderRadius: BorderRadius.circular(100.0),
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                LucideIcons.star,
-                                color: Colors.white,
-                                size: 10.0,
-                              ),
-                              const SizedBox(width: 4.0),
-                              Text(
-                                "${item.avaliacao ?? 'Novo'}",
-                                style: AppText.legenda(context).copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10.0,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            isAtiva ? 'Aberto' : 'Fechado',
+                            style: AppText.legenda(context).copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10.0,
+                            ),
                           ),
                         ),
                       ),
@@ -695,6 +942,21 @@ class PopularesSectionWidget extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4.0),
+                            if (item.avaliacao != null)
+                              Row(
+                                children: [
+                                  const Icon(LucideIcons.star,
+                                      color: Colors.amber, size: 10.0),
+                                  const SizedBox(width: 3.0),
+                                  Text(
+                                    item.avaliacao!.toStringAsFixed(1),
+                                    style: AppText.legenda(context).copyWith(
+                                      color: Colors.white70,
+                                      fontSize: 10.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                       ),
@@ -706,115 +968,6 @@ class PopularesSectionWidget extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class LoginWallHelper {
-  static void showLoginWallBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext bc) {
-        return Container(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(AppRadius.xl),
-              topRight: Radius.circular(AppRadius.xl),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40.0,
-                height: 4.0,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: ColorsPalette.redComponents.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  LucideIcons.heart,
-                  color: ColorsPalette.redComponents,
-                  size: 32.0,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                "Salve seus comércios favoritos!",
-                textAlign: TextAlign.center,
-                style: AppText.subtitulo(context).copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: ColorsPalette.black,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                "Crie uma conta gratuita em segundos para salvar, avaliar e denunciar comércios na sua cidade.",
-                textAlign: TextAlign.center,
-                style: AppText.corpo(
-                  context,
-                ).copyWith(color: ColorsPalette.greyText, height: 1.3),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              SizedBox(
-                width: double.infinity,
-                height: 52.0,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/accountType');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsPalette.redComponents,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    "Criar Conta Gratuita",
-                    style: AppText.botao(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/login');
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  child: Text(
-                    "Já tenho uma conta",
-                    style: AppText.legenda(context).copyWith(
-                      color: ColorsPalette.blackDetails,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-          ),
-        );
-      },
     );
   }
 }
