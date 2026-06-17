@@ -14,8 +14,8 @@ class MerchantProfilePage extends StatelessWidget {
 
   const MerchantProfilePage({
     super.key,
-    this.userName = 'Nome do Usuária',
-    this.userEmail = 'usuario@email.com',
+    required this.userName,
+    required this.userEmail,
   });
   void _logout(BuildContext context) {
     showDialog(

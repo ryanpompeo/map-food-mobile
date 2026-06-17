@@ -17,7 +17,6 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   int _selectedFilterIndex = 0;
-
   final List<String> _filtros = [
     'Todos',
     'Lanches e Hot Dogs',
@@ -25,9 +24,12 @@ class _SearchPageState extends State<SearchPage> {
     'Pastel e Salgados',
     'Doces e Sobremesas',
     'Bebidas',
-    'Gelados e Açaí',
+    'Gelatos e Açaí',
     'Milho e Pamonha',
     'Pipoca',
+    'Produtos Artesanais',
+    'Food Trucks',
+    'Outros',
   ];
 
   final Map<String, int> _categoryMapping = {
@@ -36,29 +38,63 @@ class _SearchPageState extends State<SearchPage> {
     'Pastel e Salgados': 2,
     'Doces e Sobremesas': 3,
     'Bebidas': 4,
-    'Gelados e Açaí': 5,
+    'Gelatos e Açaí': 5,
     'Milho e Pamonha': 7,
     'Pipoca': 8,
+    'Produtos Artesanais': 9,
+    'Food Trucks': 10,
+    'Outros': 11,
   };
 
-  final List<StoreDto> _mockDatabase = [
+  final List<StoreDto> mockDatabase = [
+    StoreDto(
+      id: 3,
+      statusLoja: 'ATIVA',
+      nome: 'Salgado do Zissimopulos',
+      descricao: 'O salgado mais vendido do COTIL 🤤',
+      categoria: 'Pastel e Salgados',
+      imagens: [
+        'assets/images/e-s-capa.jpeg',
+        'assets/images/e-s-2.jpeg',
+        'assets/images/e-s-1.jpeg',
+      ],
+      avaliacao: 5,
+    ),
     StoreDto(
       id: 1,
       statusLoja: 'ATIVA',
-      nome: 'Bebidas Refrescantes do Zé',
+      nome: 'Brotesco Bebida',
       descricao:
-          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia.',
+          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia',
       categoria: 'Bebidas',
       imagens: [
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1625740822008-e45abf4e01d5?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cmVmcmlnZXJhbnRlfGVufDB8fDB8fHww',
+
+        'https://images.unsplash.com/photo-1543253687-c931c8e01820?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHJlZnJpZ2VyYW50ZXxlbnwwfHwwfHx8MA%3D%3D',
+
+        'https://images.unsplash.com/photo-1546695259-ad30ff3fd643?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzF8fHJlZnJpZ2VyYW50ZXxlbnwwfHwwfHx8MA%3D%3D',
+
+        'https://images.unsplash.com/photo-1738569594383-d7d6516eb42f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Njh8fHJlZnJpZ2VyYW50ZXxlbnwwfHwwfHx8MA%3D%3D',
       ],
       avaliacao: 4.5,
     ),
-  ];
+    StoreDto(
+      id: 2,
+      statusLoja: 'ATIVA',
+      nome: 'Guira Picolé',
+      descricao:
+          'A melhor seleção de sorvetes da região, com ingredientes frescos e selecionados para proporcionar uma experiência única para nossos clientes',
+      categoria: 'Gelatos e Açaí',
+      imagens: [
+        'https://images.unsplash.com/photo-1599849338190-0ed15f300519?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHBpY29sJUMzJUE5fGVufDB8fDB8fHww',
 
+        'https://images.unsplash.com/photo-1699400203948-b309ddf47443?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHBpY29sJUMzJUE5fGVufDB8fDB8fHww',
+
+        'https://images.unsplash.com/photo-1572269579647-d941424e3b82?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzF8fHBpY29sJUMzJUE5fGVufDB8fDB8fHww',
+      ],
+      avaliacao: 4.7,
+    ),
+  ];
   List<StoreDto> _destaques = [];
   List<StoreDto> _populares = [];
 
@@ -69,7 +105,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _loadStores({int? categoryId, String? query}) {
-    List<StoreDto> results = _mockDatabase;
+    List<StoreDto> results = mockDatabase;
 
     if (query != null && query.isNotEmpty) {
       results = results
@@ -94,7 +130,7 @@ class _SearchPageState extends State<SearchPage> {
 
     setState(() {
       _destaques = results;
-      _populares = results.take(3).toList();
+      _populares = results.take(1).toList();
     });
   }
 
@@ -192,7 +228,7 @@ class SearchFieldWidget extends StatelessWidget {
         height: 54.0,
         decoration: BoxDecoration(
           color: ColorsPalette.white,
-          borderRadius: BorderRadius.circular(100.0),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
               color: ColorsPalette.black.withValues(alpha: 0.03),
@@ -283,21 +319,57 @@ class HorizontalDestaqueListWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
 
-    return SizedBox(
-      height: 280.0,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16.0),
-        itemBuilder: (context, index) {
-          return SizedBox(
-            width: 280.0,
-            child: DestaqueCardWidget(destaque: items[index]),
-          );
-        },
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Em Alta",
+                style: AppText.subtitulo(context).copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: ColorsPalette.black,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ViewMostPopular()),
+                  );
+                },
+                child: Text(
+                  "ver todas",
+                  style: AppText.legenda(context).copyWith(
+                    color: ColorsPalette.greyText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          height: 280.0,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16.0),
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: 280.0,
+                child: DestaqueCardWidget(destaque: items[index]),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -587,12 +659,16 @@ class StoreListItemWidget extends StatelessWidget {
 }
 
 class PopularesSectionWidget extends StatelessWidget {
+  // CORREÇÃO: Variável marcada como 'final' e sem a lista hardcoded.
+  // Agora ela usará 100% dos dados que a SearchPage enviar.
   final List<StoreDto> populares;
 
   const PopularesSectionWidget({super.key, required this.populares});
 
   @override
   Widget build(BuildContext context) {
+    if (populares.isEmpty) return const SizedBox.shrink(); // Segurança extra
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -602,7 +678,7 @@ class PopularesSectionWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Mais populares",
+                "Populares",
                 style: AppText.subtitulo(context).copyWith(
                   fontWeight: FontWeight.w800,
                   color: ColorsPalette.black,

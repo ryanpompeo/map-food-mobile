@@ -122,7 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                   height: 1.1,
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
               Text(
                 "Acesse sua conta para continuar no MapFood",
                 style: AppText.secundario(
@@ -148,9 +148,9 @@ class _LoginPageState extends State<LoginPage> {
                           padding: const EdgeInsets.symmetric(vertical: 12.0),
                           decoration: BoxDecoration(
                             color: _tipoLogin == 'CONSUMIDOR'
-                                ? ColorsPalette.redComponents
+                                ? ColorsPalette.blackComponents
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -165,6 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: GestureDetector(
                         onTap: () => setState(() => _tipoLogin = 'COMERCIANTE'),
@@ -234,7 +235,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ],
 
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
 
               Align(
                 alignment: Alignment.centerRight,
@@ -242,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Recuperação de senha em breve.'),
+                        content: Text('Recuperação de senha em breve'),
                       ),
                     );
                   },
@@ -265,10 +266,13 @@ class _LoginPageState extends State<LoginPage> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _fazerLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsPalette.redComponents,
+                    backgroundColor: _tipoLogin == 'COMERCIANTE'
+                        ? ColorsPalette.redComponents
+                        : ColorsPalette.blackComponents,
                     foregroundColor: ColorsPalette.white,
-                    disabledBackgroundColor: ColorsPalette.redComponents
-                        .withValues(alpha: 0.6),
+                    disabledBackgroundColor: ColorsPalette.black.withValues(
+                      alpha: 0.6,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),

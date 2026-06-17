@@ -1,20 +1,16 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/consumer/data/models/consumer_register_request.dart';
 import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_profile_page.dart';
-
 import 'package:map_food/features/consumer/presentation/widgets/consumer_bottom_bar.dart';
 import 'package:map_food/features/search/presentation/pages/consumer_search.dart';
 
-
 class ConsumerHomePage extends StatefulWidget {
-  final ConsumerRegisterRequest requestData;
-
-  const ConsumerHomePage({super.key, required this.requestData});
+  const ConsumerHomePage({super.key});
 
   @override
   State<ConsumerHomePage> createState() => _ConsumerHomePage();
@@ -23,6 +19,10 @@ class ConsumerHomePage extends StatefulWidget {
 class _ConsumerHomePage extends State<ConsumerHomePage> {
   int _selectedIndex = 0;
   String _filtroAtivo = 'Todos';
+
+  String _userName = '';
+  String _userEmail = '';
+  bool _sessionLoaded = false;
 
   final List<String> _filtrosMapa = [
     'Todos',
@@ -36,6 +36,23 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
     'Pipoca',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSession();
+  }
+
+  Future<void> _loadSession() async {
+    final session = await AuthStorage.getSession();
+    if (mounted) {
+      setState(() {
+        _userName = session?.nome ?? '';
+        _userEmail = session?.email ?? '';
+        _sessionLoaded = true;
+      });
+    }
+  }
+
   void _onItemTapped(int index) {
     if (_selectedIndex != index) {
       setState(() => _selectedIndex = index);
@@ -44,6 +61,12 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_sessionLoaded) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       body: Stack(
@@ -55,8 +78,8 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
               ConsumerSearch(),
               ConsumerFavoritesPage(),
               ConsumerProfilePage(
-                userName: widget.requestData.nome,
-                userEmail: widget.requestData.email,
+                userName: _userName,
+                userEmail: _userEmail,
               ),
             ],
           ),

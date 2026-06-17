@@ -4,6 +4,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
+import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
 class GuestProfilePage extends StatelessWidget {
   const GuestProfilePage({super.key});
@@ -53,12 +54,12 @@ class GuestProfilePage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
+                          padding: EdgeInsets.all(AppSpacing.md),
                           decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             color: ColorsPalette.redComponents.withValues(
                               alpha: 0.08,
                             ),
-                            shape: BoxShape.circle,
                           ),
                           child: Icon(
                             LucideIcons.userPlus,
@@ -104,11 +105,22 @@ class GuestProfilePage extends StatelessWidget {
                               shadowColor: ColorsPalette.redComponents
                                   .withValues(alpha: 0.5),
                             ),
-                            child: Text(
-                              "Criar Conta",
-                              style: AppText.botao(
-                                context,
-                              ).copyWith(fontWeight: FontWeight.bold),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Criar Conta",
+                                  style: AppText.botao(
+                                    context,
+                                  ).copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Icon(
+                                  LucideIcons.chevronRight,
+                                  color: Colors.white,
+                                  size: AppIconSize.md,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -210,7 +222,12 @@ class GuestProfilePage extends StatelessWidget {
                 context: context,
                 icon: LucideIcons.fileText,
                 title: "Termos de Uso e Privacidade",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TermosPage()),
+                  );
+                },
               ),
               const SizedBox(height: AppSpacing.xxl),
               const SizedBox(height: 100.0),
@@ -240,14 +257,13 @@ class GuestProfilePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: ColorsPalette.redComponents.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: Colors.grey.shade200),
               ),
               child: Icon(
                 icon,
                 size: AppIconSize.md,
-                color: ColorsPalette.blackDetails,
+                color: ColorsPalette.redComponents,
               ),
             ),
             const SizedBox(width: AppSpacing.md),

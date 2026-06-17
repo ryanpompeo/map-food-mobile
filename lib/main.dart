@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/consumer/data/models/consumer_register_request.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/auth/presentation/pages/login_page.dart';
 import 'package:map_food/features/auth/presentation/pages/merchant_register_page.dart';
@@ -89,23 +88,15 @@ class MyApp extends StatelessWidget {
 
             AppRoutes.merchantDashboard: (context) => const MerchantHomePage(
               requestData: StoreCreateRequest(
-                nome: 'Teste',
+                nome: '',
                 statusLoja: 'ATIVO',
-                categoriaIds: [1, 2, 3],
+                categoriaIds: [],
               ),
               fotoDestaqueId: 0,
               fotosGaleriaIds: [],
             ),
 
-            '/consumerHome': (context) => const ConsumerHomePage(
-              requestData: ConsumerRegisterRequest(
-                nome: 'Nome Teste',
-                email: 'email@email.com',
-                cpf: '12345678910',
-                celular: '19498489',
-                senha: 'senha1234',
-              ),
-            ),
+            '/consumerHome': (context) => const ConsumerHomePage(),
           },
         );
       },

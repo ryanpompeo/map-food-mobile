@@ -5,7 +5,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 
-
 Widget optionCard({
   required String title,
   required String description,

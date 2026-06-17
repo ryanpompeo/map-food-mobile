@@ -24,9 +24,7 @@ class MerchantDashboard extends StatefulWidget {
 }
 
 class _MerchantDashboardState extends State<MerchantDashboard> {
-
   bool _isEditing = false;
-
 
   late TextEditingController _nomeController;
   late TextEditingController _descricaoController;
@@ -47,7 +45,6 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     {'id': 8, 'nome': 'Pipoca'},
   ];
 
- 
   final List<Map<String, dynamic>> _avaliacoesMock = [
     {
       'nome': 'Carlos Silva',
@@ -182,7 +179,6 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   }
 
   void _efetivarSalvamento() {
-    
     setState(() {
       _isEditing = false;
     });
@@ -197,7 +193,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   void _cancelarEdicao() {
     setState(() {
       _isEditing = false;
-      _inicializarDados(); 
+      _inicializarDados();
     });
   }
 
@@ -215,7 +211,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-        
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -276,7 +272,6 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             _buildSecaoFotos(),
             const SizedBox(height: AppSpacing.xl),
 
-       
             _buildCampoTexto(
               "Nome do Comércio",
               _nomeController,
@@ -289,17 +284,15 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            
             _buildCategoriasSection(),
 
             const SizedBox(height: AppSpacing.xxl),
             const Divider(thickness: 0.5),
             const SizedBox(height: AppSpacing.lg),
 
-          
             _buildAvaliacoesSection(),
 
-            const SizedBox(height: 120), 
+            const SizedBox(height: 120),
           ],
         ),
       ),
@@ -332,8 +325,6 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           FloatingActionButtonLocation.miniCenterFloat,
     );
   }
-
-
 
   Widget _buildSecaoFotos() {
     return Column(
@@ -600,7 +591,6 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           children: _categoriasBase.map((cat) {
             final isSelected = _categoriasSelecionadas.contains(cat['id']);
 
-   
             if (!_isEditing && !isSelected) return const SizedBox.shrink();
 
             return GestureDetector(

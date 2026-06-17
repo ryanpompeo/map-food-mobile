@@ -1,9 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:map_food/core/ui/widgets/app_form_field_.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -67,7 +69,10 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
     _termosParceiroRecognizer = TapGestureRecognizer()
       ..onTap = () {
-        debugPrint("Abrir tela de Termos de Parceiro");
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TermosPage()),
+        );
       };
   }
 
@@ -86,6 +91,14 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
   Future<void> _cadastrar() async {
     if (_isLoading) return;
+
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    if (!_aceitouTermos) {
+      _mostrarErro('Você precisa aceitar os Termos de Uso.');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -118,14 +131,29 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
       final msg = e.statusCode == 409
           ? 'E-mail, CPF ou CNPJ já cadastrado.'
           : e.message;
-      setState(() => _errorMessage = msg);
+      _mostrarErro(msg);
     } catch (e, st) {
       debugPrint('Erro no cadastro de comerciante: $e');
       debugPrint('$st');
-      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+      _mostrarErro('Erro inesperado. Tente novamente.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _mostrarErro(String msg) {
+    if (!mounted) return;
+    setState(() => _errorMessage = msg);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   @override
@@ -182,6 +210,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "João da Silva",
                   icon: LucideIcons.user,
                   keyboardType: TextInputType.name,
+                  validator: FormValidator.nome,
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -191,6 +220,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   label: "E-mail de Contato",
                   hint: "contato@exemplo.com",
                   icon: LucideIcons.mail,
+                  validator: FormValidator.email,
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -201,6 +231,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "000.000.000-00",
                   icon: LucideIcons.creditCard,
                   keyboardType: TextInputType.number,
+                  validator: FormValidator.cpf,
                   inputFormatters: [_cpfFormatter],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -212,6 +243,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   icon: LucideIcons.building,
                   keyboardType: TextInputType.number,
                   inputFormatters: [_cnpjFormatter],
+                  validator: FormValidator.cnpjOpcional,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -221,6 +253,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "(11) 90000-0000",
                   icon: LucideIcons.smartphone,
                   keyboardType: TextInputType.phone,
+                  validator: FormValidator.telefone,
                   inputFormatters: [_celularFormatter],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -231,6 +264,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   hint: "(11) 4000-0000",
                   icon: LucideIcons.phone,
                   keyboardType: TextInputType.phone,
+                  validator: FormValidator.telefoneOpcional,
                   inputFormatters: [_telefoneFormatter],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -240,6 +274,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   label: "Crie uma Senha",
                   hint: "Mínimo 6 caracteres",
                   icon: LucideIcons.lock,
+                  validator: FormValidator.senha,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -365,9 +400,20 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                               strokeWidth: 2.5,
                             ),
                           )
-                        : Text(
-                            "Começar a vender",
-                            style: AppText.botao(context),
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Criar conta",
+                                style: AppText.botao(context),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Icon(
+                                LucideIcons.chevronRight,
+                                color: ColorsPalette.white,
+                                size: AppIconSize.md,
+                              ),
+                            ],
                           ),
                   ),
                 ),

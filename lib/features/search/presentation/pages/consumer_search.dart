@@ -26,9 +26,12 @@ class _SearchPageState extends State<ConsumerSearch> {
     'Pastel e Salgados',
     'Doces e Sobremesas',
     'Bebidas',
-    'Gelados e Açaí',
+    'Gelatos e Açaí',
     'Milho e Pamonha',
     'Pipoca',
+    'Produtos Artesanais',
+    'Food Trucks',
+    'Outros',
   ];
 
   final Map<String, int> _categoryMapping = {
@@ -37,39 +40,62 @@ class _SearchPageState extends State<ConsumerSearch> {
     'Pastel e Salgados': 2,
     'Doces e Sobremesas': 3,
     'Bebidas': 4,
-    'Gelados e Açaí': 5,
+    'Gelatos e Açaí': 5,
     'Milho e Pamonha': 7,
     'Pipoca': 8,
+    'Produtos Artesanais': 9,
+    'Food Trucks': 10,
+    'Outros': 11,
   };
 
   final List<StoreDto> _mockDatabase = [
     StoreDto(
+      id: 3,
+      statusLoja: 'ATIVA',
+      nome: 'Salgado do Eduardo',
+      descricao:
+          'A melhor seleção de sorvetes da região, com ingredientes frescos e selecionados para proporcionar uma experiência única para nossos clientes',
+      categoria: 'Pastel e Salgados',
+      imagens: [
+        'assets/images/e-s-capa.jpeg',
+        'assets/images/e-s-2.jpeg',
+        'assets/images/e-s-1.jpeg',
+      ],
+      avaliacao: 5,
+    ),
+    StoreDto(
       id: 1,
       statusLoja: 'ATIVA',
-      nome: 'Bebidas Refrescantes do Zé',
+      nome: 'Brotesco Bebida',
       descricao:
-          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia.',
+          'A melhor seleção de bebidas geladas para matar sua sede! De sucos naturais a refrigerantes, temos tudo para refrescar seu dia',
       categoria: 'Bebidas',
       imagens: [
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1655079343782-f0fc4704753e?q=80&w=677&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1625740822008-e45abf4e01d5?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8cmVmcmlnZXJhbnRlfGVufDB8fDB8fHww',
+
+        'https://images.unsplash.com/photo-1543253687-c931c8e01820?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHJlZnJpZ2VyYW50ZXxlbnwwfHwwfHx8MA%3D%3D',
+
+        'https://images.unsplash.com/photo-1546695259-ad30ff3fd643?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzF8fHJlZnJpZ2VyYW50ZXxlbnwwfHwwfHx8MA%3D%3D',
+
+        'https://images.unsplash.com/photo-1738569594383-d7d6516eb42f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Njh8fHJlZnJpZ2VyYW50ZXxlbnwwfHwwfHx8MA%3D%3D',
       ],
       avaliacao: 4.5,
     ),
     StoreDto(
       id: 2,
       statusLoja: 'ATIVA',
-      nome: 'Loja 2',
-      descricao: 'Descrição da Loja 2',
-      categoria: 'Gelados e Açaí',
+      nome: 'Guira Picolé',
+      descricao:
+          'A melhor seleção de sorvetes da região, com ingredientes frescos e selecionados para proporcionar uma experiência única para nossos clientes',
+      categoria: 'Gelatos e Açaí',
       imagens: [
-        'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1599849338190-0ed15f300519?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHBpY29sJUMzJUE5fGVufDB8fDB8fHww',
+
+        'https://images.unsplash.com/photo-1699400203948-b309ddf47443?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fHBpY29sJUMzJUE5fGVufDB8fDB8fHww',
+
+        'https://images.unsplash.com/photo-1572269579647-d941424e3b82?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzF8fHBpY29sJUMzJUE5fGVufDB8fDB8fHww',
       ],
-      avaliacao: 4.2,
+      avaliacao: 4.7,
     ),
   ];
 
@@ -108,7 +134,7 @@ class _SearchPageState extends State<ConsumerSearch> {
 
     setState(() {
       _destaques = results;
-      _populares = results.take(3).toList();
+      _populares = results.take(1).toList();
     });
   }
 
@@ -206,7 +232,7 @@ class SearchFieldWidget extends StatelessWidget {
         height: 54.0,
         decoration: BoxDecoration(
           color: ColorsPalette.white,
-          borderRadius: BorderRadius.circular(100.0),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
               color: ColorsPalette.black.withValues(alpha: 0.03),

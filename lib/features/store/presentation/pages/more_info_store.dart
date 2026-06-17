@@ -11,6 +11,31 @@ class MoreInfoStorePage extends StatelessWidget {
 
   const MoreInfoStorePage({super.key, required this.store});
 
+  // Mock estático isolado dentro da classe
+  final List<Map<String, dynamic>> _avaliacoesMock = const [
+    {
+      'nome': 'Carlos Silva',
+      'estrelas': 5,
+      'comentario':
+          'Sensacional! O pedido superou as expectativas e o atendimento foi rápido.',
+      'data': 'Ontem',
+    },
+    {
+      'nome': 'Ana Beatriz',
+      'estrelas': 4,
+      'comentario':
+          'Muito bom, a qualidade é excelente. Único ponto é que a fila estava um pouco grande no local.',
+      'data': 'Há 2 dias',
+    },
+    {
+      'nome': 'Felipe Martins',
+      'estrelas': 5,
+      'comentario':
+          'Recomendo de olhos fechados. Preço justo e muito saboroso.',
+      'data': 'Há 1 semana',
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +71,7 @@ class MoreInfoStorePage extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: ColorsPalette.whiteBackground,
                     ),
                     child: store.imagens != null && store.imagens!.isNotEmpty
@@ -190,17 +215,21 @@ class MoreInfoStorePage extends StatelessWidget {
                     ),
                   ),
 
+                  const SizedBox(height: AppSpacing.xl),
+                  const Divider(thickness: 0.2),
+                  const SizedBox(height: AppSpacing.lg),
+
+                  // Injeção da Seção de Avaliações
+                  _buildAvaliacoesSection(context),
+
                   const SizedBox(height: 40.0),
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: AppSpacing.xl,
-                        left: AppSpacing.lg,
-                        right: AppSpacing.lg,
-                      ),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                       child: Container(
                         height: 56,
+                        width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(100.0),
                           boxShadow: [
@@ -242,6 +271,136 @@ class MoreInfoStorePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAvaliacoesSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Avaliações",
+                  style: AppText.titulo(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w900),
+                ),
+                Text(
+                  "O que os clientes dizem",
+                  style: AppText.corpo(
+                    context,
+                  ).copyWith(color: ColorsPalette.greyText),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(100.0),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    store.avaliacao?.toString() ?? "4.8",
+                    style: AppText.subtitulo(context).copyWith(
+                      color: Colors.amber.shade900,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+
+        // Mapeando a lista diretamente na Column garante alta performance
+        // e previne bugs de SingleChildScrollView alinhados.
+        ..._avaliacoesMock.map((review) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.grey.shade100,
+                          child: Text(
+                            review['nome'][0],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          review['nome'],
+                          style: AppText.corpo(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      review['data'],
+                      style: AppText.legenda(
+                        context,
+                      ).copyWith(color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: List.generate(5, (index) {
+                    return Icon(
+                      index < review['estrelas']
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
+                      color: Colors.amber,
+                      size: 16,
+                    );
+                  }),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  review['comentario'],
+                  style: AppText.corpo(
+                    context,
+                  ).copyWith(color: Colors.grey.shade700, height: 1.4),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 }

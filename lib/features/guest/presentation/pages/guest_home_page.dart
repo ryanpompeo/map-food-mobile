@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -17,7 +17,6 @@ class GuestHomePage extends StatefulWidget {
 class _GuestHomePageState extends State<GuestHomePage> {
   int _selectedIndex = 0;
 
-
   String _filtroAtivo = 'Todos';
 
   final List<String> _filtrosMapa = [
@@ -27,9 +26,12 @@ class _GuestHomePageState extends State<GuestHomePage> {
     'Pastel e Salgados',
     'Doces e Sobremesas',
     'Bebidas',
-    'Gelados e Açaí',
+    'Gelatos e Açaí',
     'Milho e Pamonha',
     'Pipoca',
+    'Produtos Artesanais',
+    'Food Trucks',
+    'Outros',
   ];
 
   void _onItemTapped(int index) {
@@ -69,7 +71,6 @@ class _GuestHomePageState extends State<GuestHomePage> {
   Widget _buildAbaInicio() {
     return Column(
       children: [
-  
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 12.0,
@@ -133,7 +134,7 @@ class _GuestHomePageState extends State<GuestHomePage> {
                             color: isSelected
                                 ? ColorsPalette.black
                                 : ColorsPalette.white,
-                            borderRadius: BorderRadius.circular(20.0),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: Text(
                             filtro,
@@ -155,14 +156,13 @@ class _GuestHomePageState extends State<GuestHomePage> {
             ],
           ),
         ),
-      
+
         Expanded(child: _buildConteudo()),
       ],
     );
   }
 
   Widget _buildConteudo() {
-
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

@@ -28,8 +28,8 @@ class HowItWorksPage extends StatelessWidget {
                   padding: const EdgeInsets.all(8.0),
                   child: Container(
                     decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       color: ColorsPalette.whiteBackground,
-                      shape: BoxShape.circle,
                     ),
                     child: IconButton(
                       icon: const Icon(
@@ -61,7 +61,7 @@ class HowItWorksPage extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        "Descubra os melhores comércios e vendedores de rua da sua cidade em 3 passos simples.",
+                        "Descubra os melhores comércios e vendedores de rua da sua cidade em 3 passos simples",
                         style: AppText.corpo(
                           context,
                         ).copyWith(color: ColorsPalette.greyText, height: 1.4),
@@ -71,29 +71,44 @@ class HowItWorksPage extends StatelessWidget {
                       _buildStepCard(
                         context,
                         stepNumber: "1",
+                        colorCard: ColorsPalette.redDegrade3,
+                        colorIcon: ColorsPalette.white,
+                        colorBorder: ColorsPalette.redDegrade3,
+                        colorText: ColorsPalette.whiteBackground,
+                        colorStep: ColorsPalette.white.withValues(alpha: 0.8),
                         title: "Explore o Mapa",
                         description:
-                            "Navegue pelo mapa interativo e encontre vendedores de rua próximos a você em tempo real.",
+                            "Navegue pelo mapa interativo e encontre vendedores de rua próximos a você em tempo real",
                         icon: LucideIcons.mapPin,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
                       _buildStepCard(
+                        colorCard: ColorsPalette.whiteBackground,
+                        colorIcon: ColorsPalette.redComponents,
+                        colorText: ColorsPalette.black,
+                        colorBorder: ColorsPalette.transparent,
+                        colorStep: ColorsPalette.greyText,
                         context,
                         stepNumber: "2",
                         title: "Escolha sua Categoria",
                         description:
-                            "Use os filtros inteligentes para encontrar exatamente o que deseja: de espetinhos e lanches até doces e açaí.",
+                            "Use os filtros inteligentes para encontrar exatamente o que deseja: de espetinhos e lanches até doces e açaí",
                         icon: LucideIcons.slidersHorizontal,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
                       _buildStepCard(
+                        colorCard: ColorsPalette.blackComponents,
+                        colorIcon: ColorsPalette.white,
+                        colorText: ColorsPalette.white,
+                        colorBorder: ColorsPalette.transparent,
+                        colorStep: ColorsPalette.greyDetails,
                         context,
                         stepNumber: "3",
                         title: "Siga a Rota",
                         description:
-                            "Toque em 'Visualizar no mapa' para traçar a rota exata até o comércio escolhido e aproveite.",
+                            "Toque em 'Visualizar no mapa' para traçar a rota exata até o comércio escolhido e aproveite",
                         icon: LucideIcons.navigation,
                       ),
 
@@ -116,7 +131,7 @@ class HowItWorksPage extends StatelessWidget {
               child: Container(
                 height: 56,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(100.0),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   boxShadow: [
                     BoxShadow(
                       color: ColorsPalette.redComponents.withValues(alpha: 0.3),
@@ -130,18 +145,29 @@ class HowItWorksPage extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorsPalette.redComponents,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100.0),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     elevation: 0,
                   ),
                   child: Center(
-                    child: Text(
-                      "Começar a explorar",
-                      style: AppText.botao(context).copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.0,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Começar a explorar",
+                          style: AppText.botao(context).copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16.0,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          color: Colors.white,
+                          size: AppIconSize.md,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -157,15 +183,20 @@ class HowItWorksPage extends StatelessWidget {
     BuildContext context, {
     required String stepNumber,
     required String title,
+    required Color colorCard,
+    required Color colorIcon,
+    required Color colorText,
+    required Color colorStep,
+    required Color colorBorder,
     required String description,
     required IconData icon,
   }) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(color: Colors.grey.shade100),
+        color: colorCard,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colorBorder),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -179,17 +210,10 @@ class HowItWorksPage extends StatelessWidget {
         children: [
           Container(
             width: 48.0,
-            height: 48.0,
-            decoration: BoxDecoration(
-              color: ColorsPalette.redComponents.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
+            height: 100,
+
             child: Center(
-              child: Icon(
-                icon,
-                color: ColorsPalette.redComponents,
-                size: AppIconSize.lg,
-              ),
+              child: Icon(icon, color: colorIcon, size: AppIconSize.xl),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -201,7 +225,7 @@ class HowItWorksPage extends StatelessWidget {
                   title,
                   style: AppText.subtitulo(context).copyWith(
                     fontWeight: FontWeight.w800,
-                    color: ColorsPalette.black,
+                    color: colorText,
                     fontSize: 18.0,
                   ),
                 ),
@@ -210,7 +234,7 @@ class HowItWorksPage extends StatelessWidget {
                   description,
                   style: AppText.corpo(
                     context,
-                  ).copyWith(color: ColorsPalette.greyText, height: 1.4),
+                  ).copyWith(color: colorStep, height: 1.4),
                 ),
               ],
             ),

@@ -26,8 +26,19 @@ class AuthService {
         final Map<String, dynamic> json =
             raw is String ? jsonDecode(raw) as Map<String, dynamic> : raw as Map<String, dynamic>;
         final authResponse = AuthResponse.fromJson(json);
-        await AuthStorage.saveSession(authResponse);
-        return authResponse;
+        // Garante que o email esteja sempre salvo na sessão,
+        // mesmo que a API não o retorne na resposta do login.
+        final sessionToSave = authResponse.email.isNotEmpty
+            ? authResponse
+            : AuthResponse(
+                token: authResponse.token,
+                tipo: authResponse.tipo,
+                id: authResponse.id,
+                nome: authResponse.nome,
+                email: email,
+              );
+        await AuthStorage.saveSession(sessionToSave);
+        return sessionToSave;
       } else if (response.statusCode == 401) {
         throw const UnauthorizedException('Credenciais inválidas.');
       } else {

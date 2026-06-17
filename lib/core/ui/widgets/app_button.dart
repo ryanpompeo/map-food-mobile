@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -37,15 +38,28 @@ class AppButton extends StatelessWidget {
           ),
           elevation: 1,
         ),
-        child: Text(
-          text,
-          overflow: TextOverflow.visible,
-          style: AppText.botao(context).copyWith(
-            color: isDark
-                ? ColorsPalette.blackComponents
-                : ColorsPalette.redComponents,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              text,
+              overflow: TextOverflow.visible,
+              style: AppText.botao(context).copyWith(
+                color: isDark
+                    ? ColorsPalette.blackComponents
+                    : ColorsPalette.redComponents,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Icon(
+              LucideIcons.chevronRight,
+              color: isDark
+                  ? ColorsPalette.blackComponents
+                  : ColorsPalette.redComponents,
+              size: AppIconSize.md,
+            ),
+          ],
         ),
       ),
     );

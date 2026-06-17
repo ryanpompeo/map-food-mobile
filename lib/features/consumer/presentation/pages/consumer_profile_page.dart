@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_edit_profile.dart';
 import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
+import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_review_page.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
@@ -41,15 +42,15 @@ class ConsumerProfilePage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         color: ColorsPalette.redComponents.withValues(
                           alpha: 0.15,
                         ),
-                        shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         LucideIcons.logOut,
                         color: ColorsPalette.redComponents,
-                        size: 24,
+                        size: 18,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -170,7 +171,7 @@ class ConsumerProfilePage extends StatelessWidget {
                               height: 64.0,
                               width: 64.0,
                               decoration: BoxDecoration(
-                                color: ColorsPalette.redComponents.withValues(
+                                color: ColorsPalette.blackComponents.withValues(
                                   alpha: 0.1,
                                 ),
                                 shape: BoxShape.circle,
@@ -181,7 +182,7 @@ class ConsumerProfilePage extends StatelessWidget {
                                       ? userName[0].toUpperCase()
                                       : 'U',
                                   style: AppText.titulo(context).copyWith(
-                                    color: ColorsPalette.redComponents,
+                                    color: ColorsPalette.blackComponents,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -228,9 +229,8 @@ class ConsumerProfilePage extends StatelessWidget {
                               _logout(context);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorsPalette.redComponents
-                                  .withValues(alpha: 0.1),
-                              foregroundColor: ColorsPalette.redComponents,
+                              backgroundColor: ColorsPalette.black,
+                              foregroundColor: ColorsPalette.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
@@ -247,7 +247,7 @@ class ConsumerProfilePage extends StatelessWidget {
                                   "Sair da conta",
                                   style: AppText.botao(context).copyWith(
                                     fontWeight: FontWeight.bold,
-                                    color: ColorsPalette.redComponents,
+                                    color: ColorsPalette.white,
                                   ),
                                 ),
                               ],
@@ -384,7 +384,12 @@ class ConsumerProfilePage extends StatelessWidget {
                 context: context,
                 icon: LucideIcons.fileText,
                 title: "Termos de Uso e Privacidade",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TermosPage()),
+                  );
+                },
               ),
 
               const SizedBox(height: AppSpacing.xxl),
@@ -415,14 +420,14 @@ class ConsumerProfilePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: ColorsPalette.redComponents.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: Colors.grey.shade200),
               ),
               child: Icon(
                 icon,
                 size: AppIconSize.md,
-                color: ColorsPalette.blackDetails,
+                color: ColorsPalette.redComponents,
               ),
             ),
             const SizedBox(width: AppSpacing.md),

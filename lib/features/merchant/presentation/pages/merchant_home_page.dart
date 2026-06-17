@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -30,6 +31,10 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   int _selectedIndex = 0;
   String _filtroAtivo = 'Todos';
 
+  String _userName = '';
+  String _userEmail = '';
+  bool _sessionLoaded = false;
+
   final List<String> _filtrosMapa = [
     'Todos',
     'Lanches e Hot Dogs',
@@ -49,7 +54,30 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadSession();
+  }
+
+  Future<void> _loadSession() async {
+    final session = await AuthStorage.getSession();
+    if (mounted) {
+      setState(() {
+        _userName = session?.nome ?? '';
+        _userEmail = session?.email ?? '';
+        _sessionLoaded = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_sessionLoaded) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       body: Stack(
@@ -70,7 +98,10 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                 fotoDestaqueId: widget.fotoDestaqueId,
                 fotosGaleriaIds: widget.fotosGaleriaIds,
               ),
-              MerchantProfilePage(),
+              MerchantProfilePage(
+                userName: _userName,
+                userEmail: _userEmail,
+              ),
             ],
           ),
           Positioned(

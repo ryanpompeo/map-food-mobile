@@ -8,7 +8,6 @@ import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_home_page.dart';
 import 'package:map_food/features/store/presentation/pages/working_page.dart';
 
-
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
 
@@ -255,7 +254,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
                 const SizedBox(height: AppSpacing.xxl),
 
-        
                 Container(
                   width: double.infinity,
                   height: 56.0,

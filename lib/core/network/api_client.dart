@@ -24,11 +24,6 @@ class ApiClient {
 
   static ApiClient get instance => _instance ??= ApiClient._();
 
-  /// Converte [data] para o tipo [T] de forma segura.
-  /// Quando o Dio retorna String em vez de Map (ocorre em Flutter Web com
-  /// alguns servidores), faz o parse manual do JSON antes do cast.
-  /// Body vazio (null ou string vazia) é tratado como resposta válida sem
-  /// payload — evita FormatException em endpoints que retornam 200/201 sem body.
   T _parseResponse<T>(dynamic data) {
     if (data == null || (data is String && data.trim().isEmpty)) {
       return null as T;

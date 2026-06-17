@@ -1,15 +1,18 @@
+import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/widgets/app_form_field_.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/auth/data/services/auth_service.dart';
 import 'package:map_food/features/consumer/data/models/consumer_register_request.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
-import 'package:map_food/app/router/app_routes.dart';
+import 'package:map_food/features/consumer/presentation/pages/consumer_home_page.dart';
 
 class ConsumerRegisterPage extends StatefulWidget {
   const ConsumerRegisterPage({super.key});
@@ -28,6 +31,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
   final _senhaController = TextEditingController();
 
   final _consumerService = ConsumerService();
+  final _authService = AuthService();
 
   bool _obscurePassword = true;
   bool _aceitouTermos = false;
@@ -52,12 +56,18 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
     super.initState();
     _termosRecognizer = TapGestureRecognizer()
       ..onTap = () {
-        debugPrint("Abrir tela de Termos de Uso");
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TermosPage()),
+        );
       };
 
     _privacidadeRecognizer = TapGestureRecognizer()
       ..onTap = () {
-        debugPrint("Abrir tela de Política de Privacidade");
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TermosPage()),
+        );
       };
   }
 
@@ -75,6 +85,14 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
 
   Future<void> _cadastrar() async {
     if (_isLoading) return;
+
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    if (!_aceitouTermos) {
+      _mostrarErro('Você precisa aceitar os Termos de Uso.');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -94,25 +112,57 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
 
       await _consumerService.register(request);
 
+      try {
+        await _authService.login(email, senha, 'CONSUMIDOR');
+      } on AppException {
+        if (!mounted) return;
+        _mostrarErro(
+          'Conta criada, mas não foi possível entrar automaticamente. Faça login.',
+        );
+        Navigator.pushReplacementNamed(
+          context,
+          '/login',
+          arguments: 'CONSUMIDOR',
+        );
+        return;
+      }
+
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
+      Navigator.pushAndRemoveUntil(
         context,
-        AppRoutes.login,
-        arguments: 'CONSUMIDOR',
+        MaterialPageRoute(
+          builder: (_) => const ConsumerHomePage(),
+        ),
+        (route) => false,
       );
     } on AppException catch (e) {
       final msg = e.statusCode == 409
           ? 'E-mail ou CPF já cadastrado.'
           : e.message;
-      setState(() => _errorMessage = msg);
+      _mostrarErro(msg);
     } catch (e, st) {
       debugPrint('Erro no cadastro de consumidor: $e');
       debugPrint('$st');
-      setState(() => _errorMessage = 'Erro inesperado. Tente novamente.');
+      _mostrarErro('Erro inesperado. Tente novamente.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _mostrarErro(String msg) {
+    if (!mounted) return;
+    setState(() => _errorMessage = msg);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   @override
@@ -151,7 +201,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   style: AppText.display(context).copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -1.0,
-                    color: ColorsPalette.black,
+                    color: ColorsPalette.blackComponents,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -170,6 +220,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   icon: LucideIcons.user,
                   keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
+                  validator: FormValidator.nome,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -179,6 +230,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   hint: "joao@exemplo.com",
                   icon: LucideIcons.mail,
                   keyboardType: TextInputType.emailAddress,
+                  validator: FormValidator.email,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -189,6 +241,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   icon: LucideIcons.creditCard,
                   keyboardType: TextInputType.number,
                   inputFormatters: [_cpfFormatter],
+                  validator: FormValidator.cpf,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -199,6 +252,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   icon: LucideIcons.smartphone,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [_telefoneFormatter],
+                  validator: FormValidator.telefone,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -220,6 +274,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                       });
                     },
                   ),
+                  validator: FormValidator.senha,
                 ),
 
                 const SizedBox(height: AppSpacing.xl),
@@ -324,7 +379,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _cadastrar,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: ColorsPalette.blackComponents,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: Colors.black.withValues(
                         alpha: 0.6,
@@ -343,7 +398,21 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                               strokeWidth: 2.5,
                             ),
                           )
-                        : Text("Criar conta", style: AppText.botao(context)),
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Criar conta",
+                                style: AppText.botao(context),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Icon(
+                                LucideIcons.chevronRight,
+                                color: ColorsPalette.white,
+                                size: AppIconSize.md,
+                              ),
+                            ],
+                          ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),

@@ -17,14 +17,16 @@ class ErrorInterceptor extends Interceptor {
 
       exception = switch (status) {
         400 => AppException(
-            _extractValidationMessage(data) ?? message ?? 'Dados inválidos.',
-            statusCode: 400,
-          ),
+          _extractValidationMessage(data) ?? message ?? 'Dados inválidos.',
+          statusCode: 400,
+        ),
         401 => UnauthorizedException(message ?? 'Credenciais inválidas.'),
         403 => AppException(message ?? 'Acesso negado.', statusCode: 403),
         404 => NotFoundException(message ?? 'Não encontrado.'),
         409 => AppException(message ?? 'Conflito de dados.', statusCode: 409),
-        _ when (status ?? 0) >= 500 => ServerException(message ?? 'Erro no servidor.'),
+        _ when (status ?? 0) >= 500 => ServerException(
+          message ?? 'Erro no servidor.',
+        ),
         _ => AppException(message ?? 'Erro desconhecido.', statusCode: status),
       };
     }
@@ -40,15 +42,14 @@ class ErrorInterceptor extends Interceptor {
   }
 
   String? _extractMessage(dynamic data) {
-    if (data is Map) return data['message']?.toString() ?? data['error']?.toString() ?? data['erro']?.toString();
+    if (data is Map)
+      return data['message']?.toString() ??
+          data['error']?.toString() ??
+          data['erro']?.toString();
     if (data is String && data.isNotEmpty) return data;
     return null;
   }
 
-  /// Extrai a primeira mensagem de validação do corpo retornado pelo Spring
-  /// para erros 400 gerados por @Valid (MethodArgumentNotValidException).
-  /// O Spring retorna um array em "fieldErrors" ou "errors", cada item com
-  /// um campo "defaultMessage".
   String? _extractValidationMessage(dynamic data) {
     if (data is! Map) return null;
 
@@ -57,14 +58,14 @@ class ErrorInterceptor extends Interceptor {
       if (list is List && list.isNotEmpty) {
         final first = list.first;
         if (first is Map) {
-          final msg = first['defaultMessage']?.toString() ??
+          final msg =
+              first['defaultMessage']?.toString() ??
               first['message']?.toString();
           if (msg != null && msg.isNotEmpty) return msg;
         }
       }
     }
 
-    // API retorna mapa simples { "campo": "mensagem" }
     if (data is Map && data.isNotEmpty) {
       final first = data.values.first;
       if (first != null) return first.toString();

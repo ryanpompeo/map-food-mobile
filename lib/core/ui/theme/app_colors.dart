@@ -19,7 +19,7 @@ class ColorsPalette {
   static const greyBackground = Color(0xff202123);
 
   //Cores atuais de componentes
-  static const blackComponents = Color(0xff12172A);
+  static const blackComponents = Color(0xff362F40);
   static const redComponents = Color(0xffd6011b);
   static const redComponentsIcon = Color(0xFFE33E33);
   static const greyComponents = Color.fromARGB(255, 59, 61, 64);

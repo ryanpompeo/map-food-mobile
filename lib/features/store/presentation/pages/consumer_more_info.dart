@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -22,13 +23,52 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
   final TextEditingController _commentController = TextEditingController();
 
   UserReview? _minhaAvaliacao;
-  ConsumerRegisterRequest? data;
+  String _nomeLogado = "Carregando...";
+
+  // Mock estático de avaliações existentes desta loja
+  final List<Map<String, dynamic>> _avaliacoesMock = const [
+    {
+      'nome': 'Carlos Silva',
+      'estrelas': 5,
+      'comentario':
+          'Sensacional! O pedido superou as expectativas e o atendimento foi rápido.',
+      'data': 'Ontem',
+    },
+    {
+      'nome': 'Ana Beatriz',
+      'estrelas': 4,
+      'comentario':
+          'Muito bom, a qualidade é excelente. Único ponto é que a fila estava um pouco grande no local.',
+      'data': 'Há 2 dias',
+    },
+    {
+      'nome': 'Felipe Martins',
+      'estrelas': 5,
+      'comentario':
+          'Recomendo de olhos fechados. Preço justo e muito saboroso.',
+      'data': 'Há 1 semana',
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
-
     _minhaAvaliacao = ReviewRepository.buscarAvaliacao(widget.store.nome);
+    _carregarUsuarioLogado();
+  }
+
+  Future<void> _carregarUsuarioLogado() async {
+    if (widget.data != null && widget.data!.nome.isNotEmpty) {
+      setState(() => _nomeLogado = widget.data!.nome);
+      return;
+    }
+
+    final session = await AuthStorage.getSession();
+    if (mounted) {
+      setState(() {
+        _nomeLogado = session?.nome ?? "Consumidor";
+      });
+    }
   }
 
   @override
@@ -157,7 +197,7 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
 
   void _efetivarEnvio() {
     final review = UserReview(
-      userName: "Consumidor Teste",
+      userName: _nomeLogado,
       rating: _rating,
       comment: _commentController.text.trim(),
       date: DateTime.now(),
@@ -249,7 +289,6 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                         ).copyWith(color: Colors.brown.shade800, fontSize: 13),
                       ),
                       const SizedBox(height: AppSpacing.lg),
-
                       Text(
                         "Motivo",
                         style: AppText.legenda(context).copyWith(
@@ -303,7 +342,6 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-
                       Text(
                         "Descrição",
                         style: AppText.legenda(context).copyWith(
@@ -350,7 +388,6 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -637,6 +674,14 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                       const Divider(thickness: 0.2),
                       const SizedBox(height: AppSpacing.lg),
 
+                      // Seção das avaliações gerais mockadas
+                      _buildAvaliacoesSection(),
+
+                      const SizedBox(height: AppSpacing.xxl),
+                      const Divider(thickness: 0.2),
+                      const SizedBox(height: AppSpacing.lg),
+
+                      // Fluxo de avaliação condicional do usuário logado
                       if (_minhaAvaliacao == null)
                         _buildFormularioAvaliacao()
                       else
@@ -650,7 +695,7 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
             ],
           ),
 
-          //(Visualizar no mapa)
+          // Botão flutuante fixo mapeado na stack superior
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -697,6 +742,133 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAvaliacoesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Avaliações",
+                  style: AppText.titulo(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w900),
+                ),
+                Text(
+                  "O que os clientes dizem",
+                  style: AppText.corpo(
+                    context,
+                  ).copyWith(color: ColorsPalette.greyText),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(100.0),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                  const SizedBox(width: 4),
+                  Text(
+                    widget.store.avaliacao?.toString() ?? "4.8",
+                    style: AppText.subtitulo(context).copyWith(
+                      color: Colors.amber.shade900,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        ..._avaliacoesMock.map((review) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.0),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.grey.shade100,
+                          child: Text(
+                            review['nome'][0],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          review['nome'],
+                          style: AppText.corpo(
+                            context,
+                          ).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      review['data'],
+                      style: AppText.legenda(
+                        context,
+                      ).copyWith(color: Colors.grey),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: List.generate(5, (index) {
+                    return Icon(
+                      index < review['estrelas']
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
+                      color: Colors.amber,
+                      size: 16,
+                    );
+                  }),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  review['comentario'],
+                  style: AppText.corpo(
+                    context,
+                  ).copyWith(color: Colors.grey.shade700, height: 1.4),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -822,7 +994,7 @@ class _ConsumerMoreInfoState extends State<ConsumerMoreInfo> {
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        widget.data?.nome ?? "Consumidor Teste0",
+                        _nomeLogado,
                         style: AppText.corpo(context).copyWith(
                           fontWeight: FontWeight.bold,
                           color: ColorsPalette.black,
