@@ -15,6 +15,14 @@ class StoreService {
     return StoreDto.fromJson(data);
   }
 
+  Future<StoreDto> update(int storeId, StoreCreateRequest request) async {
+    final data = await _client.put<Map<String, dynamic>>(
+      '${ApiConstants.lojas}/$storeId',
+      data: request.toJson(),
+    );
+    return StoreDto.fromJson(data);
+  }
+
   Future<void> updateStatus(int storeId, String status) async {
     await _client.put<dynamic>(
       '${ApiConstants.lojas}/$storeId/status',

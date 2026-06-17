@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/auth/presentation/pages/login_page.dart';
 import 'package:map_food/features/auth/presentation/pages/merchant_register_page.dart';
 import 'package:map_food/features/auth/presentation/pages/consumer_register_page.dart';
@@ -86,15 +85,8 @@ class MyApp extends StatelessWidget {
             '/merchantRegister': (context) => const MerchantRegisterPage(),
             '/storeRegister': (context) => const StoreRegisterPage(),
 
-            AppRoutes.merchantDashboard: (context) => const MerchantHomePage(
-              requestData: StoreCreateRequest(
-                nome: '',
-                statusLoja: 'ATIVO',
-                categoriaIds: [],
-              ),
-              fotoDestaqueId: 0,
-              fotosGaleriaIds: [],
-            ),
+            AppRoutes.merchantDashboard: (context) =>
+                const MerchantHomePage(),
 
             '/consumerHome': (context) => const ConsumerHomePage(),
           },

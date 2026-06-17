@@ -1,29 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/store/data/models/store_create_request.dart';
+import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
 
 class WorkingPage extends StatefulWidget {
-  final StoreCreateRequest requestData;
-  final int fotoDestaqueId;
-  final List<int> fotosGaleriaIds;
+  final StoreDto store;
 
-  const WorkingPage({
-    super.key,
-    required this.requestData,
-    required this.fotoDestaqueId,
-    required this.fotosGaleriaIds,
-  });
+  const WorkingPage({super.key, required this.store});
 
   @override
   State<WorkingPage> createState() => _WorkingPageState();
 }
 
 class _WorkingPageState extends State<WorkingPage> {
-  bool _lojaAberta = false;
+  late bool _lojaAberta;
   bool _emRonda = false;
+  bool _isUpdatingStatus = false;
+  bool _isUpdatingRonda = false;
+
+  final _storeService = StoreService();
+
+  @override
+  void initState() {
+    super.initState();
+    _lojaAberta = widget.store.statusLoja == 'ATIVA';
+  }
+
+  Future<void> _toggleLojaStatus(bool val) async {
+    if (_isUpdatingStatus) return;
+    setState(() => _isUpdatingStatus = true);
+
+    try {
+      final session = await AuthStorage.getSession();
+      if (session == null) return;
+
+      final novoStatus = val ? 'ATIVA' : 'INATIVA';
+      await _storeService.updateStatus(widget.store.id, novoStatus);
+
+      if (mounted) {
+        setState(() {
+          _lojaAberta = val;
+          if (!val) _emRonda = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Erro ao alterar status da loja.'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdatingStatus = false);
+    }
+  }
+
+  Future<void> _toggleRonda(bool val) async {
+    if (_isUpdatingRonda) return;
+    setState(() => _isUpdatingRonda = true);
+
+    try {
+      await _storeService.updateRonda(widget.store.id, val);
+      if (mounted) setState(() => _emRonda = val);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Erro ao alterar status da ronda.'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdatingRonda = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +103,7 @@ class _WorkingPageState extends State<WorkingPage> {
         centerTitle: true,
         leading: Container(),
         title: Text(
-          widget.requestData.nome,
+          widget.store.nome,
           style: AppText.titulo(context).copyWith(
             fontWeight: FontWeight.w900,
             color: ColorsPalette.black,
@@ -78,7 +145,6 @@ class _WorkingPageState extends State<WorkingPage> {
               decoration: BoxDecoration(
                 color: ColorsPalette.white,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-
                 image: _emRonda
                     ? const DecorationImage(
                         image: NetworkImage(
@@ -143,7 +209,6 @@ class _WorkingPageState extends State<WorkingPage> {
       decoration: BoxDecoration(
         color: _lojaAberta ? ColorsPalette.black : Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-
         boxShadow: _lojaAberta
             ? [
                 BoxShadow(
@@ -164,19 +229,25 @@ class _WorkingPageState extends State<WorkingPage> {
                 LucideIcons.store,
                 color: _lojaAberta ? Colors.white : ColorsPalette.black,
               ),
-              Switch(
-                value: _lojaAberta,
-                activeThumbColor: ColorsPalette.whiteBackground,
-                activeTrackColor: ColorsPalette.redComponents,
-                inactiveThumbColor: Colors.grey.shade400,
-                inactiveTrackColor: Colors.grey.shade200,
-                onChanged: (val) {
-                  setState(() {
-                    _lojaAberta = val;
-                    if (!val) _emRonda = false;
-                  });
-                },
-              ),
+              _isUpdatingStatus
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _lojaAberta
+                            ? Colors.white
+                            : ColorsPalette.redComponents,
+                      ),
+                    )
+                  : Switch(
+                      value: _lojaAberta,
+                      activeThumbColor: ColorsPalette.whiteBackground,
+                      activeTrackColor: ColorsPalette.redComponents,
+                      inactiveThumbColor: Colors.grey.shade400,
+                      inactiveTrackColor: Colors.grey.shade200,
+                      onChanged: _toggleLojaStatus,
+                    ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -209,7 +280,6 @@ class _WorkingPageState extends State<WorkingPage> {
         decoration: BoxDecoration(
           color: _emRonda ? ColorsPalette.redComponents : Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-
           boxShadow: _emRonda
               ? [
                   BoxShadow(
@@ -230,16 +300,25 @@ class _WorkingPageState extends State<WorkingPage> {
                   LucideIcons.navigation,
                   color: _emRonda ? Colors.white : ColorsPalette.black,
                 ),
-                Switch(
-                  value: _emRonda,
-                  activeThumbColor: ColorsPalette.whiteBackground,
-                  activeTrackColor: ColorsPalette.black,
-                  inactiveThumbColor: Colors.grey.shade400,
-                  inactiveTrackColor: Colors.grey.shade200,
-                  onChanged: canActivateRonda
-                      ? (val) => setState(() => _emRonda = val)
-                      : null,
-                ),
+                _isUpdatingRonda
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _emRonda
+                              ? Colors.white
+                              : ColorsPalette.redComponents,
+                        ),
+                      )
+                    : Switch(
+                        value: _emRonda,
+                        activeThumbColor: ColorsPalette.whiteBackground,
+                        activeTrackColor: ColorsPalette.black,
+                        inactiveThumbColor: Colors.grey.shade400,
+                        inactiveTrackColor: Colors.grey.shade200,
+                        onChanged: canActivateRonda ? _toggleRonda : null,
+                      ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),

@@ -4,20 +4,13 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
+import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
 
 class MerchantDashboard extends StatefulWidget {
-  final StoreCreateRequest requestData;
-  final int fotoDestaqueId;
-  final List<int> categoriasIds;
-  final List<int> fotosGaleriaIds;
+  final StoreDto store;
 
-  const MerchantDashboard({
-    super.key,
-    required this.requestData,
-    required this.fotoDestaqueId,
-    required this.fotosGaleriaIds,
-    required this.categoriasIds,
-  });
+  const MerchantDashboard({super.key, required this.store});
 
   @override
   State<MerchantDashboard> createState() => _MerchantDashboardState();
@@ -25,14 +18,18 @@ class MerchantDashboard extends StatefulWidget {
 
 class _MerchantDashboardState extends State<MerchantDashboard> {
   bool _isEditing = false;
+  bool _isSaving = false;
 
   late TextEditingController _nomeController;
   late TextEditingController _descricaoController;
   late List<int> _categoriasSelecionadas;
+
+  // As fotos são representadas como IDs locais (upload de imagem será implementado futuramente)
   int? _fotoDestaqueTemp;
   late List<int> _fotosGaleriaTemp;
 
   final int _maxFotosGaleria = 10;
+  final _storeService = StoreService();
 
   final List<Map<String, dynamic>> _categoriasBase = [
     {'id': 1, 'nome': 'Lanches e Hot Dogs'},
@@ -69,13 +66,13 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   }
 
   void _inicializarDados() {
-    _nomeController = TextEditingController(text: widget.requestData.nome);
-    _descricaoController = TextEditingController(
-      text: widget.requestData.descricao ?? "",
-    );
-    _categoriasSelecionadas = List.from(widget.categoriasIds);
-    _fotoDestaqueTemp = widget.fotoDestaqueId;
-    _fotosGaleriaTemp = List.from(widget.fotosGaleriaIds);
+    _nomeController =
+        TextEditingController(text: widget.store.nome);
+    _descricaoController =
+        TextEditingController(text: widget.store.descricao ?? '');
+    _categoriasSelecionadas = List.from(widget.store.categoriaIds);
+    _fotoDestaqueTemp = widget.store.id; // placeholder até upload real
+    _fotosGaleriaTemp = [];
   }
 
   @override
@@ -89,9 +86,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(AppSpacing.lg),
@@ -115,17 +111,15 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               const SizedBox(height: AppSpacing.md),
               Text(
                 "Salvar Alterações",
-                style: AppText.titulo(
-                  context,
-                ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                style: AppText.titulo(context)
+                    .copyWith(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 "Deseja confirmar e atualizar as informações públicas da sua loja?",
                 textAlign: TextAlign.center,
-                style: AppText.corpo(
-                  context,
-                ).copyWith(color: ColorsPalette.greyText),
+                style: AppText.corpo(context)
+                    .copyWith(color: ColorsPalette.greyText),
               ),
               const SizedBox(height: AppSpacing.xl),
               Row(
@@ -142,9 +136,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                       ),
                       child: Text(
                         "Cancelar",
-                        style: AppText.botao(
-                          context,
-                        ).copyWith(color: ColorsPalette.black),
+                        style: AppText.botao(context)
+                            .copyWith(color: ColorsPalette.black),
                       ),
                     ),
                   ),
@@ -178,22 +171,55 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     );
   }
 
-  void _efetivarSalvamento() {
-    setState(() {
-      _isEditing = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Informações atualizadas com sucesso!"),
-        backgroundColor: Colors.green,
-      ),
-    );
+  Future<void> _efetivarSalvamento() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final request = StoreCreateRequest(
+        nome: _nomeController.text.trim(),
+        descricao: _descricaoController.text.trim().isEmpty
+            ? null
+            : _descricaoController.text.trim(),
+        statusLoja: widget.store.statusLoja,
+        categoriaIds: List.from(_categoriasSelecionadas),
+      );
+
+      await _storeService.update(widget.store.id, request);
+
+      if (mounted) {
+        setState(() => _isEditing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Informações atualizadas com sucesso!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Erro ao salvar. Tente novamente."),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   void _cancelarEdicao() {
     setState(() {
       _isEditing = false;
-      _inicializarDados();
+      _nomeController.text = widget.store.nome;
+      _descricaoController.text = widget.store.descricao ?? '';
+      _categoriasSelecionadas = List.from(widget.store.categoriaIds);
     });
   }
 
@@ -218,9 +244,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                 Expanded(
                   child: Text(
                     "Perfil da Loja",
-                    style: AppText.titulo(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.w900),
+                    style: AppText.titulo(context)
+                        .copyWith(fontWeight: FontWeight.w900),
                   ),
                 ),
                 if (!_isEditing)
@@ -228,27 +253,21 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     onTap: () => setState(() => _isEditing = true),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: ColorsPalette.black.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            LucideIcons.edit2,
-                            size: 16,
-                            color: ColorsPalette.black,
-                          ),
+                          const Icon(LucideIcons.edit2,
+                              size: 16, color: ColorsPalette.black),
                           const SizedBox(width: 6),
                           Text(
                             "Editar",
                             style: AppText.legenda(context).copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: ColorsPalette.black,
-                            ),
+                                fontWeight: FontWeight.bold,
+                                color: ColorsPalette.black),
                           ),
                         ],
                       ),
@@ -260,9 +279,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     child: Text(
                       "Cancelar",
                       style: AppText.legenda(context).copyWith(
-                        color: ColorsPalette.redComponents,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          color: ColorsPalette.redComponents,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
               ],
@@ -272,16 +290,10 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             _buildSecaoFotos(),
             const SizedBox(height: AppSpacing.xl),
 
-            _buildCampoTexto(
-              "Nome do Comércio",
-              _nomeController,
-              isMultiline: false,
-            ),
-            _buildCampoTexto(
-              "Descrição",
-              _descricaoController,
-              isMultiline: true,
-            ),
+            _buildCampoTexto("Nome do Comércio", _nomeController,
+                isMultiline: false),
+            _buildCampoTexto("Descrição", _descricaoController,
+                isMultiline: true),
             const SizedBox(height: AppSpacing.md),
 
             _buildCategoriasSection(),
@@ -301,22 +313,27 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           ? Padding(
               padding: const EdgeInsets.only(bottom: 150),
               child: FloatingActionButton.extended(
-                onPressed: _abrirModalConfirmacao,
-                backgroundColor: ColorsPalette.redComponents,
+                onPressed: _isSaving ? null : _abrirModalConfirmacao,
+                backgroundColor: _isSaving
+                    ? Colors.grey
+                    : ColorsPalette.redComponents,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
-                icon: const Icon(
-                  LucideIcons.save,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Icon(LucideIcons.save,
+                        color: Colors.white, size: 20),
                 label: Text(
-                  "Salvar Mudanças",
-                  style: AppText.botao(
-                    context,
-                  ).copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                  _isSaving ? "Salvando..." : "Salvar Mudanças",
+                  style: AppText.botao(context)
+                      .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             )
@@ -332,17 +349,16 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
       children: [
         Text(
           "Foto de Destaque",
-          style: AppText.subtitulo(
-            context,
-          ).copyWith(fontWeight: FontWeight.bold),
+          style:
+              AppText.subtitulo(context).copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.sm),
         GestureDetector(
           onTap: _isEditing
               ? () => setState(
-                  () =>
-                      _fotoDestaqueTemp = DateTime.now().millisecondsSinceEpoch,
-                )
+                    () => _fotoDestaqueTemp =
+                        DateTime.now().millisecondsSinceEpoch,
+                  )
               : null,
           child: Container(
             height: 160.0,
@@ -382,11 +398,9 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                LucideIcons.trash2,
-                                size: 16.0,
-                                color: ColorsPalette.redComponents,
-                              ),
+                              child: const Icon(LucideIcons.trash2,
+                                  size: 16.0,
+                                  color: ColorsPalette.redComponents),
                             ),
                           ),
                         ),
@@ -395,18 +409,14 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        LucideIcons.imagePlus,
-                        color: Colors.grey.shade400,
-                        size: 32.0,
-                      ),
+                      Icon(LucideIcons.imagePlus,
+                          color: Colors.grey.shade400, size: 32.0),
                       if (_isEditing) ...[
                         const SizedBox(height: 8.0),
                         Text(
                           "Adicionar Capa",
-                          style: AppText.legenda(
-                            context,
-                          ).copyWith(fontWeight: FontWeight.bold),
+                          style: AppText.legenda(context)
+                              .copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ],
@@ -417,9 +427,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
 
         Text(
           "Galeria (${_fotosGaleriaTemp.length}/$_maxFotosGaleria)",
-          style: AppText.subtitulo(
-            context,
-          ).copyWith(fontWeight: FontWeight.bold),
+          style:
+              AppText.subtitulo(context).copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.sm),
         SingleChildScrollView(
@@ -430,9 +439,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               if (_isEditing && _fotosGaleriaTemp.length < _maxFotosGaleria)
                 GestureDetector(
                   onTap: () => setState(
-                    () => _fotosGaleriaTemp.add(
-                      DateTime.now().millisecondsSinceEpoch,
-                    ),
+                    () => _fotosGaleriaTemp
+                        .add(DateTime.now().millisecondsSinceEpoch),
                   ),
                   child: Container(
                     height: 100.0,
@@ -445,16 +453,13 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          LucideIcons.plus,
-                          color: ColorsPalette.redComponents,
-                        ),
+                        const Icon(LucideIcons.plus,
+                            color: ColorsPalette.redComponents),
                         const SizedBox(height: 4.0),
                         Text(
                           "Adicionar",
-                          style: AppText.legenda(
-                            context,
-                          ).copyWith(fontWeight: FontWeight.w600),
+                          style: AppText.legenda(context)
+                              .copyWith(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -472,11 +477,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   child: Stack(
                     children: [
                       const Center(
-                        child: Icon(
-                          LucideIcons.image,
-                          color: Colors.grey,
-                          size: 32.0,
-                        ),
+                        child: Icon(LucideIcons.image,
+                            color: Colors.grey, size: 32.0),
                       ),
                       if (_isEditing)
                         Positioned(
@@ -491,13 +493,11 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey.shade200),
+                                border: Border.all(
+                                    color: Colors.grey.shade200),
                               ),
-                              child: const Icon(
-                                LucideIcons.x,
-                                size: 14.0,
-                                color: Colors.black,
-                              ),
+                              child: const Icon(LucideIcons.x,
+                                  size: 14.0, color: Colors.black),
                             ),
                           ),
                         ),
@@ -508,7 +508,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               if (!_isEditing && _fotosGaleriaTemp.isEmpty)
                 Text(
                   "Nenhuma foto na galeria.",
-                  style: AppText.legenda(context).copyWith(color: Colors.grey),
+                  style: AppText.legenda(context)
+                      .copyWith(color: Colors.grey),
                 ),
             ],
           ),
@@ -529,9 +530,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         children: [
           Text(
             label,
-            style: AppText.subtitulo(
-              context,
-            ).copyWith(fontWeight: FontWeight.bold),
+            style: AppText.subtitulo(context)
+                .copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSpacing.xs),
           TextField(
@@ -540,11 +540,13 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             readOnly: !_isEditing,
             style: AppText.corpo(context).copyWith(
               color: _isEditing ? ColorsPalette.black : Colors.grey.shade700,
-              fontWeight: _isEditing ? FontWeight.normal : FontWeight.w500,
+              fontWeight:
+                  _isEditing ? FontWeight.normal : FontWeight.w500,
             ),
             decoration: InputDecoration(
               filled: true,
-              fillColor: _isEditing ? Colors.white : Colors.grey.shade50,
+              fillColor:
+                  _isEditing ? Colors.white : Colors.grey.shade50,
               contentPadding: const EdgeInsets.all(16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -557,7 +559,9 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 borderSide: BorderSide(
-                  color: _isEditing ? Colors.grey.shade300 : Colors.transparent,
+                  color: _isEditing
+                      ? Colors.grey.shade300
+                      : Colors.transparent,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -580,16 +584,16 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
       children: [
         Text(
           "Categorias",
-          style: AppText.subtitulo(
-            context,
-          ).copyWith(fontWeight: FontWeight.bold),
+          style: AppText.subtitulo(context)
+              .copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: 8.0,
           runSpacing: 10.0,
           children: _categoriasBase.map((cat) {
-            final isSelected = _categoriasSelecionadas.contains(cat['id']);
+            final isSelected =
+                _categoriasSelecionadas.contains(cat['id']);
 
             if (!_isEditing && !isSelected) return const SizedBox.shrink();
 
@@ -608,11 +612,11 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
+                    horizontal: 16.0, vertical: 8.0),
                 decoration: BoxDecoration(
-                  color: isSelected ? ColorsPalette.black : Colors.white,
+                  color: isSelected
+                      ? ColorsPalette.black
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(100.0),
                   border: Border.all(
                     color: isSelected
@@ -623,8 +627,12 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                 child: Text(
                   cat['nome'],
                   style: AppText.legenda(context).copyWith(
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isSelected
+                        ? Colors.white
+                        : Colors.grey.shade700,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.w600,
                   ),
                 ),
               ),
@@ -636,6 +644,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   }
 
   Widget _buildAvaliacoesSection() {
+    final avaliacao = widget.store.avaliacao;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -648,38 +658,39 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               children: [
                 Text(
                   "Avaliações",
-                  style: AppText.titulo(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.w900),
+                  style: AppText.titulo(context)
+                      .copyWith(fontWeight: FontWeight.w900),
                 ),
                 Text(
                   "O que dizem sobre você",
-                  style: AppText.corpo(
-                    context,
-                  ).copyWith(color: ColorsPalette.greyText),
+                  style: AppText.corpo(context)
+                      .copyWith(color: ColorsPalette.greyText),
                 ),
               ],
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
-                  const SizedBox(width: 4),
-                  Text(
-                    "4.5",
-                    style: AppText.subtitulo(context).copyWith(
-                      color: Colors.amber.shade900,
-                      fontWeight: FontWeight.bold,
+            if (avaliacao != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star_rounded,
+                        color: Colors.amber, size: 20),
+                    const SizedBox(width: 4),
+                    Text(
+                      avaliacao.toStringAsFixed(1),
+                      style: AppText.subtitulo(context).copyWith(
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -691,7 +702,6 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16.0),
-
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
@@ -714,25 +724,22 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                           child: Text(
                             review['nome'][0],
                             style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           review['nome'],
-                          style: AppText.corpo(
-                            context,
-                          ).copyWith(fontWeight: FontWeight.bold),
+                          style: AppText.corpo(context)
+                              .copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                     Text(
                       review['data'],
-                      style: AppText.legenda(
-                        context,
-                      ).copyWith(color: Colors.grey),
+                      style: AppText.legenda(context)
+                          .copyWith(color: Colors.grey),
                     ),
                   ],
                 ),
@@ -751,9 +758,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   review['comentario'],
-                  style: AppText.corpo(
-                    context,
-                  ).copyWith(color: Colors.grey.shade700, height: 1.4),
+                  style: AppText.corpo(context).copyWith(
+                      color: Colors.grey.shade700, height: 1.4),
                 ),
               ],
             ),

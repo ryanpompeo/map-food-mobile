@@ -10,9 +10,10 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/app/router/app_routes.dart';
+import 'package:map_food/features/auth/data/services/auth_service.dart';
 import 'package:map_food/features/merchant/data/models/merchant_register_request.dart';
-
 import 'package:map_food/features/merchant/data/services/merchant_service.dart';
+import 'package:map_food/features/merchant/presentation/pages/merchant_home_page.dart';
 
 class MerchantRegisterPage extends StatefulWidget {
   const MerchantRegisterPage({super.key});
@@ -32,6 +33,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   final _senhaController = TextEditingController();
 
   final _merchantService = MerchantService();
+  final _authService = AuthService();
 
   bool _obscurePassword = true;
   bool _aceitouTermos = false;
@@ -122,10 +124,31 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
+      // Login automático após cadastro
+      try {
+        await _authService.login(
+          _emailController.text.trim(),
+          _senhaController.text,
+          'COMERCIANTE',
+        );
+      } on AppException {
+        // Se o login automático falhar, direciona para a tela de login
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.login,
+          arguments: 'COMERCIANTE',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+
+      // MerchantHomePage detecta que não há loja e redireciona para StoreRegisterPage
+      Navigator.pushAndRemoveUntil(
         context,
-        AppRoutes.login,
-        arguments: 'COMERCIANTE',
+        MaterialPageRoute(builder: (_) => const MerchantHomePage()),
+        (route) => false,
       );
     } on AppException catch (e) {
       final msg = e.statusCode == 409

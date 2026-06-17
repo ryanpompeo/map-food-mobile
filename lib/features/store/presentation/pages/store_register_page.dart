@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/widgets/app_form_field_.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_home_page.dart';
-import 'package:map_food/features/store/presentation/pages/working_page.dart';
 
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
@@ -23,6 +24,9 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
   final bool _statusLoja = true;
   String? _errorMessage;
+  bool _isLoading = false;
+
+  final _storeService = StoreService();
 
   // Estado da Foto Destaque (Capa)
   int? _fotoDestaqueMock;
@@ -51,7 +55,8 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     super.dispose();
   }
 
-  void _avancarEtapa() {
+  Future<void> _avancarEtapa() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
     if (_fotoDestaqueMock == null) {
@@ -64,30 +69,38 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
       return;
     }
 
-    // Instancia o objeto de request com os dados coletados nesta página
-    final request = StoreCreateRequest(
-      nome: _nomeController.text.trim(),
-      descricao: _descricaoController.text.trim().isEmpty
-          ? null
-          : _descricaoController.text.trim(),
-      statusLoja: _statusLoja ? 'ATIVA' : 'INATIVA',
-      categoriaIds: List<int>.from(_categoriasSelecionadas),
-    );
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    if (!mounted) return;
+    try {
+      final request = StoreCreateRequest(
+        nome: _nomeController.text.trim(),
+        descricao: _descricaoController.text.trim().isEmpty
+            ? null
+            : _descricaoController.text.trim(),
+        statusLoja: _statusLoja ? 'ATIVA' : 'INATIVA',
+        categoriaIds: List<int>.from(_categoriasSelecionadas),
+      );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MerchantHomePage(
-          requestData: request,
-          fotoDestaqueId: _fotoDestaqueMock!,
-          fotosGaleriaIds: _fotosMock,
-        ),
-      ),
-    );
+      await _storeService.create(request);
 
-    if (!mounted) return;
+      if (!mounted) return;
+
+      // MerchantHomePage carrega os dados reais do banco automaticamente
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MerchantHomePage()),
+        (route) => false,
+      );
+    } on AppException catch (e) {
+      _mostrarErro(e.message);
+    } catch (_) {
+      _mostrarErro('Erro ao cadastrar loja. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _mostrarErro(String mensagem) {
@@ -270,21 +283,31 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: _avancarEtapa,
+                    onPressed: _isLoading ? null : _avancarEtapa,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorsPalette.redComponents,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor:
+                          ColorsPalette.redComponents.withValues(alpha: 0.6),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(100.0),
                       ),
                     ),
-                    child: Text(
-                      "Concluir Cadastro",
-                      style: AppText.botao(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.bold, fontSize: 16.0),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Text(
+                            "Concluir Cadastro",
+                            style: AppText.botao(context).copyWith(
+                                fontWeight: FontWeight.bold, fontSize: 16.0),
+                          ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
