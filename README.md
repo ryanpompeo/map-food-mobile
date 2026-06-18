@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="assets/icon/app_icon.png" alt="MapFood Logo" width="100" height="100" />
-</p>
 
 <h1 align="center">MapFood — Mobile</h1>
 
