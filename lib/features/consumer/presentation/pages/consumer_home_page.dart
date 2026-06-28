@@ -7,7 +7,7 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_profile_page.dart';
 import 'package:map_food/features/consumer/presentation/widgets/consumer_bottom_bar.dart';
-import 'package:map_food/features/search/presentation/pages/consumer_search.dart';
+import 'package:map_food/features/search/presentation/pages/search_page.dart';
 
 class ConsumerHomePage extends StatefulWidget {
   const ConsumerHomePage({super.key});
@@ -75,7 +75,7 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
             index: _selectedIndex,
             children: [
               _buildAbaInicio(),
-              ConsumerSearch(),
+              const SearchPage(),
               ConsumerFavoritesPage(),
               ConsumerProfilePage(
                 userName: _userName,
