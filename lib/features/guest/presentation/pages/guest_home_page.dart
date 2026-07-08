@@ -6,6 +6,8 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_profile_page.dart';
 import 'package:map_food/features/guest/presentation/widgets/floating_bottom_bar.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
+import 'package:map_food/features/store/data/models/categoria_model.dart';
+import 'package:map_food/features/store/data/services/categoria_service.dart';
 
 class GuestHomePage extends StatefulWidget {
   const GuestHomePage({super.key});
@@ -19,20 +21,25 @@ class _GuestHomePageState extends State<GuestHomePage> {
 
   String _filtroAtivo = 'Todos';
 
-  final List<String> _filtrosMapa = [
-    'Todos',
-    'Lanches e Hot Dogs',
-    'Espetinhos',
-    'Pastel e Salgados',
-    'Doces e Sobremesas',
-    'Bebidas',
-    'Gelatos e Açaí',
-    'Milho e Pamonha',
-    'Pipoca',
-    'Produtos Artesanais',
-    'Food Trucks',
-    'Outros',
-  ];
+  final _categoriaService = CategoriaService();
+  List<CategoriaModel> _categorias = [];
+
+  List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarCategorias();
+  }
+
+  Future<void> _carregarCategorias() async {
+    try {
+      final categorias = await _categoriaService.getAll();
+      if (mounted) setState(() => _categorias = categorias);
+    } catch (_) {
+      // Mantém apenas "Todos" se a API estiver indisponível.
+    }
+  }
 
   void _onItemTapped(int index) {
     if (_selectedIndex != index) {

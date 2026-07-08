@@ -8,6 +8,8 @@ import 'package:map_food/features/favorites/presentation/pages/consumer_favorite
 import 'package:map_food/features/consumer/presentation/pages/consumer_profile_page.dart';
 import 'package:map_food/features/consumer/presentation/widgets/consumer_bottom_bar.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
+import 'package:map_food/features/store/data/models/categoria_model.dart';
+import 'package:map_food/features/store/data/services/categoria_service.dart';
 
 class ConsumerHomePage extends StatefulWidget {
   const ConsumerHomePage({super.key});
@@ -24,22 +26,16 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
   String _userEmail = '';
   bool _sessionLoaded = false;
 
-  final List<String> _filtrosMapa = [
-    'Todos',
-    'Lanches e Hot Dogs',
-    'Espetinhos',
-    'Pastel e Salgados',
-    'Doces e Sobremesas',
-    'Bebidas',
-    'Gelados e Açaí',
-    'Milho e Pamonha',
-    'Pipoca',
-  ];
+  final _categoriaService = CategoriaService();
+  List<CategoriaModel> _categorias = [];
+
+  List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
 
   @override
   void initState() {
     super.initState();
     _loadSession();
+    _carregarCategorias();
   }
 
   Future<void> _loadSession() async {
@@ -50,6 +46,15 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
         _userEmail = session?.email ?? '';
         _sessionLoaded = true;
       });
+    }
+  }
+
+  Future<void> _carregarCategorias() async {
+    try {
+      final categorias = await _categoriaService.getAll();
+      if (mounted) setState(() => _categorias = categorias);
+    } catch (_) {
+      // Mantém apenas "Todos" se a API estiver indisponível.
     }
   }
 

@@ -77,18 +77,15 @@ class MyApp extends StatelessWidget {
           initialRoute: '/',
 
           routes: {
-            "/": (context) => const GuestHomePage(),
-            '/login': (context) => const LoginPage(),
-            '/howItWorks': (context) => const HowItWorksPage(),
-            '/accountType': (context) => const AccountTypePage(),
-            '/consumerRegister': (context) => const ConsumerRegisterPage(),
-            '/merchantRegister': (context) => const MerchantRegisterPage(),
-            '/storeRegister': (context) => const StoreRegisterPage(),
-
-            AppRoutes.merchantDashboard: (context) =>
-                const MerchantHomePage(),
-
-            '/consumerHome': (context) => const ConsumerHomePage(),
+            AppRoutes.root: (context) => const GuestHomePage(),
+            AppRoutes.login: (context) => const LoginPage(),
+            AppRoutes.howItWorks: (context) => const HowItWorksPage(),
+            AppRoutes.accountType: (context) => const AccountTypePage(),
+            AppRoutes.consumerRegister: (context) => const ConsumerRegisterPage(),
+            AppRoutes.merchantRegister: (context) => const MerchantRegisterPage(),
+            AppRoutes.storeRegister: (context) => const StoreRegisterPage(),
+            AppRoutes.merchantDashboard: (context) => const MerchantHomePage(),
+            AppRoutes.consumerHome: (context) => const ConsumerHomePage(),
           },
         );
       },

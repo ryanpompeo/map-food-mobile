@@ -2,7 +2,8 @@ import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-import 'package:map_food/core/ui/widgets/app_form_field_.dart';
+import 'package:map_food/app/router/app_routes.dart';
+import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
@@ -121,7 +122,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
         );
         Navigator.pushReplacementNamed(
           context,
-          '/login',
+          AppRoutes.login,
           arguments: 'CONSUMIDOR',
         );
         return;

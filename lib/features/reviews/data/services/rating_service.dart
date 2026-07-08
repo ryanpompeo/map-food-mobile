@@ -28,7 +28,7 @@ class RatingService {
     String? comentario,
   }) async {
     final body = <String, dynamic>{
-      'id_loja': lojaId,
+      'loja': {'id': lojaId},
       'nota': nota,
       if (comentario != null && comentario.trim().isNotEmpty)
         'comentario': comentario.trim(),

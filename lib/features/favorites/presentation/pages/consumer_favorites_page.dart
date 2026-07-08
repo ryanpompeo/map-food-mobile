@@ -3,7 +3,6 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/store/presentation/pages/consumer_more_info.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
 import '../controllers/favorites_manager.dart';
@@ -69,7 +68,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ConsumerMoreInfo(store: store),
+                        builder: (_) => MoreInfoStorePage(store: store),
                       ),
                     );
                   },
@@ -128,7 +127,9 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                               const SizedBox(height: 4),
 
                               Text(
-                                store.categoria ?? "Sem categoria",
+                                store.categoria.isNotEmpty
+                                    ? store.categoria
+                                    : "Sem categoria",
                                 style: AppText.legenda(
                                   context,
                                 ).copyWith(color: Colors.grey.shade600),

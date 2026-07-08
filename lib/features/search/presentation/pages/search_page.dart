@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/search/data/services/search_service.dart';
+import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
 import 'package:map_food/features/search/presentation/pages/view_most_popular.dart';
+import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/services/categoria_service.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
 class SearchPage extends StatefulWidget {
@@ -19,34 +23,27 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  final SearchService _searchService = SearchService();
+  final StoreService _storeService = StoreService();
+  final CategoriaService _categoriaService = CategoriaService();
   Timer? _debounce;
   int _selectedFilterIndex = 0;
   bool _isLoading = false;
   String? _errorMessage;
   String _userRole = 'GUEST';
+  String _searchQuery = '';
 
-  final List<String> _filtros = [
-    'Todos', 'Lanches e Hot Dogs', 'Espetinhos', 'Pastel e Salgados',
-    'Doces e Sobremesas', 'Bebidas', 'Gelatos e Açaí', 'Milho e Pamonha',
-    'Pipoca', 'Produtos Artesanais', 'Food Trucks', 'Outros',
-  ];
-
-  final Map<String, int> _categoryMapping = {
-    'Lanches e Hot Dogs': 1, 'Espetinhos': 6, 'Pastel e Salgados': 2,
-    'Doces e Sobremesas': 3, 'Bebidas': 4, 'Gelatos e Açaí': 5,
-    'Milho e Pamonha': 7, 'Pipoca': 8, 'Produtos Artesanais': 9,
-    'Food Trucks': 10, 'Outros': 11,
-  };
-
+  List<CategoriaModel> _categorias = [];
+  List<StoreDto> _allStores = [];
   List<StoreDto> _destaques = [];
   List<StoreDto> _populares = [];
+
+  List<String> get _filtros => ['Todos', ..._categorias.map((c) => c.nome)];
 
   @override
   void initState() {
     super.initState();
     _loadUserRole();
-    _loadStores();
+    _loadInitialData();
   }
 
   Future<void> _loadUserRole() async {
@@ -58,24 +55,26 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  Future<void> _loadStores({int? categoryId, String? query}) async {
+  /// A API não oferece um endpoint de busca combinada (nome + categoria),
+  /// então carregamos todas as lojas ativas uma vez e filtramos localmente.
+  Future<void> _loadInitialData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final List<StoreDto> results = await _searchService.search(
-        nome: (query != null && query.trim().isNotEmpty) ? query.trim() : null,
-        categoriaId: categoryId,
-      );
-
+      final results = await Future.wait([
+        _categoriaService.getAll(),
+        _storeService.getActive(),
+      ]);
       if (!mounted) return;
       setState(() {
-        _destaques = results;
-        _populares = results.take(5).toList();
+        _categorias = results[0] as List<CategoriaModel>;
+        _allStores = results[1] as List<StoreDto>;
         _isLoading = false;
       });
+      _applyFilters();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -83,6 +82,26 @@ class _SearchPageState extends State<SearchPage> {
         _errorMessage = 'Não foi possível carregar as lojas. Tente novamente.';
       });
     }
+  }
+
+  void _applyFilters() {
+    final categoryId = _selectedFilterIndex == 0
+        ? null
+        : _categorias[_selectedFilterIndex - 1].id;
+
+    var list = _allStores;
+    if (categoryId != null) {
+      list = list.where((s) => s.categoriaIds.contains(categoryId)).toList();
+    }
+    if (_searchQuery.trim().isNotEmpty) {
+      final q = _searchQuery.trim().toLowerCase();
+      list = list.where((s) => s.nome.toLowerCase().contains(q)).toList();
+    }
+
+    setState(() {
+      _destaques = list;
+      _populares = list.take(5).toList();
+    });
   }
 
   @override
@@ -116,7 +135,8 @@ class _SearchPageState extends State<SearchPage> {
                         _debounce?.cancel();
                         _debounce = Timer(const Duration(milliseconds: 500), () {
                           setState(() => _selectedFilterIndex = 0);
-                          _loadStores(query: val);
+                          _searchQuery = val;
+                          _applyFilters();
                         });
                       },
                     ),
@@ -128,10 +148,9 @@ class _SearchPageState extends State<SearchPage> {
                         setState(() {
                           _selectedFilterIndex = index;
                           _searchController.clear();
+                          _searchQuery = '';
                         });
-                        final category = _filtros[index];
-                        final id = _categoryMapping[category];
-                        _loadStores(categoryId: id);
+                        _applyFilters();
                       },
                     ),
                     const SizedBox(height: AppSpacing.xl),
@@ -168,7 +187,7 @@ class _SearchPageState extends State<SearchPage> {
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () => _loadStores(),
+                        onPressed: () => _loadInitialData(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: ColorsPalette.redComponents,
                           foregroundColor: Colors.white,
@@ -628,16 +647,29 @@ class FavoriteButtonWidget extends StatelessWidget {
       );
     }
     
-    // AuthFavoriteButton
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), shape: BoxShape.circle),
-      child: GestureDetector(
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Favoritado com sucesso!"), backgroundColor: ColorsPalette.redComponents));
-        },
-        child: Icon(LucideIcons.heart, color: ColorsPalette.white, size: iconSize),
-      ),
+    return AnimatedBuilder(
+      animation: FavoritesManager.instance,
+      builder: (context, _) {
+        final isFavorite = FavoritesManager.instance.isFavorite(store.id);
+        return Container(
+          padding: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), shape: BoxShape.circle),
+          child: GestureDetector(
+            onTap: () {
+              FavoritesManager.instance.toggle(store);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(isFavorite ? "Removido dos favoritos." : "Favoritado com sucesso!"),
+                backgroundColor: ColorsPalette.redComponents,
+              ));
+            },
+            child: Icon(
+              LucideIcons.heart,
+              color: isFavorite ? ColorsPalette.redComponents : ColorsPalette.white,
+              size: iconSize,
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -682,7 +714,7 @@ class LoginWallHelper {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    Navigator.pushNamed(context, '/accountType');
+                    Navigator.pushNamed(context, AppRoutes.accountType);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorsPalette.redComponents, foregroundColor: Colors.white,
@@ -695,7 +727,7 @@ class LoginWallHelper {
               GestureDetector(
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.pushNamed(context, '/login');
+                  Navigator.pushNamed(context, AppRoutes.login);
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.sm),

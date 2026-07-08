@@ -5,7 +5,8 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/widgets/app_form_field_.dart';
+import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/features/merchant/data/models/merchant_model.dart';
 import 'package:map_food/features/merchant/data/services/merchant_service.dart';
 
 class MerchantEditProfile extends StatefulWidget {
@@ -30,7 +31,7 @@ class _MerchantEditProfileState extends State<MerchantEditProfile> {
   bool _isSaving = false;
   bool _showSenha = false;
   bool _showConfirmarSenha = false;
-  int? _userId;
+  MerchantModel? _original;
   String? _errorMsg;
 
   @override
@@ -57,29 +58,31 @@ class _MerchantEditProfileState extends State<MerchantEditProfile> {
         if (mounted) Navigator.pop(context);
         return;
       }
-      _userId = session.id;
       final data = await _service.getById(session.id);
       if (mounted) {
-        _nomeController.text = data['nome']?.toString() ?? '';
-        _emailController.text = data['email']?.toString() ?? '';
-        _celularController.text = data['celular']?.toString() ?? '';
-        _cnpjController.text = data['cnpj']?.toString() ?? '';
+        _original = data;
+        _nomeController.text = data.nome;
+        _emailController.text = data.email;
+        _celularController.text = data.celular ?? '';
+        _cnpjController.text = data.cnpj ?? '';
         setState(() => _isLoading = false);
       }
     } catch (_) {
       if (mounted) {
-        final session = await AuthStorage.getSession();
-        _userId = session?.id;
-        _nomeController.text = session?.nome ?? '';
-        _emailController.text = session?.email ?? '';
-        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível carregar seus dados.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.pop(context);
       }
     }
   }
 
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_userId == null) return;
+    if (_original == null) return;
 
     final novaSenha = _senhaController.text.trim();
     final confirmar = _confirmarSenhaController.text.trim();
@@ -94,15 +97,21 @@ class _MerchantEditProfileState extends State<MerchantEditProfile> {
     });
 
     try {
-      final fields = <String, dynamic>{
-        'nome': _nomeController.text.trim(),
-        'email': _emailController.text.trim(),
-        'celular': _celularController.text.trim(),
-        if (_cnpjController.text.trim().isNotEmpty)
-          'cnpj': _cnpjController.text.trim(),
-        if (novaSenha.isNotEmpty) 'senha': novaSenha,
-      };
-      await _service.update(_userId!, fields);
+      final atualizado = MerchantModel(
+        id: _original!.id,
+        nome: _nomeController.text.trim(),
+        email: _emailController.text.trim(),
+        cpf: _original!.cpf,
+        celular: _celularController.text.trim(),
+        telefone: _original!.telefone,
+        cnpj: _cnpjController.text.trim().isEmpty
+            ? null
+            : _cnpjController.text.trim(),
+      );
+      await _service.update(
+        atualizado,
+        novaSenha: novaSenha.isNotEmpty ? novaSenha : null,
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
-import 'package:map_food/core/ui/widgets/app_form_field_.dart';
+import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -305,7 +305,7 @@ class _LoginPageState extends State<LoginPage> {
 
               Center(
                 child: GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/accountType'),
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.accountType),
                   child: Text.rich(
                     TextSpan(
                       text: "Não tem uma conta? ",

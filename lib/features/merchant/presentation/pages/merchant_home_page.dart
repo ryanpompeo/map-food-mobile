@@ -5,11 +5,13 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/pages/merchant_dashboard.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_profile_page.dart';
-import 'package:map_food/features/search/presentation/pages/merchant_search.dart';
+import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/merchant/presentation/widgets/merchant_bottom_bar.dart';
 import 'package:map_food/features/store/presentation/pages/working_page.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
@@ -32,23 +34,25 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   String? _errorMessage;
 
   final _storeService = StoreService();
+  final _categoriaService = CategoriaService();
+  List<CategoriaModel> _categorias = [];
 
-  final List<String> _filtrosMapa = [
-    'Todos',
-    'Lanches e Hot Dogs',
-    'Espetinhos',
-    'Pastel e Salgados',
-    'Doces e Sobremesas',
-    'Bebidas',
-    'Gelados e Açaí',
-    'Milho e Pamonha',
-    'Pipoca',
-  ];
+  List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _carregarCategorias();
+  }
+
+  Future<void> _carregarCategorias() async {
+    try {
+      final categorias = await _categoriaService.getAll();
+      if (mounted) setState(() => _categorias = categorias);
+    } catch (_) {
+      // Mantém apenas "Todos" se a API estiver indisponível.
+    }
   }
 
   Future<void> _loadData() async {
@@ -169,7 +173,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
             index: _selectedIndex,
             children: [
               _buildAbaInicio(),
-              const MerchantSearch(),
+              const SearchPage(),
               WorkingPage(store: store),
               MerchantDashboard(store: store),
               MerchantProfilePage(

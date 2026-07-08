@@ -3,9 +3,8 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
-import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
+import 'package:map_food/features/merchant/presentation/pages/merchant_edit_profile.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_how_it_works.dart';
 
 class MerchantProfilePage extends StatelessWidget {
@@ -273,7 +272,14 @@ class MerchantProfilePage extends StatelessWidget {
                 icon: LucideIcons.userCog,
                 title: "Editar Perfil",
                 subtitle: "Altere seus dados e senha",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MerchantEditProfile(),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: AppSpacing.md),

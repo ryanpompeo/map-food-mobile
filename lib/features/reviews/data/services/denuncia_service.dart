@@ -1,5 +1,6 @@
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/features/reviews/data/models/denuncia_model.dart';
 
 class DenunciaService {
@@ -9,16 +10,21 @@ class DenunciaService {
   /// [lojaId] ID da loja.
   /// [motivo] Label da UI (ex: 'Fraude ou golpe') — será convertido para enum da API.
   /// [descricao] Texto descritivo opcional.
-  /// [consumidorId] ID do consumidor (passado no body como objeto).
+  ///
+  /// Diferente de /avaliacoes, o backend de /denuncias não extrai o autor do
+  /// token JWT — é preciso enviar consumidor/comerciante explicitamente.
   Future<DenunciaModel> create({
     required int lojaId,
     required String motivo,
     String? descricao,
   }) async {
+    final session = await AuthStorage.getSession();
     final body = <String, dynamic>{
       'motivo': MotivosDenuncia.toApi(motivo),
-      'id_loja': lojaId,
+      'loja': {'id': lojaId},
       if (descricao != null && descricao.isNotEmpty) 'descricao': descricao,
+      if (session?.tipo == 'CONSUMIDOR') 'consumidor': {'id': session!.id},
+      if (session?.tipo == 'COMERCIANTE') 'comerciante': {'id': session!.id},
     };
 
     final data = await _client.post<Map<String, dynamic>>(

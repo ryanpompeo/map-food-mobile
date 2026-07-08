@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/errors/exception.dart';
-import 'package:map_food/core/ui/widgets/app_form_field_.dart';
+import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
+import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_home_page.dart';
 
@@ -27,6 +29,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   bool _isLoading = false;
 
   final _storeService = StoreService();
+  final _categoriaService = CategoriaService();
 
   // Estado da Foto Destaque (Capa)
   int? _fotoDestaqueMock;
@@ -37,16 +40,28 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
   final List<int> _categoriasSelecionadas = [];
 
-  final List<Map<String, dynamic>> _categoriasBase = [
-    {'id': 1, 'nome': 'Lanches e Hot Dogs'},
-    {'id': 2, 'nome': 'Espetinhos'},
-    {'id': 3, 'nome': 'Pastel e Salgados'},
-    {'id': 4, 'nome': 'Doces e Sobremesas'},
-    {'id': 5, 'nome': 'Bebidas'},
-    {'id': 6, 'nome': 'Gelados e Açaí'},
-    {'id': 7, 'nome': 'Milho e Pamonha'},
-    {'id': 8, 'nome': 'Pipoca'},
-  ];
+  List<CategoriaModel> _categorias = [];
+  bool _isLoadingCategorias = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarCategorias();
+  }
+
+  Future<void> _carregarCategorias() async {
+    try {
+      final categorias = await _categoriaService.getAll();
+      if (mounted) {
+        setState(() {
+          _categorias = categorias;
+          _isLoadingCategorias = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingCategorias = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -189,51 +204,62 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 12.0,
-                  children: _categoriasBase.map((cat) {
-                    final isSelected = _categoriasSelecionadas.contains(
-                      cat['id'],
-                    );
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          if (isSelected) {
-                            _categoriasSelecionadas.remove(cat['id']);
-                          } else {
-                            _categoriasSelecionadas.add(cat['id']);
-                          }
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 10.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? ColorsPalette.black
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                        child: Text(
-                          cat['nome'],
-                          style: AppText.corpo(context).copyWith(
+                if (_isLoadingCategorias)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      child: CircularProgressIndicator(
+                        color: ColorsPalette.redComponents,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 12.0,
+                    children: _categorias.map((cat) {
+                      final isSelected = _categoriasSelecionadas.contains(
+                        cat.id,
+                      );
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              _categoriasSelecionadas.remove(cat.id);
+                            } else {
+                              _categoriasSelecionadas.add(cat.id);
+                            }
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 10.0,
+                          ),
+                          decoration: BoxDecoration(
                             color: isSelected
-                                ? Colors.white
-                                : ColorsPalette.greyText,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w600,
-                            fontSize: 13.0,
+                                ? ColorsPalette.black
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                          ),
+                          child: Text(
+                            cat.nome,
+                            style: AppText.corpo(context).copyWith(
+                              color: isSelected
+                                  ? Colors.white
+                                  : ColorsPalette.greyText,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
+                              fontSize: 13.0,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                      );
+                    }).toList(),
+                  ),
 
                 if (_errorMessage != null) ...[
                   const SizedBox(height: AppSpacing.lg),

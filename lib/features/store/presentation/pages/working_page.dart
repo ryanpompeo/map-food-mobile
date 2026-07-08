@@ -4,6 +4,7 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
@@ -20,7 +21,6 @@ class _WorkingPageState extends State<WorkingPage> {
   late bool _lojaAberta;
   bool _emRonda = false;
   bool _isUpdatingStatus = false;
-  bool _isUpdatingRonda = false;
 
   final _storeService = StoreService();
 
@@ -39,7 +39,18 @@ class _WorkingPageState extends State<WorkingPage> {
       if (session == null) return;
 
       final novoStatus = val ? 'ATIVA' : 'INATIVA';
-      await _storeService.updateStatus(widget.store.id, novoStatus);
+      // PUT /lojas/{id} faz merge campo-a-campo no backend (diferente de
+      // /comerciantes e /consumidores), então reenviar nome/descricao/
+      // categorias existentes é seguro e não apaga os demais dados da loja.
+      await _storeService.update(
+        widget.store.id,
+        StoreCreateRequest(
+          nome: widget.store.nome,
+          descricao: widget.store.descricao,
+          statusLoja: novoStatus,
+          categoriaIds: widget.store.categoriaIds,
+        ),
+      );
 
       if (mounted) {
         setState(() {
@@ -66,30 +77,12 @@ class _WorkingPageState extends State<WorkingPage> {
     }
   }
 
-  Future<void> _toggleRonda(bool val) async {
-    if (_isUpdatingRonda) return;
-    setState(() => _isUpdatingRonda = true);
-
-    try {
-      await _storeService.updateRonda(widget.store.id, val);
-      if (mounted) setState(() => _emRonda = val);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Erro ao alterar status da ronda.'),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUpdatingRonda = false);
-    }
+  // "Ronda" (compartilhamento de localização em tempo real) ainda não tem
+  // suporte na API — Loja não possui esse campo no backend. Mantido como
+  // estado local até o endpoint existir, para não expor um toggle que
+  // sempre falha.
+  void _toggleRonda(bool val) {
+    setState(() => _emRonda = val);
   }
 
   @override
@@ -300,25 +293,14 @@ class _WorkingPageState extends State<WorkingPage> {
                   LucideIcons.navigation,
                   color: _emRonda ? Colors.white : ColorsPalette.black,
                 ),
-                _isUpdatingRonda
-                    ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: _emRonda
-                              ? Colors.white
-                              : ColorsPalette.redComponents,
-                        ),
-                      )
-                    : Switch(
-                        value: _emRonda,
-                        activeThumbColor: ColorsPalette.whiteBackground,
-                        activeTrackColor: ColorsPalette.black,
-                        inactiveThumbColor: Colors.grey.shade400,
-                        inactiveTrackColor: Colors.grey.shade200,
-                        onChanged: canActivateRonda ? _toggleRonda : null,
-                      ),
+                Switch(
+                  value: _emRonda,
+                  activeThumbColor: ColorsPalette.whiteBackground,
+                  activeTrackColor: ColorsPalette.black,
+                  inactiveThumbColor: Colors.grey.shade400,
+                  inactiveTrackColor: Colors.grey.shade200,
+                  onChanged: canActivateRonda ? _toggleRonda : null,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),

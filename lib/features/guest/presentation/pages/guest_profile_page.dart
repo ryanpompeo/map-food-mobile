@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -92,7 +93,7 @@ class GuestProfilePage extends StatelessWidget {
                           height: 52.0,
                           child: ElevatedButton(
                             onPressed: () =>
-                                Navigator.pushNamed(context, '/accountType'),
+                                Navigator.pushNamed(context, AppRoutes.accountType),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorsPalette.redComponents,
                               foregroundColor: Colors.white,
@@ -128,7 +129,7 @@ class GuestProfilePage extends StatelessWidget {
                         Center(
                           child: GestureDetector(
                             onTap: () {
-                              Navigator.pushNamed(context, '/login');
+                              Navigator.pushNamed(context, AppRoutes.login);
                             },
                             behavior: HitTestBehavior.opaque,
                             child: Padding(

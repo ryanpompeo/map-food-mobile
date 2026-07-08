@@ -3,8 +3,12 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
+import 'package:map_food/features/reviews/data/services/rating_service.dart';
+import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
 class MerchantDashboard extends StatefulWidget {
@@ -30,39 +34,21 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
 
   final int _maxFotosGaleria = 10;
   final _storeService = StoreService();
+  final _categoriaService = CategoriaService();
+  final _ratingService = RatingService();
 
-  final List<Map<String, dynamic>> _categoriasBase = [
-    {'id': 1, 'nome': 'Lanches e Hot Dogs'},
-    {'id': 2, 'nome': 'Espetinhos'},
-    {'id': 3, 'nome': 'Pastel e Salgados'},
-    {'id': 4, 'nome': 'Doces e Sobremesas'},
-    {'id': 5, 'nome': 'Bebidas'},
-    {'id': 6, 'nome': 'Gelados e Açaí'},
-    {'id': 7, 'nome': 'Milho e Pamonha'},
-    {'id': 8, 'nome': 'Pipoca'},
-  ];
+  List<CategoriaModel> _categorias = [];
+  bool _isLoadingCategorias = true;
 
-  final List<Map<String, dynamic>> _avaliacoesMock = [
-    {
-      'nome': 'Carlos Silva',
-      'estrelas': 5,
-      'comentario':
-          'Lanche sensacional! Chegou quentinho e o molho de alho é o melhor da cidade.',
-      'data': 'Há 2 dias',
-    },
-    {
-      'nome': 'Ana Beatriz',
-      'estrelas': 4,
-      'comentario':
-          'Muito bom, mas a fila estava um pouco grande. Valeu a espera.',
-      'data': 'Há 1 semana',
-    },
-  ];
+  List<AvaliacaoModel> _avaliacoes = [];
+  bool _isLoadingAvaliacoes = true;
 
   @override
   void initState() {
     super.initState();
     _inicializarDados();
+    _carregarCategorias();
+    _carregarAvaliacoes();
   }
 
   void _inicializarDados() {
@@ -73,6 +59,34 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     _categoriasSelecionadas = List.from(widget.store.categoriaIds);
     _fotoDestaqueTemp = widget.store.id; // placeholder até upload real
     _fotosGaleriaTemp = [];
+  }
+
+  Future<void> _carregarCategorias() async {
+    try {
+      final categorias = await _categoriaService.getAll();
+      if (mounted) {
+        setState(() {
+          _categorias = categorias;
+          _isLoadingCategorias = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingCategorias = false);
+    }
+  }
+
+  Future<void> _carregarAvaliacoes() async {
+    try {
+      final avaliacoes = await _ratingService.getStoreRatings(widget.store.id);
+      if (mounted) {
+        setState(() {
+          _avaliacoes = avaliacoes;
+          _isLoadingAvaliacoes = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingAvaliacoes = false);
+    }
   }
 
   @override
@@ -588,57 +602,66 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               .copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: 8.0,
-          runSpacing: 10.0,
-          children: _categoriasBase.map((cat) {
-            final isSelected =
-                _categoriasSelecionadas.contains(cat['id']);
+        if (_isLoadingCategorias)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            child: CircularProgressIndicator(
+              color: ColorsPalette.redComponents,
+              strokeWidth: 2,
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 10.0,
+            children: _categorias.map((cat) {
+              final isSelected =
+                  _categoriasSelecionadas.contains(cat.id);
 
-            if (!_isEditing && !isSelected) return const SizedBox.shrink();
+              if (!_isEditing && !isSelected) return const SizedBox.shrink();
 
-            return GestureDetector(
-              onTap: _isEditing
-                  ? () {
-                      setState(() {
-                        if (isSelected) {
-                          _categoriasSelecionadas.remove(cat['id']);
-                        } else {
-                          _categoriasSelecionadas.add(cat['id']);
-                        }
-                      });
-                    }
-                  : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 8.0),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? ColorsPalette.black
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(100.0),
-                  border: Border.all(
+              return GestureDetector(
+                onTap: _isEditing
+                    ? () {
+                        setState(() {
+                          if (isSelected) {
+                            _categoriasSelecionadas.remove(cat.id);
+                          } else {
+                            _categoriasSelecionadas.add(cat.id);
+                          }
+                        });
+                      }
+                    : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
+                  decoration: BoxDecoration(
                     color: isSelected
                         ? ColorsPalette.black
-                        : ColorsPalette.whiteBackground,
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(100.0),
+                    border: Border.all(
+                      color: isSelected
+                          ? ColorsPalette.black
+                          : ColorsPalette.whiteBackground,
+                    ),
+                  ),
+                  child: Text(
+                    cat.nome,
+                    style: AppText.legenda(context).copyWith(
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.grey.shade700,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
+                    ),
                   ),
                 ),
-                child: Text(
-                  cat['nome'],
-                  style: AppText.legenda(context).copyWith(
-                    color: isSelected
-                        ? Colors.white
-                        : Colors.grey.shade700,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.w600,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+              );
+            }).toList(),
+          ),
       ],
     );
   }
@@ -695,77 +718,122 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         ),
         const SizedBox(height: AppSpacing.lg),
 
-        ..._avaliacoesMock.map((review) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: AppSpacing.md),
-            padding: const EdgeInsets.all(AppSpacing.md),
+        if (_isLoadingAvaliacoes)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: CircularProgressIndicator(
+                color: ColorsPalette.redComponents,
+                strokeWidth: 2,
+              ),
+            ),
+          )
+        else if (_avaliacoes.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              border: Border.all(color: Colors.grey.shade200),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: Colors.grey.shade100,
-                          child: Text(
-                            review['nome'][0],
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black),
+            child: Text(
+              'Nenhuma avaliação recebida ainda.',
+              style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+            ),
+          )
+        else
+          ..._avaliacoes.map((review) {
+            final nome = review.consumidor?.nome ?? 'Usuário';
+            return Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.grey.shade100,
+                            child: Text(
+                              nome.isNotEmpty ? nome[0].toUpperCase() : '?',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          review['nome'],
-                          style: AppText.corpo(context)
-                              .copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 8),
+                          Text(
+                            nome,
+                            style: AppText.corpo(context)
+                                .copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        _formatDate(review.dataAvaliacao),
+                        style: AppText.legenda(context)
+                            .copyWith(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < review.nota
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
+                        color: Colors.amber,
+                        size: 16,
+                      );
+                    }),
+                  ),
+                  if (review.comentario != null &&
+                      review.comentario!.trim().isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
-                      review['data'],
-                      style: AppText.legenda(context)
-                          .copyWith(color: Colors.grey),
+                      review.comentario!,
+                      style: AppText.corpo(context).copyWith(
+                          color: Colors.grey.shade700, height: 1.4),
                     ),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: List.generate(5, (index) {
-                    return Icon(
-                      index < review['estrelas']
-                          ? Icons.star_rounded
-                          : Icons.star_border_rounded,
-                      color: Colors.amber,
-                      size: 16,
-                    );
-                  }),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  review['comentario'],
-                  style: AppText.corpo(context).copyWith(
-                      color: Colors.grey.shade700, height: 1.4),
-                ),
-              ],
-            ),
-          );
-        }),
+                ],
+              ),
+            );
+          }),
       ],
     );
+  }
+
+  String _formatDate(String? rawDate) {
+    if (rawDate == null) return '';
+    try {
+      final dt = DateTime.parse(rawDate).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inDays == 0) return 'Hoje';
+      if (diff.inDays == 1) return 'Ontem';
+      if (diff.inDays < 7) return 'Há ${diff.inDays} dias';
+      if (diff.inDays < 30) return 'Há ${(diff.inDays / 7).floor()} semanas';
+      if (diff.inDays < 365) return 'Há ${(diff.inDays / 30).floor()} meses';
+      return 'Há ${(diff.inDays / 365).floor()} anos';
+    } catch (_) {
+      return '';
+    }
   }
 }

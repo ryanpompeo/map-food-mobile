@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -61,7 +62,7 @@ class AccountTypePage extends StatelessWidget {
                   buttonText: 'Seja um Cliente',
                   isDark: true,
                   onTap: () {
-                    Navigator.pushNamed(context, '/consumerRegister');
+                    Navigator.pushNamed(context, AppRoutes.consumerRegister);
                   },
                 ),
 
@@ -80,7 +81,7 @@ class AccountTypePage extends StatelessWidget {
                   buttonText: 'Seja um Comerciante',
                   isDark: false,
                   onTap: () {
-                    Navigator.pushNamed(context, '/merchantRegister');
+                    Navigator.pushNamed(context, AppRoutes.merchantRegister);
                   },
                 ),
 

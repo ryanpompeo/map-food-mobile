@@ -5,8 +5,8 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_edit_profile.dart';
-import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
+import 'package:map_food/features/reviews/presentation/pages/consumer_complaints_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_review_page.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
@@ -308,7 +308,7 @@ class ConsumerProfilePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ConsumerReviewPage(),
+                      builder: (context) => const ConsumerComplaintsPage(),
                     ),
                   );
                 },
