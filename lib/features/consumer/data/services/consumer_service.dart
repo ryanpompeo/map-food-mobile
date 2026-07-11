@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/consumer/data/models/consumer_model.dart';
@@ -5,6 +7,22 @@ import 'package:map_food/features/consumer/data/models/consumer_register_request
 
 class ConsumerService {
   final _client = ApiClient.instance;
+
+  /// Envia a foto de perfil. O corpo da resposta do POST não é confiável,
+  /// então busca o consumidor novamente pra devolver o estado atualizado.
+  /// Usa bytes (não o path) porque o Flutter Web não expõe caminho de arquivo.
+  Future<ConsumerModel> uploadImagem(int id, XFile file) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
+    });
+    await _client.post<dynamic>('${ApiConstants.consumidores}/$id/imagem', data: formData);
+    return getById(id);
+  }
+
+  Future<ConsumerModel> removerImagem(int id) async {
+    await _client.delete('${ApiConstants.consumidores}/$id/imagem');
+    return getById(id);
+  }
 
   Future<void> register(ConsumerRegisterRequest request) async {
     await _client.post<dynamic>(ApiConstants.consumidores, data: request.toJson());

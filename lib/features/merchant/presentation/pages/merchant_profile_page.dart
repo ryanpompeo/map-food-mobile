@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/network/image_url_resolver.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
+import 'package:map_food/features/merchant/data/services/merchant_service.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_edit_profile.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_how_it_works.dart';
 
-class MerchantProfilePage extends StatelessWidget {
+class MerchantProfilePage extends StatefulWidget {
   final String userName;
   final String userEmail;
 
@@ -16,6 +19,32 @@ class MerchantProfilePage extends StatelessWidget {
     required this.userName,
     required this.userEmail,
   });
+
+  @override
+  State<MerchantProfilePage> createState() => _MerchantProfilePageState();
+}
+
+class _MerchantProfilePageState extends State<MerchantProfilePage> {
+  final _service = MerchantService();
+  String? _imagemUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarFoto();
+  }
+
+  Future<void> _carregarFoto() async {
+    try {
+      final session = await AuthStorage.getSession();
+      if (session == null) return;
+      final data = await _service.getById(session.id);
+      if (mounted) setState(() => _imagemUrl = data.imagemUrl);
+    } catch (_) {
+      // Mantém o fallback com as iniciais do nome.
+    }
+  }
+
   void _logout(BuildContext context) {
     showDialog(
       context: context,
@@ -119,6 +148,8 @@ class MerchantProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedImagemUrl = resolveImagemUrl(_imagemUrl);
+
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       body: SafeArea(
@@ -166,23 +197,40 @@ class MerchantProfilePage extends StatelessWidget {
                             Container(
                               height: 64.0,
                               width: 64.0,
+                              clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
                                 color: ColorsPalette.redComponents.withValues(
                                   alpha: 0.1,
                                 ),
                                 shape: BoxShape.circle,
                               ),
-                              child: Center(
-                                child: Text(
-                                  userName.isNotEmpty
-                                      ? userName[0].toUpperCase()
-                                      : 'U',
-                                  style: AppText.titulo(context).copyWith(
-                                    color: ColorsPalette.redComponents,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                              child: resolvedImagemUrl != null
+                                  ? Image.network(
+                                      resolvedImagemUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Center(
+                                        child: Text(
+                                          widget.userName.isNotEmpty
+                                              ? widget.userName[0].toUpperCase()
+                                              : 'U',
+                                          style: AppText.titulo(context).copyWith(
+                                            color: ColorsPalette.redComponents,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        widget.userName.isNotEmpty
+                                            ? widget.userName[0].toUpperCase()
+                                            : 'U',
+                                        style: AppText.titulo(context).copyWith(
+                                          color: ColorsPalette.redComponents,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
                             ),
                             const SizedBox(width: AppSpacing.md),
                             // Nome e E-mail
@@ -191,7 +239,7 @@ class MerchantProfilePage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    userName,
+                                    widget.userName,
                                     style: AppText.subtitulo(context).copyWith(
                                       color: ColorsPalette.blackDetails,
                                       fontWeight: FontWeight.w900,
@@ -202,7 +250,7 @@ class MerchantProfilePage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4.0),
                                   Text(
-                                    userEmail,
+                                    widget.userEmail,
                                     style: AppText.secundario(context).copyWith(
                                       color: ColorsPalette.greyText,
                                       fontWeight: FontWeight.w500,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -103,10 +104,10 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                 children: [
                   Container(
                     decoration: const BoxDecoration(color: ColorsPalette.whiteBackground),
-                    child: store.imagens != null && store.imagens!.isNotEmpty
+                    child: resolveImagemUrl(store.capaUrl) != null
                         ? ClipRRect(
                             child: Image.network(
-                              store.imagens![0], fit: BoxFit.cover,
+                              resolveImagemUrl(store.capaUrl)!, fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, size: 64.0, color: Colors.grey)),
                             ),
                           )
@@ -162,7 +163,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Galeria de fotos', style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black)),
-                      Text('${store.imagens?.length ?? 0} fotos', style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600)),
+                      Text('${store.galeria.length} fotos', style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -170,15 +171,18 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     height: 140.0,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal, physics: const BouncingScrollPhysics(), clipBehavior: Clip.none,
-                      itemCount: store.imagens?.length ?? 0,
+                      itemCount: store.galeria.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12.0),
                       itemBuilder: (context, index) {
+                        final url = resolveImagemUrl(store.galeria[index]);
                         return Container(
                           width: 140.0,
                           decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16.0), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16.0),
-                            child: Image.network(store.imagens![index], fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0))),
+                            child: url != null
+                                ? Image.network(url, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)))
+                                : const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)),
                           ),
                         );
                       },

@@ -7,7 +7,8 @@ class StoreDto {
   final String categoria;       // Nome da 1ª categoria (cards / chips de busca)
   final List<int> categoriaIds; // IDs para edição de loja
   final List<String> categoriaNomes; // Todos os nomes (tela de detalhes)
-  final List<String>? imagens;
+  final String? imagemUrl; // Foto de capa
+  final List<String> galeria; // Fotos internas (cardápio/vitrine)
   final double? avaliacao;
   final int totalAvaliacoes;
 
@@ -20,10 +21,16 @@ class StoreDto {
     required this.categoria,
     this.categoriaIds = const [],
     this.categoriaNomes = const [],
-    this.imagens,
+    this.imagemUrl,
+    this.galeria = const [],
     this.avaliacao,
     this.totalAvaliacoes = 0,
   });
+
+  /// Uma foto representativa da loja, pra widgets que só precisam de uma
+  /// imagem (cards de busca, favoritos): a capa, ou a primeira da galeria
+  /// se não houver capa definida.
+  String? get capaUrl => imagemUrl ?? (galeria.isNotEmpty ? galeria.first : null);
 
   factory StoreDto.fromJson(Map<String, dynamic> json) => StoreDto(
         id: (json['id'] as num).toInt(),
@@ -34,9 +41,11 @@ class StoreDto {
         categoria: _parseCategoriaName(json),
         categoriaIds: _parseCategoriaIds(json),
         categoriaNomes: _parseCategoriaNames(json),
-        imagens: (json['imagens'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList(),
+        imagemUrl: json['imagemUrl'] as String?,
+        galeria: (json['galeria'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
         // Suporta campo 'avaliacao' (legado) ou 'mediaAvaliacao' (endpoint /search)
         avaliacao: (json['mediaAvaliacao'] as num?)?.toDouble() ??
             (json['avaliacao'] as num?)?.toDouble(),

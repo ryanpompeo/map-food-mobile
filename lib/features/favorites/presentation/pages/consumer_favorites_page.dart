@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -95,17 +96,19 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                             borderRadius: BorderRadius.circular(12),
                             color: Colors.grey.shade100,
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              store.imagens?.first ?? '',
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
-                                LucideIcons.image,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
-                          ),
+                          child: resolveImagemUrl(store.capaUrl) != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    resolveImagemUrl(store.capaUrl)!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Icon(
+                                      LucideIcons.image,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ),
+                                )
+                              : Icon(LucideIcons.image, color: Colors.grey.shade400),
                         ),
 
                         const SizedBox(width: 12),

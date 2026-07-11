@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
+import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
 import 'package:map_food/features/consumer/data/models/consumer_model.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 
@@ -28,6 +31,7 @@ class _ConsumerEditProfileState extends State<ConsumerEditProfile> {
 
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploadingFoto = false;
   bool _showSenha = false;
   bool _showConfirmarSenha = false;
   ConsumerModel? _original;
@@ -77,6 +81,54 @@ class _ConsumerEditProfileState extends State<ConsumerEditProfile> {
     }
   }
 
+  Future<void> _trocarFoto() async {
+    if (_original == null) return;
+    final file = await pickImageFromSheet(context);
+    if (file == null) return;
+
+    setState(() => _isUploadingFoto = true);
+    try {
+      final atualizado = await _service.uploadImagem(_original!.id, file);
+      if (!mounted) return;
+      setState(() => _original = atualizado);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível enviar a foto. Tente novamente.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingFoto = false);
+    }
+  }
+
+  Future<void> _removerFoto() async {
+    if (_original == null || _original!.imagemUrl == null) return;
+    final confirmou = await confirmarRemocaoFoto(context);
+    if (!confirmou || !mounted) return;
+
+    setState(() => _isUploadingFoto = true);
+    try {
+      final atualizado = await _service.removerImagem(_original!.id);
+      if (!mounted) return;
+      setState(() => _original = atualizado);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não foi possível remover a foto. Tente novamente.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingFoto = false);
+    }
+  }
+
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
     if (_original == null) return;
@@ -100,6 +152,7 @@ class _ConsumerEditProfileState extends State<ConsumerEditProfile> {
         email: _emailController.text.trim(),
         cpf: _original!.cpf,
         celular: _celularController.text.trim(),
+        imagemUrl: _original!.imagemUrl,
       );
       await _service.update(
         atualizado,
@@ -167,25 +220,87 @@ class _ConsumerEditProfileState extends State<ConsumerEditProfile> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Center(
-                        child: Container(
-                          height: 80,
-                          width: 80,
-                          decoration: BoxDecoration(
-                            color: ColorsPalette.redComponents
-                                .withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _nomeController.text.isNotEmpty
-                                  ? _nomeController.text[0].toUpperCase()
-                                  : 'U',
-                              style: AppText.titulo(context).copyWith(
-                                fontSize: 32,
-                                color: ColorsPalette.redComponents,
-                                fontWeight: FontWeight.bold,
+                        child: GestureDetector(
+                          onTap: _isUploadingFoto ? null : _trocarFoto,
+                          child: Stack(
+                            children: [
+                              Container(
+                                height: 80,
+                                width: 80,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: BoxDecoration(
+                                  color: ColorsPalette.redComponents
+                                      .withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: _isUploadingFoto
+                                    ? const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: ColorsPalette.redComponents,
+                                        ),
+                                      )
+                                    : resolveImagemUrl(_original?.imagemUrl) != null
+                                        ? Image.network(
+                                            resolveImagemUrl(_original!.imagemUrl)!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) => Center(
+                                              child: Text(
+                                                _nomeController.text.isNotEmpty
+                                                    ? _nomeController.text[0].toUpperCase()
+                                                    : 'U',
+                                                style: AppText.titulo(context).copyWith(
+                                                  fontSize: 32,
+                                                  color: ColorsPalette.redComponents,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : Center(
+                                            child: Text(
+                                              _nomeController.text.isNotEmpty
+                                                  ? _nomeController.text[0].toUpperCase()
+                                                  : 'U',
+                                              style: AppText.titulo(context).copyWith(
+                                                fontSize: 32,
+                                                color: ColorsPalette.redComponents,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
                               ),
-                            ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6.0),
+                                  decoration: const BoxDecoration(
+                                    color: ColorsPalette.redComponents,
+                                    shape: BoxShape.circle,
+                                    border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 2.0)),
+                                  ),
+                                  child: const Icon(LucideIcons.camera, size: 14.0, color: Colors.white),
+                                ),
+                              ),
+                              if (_original?.imagemUrl != null && !_isUploadingFoto)
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: _removerFoto,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4.0),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.fromBorderSide(BorderSide(color: ColorsPalette.redComponents, width: 1.5)),
+                                      ),
+                                      child: const Icon(LucideIcons.x, size: 12.0, color: ColorsPalette.redComponents),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ),

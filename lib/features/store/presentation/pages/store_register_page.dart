@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
+import 'package:map_food/core/ui/widgets/xfile_image.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -32,10 +35,10 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   final _categoriaService = CategoriaService();
 
   // Estado da Foto Destaque (Capa)
-  int? _fotoDestaqueMock;
+  XFile? _fotoDestaque;
 
   // Estado da Galeria Interna
-  final List<int> _fotosMock = [];
+  final List<XFile> _fotosGaleria = [];
   final int _maxFotos = 10;
 
   final List<int> _categoriasSelecionadas = [];
@@ -74,7 +77,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
-    if (_fotoDestaqueMock == null) {
+    if (_fotoDestaque == null) {
       _mostrarErro("Adicione uma Foto Destaque para o seu comércio");
       return;
     }
@@ -99,7 +102,23 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         categoriaIds: List<int>.from(_categoriasSelecionadas),
       );
 
-      await _storeService.create(request);
+      final loja = await _storeService.create(request);
+
+      try {
+        await _storeService.uploadImagemCapa(loja.id, _fotoDestaque!);
+        if (_fotosGaleria.isNotEmpty) {
+          await _storeService.uploadGaleria(loja.id, _fotosGaleria);
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Loja cadastrada, mas houve um erro ao enviar as fotos. Tente novamente na edição da loja.'),
+              backgroundColor: ColorsPalette.redComponents,
+            ),
+          );
+        }
+      }
 
       if (!mounted) return;
 
@@ -388,35 +407,31 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         ),
         const SizedBox(height: AppSpacing.md),
         GestureDetector(
-          onTap: () {
-            setState(
-              () => _fotoDestaqueMock = DateTime.now().millisecondsSinceEpoch,
-            );
+          onTap: () async {
+            final file = await pickImageFromSheet(context);
+            if (file != null) setState(() => _fotoDestaque = file);
           },
           child: Container(
             height: 180.0,
             width: double.infinity,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: _fotoDestaqueMock != null
+              color: _fotoDestaque != null
                   ? ColorsPalette.redComponents.withValues(alpha: 0.05)
                   : Colors.white,
               borderRadius: BorderRadius.circular(24.0),
             ),
-            child: _fotoDestaqueMock != null
+            child: _fotoDestaque != null
                 ? Stack(
                     children: [
-                      const Center(
-                        child: Icon(
-                          LucideIcons.image,
-                          color: ColorsPalette.redComponents,
-                          size: 48.0,
-                        ),
+                      Positioned.fill(
+                        child: XFileImage(_fotoDestaque!),
                       ),
                       Positioned(
                         top: 12,
                         right: 12,
                         child: GestureDetector(
-                          onTap: () => setState(() => _fotoDestaqueMock = null),
+                          onTap: () => setState(() => _fotoDestaque = null),
                           child: Container(
                             padding: const EdgeInsets.all(8.0),
                             decoration: BoxDecoration(
@@ -486,12 +501,11 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
           clipBehavior: Clip.none,
           child: Row(
             children: [
-              if (_fotosMock.length < _maxFotos)
+              if (_fotosGaleria.length < _maxFotos)
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _fotosMock.add(DateTime.now().millisecondsSinceEpoch);
-                    });
+                  onTap: () async {
+                    final file = await pickImageFromSheet(context);
+                    if (file != null) setState(() => _fotosGaleria.add(file));
                   },
                   child: Container(
                     height: 110.0,
@@ -538,7 +552,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     ),
                   ),
                 ),
-              ..._fotosMock.map((fotoId) => _buildFotoMockItem(fotoId)),
+              ..._fotosGaleria.map((foto) => _buildFotoGaleriaItem(foto)),
             ],
           ),
         ),
@@ -546,11 +560,12 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     );
   }
 
-  Widget _buildFotoMockItem(int fotoId) {
+  Widget _buildFotoGaleriaItem(XFile foto) {
     return Container(
       height: 110.0,
       width: 110.0,
       margin: const EdgeInsets.only(right: 16.0),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: ColorsPalette.redComponents.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20.0),
@@ -561,19 +576,15 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
       ),
       child: Stack(
         children: [
-          const Center(
-            child: Icon(
-              LucideIcons.image,
-              color: ColorsPalette.redComponents,
-              size: 36.0,
-            ),
+          Positioned.fill(
+            child: XFileImage(foto),
           ),
           Positioned(
             top: 6,
             right: 6,
             child: GestureDetector(
               onTap: () {
-                setState(() => _fotosMock.remove(fotoId));
+                setState(() => _fotosGaleria.remove(foto));
               },
               child: Container(
                 padding: const EdgeInsets.all(6.0),

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
+import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
+import 'package:map_food/core/ui/widgets/xfile_image.dart';
 import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
 import 'package:map_food/features/reviews/data/services/rating_service.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
@@ -23,14 +28,20 @@ class MerchantDashboard extends StatefulWidget {
 class _MerchantDashboardState extends State<MerchantDashboard> {
   bool _isEditing = false;
   bool _isSaving = false;
+  bool _isRemovendoCapa = false;
+  String? _removendoGaleriaUrl;
 
   late TextEditingController _nomeController;
   late TextEditingController _descricaoController;
   late List<int> _categoriasSelecionadas;
 
-  // As fotos são representadas como IDs locais (upload de imagem será implementado futuramente)
-  int? _fotoDestaqueTemp;
-  late List<int> _fotosGaleriaTemp;
+  // Foto de capa/galeria já salvas no servidor (`_store.capaUrl`/`galeria`) são
+  // só exibidas; estas variáveis guardam fotos escolhidas nesta sessão de
+  // edição, que ainda não foram enviadas.
+  XFile? _novaCapa;
+  final List<XFile> _novasFotosGaleria = [];
+
+  late StoreDto _store;
 
   final int _maxFotosGaleria = 10;
   final _storeService = StoreService();
@@ -52,13 +63,12 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   }
 
   void _inicializarDados() {
+    _store = widget.store;
     _nomeController =
         TextEditingController(text: widget.store.nome);
     _descricaoController =
         TextEditingController(text: widget.store.descricao ?? '');
     _categoriasSelecionadas = List.from(widget.store.categoriaIds);
-    _fotoDestaqueTemp = widget.store.id; // placeholder até upload real
-    _fotosGaleriaTemp = [];
   }
 
   Future<void> _carregarCategorias() async {
@@ -185,6 +195,45 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     );
   }
 
+  Future<void> _removerCapaSalva() async {
+    if (_store.capaUrl == null) return;
+    final confirmou = await confirmarRemocaoFoto(context);
+    if (!confirmou || !mounted) return;
+
+    setState(() => _isRemovendoCapa = true);
+    try {
+      final atualizada = await _storeService.removerImagemCapa(widget.store.id);
+      if (mounted) setState(() => _store = atualizada);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Não foi possível remover a foto. Tente novamente."), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRemovendoCapa = false);
+    }
+  }
+
+  Future<void> _removerFotoGaleriaSalva(String url) async {
+    final confirmou = await confirmarRemocaoFoto(context);
+    if (!confirmou || !mounted) return;
+
+    setState(() => _removendoGaleriaUrl = url);
+    try {
+      final atualizada = await _storeService.removerFotoGaleria(widget.store.id, url);
+      if (mounted) setState(() => _store = atualizada);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Não foi possível remover a foto. Tente novamente."), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _removendoGaleriaUrl = null);
+    }
+  }
+
   Future<void> _efetivarSalvamento() async {
     if (_isSaving) return;
     setState(() => _isSaving = true);
@@ -199,10 +248,22 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         categoriaIds: List.from(_categoriasSelecionadas),
       );
 
-      await _storeService.update(widget.store.id, request);
+      var lojaAtualizada = await _storeService.update(widget.store.id, request);
+
+      if (_novaCapa != null) {
+        lojaAtualizada = await _storeService.uploadImagemCapa(widget.store.id, _novaCapa!);
+      }
+      if (_novasFotosGaleria.isNotEmpty) {
+        lojaAtualizada = await _storeService.uploadGaleria(widget.store.id, _novasFotosGaleria);
+      }
 
       if (mounted) {
-        setState(() => _isEditing = false);
+        setState(() {
+          _isEditing = false;
+          _store = lojaAtualizada;
+          _novaCapa = null;
+          _novasFotosGaleria.clear();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Informações atualizadas com sucesso!"),
@@ -234,6 +295,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
       _nomeController.text = widget.store.nome;
       _descricaoController.text = widget.store.descricao ?? '';
       _categoriasSelecionadas = List.from(widget.store.categoriaIds);
+      _novaCapa = null;
+      _novasFotosGaleria.clear();
     });
   }
 
@@ -369,16 +432,17 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         const SizedBox(height: AppSpacing.sm),
         GestureDetector(
           onTap: _isEditing
-              ? () => setState(
-                    () => _fotoDestaqueTemp =
-                        DateTime.now().millisecondsSinceEpoch,
-                  )
+              ? () async {
+                  final file = await pickImageFromSheet(context);
+                  if (file != null) setState(() => _novaCapa = file);
+                }
               : null,
           child: Container(
             height: 160.0,
             width: double.infinity,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: _fotoDestaqueTemp != null
+              color: _novaCapa != null || _store.capaUrl != null
                   ? ColorsPalette.redComponents.withValues(alpha: 0.05)
                   : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(16.0),
@@ -388,33 +452,44 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     : Colors.transparent,
               ),
             ),
-            child: _fotoDestaqueTemp != null
+            child: _novaCapa != null || resolveImagemUrl(_store.capaUrl) != null
                 ? Stack(
                     fit: StackFit.expand,
                     children: [
-                      const Center(
-                        child: Icon(
-                          LucideIcons.image,
-                          color: ColorsPalette.redComponents,
-                          size: 48.0,
-                        ),
-                      ),
+                      _novaCapa != null
+                          ? XFileImage(_novaCapa!)
+                          : Image.network(
+                              resolveImagemUrl(_store.capaUrl)!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => const Center(
+                                child: Icon(LucideIcons.image, color: ColorsPalette.redComponents, size: 48.0),
+                              ),
+                            ),
                       if (_isEditing)
                         Positioned(
                           top: 8,
                           right: 8,
                           child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _fotoDestaqueTemp = null),
+                            onTap: _isRemovendoCapa
+                                ? null
+                                : _novaCapa != null
+                                    ? () => setState(() => _novaCapa = null)
+                                    : _removerCapaSalva,
                             child: Container(
                               padding: const EdgeInsets.all(8.0),
                               decoration: const BoxDecoration(
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(LucideIcons.trash2,
-                                  size: 16.0,
-                                  color: ColorsPalette.redComponents),
+                              child: _isRemovendoCapa
+                                  ? const SizedBox(
+                                      width: 16.0,
+                                      height: 16.0,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: ColorsPalette.redComponents),
+                                    )
+                                  : const Icon(LucideIcons.trash2,
+                                      size: 16.0,
+                                      color: ColorsPalette.redComponents),
                             ),
                           ),
                         ),
@@ -440,7 +515,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         const SizedBox(height: AppSpacing.md),
 
         Text(
-          "Galeria (${_fotosGaleriaTemp.length}/$_maxFotosGaleria)",
+          "Galeria (${_store.galeria.length + _novasFotosGaleria.length}/$_maxFotosGaleria)",
           style:
               AppText.subtitulo(context).copyWith(fontWeight: FontWeight.bold),
         ),
@@ -450,12 +525,12 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           clipBehavior: Clip.none,
           child: Row(
             children: [
-              if (_isEditing && _fotosGaleriaTemp.length < _maxFotosGaleria)
+              if (_isEditing && (_store.galeria.length + _novasFotosGaleria.length) < _maxFotosGaleria)
                 GestureDetector(
-                  onTap: () => setState(
-                    () => _fotosGaleriaTemp
-                        .add(DateTime.now().millisecondsSinceEpoch),
-                  ),
+                  onTap: () async {
+                    final file = await pickImageFromSheet(context);
+                    if (file != null) setState(() => _novasFotosGaleria.add(file));
+                  },
                   child: Container(
                     height: 100.0,
                     width: 100.0,
@@ -479,28 +554,75 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     ),
                   ),
                 ),
-              ..._fotosGaleriaTemp.map((fotoId) {
+              ..._store.galeria.map((fotoPath) {
+                final url = resolveImagemUrl(fotoPath);
+                final removendo = _removendoGaleriaUrl == fotoPath;
                 return Container(
                   height: 100.0,
                   width: 100.0,
                   margin: const EdgeInsets.only(right: 12.0),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: ColorsPalette.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: Stack(
                     children: [
-                      const Center(
-                        child: Icon(LucideIcons.image,
-                            color: Colors.grey, size: 32.0),
+                      Positioned.fill(
+                        child: url != null
+                            ? Image.network(
+                                url, fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)),
+                              )
+                            : const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)),
                       ),
                       if (_isEditing)
                         Positioned(
                           top: 4,
                           right: 4,
                           child: GestureDetector(
+                            onTap: removendo ? null : () => _removerFotoGaleriaSalva(fotoPath),
+                            child: Container(
+                              padding: const EdgeInsets.all(4.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: removendo
+                                  ? const SizedBox(
+                                      width: 12.0,
+                                      height: 12.0,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: ColorsPalette.redComponents),
+                                    )
+                                  : const Icon(LucideIcons.x, size: 14.0, color: Colors.black),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }),
+              ..._novasFotosGaleria.map((foto) {
+                return Container(
+                  height: 100.0,
+                  width: 100.0,
+                  margin: const EdgeInsets.only(right: 12.0),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: ColorsPalette.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: XFileImage(foto)),
+                      if (_isEditing)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
                             onTap: () => setState(
-                              () => _fotosGaleriaTemp.remove(fotoId),
+                              () => _novasFotosGaleria.remove(foto),
                             ),
                             child: Container(
                               padding: const EdgeInsets.all(4.0),
@@ -519,7 +641,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   ),
                 );
               }),
-              if (!_isEditing && _fotosGaleriaTemp.isEmpty)
+              if (!_isEditing && _store.galeria.isEmpty && _novasFotosGaleria.isEmpty)
                 Text(
                   "Nenhuma foto na galeria.",
                   style: AppText.legenda(context)
