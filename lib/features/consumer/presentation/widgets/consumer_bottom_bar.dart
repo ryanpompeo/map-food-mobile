@@ -72,16 +72,12 @@ class ConsumerBottomBar extends StatelessWidget {
                       onTap: () => onItemTapped(1),
                     ),
                     const SizedBox(width: 4.0),
-                    _NavItem(
-                      icon: LucideIcons.heart,
-                      isSelected: selectedIndex == 2,
-                      onTap: () => onItemTapped(2),
-                    ),
-                    const SizedBox(width: 4.0),
+                    // Favoritos saiu da bottom bar (Fase 8) — agora vive
+                    // dentro do Perfil ("Meus Favoritos").
                     _NavItem(
                       icon: LucideIcons.user,
-                      isSelected: selectedIndex == 3,
-                      onTap: () => onItemTapped(3),
+                      isSelected: selectedIndex == 2,
+                      onTap: () => onItemTapped(2),
                     ),
                   ],
                 ),

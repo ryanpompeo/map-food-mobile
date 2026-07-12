@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/services/notification_service.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/theme/app_theme.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/features/reviews/data/models/denuncia_model.dart';
 import 'package:map_food/features/reviews/data/services/denuncia_service.dart';
@@ -85,8 +87,11 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
                         child: ListView.separated(
                           padding: const EdgeInsets.all(AppSpacing.lg),
                           itemCount: _denuncias.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
-                          itemBuilder: (context, index) => _DenunciaCard(denuncia: _denuncias[index]),
+                          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                          itemBuilder: (context, index) => _DenunciaCard(
+                            denuncia: _denuncias[index],
+                            onCancelled: () => setState(() => _denuncias.removeAt(index)),
+                          ),
                         ),
                       ),
       ),
@@ -94,9 +99,19 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
   }
 }
 
-class _DenunciaCard extends StatelessWidget {
+class _DenunciaCard extends StatefulWidget {
   final DenunciaModel denuncia;
-  const _DenunciaCard({required this.denuncia});
+  final VoidCallback onCancelled;
+
+  const _DenunciaCard({required this.denuncia, required this.onCancelled});
+
+  @override
+  State<_DenunciaCard> createState() => _DenunciaCardState();
+}
+
+class _DenunciaCardState extends State<_DenunciaCard> {
+  final _denunciaService = DenunciaService();
+  bool _isCancelling = false;
 
   static const _motivoLabels = {
     'CONTEUDO_INAPROPRIADO': 'Conteúdo inapropriado',
@@ -106,16 +121,17 @@ class _DenunciaCard extends StatelessWidget {
     'OUTRO': 'Outro',
   };
 
-  ({String label, Color color}) _statusInfo(String status) {
+  // Cores semânticas da paleta (context.appColors), não mais hardcoded.
+  ({String label, Color color}) _statusInfo(AppColorsExtension colors, String status) {
     switch (status) {
       case 'RESOLVIDA':
-        return (label: 'Resolvida', color: Colors.green);
+        return (label: 'Resolvida', color: colors.success);
       case 'EM_ANALISE':
-        return (label: 'Em análise', color: Colors.amber.shade800);
+        return (label: 'Em análise', color: colors.warning);
       case 'ARQUIVADA':
-        return (label: 'Arquivada', color: Colors.grey);
+        return (label: 'Arquivada', color: colors.textSecondary);
       default:
-        return (label: 'Pendente', color: ColorsPalette.redComponents);
+        return (label: 'Pendente', color: colors.warning);
     }
   }
 
@@ -129,9 +145,46 @@ class _DenunciaCard extends StatelessWidget {
     }
   }
 
+  Future<void> _confirmarCancelamento() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        title: const Text('Cancelar denúncia?'),
+        content: const Text('Essa denúncia será removida e não poderá ser recuperada.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('Voltar', style: TextStyle(color: context.appColors.textSecondary, fontWeight: FontWeight.w700)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text('Confirmar', style: TextStyle(color: context.appColors.error, fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true) return;
+
+    setState(() => _isCancelling = true);
+    try {
+      await _denunciaService.cancel(widget.denuncia.id);
+      NotificationService.instance.success('Denúncia cancelada.');
+      widget.onCancelled();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isCancelling = false);
+      NotificationService.instance.error('Não foi possível cancelar. Tente novamente.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final status = _statusInfo(denuncia.statusDenuncia);
+    final colors = context.appColors;
+    final denuncia = widget.denuncia;
+    final status = _statusInfo(colors, denuncia.statusDenuncia);
+    final podeCancel = denuncia.statusDenuncia == 'PENDENTE';
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -165,6 +218,19 @@ class _DenunciaCard extends StatelessWidget {
                   style: AppText.legenda(context).copyWith(color: status.color, fontWeight: FontWeight.bold),
                 ),
               ),
+              // Só existe enquanto a denúncia estiver PENDENTE — some
+              // sozinho assim que o status mudar (RESOLVIDA/ARQUIVADA não
+              // podem mais ser canceladas, e o backend já rejeita com 409).
+              if (podeCancel) ...[
+                const SizedBox(width: 8.0),
+                _isCancelling
+                    ? const SizedBox(
+                        width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : GestureDetector(
+                        onTap: _confirmarCancelamento,
+                        child: Icon(LucideIcons.trash2, size: 18, color: colors.error),
+                      ),
+              ],
             ],
           ),
           if (denuncia.descricao != null && denuncia.descricao!.trim().isNotEmpty) ...[

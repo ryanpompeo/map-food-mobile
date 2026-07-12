@@ -9,6 +9,7 @@ class ConsumerModel {
   final String email;
   final String? cpf;
   final String? celular;
+  final String? imagemUrl;
 
   const ConsumerModel({
     required this.id,
@@ -16,6 +17,7 @@ class ConsumerModel {
     required this.email,
     this.cpf,
     this.celular,
+    this.imagemUrl,
   });
 
   factory ConsumerModel.fromJson(Map<String, dynamic> json) => ConsumerModel(
@@ -24,6 +26,7 @@ class ConsumerModel {
         email: json['email']?.toString() ?? '',
         cpf: json['cpf'] as String?,
         celular: json['celular'] as String?,
+        imagemUrl: json['imagemUrl'] as String?,
       );
 
   Map<String, dynamic> toJson() => {

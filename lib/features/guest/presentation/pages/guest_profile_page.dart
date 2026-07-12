@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_theme.dart';
+import 'package:map_food/core/ui/widgets/theme_mode_selector_sheet.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
@@ -12,8 +13,9 @@ class GuestProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: colors.background,
 
       body: SafeArea(
         child: SingleChildScrollView(
@@ -25,17 +27,17 @@ class GuestProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: ColorsPalette.white,
+                    color: colors.surface,
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
-                        color: ColorsPalette.black.withValues(alpha: 0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 24,
                         spreadRadius: 0,
                         offset: const Offset(0, 4),
                       ),
                       BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: colors.background.withValues(alpha: 0.9),
                         blurRadius: 15,
                         spreadRadius: 2,
                         offset: const Offset(-6, -6),
@@ -48,7 +50,7 @@ class GuestProfilePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.xl),
                       border: Border.all(
                         width: 1.5,
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: colors.divider.withValues(alpha: 0.6),
                       ),
                     ),
                     child: Column(
@@ -58,13 +60,11 @@ class GuestProfilePage extends StatelessWidget {
                           padding: EdgeInsets.all(AppSpacing.md),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(AppRadius.lg),
-                            color: ColorsPalette.redComponents.withValues(
-                              alpha: 0.08,
-                            ),
+                            color: colors.accent.withValues(alpha: 0.08),
                           ),
                           child: Icon(
                             LucideIcons.userPlus,
-                            color: ColorsPalette.redComponents,
+                            color: colors.accent,
                             size: AppIconSize.lg,
                           ),
                         ),
@@ -72,7 +72,7 @@ class GuestProfilePage extends StatelessWidget {
                         Text(
                           "Faça parte do MapFood",
                           style: AppText.subtitulo(context).copyWith(
-                            color: ColorsPalette.blackDetails,
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.8,
                           ),
@@ -81,7 +81,7 @@ class GuestProfilePage extends StatelessWidget {
                         Text(
                           "Descubra novos sabores e salve favoritos, ou crie sua conta de parceiro para vender",
                           style: AppText.secundario(context).copyWith(
-                            color: ColorsPalette.greyText,
+                            color: colors.textSecondary,
                             height: 1.3,
                             fontWeight: FontWeight.w500,
                           ),
@@ -95,7 +95,7 @@ class GuestProfilePage extends StatelessWidget {
                             onPressed: () =>
                                 Navigator.pushNamed(context, AppRoutes.accountType),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorsPalette.redComponents,
+                              backgroundColor: colors.accent,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
@@ -103,8 +103,7 @@ class GuestProfilePage extends StatelessWidget {
                                 ),
                               ),
                               elevation: 4,
-                              shadowColor: ColorsPalette.redComponents
-                                  .withValues(alpha: 0.5),
+                              shadowColor: colors.accent.withValues(alpha: 0.5),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -141,7 +140,7 @@ class GuestProfilePage extends StatelessWidget {
                                 TextSpan(
                                   text: "Já tem uma conta? ",
                                   style: AppText.secundario(context).copyWith(
-                                    color: ColorsPalette.greyText,
+                                    color: colors.textSecondary,
                                     fontWeight: FontWeight.w500,
                                   ),
                                   children: [
@@ -149,7 +148,7 @@ class GuestProfilePage extends StatelessWidget {
                                       text: "Entrar",
                                       style: AppText.secundario(context)
                                           .copyWith(
-                                            color: ColorsPalette.blackDetails,
+                                            color: colors.textPrimary,
                                             fontWeight: FontWeight.bold,
                                             decoration:
                                                 TextDecoration.underline,
@@ -181,7 +180,7 @@ class GuestProfilePage extends StatelessWidget {
                 icon: LucideIcons.moon,
                 title: "Tema do Aplicativo",
                 subtitle: "Claro, Escuro ou Sistema",
-                onTap: () {},
+                onTap: () => ThemeModeSelectorSheet.show(context),
               ),
               buildListTile(
                 context: context,
@@ -192,7 +191,7 @@ class GuestProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               Divider(
-                color: Colors.grey.shade200,
+                color: colors.divider,
                 height: 1.0,
                 indent: AppSpacing.lg,
                 endIndent: AppSpacing.lg,
@@ -246,6 +245,7 @@ class GuestProfilePage extends StatelessWidget {
     String? subtitle,
     required VoidCallback onTap,
   }) {
+    final colors = context.appColors;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -258,13 +258,13 @@ class GuestProfilePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: ColorsPalette.redComponents.withValues(alpha: 0.08),
+                color: colors.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 icon,
                 size: AppIconSize.md,
-                color: ColorsPalette.redComponents,
+                color: colors.accent,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -276,7 +276,7 @@ class GuestProfilePage extends StatelessWidget {
                     title,
                     style: AppText.corpo(context).copyWith(
                       fontWeight: FontWeight.w600,
-                      color: ColorsPalette.blackDetails,
+                      color: colors.textPrimary,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -285,7 +285,7 @@ class GuestProfilePage extends StatelessWidget {
                       subtitle,
                       style: AppText.legenda(
                         context,
-                      ).copyWith(color: Colors.grey.shade500),
+                      ).copyWith(color: colors.textSecondary),
                     ),
                   ],
                 ],
@@ -294,7 +294,7 @@ class GuestProfilePage extends StatelessWidget {
             Icon(
               LucideIcons.chevronRight,
               size: AppIconSize.sm,
-              color: Colors.grey.shade400,
+              color: colors.textSecondary.withValues(alpha: 0.5),
             ),
           ],
         ),

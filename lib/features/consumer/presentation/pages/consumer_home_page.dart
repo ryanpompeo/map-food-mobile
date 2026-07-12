@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
+import 'package:map_food/core/services/auth_controller.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_profile_page.dart';
 import 'package:map_food/features/consumer/presentation/widgets/consumer_bottom_bar.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
@@ -22,8 +21,6 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
   int _selectedIndex = 0;
   String _filtroAtivo = 'Todos';
 
-  String _userName = '';
-  String _userEmail = '';
   bool _sessionLoaded = false;
 
   final _categoriaService = CategoriaService();
@@ -39,14 +36,8 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
   }
 
   Future<void> _loadSession() async {
-    final session = await AuthStorage.getSession();
-    if (mounted) {
-      setState(() {
-        _userName = session?.nome ?? '';
-        _userEmail = session?.email ?? '';
-        _sessionLoaded = true;
-      });
-    }
+    await AuthController.instance.load();
+    if (mounted) setState(() => _sessionLoaded = true);
   }
 
   Future<void> _carregarCategorias() async {
@@ -81,11 +72,7 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
             children: [
               _buildAbaInicio(),
               const SearchPage(),
-              ConsumerFavoritesPage(),
-              ConsumerProfilePage(
-                userName: _userName,
-                userEmail: _userEmail,
-              ),
+              const ConsumerProfilePage(),
             ],
           ),
           Positioned(

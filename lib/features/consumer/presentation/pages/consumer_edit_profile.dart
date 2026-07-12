@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/services/auth_controller.dart';
+import 'package:map_food/core/services/notification_service.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/editable_avatar.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:map_food/features/consumer/data/models/consumer_model.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 
@@ -101,26 +105,16 @@ class _ConsumerEditProfileState extends State<ConsumerEditProfile> {
         cpf: _original!.cpf,
         celular: _celularController.text.trim(),
       );
-      await _service.update(
+      // AuthController faz o PUT e, assim que a resposta chega, já
+      // atualiza a sessão em memória — quem estiver ouvindo (ex: a
+      // ProfilePage) reflete o novo nome/e-mail na hora, sem novo GET.
+      await AuthController.instance.updateConsumerProfile(
         atualizado,
         novaSenha: novaSenha.isNotEmpty ? novaSenha : null,
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Perfil atualizado com sucesso!',
-            style: AppText.corpo(context)
-                .copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.green.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-        ),
-      );
+      NotificationService.instance.success('Perfil atualizado com sucesso!');
       Navigator.pop(context);
     } on AppException catch (e) {
       setState(() => _errorMsg = e.message);
@@ -166,28 +160,20 @@ class _ConsumerEditProfileState extends State<ConsumerEditProfile> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(
-                        child: Container(
-                          height: 80,
-                          width: 80,
-                          decoration: BoxDecoration(
-                            color: ColorsPalette.redComponents
-                                .withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _nomeController.text.isNotEmpty
-                                  ? _nomeController.text[0].toUpperCase()
-                                  : 'U',
-                              style: AppText.titulo(context).copyWith(
-                                fontSize: 32,
-                                color: ColorsPalette.redComponents,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
+                      EditableAvatar(
+                        imageUrl: _original?.imagemUrl,
+                        fallbackLetter: _nomeController.text.isNotEmpty
+                            ? _nomeController.text[0].toUpperCase()
+                            : 'U',
+                        onUpload: (XFile file) async {
+                          final atualizado =
+                              await _service.uploadImagem(_original!.id, file);
+                          setState(() => _original = atualizado);
+                        },
+                        onRemove: () async {
+                          final atualizado = await _service.removerImagem(_original!.id);
+                          setState(() => _original = atualizado);
+                        },
                       ),
                       const SizedBox(height: AppSpacing.xl),
 

@@ -6,6 +6,8 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/editable_avatar.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:map_food/features/merchant/data/models/merchant_model.dart';
 import 'package:map_food/features/merchant/data/services/merchant_service.dart';
 
@@ -173,28 +175,20 @@ class _MerchantEditProfileState extends State<MerchantEditProfile> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(
-                        child: Container(
-                          height: 80,
-                          width: 80,
-                          decoration: BoxDecoration(
-                            color: ColorsPalette.redComponents
-                                .withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _nomeController.text.isNotEmpty
-                                  ? _nomeController.text[0].toUpperCase()
-                                  : 'C',
-                              style: AppText.titulo(context).copyWith(
-                                fontSize: 32,
-                                color: ColorsPalette.redComponents,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
+                      EditableAvatar(
+                        imageUrl: _original?.imagemUrl,
+                        fallbackLetter: _nomeController.text.isNotEmpty
+                            ? _nomeController.text[0].toUpperCase()
+                            : 'C',
+                        onUpload: (XFile file) async {
+                          final atualizado =
+                              await _service.uploadImagem(_original!.id, file);
+                          setState(() => _original = atualizado);
+                        },
+                        onRemove: () async {
+                          final atualizado = await _service.removerImagem(_original!.id);
+                          setState(() => _original = atualizado);
+                        },
                       ),
                       const SizedBox(height: AppSpacing.xl),
 

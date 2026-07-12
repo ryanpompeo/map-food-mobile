@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/consumer/data/models/consumer_model.dart';
@@ -32,5 +33,28 @@ class ConsumerService {
       data: body,
     );
     return ConsumerModel.fromJson(data);
+  }
+
+  Future<ConsumerModel> uploadImagem(int id, XFile file) async {
+    final data = await _client.uploadFile<Map<String, dynamic>>(
+      '${ApiConstants.consumidores}/$id/imagem',
+      bytes: await file.readAsBytes(),
+      fileName: file.name,
+    );
+    return ConsumerModel.fromJson(data);
+  }
+
+  Future<ConsumerModel> removerImagem(int id) async {
+    final data = await _client.delete<Map<String, dynamic>>(
+      '${ApiConstants.consumidores}/$id/imagem',
+    );
+    return ConsumerModel.fromJson(data);
+  }
+
+  /// Exclusão de conta — o backend faz soft delete + anonimização (LGPD),
+  /// não um DELETE físico. Do lado do app, é só um DELETE comum que retorna
+  /// 204; quem chama é responsável por limpar a sessão local depois.
+  Future<void> deleteAccount(int id) async {
+    await _client.delete<dynamic>('${ApiConstants.consumidores}/$id');
   }
 }

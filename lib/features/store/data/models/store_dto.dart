@@ -11,6 +11,12 @@ class StoreDto {
   final double? avaliacao;
   final int totalAvaliacoes;
 
+  /// `true` só nos StoreDto "stub" montados no próprio app pra deep link
+  /// (ex: a partir de "Minhas Avaliações", que só recebe lojaId/nomeLoja da
+  /// API) — nunca vem de JSON. Sinaliza pra StoreDetailsPage que precisa
+  /// buscar os dados completos por id antes de renderizar de verdade.
+  final bool isPartial;
+
   const StoreDto({
     required this.id,
     required this.nome,
@@ -23,6 +29,7 @@ class StoreDto {
     this.imagens,
     this.avaliacao,
     this.totalAvaliacoes = 0,
+    this.isPartial = false,
   });
 
   factory StoreDto.fromJson(Map<String, dynamic> json) => StoreDto(
@@ -41,6 +48,8 @@ class StoreDto {
         avaliacao: (json['mediaAvaliacao'] as num?)?.toDouble() ??
             (json['avaliacao'] as num?)?.toDouble(),
         totalAvaliacoes: (json['totalAvaliacoes'] as num?)?.toInt() ?? 0,
+        // Vindo da API => sempre completo.
+        isPartial: false,
       );
 
   /// Extrai o nome da primeira categoria para exibição nos cards.

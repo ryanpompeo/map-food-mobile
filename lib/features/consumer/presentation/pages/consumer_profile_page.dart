@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
+import 'package:map_food/core/services/auth_controller.dart';
+import 'package:map_food/core/services/notification_service.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_theme.dart';
+import 'package:map_food/core/ui/widgets/account_deletion_dialog.dart';
+import 'package:map_food/core/ui/widgets/theme_mode_selector_sheet.dart';
+import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_edit_profile.dart';
+import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_complaints_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_review_page.dart';
@@ -12,15 +18,10 @@ import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart'
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
 
 class ConsumerProfilePage extends StatelessWidget {
-  final String userName;
-  final String userEmail;
+  const ConsumerProfilePage({super.key});
 
-  const ConsumerProfilePage({
-    super.key,
-    required this.userName,
-    required this.userEmail,
-  });
   void _logout(BuildContext context) {
+    final colors = context.appColors;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -28,7 +29,7 @@ class ConsumerProfilePage extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: colors.surface,
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(AppSpacing.lg),
           child: Padding(
@@ -43,13 +44,13 @@ class ConsumerProfilePage extends StatelessWidget {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadius.md),
-                        color: ColorsPalette.redComponents.withValues(
+                        color: colors.accent.withValues(
                           alpha: 0.15,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.logOut,
-                        color: ColorsPalette.redComponents,
+                        color: colors.accent,
                         size: 18,
                       ),
                     ),
@@ -58,7 +59,7 @@ class ConsumerProfilePage extends StatelessWidget {
                       "Sair da conta",
                       style: AppText.titulo(
                         context,
-                      ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                      ).copyWith(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
                     ),
                   ],
                 ),
@@ -67,7 +68,7 @@ class ConsumerProfilePage extends StatelessWidget {
                   "Deseja realmente sair?",
                   style: AppText.corpo(
                     context,
-                  ).copyWith(color: ColorsPalette.black),
+                  ).copyWith(color: colors.textPrimary),
                 ),
 
                 const SizedBox(height: AppSpacing.xl),
@@ -76,15 +77,15 @@ class ConsumerProfilePage extends StatelessWidget {
                   children: [
                     TextButton(
                       style: TextButton.styleFrom(
-                        foregroundColor: ColorsPalette.transparent,
-                        surfaceTintColor: ColorsPalette.transparent,
+                        foregroundColor: Colors.transparent,
+                        surfaceTintColor: Colors.transparent,
                       ),
                       onPressed: () => Navigator.pop(context),
                       child: Text(
                         "Cancelar",
                         style: AppText.botao(
                           context,
-                        ).copyWith(color: Colors.grey.shade700),
+                        ).copyWith(color: colors.textSecondary),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -99,8 +100,8 @@ class ConsumerProfilePage extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsPalette.black,
-                        foregroundColor: ColorsPalette.white,
+                        backgroundColor: colors.textPrimary,
+                        foregroundColor: colors.background,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -121,143 +122,98 @@ class ConsumerProfilePage extends StatelessWidget {
     );
   }
 
+  Future<void> _excluirConta(BuildContext context) async {
+    final confirmado = await AccountDeletionDialog.show(context);
+    if (!confirmado) return;
+
+    final session = AuthController.instance.session;
+    if (session == null) return;
+
+    try {
+      await ConsumerService().deleteAccount(session.id);
+      await AuthController.instance.clear();
+
+      if (!context.mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const GuestHomePage()),
+        (route) => false,
+      );
+      NotificationService.instance.success('Conta excluída definitivamente.');
+    } catch (_) {
+      if (!context.mounted) return;
+      NotificationService.instance.error('Não foi possível excluir sua conta. Tente novamente.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: colors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: ColorsPalette.white,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorsPalette.black.withValues(alpha: 0.08),
-                        blurRadius: 24,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 4),
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                        offset: const Offset(-6, -6),
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      border: Border.all(
-                        width: 1.5,
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            // Avatar do Usuário
-                            Container(
-                              height: 64.0,
-                              width: 64.0,
-                              decoration: BoxDecoration(
-                                color: ColorsPalette.blackComponents.withValues(
-                                  alpha: 0.1,
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  userName.isNotEmpty
-                                      ? userName[0].toUpperCase()
-                                      : 'U',
-                                  style: AppText.titulo(context).copyWith(
-                                    color: ColorsPalette.blackComponents,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            // Nome e E-mail
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userName,
-                                    style: AppText.subtitulo(context).copyWith(
-                                      color: ColorsPalette.blackDetails,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: -0.5,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4.0),
-                                  Text(
-                                    userEmail,
-                                    style: AppText.secundario(context).copyWith(
-                                      color: ColorsPalette.greyText,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
+              // Avatar, nome e e-mail centralizados — reativo ao
+              // AuthController: assim que a edição de perfil salvar com
+              // sucesso, esta seção atualiza sozinha, sem novo GET.
+              AnimatedBuilder(
+                animation: AuthController.instance,
+                builder: (context, _) {
+                  final session = AuthController.instance.session;
+                  final nome = session?.nome ?? '';
+                  final email = session?.email ?? '';
 
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48.0,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              _logout(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorsPalette.black,
-                              foregroundColor: ColorsPalette.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 80.0,
+                          width: 80.0,
+                          decoration: BoxDecoration(
+                            color: colors.accent.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              nome.isNotEmpty ? nome[0].toUpperCase() : 'U',
+                              style: AppText.titulo(context).copyWith(
+                                fontSize: 32,
+                                color: colors.accent,
+                                fontWeight: FontWeight.bold,
                               ),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(LucideIcons.logOut, size: 20.0),
-                                const SizedBox(width: 8.0),
-                                Text(
-                                  "Sair da conta",
-                                  style: AppText.botao(context).copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: ColorsPalette.white,
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          nome,
+                          style: AppText.subtitulo(context).copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4.0),
+                        Text(
+                          email,
+                          style: AppText.secundario(context).copyWith(
+                            color: colors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
 
               Padding(
@@ -269,6 +225,20 @@ class ConsumerProfilePage extends StatelessWidget {
                   "Minha Conta",
                   style: AppText.subtitulo(context).copyWith(fontSize: 18.0),
                 ),
+              ),
+              buildListTile(
+                context: context,
+                icon: LucideIcons.heart,
+                title: "Meus Favoritos",
+                subtitle: "Comércios que você salvou",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ConsumerFavoritesPage(),
+                    ),
+                  );
+                },
               ),
               buildListTile(
                 context: context,
@@ -285,6 +255,7 @@ class ConsumerProfilePage extends StatelessWidget {
                 },
               ),
 
+              // Real a partir da Fase 9 (GET /avaliacoes/consumidor/{id}).
               buildListTile(
                 context: context,
                 icon: LucideIcons.star,
@@ -294,7 +265,7 @@ class ConsumerProfilePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ConsumerReviewPage(),
+                      builder: (context) => const ConsumerReviewPage(),
                     ),
                   );
                 },
@@ -316,7 +287,7 @@ class ConsumerProfilePage extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.md),
               Divider(
-                color: Colors.grey.shade200,
+                color: colors.divider,
                 height: 1.0,
                 indent: AppSpacing.lg,
                 endIndent: AppSpacing.lg,
@@ -339,7 +310,7 @@ class ConsumerProfilePage extends StatelessWidget {
                 icon: LucideIcons.moon,
                 title: "Tema do Aplicativo",
                 subtitle: "Claro, Escuro ou Sistema",
-                onTap: () {},
+                onTap: () => ThemeModeSelectorSheet.show(context),
               ),
               buildListTile(
                 context: context,
@@ -351,7 +322,7 @@ class ConsumerProfilePage extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.md),
               Divider(
-                color: Colors.grey.shade200,
+                color: colors.divider,
                 height: 1.0,
                 indent: AppSpacing.lg,
                 endIndent: AppSpacing.lg,
@@ -392,6 +363,78 @@ class ConsumerProfilePage extends StatelessWidget {
                 },
               ),
 
+              const SizedBox(height: AppSpacing.md),
+              Divider(
+                color: colors.divider,
+                height: 1.0,
+                indent: AppSpacing.lg,
+                endIndent: AppSpacing.lg,
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              buildListTile(
+                context: context,
+                icon: LucideIcons.logOut,
+                title: "Sair da conta",
+                onTap: () => _logout(context),
+              ),
+
+              const SizedBox(height: AppSpacing.md),
+              Divider(
+                color: colors.divider,
+                height: 1.0,
+                indent: AppSpacing.lg,
+                endIndent: AppSpacing.lg,
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Danger Zone — única seção em vermelho da tela inteira.
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                child: Text(
+                  "Zona de Risco",
+                  style: AppText.subtitulo(context).copyWith(fontSize: 18.0, color: colors.error),
+                ),
+              ),
+              InkWell(
+                onTap: () => _excluirConta(context),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10.0),
+                        decoration: BoxDecoration(
+                          color: colors.error.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                        ),
+                        child: Icon(LucideIcons.trash2, size: AppIconSize.md, color: colors.error),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Excluir minha conta",
+                              style: AppText.corpo(context)
+                                  .copyWith(fontWeight: FontWeight.w700, color: colors.error),
+                            ),
+                            const SizedBox(height: 2.0),
+                            Text(
+                              "Ação permanente e irreversível",
+                              style: AppText.legenda(context).copyWith(color: colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(LucideIcons.chevronRight, size: AppIconSize.sm, color: colors.textSecondary.withValues(alpha: 0.5)),
+                    ],
+                  ),
+                ),
+              ),
+
               const SizedBox(height: AppSpacing.xxl),
               const SizedBox(height: 100.0),
             ],
@@ -408,6 +451,7 @@ class ConsumerProfilePage extends StatelessWidget {
     String? subtitle,
     required VoidCallback onTap,
   }) {
+    final colors = context.appColors;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -420,14 +464,14 @@ class ConsumerProfilePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: ColorsPalette.redComponents.withValues(alpha: 0.1),
+                color: colors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: colors.divider),
               ),
               child: Icon(
                 icon,
                 size: AppIconSize.md,
-                color: ColorsPalette.redComponents,
+                color: colors.accent,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -439,7 +483,7 @@ class ConsumerProfilePage extends StatelessWidget {
                     title,
                     style: AppText.corpo(context).copyWith(
                       fontWeight: FontWeight.w600,
-                      color: ColorsPalette.blackDetails,
+                      color: colors.textPrimary,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -448,7 +492,7 @@ class ConsumerProfilePage extends StatelessWidget {
                       subtitle,
                       style: AppText.legenda(
                         context,
-                      ).copyWith(color: Colors.grey.shade500),
+                      ).copyWith(color: colors.textSecondary),
                     ),
                   ],
                 ],
@@ -457,7 +501,7 @@ class ConsumerProfilePage extends StatelessWidget {
             Icon(
               LucideIcons.chevronRight,
               size: AppIconSize.sm,
-              color: Colors.grey.shade400,
+              color: colors.textSecondary.withValues(alpha: 0.5),
             ),
           ],
         ),

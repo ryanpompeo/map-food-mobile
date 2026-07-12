@@ -43,4 +43,10 @@ class DenunciaService {
         .map((e) => DenunciaModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  /// Cancela uma denúncia própria (só permitido enquanto o status for
+  /// PENDENTE — o backend valida isso e responde 409 caso contrário).
+  Future<void> cancel(int id) async {
+    await _client.delete<dynamic>('${ApiConstants.denuncias}/$id');
+  }
 }

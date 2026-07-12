@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -28,14 +29,18 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   late TextEditingController _descricaoController;
   late List<int> _categoriasSelecionadas;
 
-  // As fotos são representadas como IDs locais (upload de imagem será implementado futuramente)
-  int? _fotoDestaqueTemp;
-  late List<int> _fotosGaleriaTemp;
+  // Imagens reais da loja: [0] é a capa (imagemUrl), o restante é a galeria.
+  List<String> _imagens = [];
+  bool _isUploadingFoto = false;
 
   final int _maxFotosGaleria = 10;
   final _storeService = StoreService();
   final _categoriaService = CategoriaService();
   final _ratingService = RatingService();
+  final _picker = ImagePicker();
+
+  String? get _fotoCapa => _imagens.isNotEmpty ? _imagens.first : null;
+  List<String> get _fotosGaleria => _imagens.length > 1 ? _imagens.sublist(1) : const [];
 
   List<CategoriaModel> _categorias = [];
   bool _isLoadingCategorias = true;
@@ -57,8 +62,49 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     _descricaoController =
         TextEditingController(text: widget.store.descricao ?? '');
     _categoriasSelecionadas = List.from(widget.store.categoriaIds);
-    _fotoDestaqueTemp = widget.store.id; // placeholder até upload real
-    _fotosGaleriaTemp = [];
+    _imagens = List.from(widget.store.imagens ?? const []);
+  }
+
+  Future<void> _selecionarFotoCapa() async {
+    final foto = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (foto == null) return;
+    await _executarAcaoFoto(() => _storeService.uploadImagemCapa(widget.store.id, foto));
+  }
+
+  Future<void> _removerFotoCapa() async {
+    await _executarAcaoFoto(() => _storeService.removerImagemCapa(widget.store.id));
+  }
+
+  Future<void> _adicionarFotoGaleria() async {
+    final foto = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (foto == null) return;
+    await _executarAcaoFoto(() => _storeService.uploadGaleria(widget.store.id, [foto]));
+  }
+
+  Future<void> _removerFotoGaleria(String url) async {
+    await _executarAcaoFoto(() => _storeService.removerImagemGaleria(widget.store.id, url));
+  }
+
+  Future<void> _executarAcaoFoto(Future<StoreDto> Function() acao) async {
+    setState(() => _isUploadingFoto = true);
+    try {
+      final atualizado = await acao();
+      if (!mounted) return;
+      setState(() => _imagens = List.from(atualizado.imagens ?? const []));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Erro ao atualizar foto. Tente novamente.'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploadingFoto = false);
+    }
   }
 
   Future<void> _carregarCategorias() async {
@@ -368,17 +414,13 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         ),
         const SizedBox(height: AppSpacing.sm),
         GestureDetector(
-          onTap: _isEditing
-              ? () => setState(
-                    () => _fotoDestaqueTemp =
-                        DateTime.now().millisecondsSinceEpoch,
-                  )
-              : null,
+          onTap: _isEditing && !_isUploadingFoto ? _selecionarFotoCapa : null,
           child: Container(
             height: 160.0,
             width: double.infinity,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: _fotoDestaqueTemp != null
+              color: _fotoCapa != null
                   ? ColorsPalette.redComponents.withValues(alpha: 0.05)
                   : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(16.0),
@@ -388,24 +430,24 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     : Colors.transparent,
               ),
             ),
-            child: _fotoDestaqueTemp != null
+            child: _fotoCapa != null
                 ? Stack(
                     fit: StackFit.expand,
                     children: [
-                      const Center(
-                        child: Icon(
-                          LucideIcons.image,
-                          color: ColorsPalette.redComponents,
-                          size: 48.0,
-                        ),
+                      Image.network(
+                        _fotoCapa!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                            LucideIcons.image,
+                            color: ColorsPalette.redComponents,
+                            size: 48.0),
                       ),
                       if (_isEditing)
                         Positioned(
                           top: 8,
                           right: 8,
                           child: GestureDetector(
-                            onTap: () =>
-                                setState(() => _fotoDestaqueTemp = null),
+                            onTap: _isUploadingFoto ? null : _removerFotoCapa,
                             child: Container(
                               padding: const EdgeInsets.all(8.0),
                               decoration: const BoxDecoration(
@@ -418,20 +460,32 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                             ),
                           ),
                         ),
+                      if (_isUploadingFoto)
+                        Container(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          child: const Center(
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          ),
+                        ),
                     ],
                   )
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(LucideIcons.imagePlus,
-                          color: Colors.grey.shade400, size: 32.0),
-                      if (_isEditing) ...[
-                        const SizedBox(height: 8.0),
-                        Text(
-                          "Adicionar Capa",
-                          style: AppText.legenda(context)
-                              .copyWith(fontWeight: FontWeight.bold),
-                        ),
+                      if (_isUploadingFoto)
+                        const CircularProgressIndicator(
+                            color: ColorsPalette.redComponents, strokeWidth: 2)
+                      else ...[
+                        Icon(LucideIcons.imagePlus,
+                            color: Colors.grey.shade400, size: 32.0),
+                        if (_isEditing) ...[
+                          const SizedBox(height: 8.0),
+                          Text(
+                            "Adicionar Capa",
+                            style: AppText.legenda(context)
+                                .copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ],
                     ],
                   ),
@@ -440,7 +494,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         const SizedBox(height: AppSpacing.md),
 
         Text(
-          "Galeria (${_fotosGaleriaTemp.length}/$_maxFotosGaleria)",
+          "Galeria (${_fotosGaleria.length}/$_maxFotosGaleria)",
           style:
               AppText.subtitulo(context).copyWith(fontWeight: FontWeight.bold),
         ),
@@ -450,12 +504,9 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           clipBehavior: Clip.none,
           child: Row(
             children: [
-              if (_isEditing && _fotosGaleriaTemp.length < _maxFotosGaleria)
+              if (_isEditing && _fotosGaleria.length < _maxFotosGaleria)
                 GestureDetector(
-                  onTap: () => setState(
-                    () => _fotosGaleriaTemp
-                        .add(DateTime.now().millisecondsSinceEpoch),
-                  ),
+                  onTap: _isUploadingFoto ? null : _adicionarFotoGaleria,
                   child: Container(
                     height: 100.0,
                     width: 100.0,
@@ -479,29 +530,33 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     ),
                   ),
                 ),
-              ..._fotosGaleriaTemp.map((fotoId) {
+              ..._fotosGaleria.map((url) {
                 return Container(
                   height: 100.0,
                   width: 100.0,
                   margin: const EdgeInsets.only(right: 12.0),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: ColorsPalette.black.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      const Center(
-                        child: Icon(LucideIcons.image,
-                            color: Colors.grey, size: 32.0),
+                      Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(LucideIcons.image, color: Colors.grey, size: 32.0),
                       ),
                       if (_isEditing)
                         Positioned(
                           top: 4,
                           right: 4,
                           child: GestureDetector(
-                            onTap: () => setState(
-                              () => _fotosGaleriaTemp.remove(fotoId),
-                            ),
+                            onTap: _isUploadingFoto
+                                ? null
+                                : () => _removerFotoGaleria(url),
                             child: Container(
                               padding: const EdgeInsets.all(4.0),
                               decoration: BoxDecoration(
@@ -519,7 +574,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   ),
                 );
               }),
-              if (!_isEditing && _fotosGaleriaTemp.isEmpty)
+              if (!_isEditing && _fotosGaleria.isEmpty)
                 Text(
                   "Nenhuma foto na galeria.",
                   style: AppText.legenda(context)

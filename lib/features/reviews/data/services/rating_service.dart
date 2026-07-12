@@ -1,10 +1,21 @@
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
+import 'package:map_food/features/reviews/data/models/minha_avaliacao_model.dart';
 
 /// Serviço responsável por consumir os endpoints de avaliação.
 class RatingService {
   final _client = ApiClient.instance;
+
+  /// Avaliações feitas pelo consumidor logado, via GET /avaliacoes/consumidor/{id}.
+  Future<List<MinhaAvaliacaoModel>> getMyRatings(int consumidorId) async {
+    final data = await _client.get<List<dynamic>>(
+      '${ApiConstants.avaliacoes}/consumidor/$consumidorId',
+    );
+    return data
+        .map((e) => MinhaAvaliacaoModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 
   /// Busca as avaliações de uma loja específica via GET /avaliacoes/loja/{id}.
   /// Rota pública — não requer token.

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/services/notification_service.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/utils/ui_utils.dart';
 import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
 import 'package:map_food/features/reviews/data/services/rating_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
-import 'package:map_food/core/ui/utils/ui_utils.dart';
-import 'package:map_food/features/reviews/data/services/denuncia_service.dart';
-import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/store/presentation/widgets/fullscreen_image_viewer.dart';
+import 'package:map_food/features/store/presentation/widgets/report_store_form.dart';
 
 class MoreInfoStorePage extends StatefulWidget {
   final StoreDto store;
@@ -22,6 +24,10 @@ class MoreInfoStorePage extends StatefulWidget {
 
 class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   final RatingService _ratingService = RatingService();
+  final StoreService _storeService = StoreService();
+
+  late StoreDto _store;
+  bool _isHydrating = false;
 
   List<AvaliacaoModel> _avaliacoes = [];
   bool _isLoadingRatings = true;
@@ -32,8 +38,31 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   @override
   void initState() {
     super.initState();
+    _store = widget.store;
+    if (_store.isPartial) {
+      _hydrateStore();
+    }
     _fetchRatings();
     _loadUserRole();
+  }
+
+  /// Deep link "mínimo" (ex: vindo de Minhas Avaliações, só com id/nome) —
+  /// busca a loja completa (capa, galeria, categorias) por id antes de
+  /// renderizar de verdade.
+  Future<void> _hydrateStore() async {
+    setState(() => _isHydrating = true);
+    try {
+      final completo = await _storeService.getById(_store.id);
+      if (!mounted) return;
+      setState(() {
+        _store = completo;
+        _isHydrating = false;
+      });
+    } catch (_) {
+      // Mantém o stub — melhor mostrar algo incompleto do que travar a tela.
+      if (!mounted) return;
+      setState(() => _isHydrating = false);
+    }
   }
 
   Future<void> _loadUserRole() async {
@@ -48,7 +77,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
 
   Future<void> _fetchRatings() async {
     try {
-      final ratings = await _ratingService.getStoreRatings(widget.store.id);
+      final ratings = await _ratingService.getStoreRatings(_store.id);
       if (!mounted) return;
       setState(() {
         _avaliacoes = ratings;
@@ -70,7 +99,16 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
 
   @override
   Widget build(BuildContext context) {
-    final store = widget.store;
+    if (_isHydrating) {
+      return Scaffold(
+        backgroundColor: ColorsPalette.whiteBackground,
+        body: const SafeArea(
+          child: Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents)),
+        ),
+      );
+    }
+
+    final store = _store;
 
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
@@ -148,6 +186,11 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     const SizedBox(height: AppSpacing.sm),
                     Wrap(spacing: 6.0, runSpacing: 6.0, children: _buildCategoryChips(context, store)),
                   ],
+                  const SizedBox(height: AppSpacing.lg),
+
+                  _VisualizarNoMapaButton(
+                    onTap: () => NotificationService.instance.warning('Integração de rotas em breve.'),
+                  ),
                   const SizedBox(height: AppSpacing.xl),
 
                   Text('Sobre o local', style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black)),
@@ -156,34 +199,49 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     store.descricao ?? 'O vendedor não adicionou uma descrição detalhada para este comércio.',
                     style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText, height: 1.5),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Galeria de fotos', style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black)),
-                      Text('${store.imagens?.length ?? 0} fotos', style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    height: 140.0,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal, physics: const BouncingScrollPhysics(), clipBehavior: Clip.none,
-                      itemCount: store.imagens?.length ?? 0,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12.0),
+                  // A capa (imagens[0]) já é o hero do SliverAppBar acima — a
+                  // galeria abaixo mostra só o restante, e a seção some
+                  // inteira se não houver nenhuma foto além da capa.
+                  if (_galeria(store).isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.xl),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Galeria de fotos', style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black)),
+                        Text('${_galeria(store).length} fotos', style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _galeria(store).length,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                      ),
                       itemBuilder: (context, index) {
-                        return Container(
-                          width: 140.0,
-                          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16.0), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]),
+                        final url = _galeria(store)[index];
+                        return GestureDetector(
+                          onTap: () => Navigator.push(context, FullscreenImageViewer.route(url)),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16.0),
-                            child: Image.network(store.imagens![index], fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0))),
+                            borderRadius: BorderRadius.circular(12.0),
+                            child: Container(
+                              color: Colors.grey.shade100,
+                              child: Image.network(
+                                url,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 24.0)),
+                              ),
+                            ),
                           ),
                         );
                       },
                     ),
-                  ),
+                  ],
 
                   const SizedBox(height: AppSpacing.xl),
                   const Divider(thickness: 0.2),
@@ -203,27 +261,15 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
           ),
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ColorsPalette.redComponents,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100.0)),
-              elevation: 4,
-            ),
-            child: Text(
-              'Visualizar no mapa',
-              style: AppText.botao(context).copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16.0),
-            ),
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+  }
+
+  /// Todas as fotos exceto a capa (`imagens[0]`), que já é o hero do
+  /// SliverAppBar — evita mostrar a mesma imagem duas vezes.
+  List<String> _galeria(StoreDto store) {
+    final imagens = store.imagens;
+    if (imagens == null || imagens.length <= 1) return const [];
+    return imagens.sublist(1);
   }
 
   List<Widget> _buildCategoryChips(BuildContext context, StoreDto store) {
@@ -274,6 +320,51 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
         else
           ..._avaliacoes.map((review) => _ReviewCard(review: review)),
       ],
+    );
+  }
+}
+
+/// Botão de intenção "Visualizar no Mapa" — a API ainda não retorna
+/// latitude/longitude (travado pela Fase 3), então o toque só avisa que a
+/// integração está a caminho, sem navegar a lugar nenhum de verdade.
+class _VisualizarNoMapaButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _VisualizarNoMapaButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: ColorsPalette.redComponents.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.mapPin, color: ColorsPalette.redComponents, size: 18),
+            ),
+            const SizedBox(width: 12.0),
+            Expanded(
+              child: Text(
+                'Visualizar no mapa',
+                style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w700, color: ColorsPalette.black),
+              ),
+            ),
+            Icon(LucideIcons.chevronRight, size: 18, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -383,110 +474,10 @@ class ConsumerActionWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            String motivoSelecionado = 'Outro';
-            bool isSubmitting = false;
-            final DenunciaService denunciaService = DenunciaService();
-
-            return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(AppSpacing.lg),
-              child: StatefulBuilder(
-                builder: (context, setModalState) {
-                  return SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(LucideIcons.flag, color: ColorsPalette.redComponents, size: 20),
-                                  const SizedBox(width: 8),
-                                  Text("Denunciar loja", style: AppText.titulo(context).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              IconButton(icon: const Icon(LucideIcons.x, size: 20, color: Colors.grey), onPressed: () => Navigator.pop(context), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text("Seu relatório será analisado pela nossa equipe. Obrigado por manter a plataforma segura.", style: AppText.corpo(context).copyWith(color: Colors.brown.shade800, fontSize: 13)),
-                          const SizedBox(height: AppSpacing.lg),
-                          Text("Motivo", style: AppText.legenda(context).copyWith(fontWeight: FontWeight.bold, color: Colors.black)),
-                          const SizedBox(height: AppSpacing.xs),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12.0), border: Border.all(color: ColorsPalette.redComponents.withValues(alpha: 0.3), width: 1.2)),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: motivoSelecionado,
-                                isExpanded: true,
-                                dropdownColor: const Color(0xFFFCF9F9),
-                                borderRadius: BorderRadius.circular(12.0),
-                                icon: const Icon(LucideIcons.chevronDown, size: 18, color: Colors.black87),
-                                items: ['Conteúdo inapropriado', 'Fraude ou golpe', 'Informações falsas', 'Spam', 'Outro'].map((String motivo) {
-                                  return DropdownMenuItem<String>(value: motivo, child: Text(motivo, style: AppText.corpo(context).copyWith(color: Colors.black87)));
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) setModalState(() => motivoSelecionado = newValue);
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancelar", style: AppText.botao(context).copyWith(color: Colors.brown.shade800))),
-                              const SizedBox(width: AppSpacing.sm),
-                              ElevatedButton(
-                                onPressed: isSubmitting ? null : () async {
-                                  setModalState(() => isSubmitting = true);
-                                  try {
-                                    await denunciaService.create(
-                                      lojaId: lojaId,
-                                      motivo: motivoSelecionado,
-                                    );
-                                    if (!context.mounted) return;
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Denúncia enviada."), backgroundColor: Colors.green));
-                                  } catch (e) {
-                                    if (!context.mounted) return;
-                                    setModalState(() => isSubmitting = false);
-                                    Navigator.pop(context);
-                                    if (e.toString().contains('409') || (e is AppException && e.statusCode == 409)) {
-                                      UIUtils.showErrorDialog(context, "Você já possui uma denúncia registrada para este comércio. Acesse seu perfil para gerenciá-la.");
-                                    } else {
-                                      UIUtils.showErrorDialog(context, "Erro ao enviar denúncia. Tente novamente.");
-                                    }
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(backgroundColor: ColorsPalette.redComponents, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill))),
-                                child: isSubmitting
-                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : const Text("Enviar denúncia", style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
-        );
-      },
+      onTap: () => showDialog(
+        context: context,
+        builder: (_) => ReportStoreForm(lojaId: lojaId),
+      ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(color: ColorsPalette.redComponents.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(100)),

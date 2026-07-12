@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
@@ -10,6 +13,16 @@ import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_home_page.dart';
+
+/// Foto selecionada localmente, ainda não enviada ao servidor.
+/// Guarda os bytes (para pré-visualização com Image.memory, compatível com
+/// Web) junto com o XFile original (necessário para o upload).
+class _PickedPhoto {
+  final XFile file;
+  final Uint8List bytes;
+
+  const _PickedPhoto(this.file, this.bytes);
+}
 
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
@@ -30,12 +43,13 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
   final _storeService = StoreService();
   final _categoriaService = CategoriaService();
+  final _picker = ImagePicker();
 
-  // Estado da Foto Destaque (Capa)
-  int? _fotoDestaqueMock;
+  // Foto Destaque (Capa)
+  _PickedPhoto? _fotoDestaque;
 
-  // Estado da Galeria Interna
-  final List<int> _fotosMock = [];
+  // Galeria Interna
+  final List<_PickedPhoto> _fotosGaleria = [];
   final int _maxFotos = 10;
 
   final List<int> _categoriasSelecionadas = [];
@@ -70,11 +84,25 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     super.dispose();
   }
 
+  Future<void> _selecionarFotoDestaque() async {
+    final foto = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (foto == null) return;
+    final bytes = await foto.readAsBytes();
+    if (mounted) setState(() => _fotoDestaque = _PickedPhoto(foto, bytes));
+  }
+
+  Future<void> _adicionarFotoGaleria() async {
+    final foto = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (foto == null) return;
+    final bytes = await foto.readAsBytes();
+    if (mounted) setState(() => _fotosGaleria.add(_PickedPhoto(foto, bytes)));
+  }
+
   Future<void> _avancarEtapa() async {
     if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
-    if (_fotoDestaqueMock == null) {
+    if (_fotoDestaque == null) {
       _mostrarErro("Adicione uma Foto Destaque para o seu comércio");
       return;
     }
@@ -99,7 +127,22 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         categoriaIds: List<int>.from(_categoriasSelecionadas),
       );
 
-      await _storeService.create(request);
+      final loja = await _storeService.create(request);
+
+      // A loja já foi criada nesse ponto; falha ao enviar as fotos não deve
+      // impedir o comerciante de seguir para o dashboard (ele pode reenviar
+      // as fotos por lá depois).
+      try {
+        await _storeService.uploadImagemCapa(loja.id, _fotoDestaque!.file);
+        if (_fotosGaleria.isNotEmpty) {
+          await _storeService.uploadGaleria(
+            loja.id,
+            _fotosGaleria.map((p) => p.file).toList(),
+          );
+        }
+      } catch (_) {
+        // segue o fluxo mesmo se o upload de foto falhar
+      }
 
       if (!mounted) return;
 
@@ -388,35 +431,27 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         ),
         const SizedBox(height: AppSpacing.md),
         GestureDetector(
-          onTap: () {
-            setState(
-              () => _fotoDestaqueMock = DateTime.now().millisecondsSinceEpoch,
-            );
-          },
+          onTap: _selecionarFotoDestaque,
           child: Container(
             height: 180.0,
             width: double.infinity,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: _fotoDestaqueMock != null
+              color: _fotoDestaque != null
                   ? ColorsPalette.redComponents.withValues(alpha: 0.05)
                   : Colors.white,
               borderRadius: BorderRadius.circular(24.0),
             ),
-            child: _fotoDestaqueMock != null
+            child: _fotoDestaque != null
                 ? Stack(
+                    fit: StackFit.expand,
                     children: [
-                      const Center(
-                        child: Icon(
-                          LucideIcons.image,
-                          color: ColorsPalette.redComponents,
-                          size: 48.0,
-                        ),
-                      ),
+                      Image.memory(_fotoDestaque!.bytes, fit: BoxFit.cover),
                       Positioned(
                         top: 12,
                         right: 12,
                         child: GestureDetector(
-                          onTap: () => setState(() => _fotoDestaqueMock = null),
+                          onTap: () => setState(() => _fotoDestaque = null),
                           child: Container(
                             padding: const EdgeInsets.all(8.0),
                             decoration: BoxDecoration(
@@ -486,13 +521,9 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
           clipBehavior: Clip.none,
           child: Row(
             children: [
-              if (_fotosMock.length < _maxFotos)
+              if (_fotosGaleria.length < _maxFotos)
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _fotosMock.add(DateTime.now().millisecondsSinceEpoch);
-                    });
-                  },
+                  onTap: _adicionarFotoGaleria,
                   child: Container(
                     height: 110.0,
                     width: 110.0,
@@ -538,7 +569,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     ),
                   ),
                 ),
-              ..._fotosMock.map((fotoId) => _buildFotoMockItem(fotoId)),
+              ..._fotosGaleria.map((foto) => _buildFotoGaleriaItem(foto)),
             ],
           ),
         ),
@@ -546,13 +577,13 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     );
   }
 
-  Widget _buildFotoMockItem(int fotoId) {
+  Widget _buildFotoGaleriaItem(_PickedPhoto foto) {
     return Container(
       height: 110.0,
       width: 110.0,
       margin: const EdgeInsets.only(right: 16.0),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: ColorsPalette.redComponents.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20.0),
         border: Border.all(
           color: ColorsPalette.redComponents.withValues(alpha: 0.3),
@@ -560,20 +591,15 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         ),
       ),
       child: Stack(
+        fit: StackFit.expand,
         children: [
-          const Center(
-            child: Icon(
-              LucideIcons.image,
-              color: ColorsPalette.redComponents,
-              size: 36.0,
-            ),
-          ),
+          Image.memory(foto.bytes, fit: BoxFit.cover),
           Positioned(
             top: 6,
             right: 6,
             child: GestureDetector(
               onTap: () {
-                setState(() => _fotosMock.remove(fotoId));
+                setState(() => _fotosGaleria.remove(foto));
               },
               child: Container(
                 padding: const EdgeInsets.all(6.0),

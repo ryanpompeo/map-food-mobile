@@ -65,9 +65,42 @@ class ApiClient {
     }
   }
 
-  Future<void> delete(String path) async {
+  Future<T> delete<T>(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
-      await _dio.delete(path);
+      final response = await _dio.delete(path, queryParameters: queryParameters);
+      return _parseResponse<T>(response.data);
+    } on DioException catch (e) {
+      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+    }
+  }
+
+  /// Envia um único arquivo via multipart/form-data sob o campo "file".
+  ///
+  /// Recebe os bytes já lidos (em vez de um caminho de arquivo) para
+  /// funcionar tanto em mobile/desktop quanto no target Web, onde não há
+  /// acesso a `dart:io`/sistema de arquivos.
+  Future<T> uploadFile<T>(String path, {required List<int> bytes, required String fileName}) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+      });
+      final response = await _dio.post(path, data: formData);
+      return _parseResponse<T>(response.data);
+    } on DioException catch (e) {
+      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+    }
+  }
+
+  /// Envia múltiplos arquivos via multipart/form-data sob o campo "files".
+  Future<T> uploadFiles<T>(String path, {required List<(List<int> bytes, String fileName)> files}) async {
+    try {
+      final formData = FormData.fromMap({
+        'files': [
+          for (final (bytes, fileName) in files) MultipartFile.fromBytes(bytes, filename: fileName),
+        ],
+      });
+      final response = await _dio.post(path, data: formData);
+      return _parseResponse<T>(response.data);
     } on DioException catch (e) {
       throw (e.error is AppException) ? e.error as AppException : const NetworkException();
     }

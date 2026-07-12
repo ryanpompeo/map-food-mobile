@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_theme.dart';
+import 'package:map_food/core/ui/widgets/theme_mode_selector_sheet.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_edit_profile.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_how_it_works.dart';
@@ -17,6 +18,7 @@ class MerchantProfilePage extends StatelessWidget {
     required this.userEmail,
   });
   void _logout(BuildContext context) {
+    final colors = context.appColors;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -24,7 +26,7 @@ class MerchantProfilePage extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.0),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: colors.surface,
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(AppSpacing.lg),
           child: Padding(
@@ -38,14 +40,14 @@ class MerchantProfilePage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: ColorsPalette.redComponents.withValues(
+                        color: colors.accent.withValues(
                           alpha: 0.15,
                         ),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.logOut,
-                        color: ColorsPalette.redComponents,
+                        color: colors.accent,
                         size: 24,
                       ),
                     ),
@@ -54,7 +56,7 @@ class MerchantProfilePage extends StatelessWidget {
                       "Sair da conta",
                       style: AppText.titulo(
                         context,
-                      ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                      ).copyWith(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
                     ),
                   ],
                 ),
@@ -63,7 +65,7 @@ class MerchantProfilePage extends StatelessWidget {
                   "Deseja realmente sair?",
                   style: AppText.corpo(
                     context,
-                  ).copyWith(color: ColorsPalette.black),
+                  ).copyWith(color: colors.textPrimary),
                 ),
 
                 const SizedBox(height: AppSpacing.xl),
@@ -72,15 +74,15 @@ class MerchantProfilePage extends StatelessWidget {
                   children: [
                     TextButton(
                       style: TextButton.styleFrom(
-                        foregroundColor: ColorsPalette.transparent,
-                        surfaceTintColor: ColorsPalette.transparent,
+                        foregroundColor: Colors.transparent,
+                        surfaceTintColor: Colors.transparent,
                       ),
                       onPressed: () => Navigator.pop(context),
                       child: Text(
                         "Cancelar",
                         style: AppText.botao(
                           context,
-                        ).copyWith(color: Colors.grey.shade700),
+                        ).copyWith(color: colors.textSecondary),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -95,8 +97,8 @@ class MerchantProfilePage extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsPalette.black,
-                        foregroundColor: ColorsPalette.white,
+                        backgroundColor: colors.textPrimary,
+                        foregroundColor: colors.background,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -119,8 +121,9 @@ class MerchantProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: colors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -131,17 +134,17 @@ class MerchantProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: ColorsPalette.white,
+                    color: colors.surface,
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
-                        color: ColorsPalette.black.withValues(alpha: 0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 24,
                         spreadRadius: 0,
                         offset: const Offset(0, 4),
                       ),
                       BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: colors.background.withValues(alpha: 0.9),
                         blurRadius: 15,
                         spreadRadius: 2,
                         offset: const Offset(-6, -6),
@@ -154,7 +157,7 @@ class MerchantProfilePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.xl),
                       border: Border.all(
                         width: 1.5,
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: colors.divider.withValues(alpha: 0.6),
                       ),
                     ),
                     child: Column(
@@ -167,7 +170,7 @@ class MerchantProfilePage extends StatelessWidget {
                               height: 64.0,
                               width: 64.0,
                               decoration: BoxDecoration(
-                                color: ColorsPalette.redComponents.withValues(
+                                color: colors.accent.withValues(
                                   alpha: 0.1,
                                 ),
                                 shape: BoxShape.circle,
@@ -178,7 +181,7 @@ class MerchantProfilePage extends StatelessWidget {
                                       ? userName[0].toUpperCase()
                                       : 'U',
                                   style: AppText.titulo(context).copyWith(
-                                    color: ColorsPalette.redComponents,
+                                    color: colors.accent,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -193,7 +196,7 @@ class MerchantProfilePage extends StatelessWidget {
                                   Text(
                                     userName,
                                     style: AppText.subtitulo(context).copyWith(
-                                      color: ColorsPalette.blackDetails,
+                                      color: colors.textPrimary,
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: -0.5,
                                     ),
@@ -204,7 +207,7 @@ class MerchantProfilePage extends StatelessWidget {
                                   Text(
                                     userEmail,
                                     style: AppText.secundario(context).copyWith(
-                                      color: ColorsPalette.greyText,
+                                      color: colors.textSecondary,
                                       fontWeight: FontWeight.w500,
                                     ),
                                     maxLines: 1,
@@ -225,9 +228,9 @@ class MerchantProfilePage extends StatelessWidget {
                               _logout(context);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorsPalette.redComponents
+                              backgroundColor: colors.accent
                                   .withValues(alpha: 0.1),
-                              foregroundColor: ColorsPalette.redComponents,
+                              foregroundColor: colors.accent,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
                                   AppRadius.pill,
@@ -244,7 +247,7 @@ class MerchantProfilePage extends StatelessWidget {
                                   "Sair da conta",
                                   style: AppText.botao(context).copyWith(
                                     fontWeight: FontWeight.bold,
-                                    color: ColorsPalette.redComponents,
+                                    color: colors.accent,
                                   ),
                                 ),
                               ],
@@ -284,7 +287,7 @@ class MerchantProfilePage extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.md),
               Divider(
-                color: Colors.grey.shade200,
+                color: colors.divider,
                 height: 1.0,
                 indent: AppSpacing.lg,
                 endIndent: AppSpacing.lg,
@@ -307,7 +310,7 @@ class MerchantProfilePage extends StatelessWidget {
                 icon: LucideIcons.moon,
                 title: "Tema do Aplicativo",
                 subtitle: "Claro, Escuro ou Sistema",
-                onTap: () {},
+                onTap: () => ThemeModeSelectorSheet.show(context),
               ),
               buildListTile(
                 context: context,
@@ -319,7 +322,7 @@ class MerchantProfilePage extends StatelessWidget {
 
               const SizedBox(height: AppSpacing.md),
               Divider(
-                color: Colors.grey.shade200,
+                color: colors.divider,
                 height: 1.0,
                 indent: AppSpacing.lg,
                 endIndent: AppSpacing.lg,
@@ -373,6 +376,7 @@ class MerchantProfilePage extends StatelessWidget {
     String? subtitle,
     required VoidCallback onTap,
   }) {
+    final colors = context.appColors;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -385,14 +389,14 @@ class MerchantProfilePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: colors.divider.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: colors.divider),
               ),
               child: Icon(
                 icon,
                 size: AppIconSize.md,
-                color: ColorsPalette.blackDetails,
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -404,7 +408,7 @@ class MerchantProfilePage extends StatelessWidget {
                     title,
                     style: AppText.corpo(context).copyWith(
                       fontWeight: FontWeight.w600,
-                      color: ColorsPalette.blackDetails,
+                      color: colors.textPrimary,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -413,7 +417,7 @@ class MerchantProfilePage extends StatelessWidget {
                       subtitle,
                       style: AppText.legenda(
                         context,
-                      ).copyWith(color: Colors.grey.shade500),
+                      ).copyWith(color: colors.textSecondary),
                     ),
                   ],
                 ],
@@ -422,7 +426,7 @@ class MerchantProfilePage extends StatelessWidget {
             Icon(
               LucideIcons.chevronRight,
               size: AppIconSize.sm,
-              color: Colors.grey.shade400,
+              color: colors.textSecondary.withValues(alpha: 0.5),
             ),
           ],
         ),

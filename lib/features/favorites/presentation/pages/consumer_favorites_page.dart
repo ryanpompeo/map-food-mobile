@@ -44,7 +44,10 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
         elevation: 0,
         backgroundColor: ColorsPalette.whiteBackground,
         centerTitle: true,
-        leading: Container(),
+        leading: IconButton(
+          icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           "Favoritos",
           style: AppText.subtitulo(

@@ -1,3 +1,4 @@
+import 'package:image_picker/image_picker.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/merchant/data/models/merchant_model.dart';
@@ -30,6 +31,22 @@ class MerchantService {
     final data = await _client.put<Map<String, dynamic>>(
       '${ApiConstants.comerciantes}/${merchant.id}',
       data: body,
+    );
+    return MerchantModel.fromJson(data);
+  }
+
+  Future<MerchantModel> uploadImagem(int id, XFile file) async {
+    final data = await _client.uploadFile<Map<String, dynamic>>(
+      '${ApiConstants.comerciantes}/$id/imagem',
+      bytes: await file.readAsBytes(),
+      fileName: file.name,
+    );
+    return MerchantModel.fromJson(data);
+  }
+
+  Future<MerchantModel> removerImagem(int id) async {
+    final data = await _client.delete<Map<String, dynamic>>(
+      '${ApiConstants.comerciantes}/$id/imagem',
     );
     return MerchantModel.fromJson(data);
   }
