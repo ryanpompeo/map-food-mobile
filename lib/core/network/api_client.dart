@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:map_food/core/network/api_constants.dart';
-import 'package:map_food/core/network/auth_interceptor.dart';
-import 'package:map_food/core/network/error_interceptor.dart';
-import 'package:map_food/core/errors/app_exception.dart';
+import 'package:map_food/core/network/interceptors/auth_interceptor.dart';
+import 'package:map_food/core/network/interceptors/error_interceptor.dart';
+import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/session/session_manager.dart';
 
 class ApiClient {
   static ApiClient? _instance;
@@ -15,6 +17,7 @@ class ApiClient {
         connectTimeout: ApiConstants.connectTimeout,
         receiveTimeout: ApiConstants.receiveTimeout,
         headers: {'Content-Type': 'application/json'},
+        responseType: ResponseType.json,
       ),
     );
     _dio.interceptors.addAll([AuthInterceptor(), ErrorInterceptor()]);
@@ -22,30 +25,54 @@ class ApiClient {
 
   static ApiClient get instance => _instance ??= ApiClient._();
 
+  T _parseResponse<T>(dynamic data) {
+    if (data == null || (data is String && data.trim().isEmpty)) {
+      return null as T;
+    }
+    if (data is T) return data;
+    if (data is String) {
+      try {
+        final decoded = jsonDecode(data);
+        if (decoded is T) return decoded;
+      } catch (_) {}
+    }
+    return data as T;
+  }
+
+  /// Converte o DioException em AppException e, se for 401, dispara a
+  /// limpeza de sessão global antes de relançar.
+  Never _throwFrom(DioException e) {
+    final exception = (e.error is AppException) ? e.error as AppException : const NetworkException();
+    if (exception is UnauthorizedException) {
+      SessionManager.handleUnauthorized();
+    }
+    throw exception;
+  }
+
   Future<T> get<T>(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio.get(path, queryParameters: queryParameters);
-      return response.data as T;
+      return _parseResponse<T>(response.data);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 
   Future<T> post<T>(String path, {dynamic data}) async {
     try {
       final response = await _dio.post(path, data: data);
-      return response.data as T;
+      return _parseResponse<T>(response.data);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 
   Future<T> put<T>(String path, {dynamic data}) async {
     try {
       final response = await _dio.put(path, data: data);
-      return response.data as T;
+      return _parseResponse<T>(response.data);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 
@@ -53,7 +80,7 @@ class ApiClient {
     try {
       await _dio.delete(path);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 }

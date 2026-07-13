@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Precisamos acessar suas fotos para você escolher uma imagem de perfil ou da sua loja.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Precisamos acessar a câmera para você tirar uma foto de perfil ou da sua loja.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Usamos sua localização para mostrar comércios próximos de você.</string>
 </dict>
 </plist>

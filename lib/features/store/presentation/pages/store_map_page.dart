@@ -1,0 +1,211 @@
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/services/route_service.dart';
+import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
+
+/// Tela cheia com o mapa focado numa única loja — destino do botão
+/// "Visualizar no mapa" na tela de detalhe. Mostra a posição atual do
+/// usuário, traça a rota a pé até a loja (OSRM; linha reta como fallback)
+/// e exibe a distância.
+class StoreMapPage extends StatefulWidget {
+  final StoreDto store;
+
+  const StoreMapPage({super.key, required this.store});
+
+  @override
+  State<StoreMapPage> createState() => _StoreMapPageState();
+}
+
+class _StoreMapPageState extends State<StoreMapPage> {
+  final _routeService = RouteService();
+
+  double? _userLat;
+  double? _userLng;
+  List<LatLng>? _routePoints;
+  double? _distanciaMetros;
+  bool _carregandoRota = false;
+  bool _semPermissao = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPosicaoERota();
+  }
+
+  Future<void> _carregarPosicaoERota() async {
+    if (!widget.store.temLocalizacao) return;
+
+    setState(() => _carregandoRota = true);
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (!serviceEnabled ||
+          permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          setState(() {
+            _semPermissao = true;
+            _carregandoRota = false;
+          });
+        }
+        return;
+      }
+
+      final posicao = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      final origem = LatLng(posicao.latitude, posicao.longitude);
+      final destino = LatLng(widget.store.latitude!, widget.store.longitude!);
+
+      final rota = await _routeService.getRoute(origem, destino);
+
+      if (!mounted) return;
+      setState(() {
+        _userLat = origem.latitude;
+        _userLng = origem.longitude;
+        if (rota != null) {
+          _routePoints = rota.pontos;
+          _distanciaMetros = rota.distanciaMetros;
+        } else {
+          // OSRM indisponível — linha reta como fallback.
+          _routePoints = [origem, destino];
+          _distanciaMetros = const Distance().as(LengthUnit.Meter, origem, destino);
+        }
+        _carregandoRota = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _carregandoRota = false);
+    }
+  }
+
+  String get _distanciaLabel {
+    final metros = _distanciaMetros;
+    if (metros == null) return '';
+    if (metros < 1000) return '≈ ${metros.round()} m';
+    return '≈ ${(metros / 1000).toStringAsFixed(1)} km';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorsPalette.whiteBackground,
+      appBar: AppBar(
+        backgroundColor: ColorsPalette.whiteBackground,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
+        ),
+        title: Text(
+          widget.store.nome,
+          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+        ),
+      ),
+      body: Stack(
+        children: [
+          StoreMapView(
+            stores: [widget.store],
+            focusedStore: widget.store,
+            userLatitude: _userLat,
+            userLongitude: _userLng,
+            routePoints: _routePoints,
+          ),
+          if (_carregandoRota)
+            Positioned(
+              bottom: 24.0,
+              left: 0,
+              right: 0,
+              child: Center(child: _buildPill(child: _buildPillLoading())),
+            )
+          else if (_distanciaMetros != null)
+            Positioned(
+              bottom: 24.0,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _buildPill(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.footprints, size: 16.0, color: ColorsPalette.redComponents),
+                      const SizedBox(width: 6.0),
+                      Text(
+                        _distanciaLabel,
+                        style: AppText.legenda(context).copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: ColorsPalette.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (_semPermissao)
+            Positioned(
+              bottom: 24.0,
+              left: 24.0,
+              right: 24.0,
+              child: Center(
+                child: _buildPill(
+                  child: Text(
+                    "Ative a localização para traçar a rota até a loja",
+                    textAlign: TextAlign.center,
+                    style: AppText.legenda(context).copyWith(
+                      color: ColorsPalette.greyText,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPill({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(100.0),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildPillLoading() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(
+          width: 14.0,
+          height: 14.0,
+          child: CircularProgressIndicator(strokeWidth: 2, color: ColorsPalette.redComponents),
+        ),
+        const SizedBox(width: 8.0),
+        Text(
+          "Traçando rota...",
+          style: AppText.legenda(context).copyWith(
+            color: ColorsPalette.greyText,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
