@@ -3,7 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
@@ -32,6 +34,11 @@ class StoreMapView extends StatefulWidget {
   /// desenhado sob os markers.
   final List<LatLng>? routePoints;
 
+  /// Espaço reservado abaixo dos botões flutuantes de câmera (centralizar /
+  /// travar rotação), pra não ficarem escondidos atrás de bottom bars ou
+  /// pills que ficam por cima do mapa em algumas telas.
+  final double floatingControlsBottomPadding;
+
   const StoreMapView({
     super.key,
     required this.stores,
@@ -41,6 +48,7 @@ class StoreMapView extends StatefulWidget {
     this.userLatitude,
     this.userLongitude,
     this.routePoints,
+    this.floatingControlsBottomPadding = 16.0,
   });
 
   @override
@@ -60,6 +68,7 @@ class _StoreMapViewState extends State<StoreMapView> {
   static const Distance _distance = Distance();
 
   LatLng? _centroRastreadoAnterior;
+  bool _rotacaoTravada = false;
 
   @override
   void dispose() {
@@ -132,42 +141,111 @@ class _StoreMapViewState extends State<StoreMapView> {
     }
   }
 
-  /// Pin de loja: círculo branco com sombra e ícone vermelho; a loja em
-  /// foco inverte (fundo vermelho, ícone branco) e fica maior.
-  Widget _buildStoreMarker({required bool isFocused}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isFocused ? ColorsPalette.redComponents : Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isFocused ? 0.3 : 0.18),
-            blurRadius: isFocused ? 10.0 : 6.0,
-            offset: const Offset(0, 3),
-          ),
-        ],
+  /// Centraliza a câmera na posição atual do usuário (estilo Uber), mantendo
+  /// o zoom atual — ou um zoom mínimo de "rua" se o usuário estiver com o
+  /// mapa muito distante.
+  void _centralizarNaMinhaPosicao() {
+    if (widget.userLatitude == null || widget.userLongitude == null) return;
+    final zoomAtual = _mapController.camera.zoom;
+    _mapController.move(
+      LatLng(widget.userLatitude!, widget.userLongitude!),
+      zoomAtual < 15.0 ? 16.0 : zoomAtual,
+    );
+  }
+
+  /// Alterna o travamento de rotação do mapa. Ao travar, alinha o mapa de
+  /// volta pro norte — não faz sentido travar "torto".
+  void _alternarTravaDeRotacao() {
+    setState(() => _rotacaoTravada = !_rotacaoTravada);
+    if (_rotacaoTravada) _mapController.rotate(0);
+  }
+
+  /// Pin de loja: círculo com borda branca contendo a foto do comércio —
+  /// cai pro ícone padrão (fundo vermelho) se não houver foto ou a imagem
+  /// falhar ao carregar. A loja em foco fica maior e com borda mais grossa.
+  Widget _buildStoreMarker(StoreDto store, {required bool isFocused}) {
+    final imagemUrl = resolveImagemUrl(store.capaUrl);
+    final tamanho = isFocused ? 52.0 : 42.0;
+
+    return RepaintBoundary(
+      child: Container(
+        width: tamanho,
+        height: tamanho,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          border: Border.all(color: Colors.white, width: isFocused ? 3.5 : 2.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isFocused ? 0.3 : 0.18),
+              blurRadius: isFocused ? 10.0 : 6.0,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: imagemUrl != null
+              ? Image.network(
+                  imagemUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => _buildStoreMarkerFallback(isFocused),
+                )
+              : _buildStoreMarkerFallback(isFocused),
+        ),
       ),
+    );
+  }
+
+  Widget _buildStoreMarkerFallback(bool isFocused) {
+    return Container(
+      color: isFocused ? ColorsPalette.redComponents : ColorsPalette.redComponents.withValues(alpha: 0.12),
       child: Icon(
-        LucideIcons.mapPin,
+        LucideIcons.store,
         color: isFocused ? Colors.white : ColorsPalette.redComponents,
-        size: isFocused ? 24.0 : 20.0,
+        size: isFocused ? 24.0 : 18.0,
       ),
     );
   }
 
   /// Marker "minha posição": bolinha azul com borda branca, padrão de mapas.
   Widget _buildUserMarker() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2979FF),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 6.0,
-            offset: const Offset(0, 2),
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2979FF),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 6.0,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingControls() {
+    return Positioned(
+      right: AppSpacing.md,
+      bottom: widget.floatingControlsBottomPadding,
+      child: Column(
+        children: [
+          if (widget.userLatitude != null && widget.userLongitude != null) ...[
+            _MapControlButton(
+              icon: LucideIcons.locate,
+              tooltip: 'Centralizar na minha posição',
+              onTap: _centralizarNaMinhaPosicao,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          _MapControlButton(
+            icon: _rotacaoTravada ? LucideIcons.lock : LucideIcons.compass,
+            tooltip: _rotacaoTravada ? 'Destravar rotação do mapa' : 'Travar rotação do mapa',
+            isActive: _rotacaoTravada,
+            onTap: _alternarTravaDeRotacao,
           ),
         ],
       ),
@@ -183,7 +261,13 @@ class _StoreMapViewState extends State<StoreMapView> {
       children: [
         FlutterMap(
           mapController: _mapController,
-          options: MapOptions(initialCenter: center, initialZoom: zoom),
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: zoom,
+            interactionOptions: InteractionOptions(
+              flags: _rotacaoTravada ? InteractiveFlag.all & ~InteractiveFlag.rotate : InteractiveFlag.all,
+            ),
+          ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -218,14 +302,14 @@ class _StoreMapViewState extends State<StoreMapView> {
                   final isFocused = widget.focusedStore?.id == store.id;
                   return Marker(
                     point: LatLng(store.latitude!, store.longitude!),
-                    width: isFocused ? 48.0 : 40.0,
-                    height: isFocused ? 48.0 : 40.0,
+                    width: isFocused ? 60.0 : 48.0,
+                    height: isFocused ? 60.0 : 48.0,
                     child: GestureDetector(
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => MoreInfoStorePage(store: store)),
                       ),
-                      child: _buildStoreMarker(isFocused: isFocused),
+                      child: _buildStoreMarker(store, isFocused: isFocused),
                     ),
                   );
                 }),
@@ -233,6 +317,7 @@ class _StoreMapViewState extends State<StoreMapView> {
             ),
           ],
         ),
+        _buildFloatingControls(),
         if (comLocalizacao.isEmpty)
           Positioned(
             top: 16.0,
@@ -255,6 +340,48 @@ class _StoreMapViewState extends State<StoreMapView> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Botão flutuante circular usado pelos controles de câmera do mapa
+/// (centralizar / travar rotação) — mesmo visual dos "pills" de vidro já
+/// usados em outros lugares do app, só que circular.
+class _MapControlButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool isActive;
+
+  const _MapControlButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.isActive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: isActive ? ColorsPalette.redComponents : Colors.white,
+        shape: const CircleBorder(),
+        elevation: 3.0,
+        shadowColor: Colors.black.withValues(alpha: 0.3),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Icon(
+              icon,
+              size: AppIconSize.md,
+              color: isActive ? Colors.white : ColorsPalette.black,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

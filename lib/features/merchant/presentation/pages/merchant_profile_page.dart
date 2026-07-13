@@ -11,10 +11,16 @@ class MerchantProfilePage extends StatelessWidget {
   final String userName;
   final String userEmail;
 
+  /// Chamado ao voltar da tela de Editar Perfil, pra quem construiu esta
+  /// página poder recarregar nome/e-mail/foto — o card de perfil não
+  /// atualiza sozinho porque os dados vêm de fora via [userName]/[userEmail].
+  final VoidCallback? onProfileUpdated;
+
   const MerchantProfilePage({
     super.key,
     required this.userName,
     required this.userEmail,
+    this.onProfileUpdated,
   });
 
   @override
@@ -25,8 +31,8 @@ class MerchantProfilePage extends StatelessWidget {
       avatarColor: ColorsPalette.redComponents,
       logoutBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
       logoutForegroundColor: ColorsPalette.redComponents,
-      listIconBackgroundColor: Colors.grey.shade50,
-      listIconColor: ColorsPalette.blackDetails,
+      listIconBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
+      listIconColor: ColorsPalette.redComponents,
       fetchImagemUrl: () async {
         final session = await AuthStorage.getSession();
         if (session == null) return null;
@@ -44,11 +50,12 @@ class MerchantProfilePage extends StatelessWidget {
           icon: LucideIcons.userCog,
           title: "Editar Perfil",
           subtitle: "Altere seus dados e senha",
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const MerchantEditProfile()),
             );
+            onProfileUpdated?.call();
           },
         ),
       ],

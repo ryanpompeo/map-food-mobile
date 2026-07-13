@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -188,7 +189,7 @@ class GuestProfilePage extends StatelessWidget {
                 icon: LucideIcons.mapPin,
                 title: "Permissões de Localização",
                 subtitle: "Gerenciar acesso ao GPS",
-                onTap: () {},
+                onTap: () => Geolocator.openAppSettings(),
               ),
               const SizedBox(height: AppSpacing.md),
               Divider(

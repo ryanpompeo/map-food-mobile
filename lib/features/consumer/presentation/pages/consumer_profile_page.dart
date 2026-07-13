@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/widgets/profile_page_scaffold.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_edit_profile.dart';
 import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
+import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_complaints_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_review_page.dart';
@@ -14,10 +15,16 @@ class ConsumerProfilePage extends StatelessWidget {
   final String userName;
   final String userEmail;
 
+  /// Chamado ao voltar da tela de Editar Perfil, pra quem construiu esta
+  /// página poder recarregar nome/e-mail/foto — o card de perfil não
+  /// atualiza sozinho porque os dados vêm de fora via [userName]/[userEmail].
+  final VoidCallback? onProfileUpdated;
+
   const ConsumerProfilePage({
     super.key,
     required this.userName,
     required this.userEmail,
+    this.onProfileUpdated,
   });
 
   @override
@@ -48,10 +55,22 @@ class ConsumerProfilePage extends StatelessWidget {
           icon: LucideIcons.userCog,
           title: "Editar Perfil",
           subtitle: "Altere seus dados e senha",
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ConsumerEditProfile()),
+            );
+            onProfileUpdated?.call();
+          },
+        ),
+        ProfileMenuItem(
+          icon: LucideIcons.heart,
+          title: "Favoritos",
+          subtitle: "Lojas que você salvou",
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ConsumerEditProfile()),
+              MaterialPageRoute(builder: (context) => ConsumerFavoritesPage()),
             );
           },
         ),

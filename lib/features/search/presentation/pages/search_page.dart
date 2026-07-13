@@ -273,7 +273,7 @@ class _SearchPageState extends State<SearchPage> {
                   child: EmAltaSectionWidget(items: _emAltaStores, userRole: _userRole),
                 ),
               ),
-              SliverToBoxAdapter(child: PopularesSectionHeaderWidget(populares: _popularesStores, userRole: _userRole)),
+              const SliverToBoxAdapter(child: PopularesSectionHeaderWidget()),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
               PopularesGridSliverWidget(populares: _popularesStores, userRole: _userRole),
               const SliverToBoxAdapter(child: SizedBox(height: 120.0)),

@@ -4,6 +4,7 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
 import 'package:map_food/features/reviews/data/services/rating_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
@@ -60,9 +61,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => MoreInfoStorePage(store: store)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Não foi possível abrir esta loja.")),
-      );
+      AppToast.error(context, "Não foi possível abrir esta loja.");
     }
   }
 

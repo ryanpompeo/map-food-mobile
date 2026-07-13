@@ -31,21 +31,23 @@ class CategoryFilterChips extends StatelessWidget {
           final bool isSelected = ativo == filtro;
           return Padding(
             padding: const EdgeInsets.only(right: 12.0),
-            child: GestureDetector(
-              onTap: () => onSelect(filtro),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isSelected ? ColorsPalette.black : ColorsPalette.white,
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                child: Text(
-                  filtro,
-                  style: AppText.legenda(context).copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
+            child: RepaintBoundary(
+              child: GestureDetector(
+                onTap: () => onSelect(filtro),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isSelected ? ColorsPalette.black : ColorsPalette.white,
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  child: Text(
+                    filtro,
+                    style: AppText.legenda(context).copyWith(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.grey.shade700,
+                    ),
                   ),
                 ),
               ),

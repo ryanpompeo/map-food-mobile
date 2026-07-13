@@ -4,43 +4,27 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/features/search/presentation/pages/view_most_popular.dart';
 import 'package:map_food/features/search/presentation/utils/rating_format.dart';
 import 'package:map_food/features/search/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
-/// Cabeçalho ("Populares" + subtítulo + "ver todas"). Fica separado do grid
-/// para que o grid abaixo possa ser um sliver de verdade, rolando junto com
-/// o resto da página em vez de um carrossel horizontal isolado.
+/// Cabeçalho ("Populares" + subtítulo"). Fica separado do grid para que o
+/// grid abaixo possa ser um sliver de verdade, rolando junto com o resto da
+/// página em vez de um carrossel horizontal isolado.
 class PopularesSectionHeaderWidget extends StatelessWidget {
-  final List<StoreDto> populares;
-  final String userRole;
-
-  const PopularesSectionHeaderWidget({super.key, required this.populares, required this.userRole});
+  const PopularesSectionHeaderWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Populares", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black)),
-                const SizedBox(height: 2.0),
-                Text("Mais avaliadas pela comunidade", style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText)),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ViewMostPopular(titulo: "Populares", items: populares, userRole: userRole))),
-            child: Text("ver todas", style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600)),
-          ),
+          Text("Populares", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black)),
+          const SizedBox(height: 2.0),
+          Text("Mais avaliadas pela comunidade", style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText)),
         ],
       ),
     );
@@ -110,18 +94,22 @@ class PopularStoreTileWidget extends StatelessWidget {
           children: [
             Stack(
               children: [
-                Container(
-                  height: 120.0, width: double.infinity,
-                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(AppRadius.md)),
-                  child: resolveImagemUrl(store.capaUrl) != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          child: Image.network(
-                            resolveImagemUrl(store.capaUrl)!, fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Icon(LucideIcons.image, size: 32.0, color: Colors.grey.shade300),
-                          ),
-                        )
-                      : Icon(LucideIcons.image, size: 32.0, color: Colors.grey.shade300),
+                // RepaintBoundary próprio pra a foto não repintar junto com
+                // o botão de favorito ao lado ou o scroll do grid.
+                RepaintBoundary(
+                  child: Container(
+                    height: 120.0, width: double.infinity,
+                    decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(AppRadius.md)),
+                    child: resolveImagemUrl(store.capaUrl) != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: Image.network(
+                              resolveImagemUrl(store.capaUrl)!, fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Icon(LucideIcons.image, size: 32.0, color: Colors.grey.shade300),
+                            ),
+                          )
+                        : Icon(LucideIcons.image, size: 32.0, color: Colors.grey.shade300),
+                  ),
                 ),
                 Positioned(
                   top: 6.0, right: 6.0,

@@ -6,6 +6,7 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
@@ -195,15 +196,7 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
       );
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Erro ao excluir a conta. Tente novamente."),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        AppToast.error(context, "Erro ao excluir a conta. Tente novamente.");
       }
     }
   }

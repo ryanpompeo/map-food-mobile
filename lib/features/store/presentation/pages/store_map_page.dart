@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/route_service.dart';
 import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
@@ -59,31 +60,50 @@ class _StoreMapPageState extends State<StoreMapPage> {
         return;
       }
 
-      final posicao = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-      );
-      final origem = LatLng(posicao.latitude, posicao.longitude);
       final destino = LatLng(widget.store.latitude!, widget.store.longitude!);
 
-      final rota = await _routeService.getRoute(origem, destino);
+      // `getCurrentPosition` espera um fix "fresco" de GPS — isso, e não o
+      // cálculo da rota em si, é o que demora (às vezes vários segundos),
+      // mesmo quando a rota já está no cache do RouteService. Por isso, se
+      // já existe uma última posição conhecida (leitura instantânea, sem
+      // esperar o hardware), traça a rota com ela primeiro — na prática cai
+      // direto no cache quando é a mesma loja de uma visita recente — e só
+      // depois refina com a posição atual.
+      final ultimaConhecida = await Geolocator.getLastKnownPosition();
+      if (ultimaConhecida != null && mounted) {
+        await _tracarRotaPara(LatLng(ultimaConhecida.latitude, ultimaConhecida.longitude), destino);
+      }
 
+      final posicaoAtual = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
       if (!mounted) return;
-      setState(() {
-        _userLat = origem.latitude;
-        _userLng = origem.longitude;
-        if (rota != null) {
-          _routePoints = rota.pontos;
-          _distanciaMetros = rota.distanciaMetros;
-        } else {
-          // OSRM indisponível — linha reta como fallback.
-          _routePoints = [origem, destino];
-          _distanciaMetros = const Distance().as(LengthUnit.Meter, origem, destino);
-        }
-        _carregandoRota = false;
-      });
+      await _tracarRotaPara(LatLng(posicaoAtual.latitude, posicaoAtual.longitude), destino);
     } catch (_) {
       if (mounted) setState(() => _carregandoRota = false);
     }
+  }
+
+  /// Busca (ou pega do cache) a rota entre [origem] e [destino] e atualiza o
+  /// estado da tela. Chamado até duas vezes por carregamento — uma vez
+  /// (opcional) com a última posição conhecida, pra sentir instantâneo, e
+  /// outra com o fix atual do GPS, pra corrigir caso o usuário tenha andado.
+  Future<void> _tracarRotaPara(LatLng origem, LatLng destino) async {
+    final rota = await _routeService.getRoute(origem, destino);
+    if (!mounted) return;
+    setState(() {
+      _userLat = origem.latitude;
+      _userLng = origem.longitude;
+      if (rota != null) {
+        _routePoints = rota.pontos;
+        _distanciaMetros = rota.distanciaMetros;
+      } else {
+        // OSRM indisponível — linha reta como fallback.
+        _routePoints = [origem, destino];
+        _distanciaMetros = const Distance().as(LengthUnit.Meter, origem, destino);
+      }
+      _carregandoRota = false;
+    });
   }
 
   String get _distanciaLabel {
@@ -95,7 +115,10 @@ class _StoreMapPageState extends State<StoreMapPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _carregandoRota,
+      confirmDialog: confirmarSairDuranteCalculoDeRota,
+      child: Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       appBar: AppBar(
         backgroundColor: ColorsPalette.whiteBackground,
@@ -103,7 +126,11 @@ class _StoreMapPageState extends State<StoreMapPage> {
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
+          // maybePop (não pop) consulta o PopScope do UnsavedChangesGuard
+          // antes de sair — Navigator.pop força a saída e só avisa o guard
+          // depois de já ter saído, então o diálogo nunca chegava a aparecer
+          // pelo botão visual (só pelo gesto/botão físico de voltar).
+          onPressed: () => Navigator.maybePop(context),
           icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
         ),
         title: Text(
@@ -170,6 +197,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
               ),
             ),
         ],
+      ),
       ),
     );
   }

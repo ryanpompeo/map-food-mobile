@@ -4,7 +4,6 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/features/search/presentation/pages/view_most_popular.dart';
 import 'package:map_food/features/search/presentation/utils/rating_format.dart';
 import 'package:map_food/features/search/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -39,24 +38,12 @@ class _EmAltaSectionWidgetState extends State<EmAltaSectionWidget> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Em Alta", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black)),
-                    const SizedBox(height: 2.0),
-                    Text("As lojas mais bem avaliadas", style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText)),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ViewMostPopular(titulo: "Em Alta", items: widget.items, userRole: widget.userRole))),
-                child: Text("ver todas", style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600)),
-              ),
+              Text("Em Alta", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black)),
+              const SizedBox(height: 2.0),
+              Text("As lojas mais bem avaliadas", style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText)),
             ],
           ),
         ),
@@ -123,15 +110,19 @@ class DestaqueCardWidget extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Foto em tela cheia como fundo do card.
-              Container(
-                color: Colors.grey.shade200,
-                child: resolveImagemUrl(destaque.capaUrl) != null
-                    ? Image.network(
-                        resolveImagemUrl(destaque.capaUrl)!, fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Icon(LucideIcons.image, size: 48.0, color: Colors.grey.shade400),
-                      )
-                    : Icon(LucideIcons.image, size: 48.0, color: Colors.grey.shade400),
+              // Foto em tela cheia como fundo do card — isolada num
+              // RepaintBoundary próprio pra não repintar a cada troca de
+              // favorito ou scroll do carrossel ao lado.
+              RepaintBoundary(
+                child: Container(
+                  color: Colors.grey.shade200,
+                  child: resolveImagemUrl(destaque.capaUrl) != null
+                      ? Image.network(
+                          resolveImagemUrl(destaque.capaUrl)!, fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(LucideIcons.image, size: 48.0, color: Colors.grey.shade400),
+                        )
+                      : Icon(LucideIcons.image, size: 48.0, color: Colors.grey.shade400),
+                ),
               ),
               Positioned(
                 top: 12.0, right: 12.0,

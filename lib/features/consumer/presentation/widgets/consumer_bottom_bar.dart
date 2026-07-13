@@ -21,7 +21,6 @@ class ConsumerBottomBar extends StatelessWidget {
       items: const [
         BottomBarItem(LucideIcons.house),
         BottomBarItem(LucideIcons.search),
-        BottomBarItem(LucideIcons.heart),
         BottomBarItem(LucideIcons.user),
       ],
     );

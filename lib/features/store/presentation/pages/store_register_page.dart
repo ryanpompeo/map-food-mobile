@@ -7,7 +7,9 @@ import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/cep_service.dart';
 import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
+import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/core/ui/widgets/xfile_image.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -60,7 +62,15 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   void initState() {
     super.initState();
     _carregarCategorias();
+    // Reconstrói a tela a cada tecla digitada para o PopScope do
+    // UnsavedChangesGuard sempre enxergar o estado mais recente do
+    // formulário ao decidir se deve pedir confirmação de saída.
+    for (final controller in [_nomeController, _descricaoController, _enderecoController, _cidadeController, _estadoController, _cepController]) {
+      controller.addListener(_onFormChanged);
+    }
   }
+
+  void _onFormChanged() => setState(() {});
 
   Future<void> _carregarCategorias() async {
     try {
@@ -78,6 +88,9 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
   @override
   void dispose() {
+    for (final controller in [_nomeController, _descricaoController, _enderecoController, _cidadeController, _estadoController, _cepController]) {
+      controller.removeListener(_onFormChanged);
+    }
     _nomeController.dispose();
     _descricaoController.dispose();
     _enderecoController.dispose();
@@ -181,11 +194,9 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         }
       } catch (_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Loja cadastrada, mas houve um erro ao enviar as fotos. Tente novamente na edição da loja.'),
-              backgroundColor: ColorsPalette.redComponents,
-            ),
+          AppToast.error(
+            context,
+            'Loja cadastrada, mas houve um erro ao enviar as fotos. Tente novamente na edição da loja.',
           );
         }
       }
@@ -208,26 +219,25 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   }
 
   void _mostrarErro(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          mensagem,
-          style: AppText.corpo(
-            context,
-          ).copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: ColorsPalette.redComponents,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-        ),
-      ),
-    );
+    AppToast.error(context, mensagem);
   }
+
+  bool get _hasUnsavedChanges =>
+      _nomeController.text.isNotEmpty ||
+      _descricaoController.text.isNotEmpty ||
+      _enderecoController.text.isNotEmpty ||
+      _cidadeController.text.isNotEmpty ||
+      _estadoController.text.isNotEmpty ||
+      _cepController.text.isNotEmpty ||
+      _fotoDestaque != null ||
+      _fotosGaleria.isNotEmpty ||
+      _categoriasSelecionadas.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _hasUnsavedChanges,
+      child: Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       appBar: AppBar(
         backgroundColor: ColorsPalette.whiteBackground,
@@ -498,6 +508,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

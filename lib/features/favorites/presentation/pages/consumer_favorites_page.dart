@@ -4,6 +4,7 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
 import '../controllers/favorites_manager.dart';
@@ -46,8 +47,12 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: ColorsPalette.whiteBackground,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
-        leading: Container(),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
+        ),
         title: Text(
           "Favoritos",
           style: AppText.subtitulo(
@@ -172,12 +177,9 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                               await FavoritesManager.instance.toggle(store);
                             } catch (_) {
                               if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Não foi possível remover dos favoritos. Tente novamente.",
-                                  ),
-                                ),
+                              AppToast.error(
+                                context,
+                                "Não foi possível remover dos favoritos. Tente novamente.",
                               );
                             }
                           },

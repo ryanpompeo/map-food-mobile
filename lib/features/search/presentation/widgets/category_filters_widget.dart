@@ -26,21 +26,23 @@ class CategoryFiltersWidget extends StatelessWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 12.0),
         itemBuilder: (context, index) {
           final isSelected = index == selectedIndex;
-          return GestureDetector(
-            onTap: () => onFilterChanged(index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isSelected ? ColorsPalette.black : ColorsPalette.white,
-                borderRadius: BorderRadius.circular(20.0),
-              ),
-              child: Text(
-                filtros[index],
-                style: AppText.legenda(context).copyWith(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  color: isSelected ? Colors.white : Colors.grey.shade700,
+          return RepaintBoundary(
+            child: GestureDetector(
+              onTap: () => onFilterChanged(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? ColorsPalette.black : ColorsPalette.white,
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                child: Text(
+                  filtros[index],
+                  style: AppText.legenda(context).copyWith(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                  ),
                 ),
               ),
             ),

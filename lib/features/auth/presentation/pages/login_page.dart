@@ -69,11 +69,13 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      if (response.tipo == 'COMERCIANTE') {
-        Navigator.pushReplacementNamed(context, AppRoutes.merchantDashboard);
-      } else {
-        Navigator.pushReplacementNamed(context, AppRoutes.consumerHome);
-      }
+      final destino = response.tipo == 'COMERCIANTE'
+          ? AppRoutes.merchantDashboard
+          : AppRoutes.consumerHome;
+      // pushNamedAndRemoveUntil (não pushReplacementNamed) para limpar todo o
+      // histórico de navegação do Guest — sem isso o botão "voltar" do
+      // celular retornava ao perfil Guest depois de logado.
+      Navigator.pushNamedAndRemoveUntil(context, destino, (route) => false);
     } on UnauthorizedException {
       setState(() => _errorMessage = 'E-mail ou senha incorretos.');
     } on AppException catch (e) {

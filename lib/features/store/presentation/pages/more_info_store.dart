@@ -9,9 +9,11 @@ import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
 import 'package:map_food/features/reviews/data/services/rating_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/core/ui/utils/ui_utils.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/reviews/data/services/denuncia_service.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/features/store/presentation/pages/store_map_page.dart';
+import 'package:map_food/features/store/presentation/widgets/store_gallery_viewer.dart';
 
 class MoreInfoStorePage extends StatefulWidget {
   final StoreDto store;
@@ -30,6 +32,14 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   String? _ratingsError;
   String _userRole = 'GUEST';
   String _userName = 'Usuário';
+
+  // Filtro por estrelas na lista de avaliações — null significa "todas". A
+  // API sempre devolve a lista completa; o filtro é só client-side.
+  int? _filtroEstrelas;
+
+  List<AvaliacaoModel> get _avaliacoesFiltradas => _filtroEstrelas == null
+      ? _avaliacoes
+      : _avaliacoes.where((r) => r.nota == _filtroEstrelas).toList();
 
   @override
   void initState() {
@@ -68,6 +78,19 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   String _formatRating(double? rating) {
     if (rating == null || rating == 0.0) return 'Novo';
     return rating.toStringAsFixed(1);
+  }
+
+  /// Média calculada a partir das avaliações já buscadas — `store.avaliacao`
+  /// vem sempre nulo, porque os endpoints de loja (`GET /lojas`, `/ativas`,
+  /// etc.) devolvem a entidade `Loja` pura, sem nenhum campo de média
+  /// calculada pelo backend. Como esta tela já busca as avaliações da loja
+  /// pra listar os comentários, é de graça calcular a média aqui também —
+  /// sem essa conta, o selo de nota mostrava "Novo" mesmo em lojas com
+  /// várias avaliações reais.
+  double? get _mediaCalculada {
+    if (_avaliacoes.isEmpty) return null;
+    final soma = _avaliacoes.fold<int>(0, (acumulado, r) => acumulado + r.nota);
+    return soma / _avaliacoes.length;
   }
 
   @override
@@ -185,26 +208,48 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  SizedBox(
-                    height: 140.0,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal, physics: const BouncingScrollPhysics(), clipBehavior: Clip.none,
-                      itemCount: store.galeria.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12.0),
-                      itemBuilder: (context, index) {
-                        final url = resolveImagemUrl(store.galeria[index]);
-                        return Container(
-                          width: 140.0,
-                          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16.0), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16.0),
-                            child: url != null
-                                ? Image.network(url, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)))
-                                : const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)),
-                          ),
-                        );
-                      },
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final galeriaResolvida = store.galeria
+                          .map(resolveImagemUrl)
+                          .whereType<String>()
+                          .toList();
+                      return SizedBox(
+                        height: 140.0,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal, physics: const BouncingScrollPhysics(), clipBehavior: Clip.none,
+                          itemCount: store.galeria.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 12.0),
+                          itemBuilder: (context, index) {
+                            final url = resolveImagemUrl(store.galeria[index]);
+                            final indiceResolvido = url == null ? -1 : galeriaResolvida.indexOf(url);
+                            return GestureDetector(
+                              onTap: url == null || galeriaResolvida.isEmpty
+                                  ? null
+                                  : () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => StoreGalleryViewer(
+                                            imagens: galeriaResolvida,
+                                            initialIndex: indiceResolvido < 0 ? 0 : indiceResolvido,
+                                          ),
+                                        ),
+                                      ),
+                              child: Container(
+                                width: 140.0,
+                                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16.0), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16.0),
+                                  child: url != null
+                                      ? Image.network(url, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)))
+                                      : const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: AppSpacing.xl),
@@ -282,7 +327,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                 children: [
                   const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
                   const SizedBox(width: 4),
-                  Text(_formatRating(store.avaliacao), style: AppText.subtitulo(context).copyWith(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
+                  Text(_formatRating(_mediaCalculada), style: AppText.subtitulo(context).copyWith(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -290,15 +335,103 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
         ),
         const SizedBox(height: AppSpacing.lg),
 
+        if (!_isLoadingRatings && _ratingsError == null && _avaliacoes.isNotEmpty) ...[
+          _buildFiltroEstrelas(context),
+          const SizedBox(height: AppSpacing.md),
+        ],
+
         if (_isLoadingRatings)
           const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: AppSpacing.xl), child: CircularProgressIndicator(color: ColorsPalette.redComponents, strokeWidth: 2.5)))
         else if (_ratingsError != null)
           _RatingsErrorWidget(onRetry: _fetchRatings)
         else if (_avaliacoes.isEmpty)
           _RatingsEmptyWidget()
+        else if (_avaliacoesFiltradas.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+            child: Center(
+              child: Text(
+                'Nenhuma avaliação com $_filtroEstrelas estrelas.',
+                style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+              ),
+            ),
+          )
         else
-          ..._avaliacoes.map((review) => _ReviewCard(review: review)),
+          ..._avaliacoesFiltradas.map((review) => _ReviewCard(review: review)),
       ],
+    );
+  }
+
+  Widget _buildFiltroEstrelas(BuildContext context) {
+    return SizedBox(
+      height: 36.0,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          _FiltroEstrelaChip(
+            label: 'Todas',
+            isSelected: _filtroEstrelas == null,
+            onTap: () => setState(() => _filtroEstrelas = null),
+          ),
+          for (var estrelas = 5; estrelas >= 1; estrelas--) ...[
+            const SizedBox(width: 8.0),
+            _FiltroEstrelaChip(
+              label: '$estrelas',
+              icon: LucideIcons.star,
+              isSelected: _filtroEstrelas == estrelas,
+              onTap: () => setState(() => _filtroEstrelas = estrelas),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FiltroEstrelaChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FiltroEstrelaChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? ColorsPalette.black : Colors.white,
+          borderRadius: BorderRadius.circular(18.0),
+          border: Border.all(color: isSelected ? ColorsPalette.black : Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13.0, color: isSelected ? Colors.amber : Colors.amber.shade600),
+              const SizedBox(width: 4.0),
+            ],
+            Text(
+              label,
+              style: AppText.legenda(context).copyWith(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -483,7 +616,7 @@ class ConsumerActionWidget extends StatelessWidget {
                                     );
                                     if (!context.mounted) return;
                                     Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Denúncia enviada."), backgroundColor: Colors.green));
+                                    AppToast.success(context, "Denúncia enviada.");
                                   } catch (e) {
                                     if (!context.mounted) return;
                                     setModalState(() => isSubmitting = false);
@@ -545,7 +678,7 @@ class _ConsumerReviewWidgetState extends State<ConsumerReviewWidget> {
 
   Future<void> _submit() async {
     if (_rating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecione uma nota de 1 a 5 estrelas.'), backgroundColor: ColorsPalette.redComponents));
+      AppToast.error(context, 'Selecione uma nota de 1 a 5 estrelas.');
       return;
     }
 
@@ -564,7 +697,7 @@ class _ConsumerReviewWidgetState extends State<ConsumerReviewWidget> {
         _rating = 0;
         _commentController.clear();
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avaliação enviada com sucesso!'), backgroundColor: Colors.green));
+      AppToast.success(context, 'Avaliação enviada com sucesso!');
       widget.onReviewSubmitted();
     } catch (e) {
       if (!mounted) return;

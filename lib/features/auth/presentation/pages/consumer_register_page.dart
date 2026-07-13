@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
@@ -154,16 +155,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
   void _mostrarErro(String msg) {
     if (!mounted) return;
     setState(() => _errorMessage = msg);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    AppToast.error(context, msg);
   }
 
   @override

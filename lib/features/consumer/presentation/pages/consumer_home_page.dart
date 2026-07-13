@@ -8,14 +8,12 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/widgets/category_filter_chips.dart';
 import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
-import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_profile_page.dart';
 import 'package:map_food/features/consumer/presentation/widgets/consumer_bottom_bar.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
-import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
-import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 import 'package:map_food/features/store/presentation/widgets/nearby_stores_section.dart';
 
 class ConsumerHomePage extends StatefulWidget {
@@ -32,6 +30,10 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
   String _userName = '';
   String _userEmail = '';
   bool _sessionLoaded = false;
+  // Muda a cada edição de perfil salva, forçando o ConsumerProfilePage a
+  // remontar (novo nome/e-mail/foto) em vez de continuar com os dados
+  // carregados na primeira vez que a aba foi aberta.
+  int _profileRefreshToken = 0;
 
   final _categoriaService = CategoriaService();
   List<CategoriaModel> _categorias = [];
@@ -43,15 +45,7 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
   bool _locationLoading = true;
   bool _locationDenied = false;
 
-  final _storeService = StoreService();
-  List<StoreDto> _lojas = [];
-  bool _isLoadingLojas = true;
-
   List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
-
-  List<StoreDto> get _lojasFiltradas => _filtroAtivo == 'Todos'
-      ? _lojas
-      : _lojas.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
 
   @override
   void initState() {
@@ -59,18 +53,6 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
     _loadSession();
     _carregarCategorias();
     _loadLocation();
-    _carregarLojas();
-  }
-
-  Future<void> _carregarLojas() async {
-    try {
-      final lojas = await _storeService.getActive();
-      if (mounted) setState(() => _lojas = lojas);
-    } catch (_) {
-      // Mapa fica vazio se a API estiver indisponível.
-    } finally {
-      if (mounted) setState(() => _isLoadingLojas = false);
-    }
   }
 
   Future<void> _loadLocation() async {
@@ -118,6 +100,14 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
     FavoritesManager.instance.load();
   }
 
+  /// Chamado ao voltar da tela de Editar Perfil — recarrega nome/e-mail da
+  /// sessão e força o ConsumerProfilePage a remontar (via troca de key) pra
+  /// também buscar a foto de novo, já que o card não se atualiza sozinho.
+  Future<void> _onProfileUpdated() async {
+    await _loadSession();
+    if (mounted) setState(() => _profileRefreshToken++);
+  }
+
   Future<void> _carregarCategorias() async {
     try {
       final categorias = await _categoriaService.getAll();
@@ -150,10 +140,11 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
             children: [
               _buildAbaInicio(),
               const SearchPage(),
-              ConsumerFavoritesPage(),
               ConsumerProfilePage(
+                key: ValueKey(_profileRefreshToken),
                 userName: _userName,
                 userEmail: _userEmail,
+                onProfileUpdated: _onProfileUpdated,
               ),
             ],
           ),
@@ -184,9 +175,9 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
             color: ColorsPalette.whiteBackground,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -240,15 +231,24 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
   }
 
   Widget _buildConteudo() {
-    if (_isLoadingLojas) {
-      return const Center(
-        child: CircularProgressIndicator(color: ColorsPalette.redComponents),
-      );
-    }
-    return NearbyStoresSection(
-      stores: _lojasFiltradas,
-      initialLatitude: _userLatitude,
-      initialLongitude: _userLongitude,
+    return ListenableBuilder(
+      listenable: ActiveStoresManager.instance,
+      builder: (context, _) {
+        final manager = ActiveStoresManager.instance;
+        if (manager.isLoading && manager.stores.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(color: ColorsPalette.redComponents),
+          );
+        }
+        final lojas = _filtroAtivo == 'Todos'
+            ? manager.stores
+            : manager.stores.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
+        return NearbyStoresSection(
+          stores: lojas,
+          initialLatitude: _userLatitude,
+          initialLongitude: _userLongitude,
+        );
+      },
     );
   }
 }

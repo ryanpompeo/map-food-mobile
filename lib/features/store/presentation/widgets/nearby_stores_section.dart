@@ -116,22 +116,24 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
               final bool isSelected = _raioSelecionadoKm == raio;
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
-                child: GestureDetector(
-                  onTap: () => setState(() => _raioSelecionadoKm = raio),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: isSelected ? ColorsPalette.redComponents : Colors.white,
-                      borderRadius: BorderRadius.circular(18.0),
-                      border: Border.all(color: isSelected ? ColorsPalette.redComponents : Colors.grey.shade300),
-                    ),
-                    child: Text(
-                      _labelRaio(raio),
-                      style: AppText.legenda(context).copyWith(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: isSelected ? Colors.white : Colors.grey.shade700,
+                child: RepaintBoundary(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _raioSelecionadoKm = raio),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isSelected ? ColorsPalette.redComponents : Colors.white,
+                        borderRadius: BorderRadius.circular(18.0),
+                        border: Border.all(color: isSelected ? ColorsPalette.redComponents : Colors.grey.shade300),
+                      ),
+                      child: Text(
+                        _labelRaio(raio),
+                        style: AppText.legenda(context).copyWith(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected ? Colors.white : Colors.grey.shade700,
+                        ),
                       ),
                     ),
                   ),
@@ -148,6 +150,9 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
             initialLongitude: _lng,
             userLatitude: _lat,
             userLongitude: _lng,
+            // A bottom bar flutuante (glass) fica por cima do mapa aqui —
+            // sem esse respiro os botões de câmera ficariam embaixo dela.
+            floatingControlsBottomPadding: 110.0,
           ),
         ),
       ],

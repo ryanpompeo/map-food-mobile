@@ -20,9 +20,31 @@ class RouteService {
     ),
   );
 
+  // Cache em memória das últimas rotas calculadas — evita recalcular (e
+  // esperar o round-trip do OSRM) quando o usuário volta a pedir a mesma
+  // rota, ex: sair e voltar pra tela "Visualizar no mapa" da mesma loja.
+  // Compartilhado entre instâncias (static) porque cada tela cria seu
+  // próprio `RouteService()`.
+  static final List<MapEntry<String, RouteResult>> _cache = [];
+  static const int _cacheMaxSize = 3;
+
+  String _chaveCache(LatLng origem, LatLng destino) =>
+      '${origem.latitude.toStringAsFixed(5)},${origem.longitude.toStringAsFixed(5)}'
+      '->'
+      '${destino.latitude.toStringAsFixed(5)},${destino.longitude.toStringAsFixed(5)}';
+
   /// Rota a pé entre [origem] e [destino]. Devolve null em qualquer falha —
   /// o chamador decide o fallback (ex: linha reta).
   Future<RouteResult?> getRoute(LatLng origem, LatLng destino) async {
+    final chave = _chaveCache(origem, destino);
+    final indiceEmCache = _cache.indexWhere((entry) => entry.key == chave);
+    if (indiceEmCache != -1) {
+      // Move pro topo (mais recente) e devolve sem bater na rede.
+      final entry = _cache.removeAt(indiceEmCache);
+      _cache.insert(0, entry);
+      return entry.value;
+    }
+
     try {
       final url =
           'https://router.project-osrm.org/route/v1/foot/'
@@ -46,10 +68,15 @@ class RouteService {
           .toList();
       if (pontos.length < 2) return null;
 
-      return RouteResult(
+      final resultado = RouteResult(
         pontos: pontos,
         distanciaMetros: (route['distance'] as num).toDouble(),
       );
+
+      _cache.insert(0, MapEntry(chave, resultado));
+      if (_cache.length > _cacheMaxSize) _cache.removeLast();
+
+      return resultado;
     } catch (_) {
       return null;
     }

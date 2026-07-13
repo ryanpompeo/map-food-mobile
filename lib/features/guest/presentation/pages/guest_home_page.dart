@@ -8,9 +8,8 @@ import 'package:map_food/features/guest/presentation/pages/guest_profile_page.da
 import 'package:map_food/features/guest/presentation/widgets/floating_bottom_bar.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
-import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
-import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 import 'package:map_food/features/store/presentation/widgets/nearby_stores_section.dart';
 
 class GuestHomePage extends StatefulWidget {
@@ -28,21 +27,12 @@ class _GuestHomePageState extends State<GuestHomePage> {
   final _categoriaService = CategoriaService();
   List<CategoriaModel> _categorias = [];
 
-  final _storeService = StoreService();
-  List<StoreDto> _lojas = [];
-  bool _isLoadingLojas = true;
-
   List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
-
-  List<StoreDto> get _lojasFiltradas => _filtroAtivo == 'Todos'
-      ? _lojas
-      : _lojas.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
 
   @override
   void initState() {
     super.initState();
     _carregarCategorias();
-    _carregarLojas();
   }
 
   Future<void> _carregarCategorias() async {
@@ -51,17 +41,6 @@ class _GuestHomePageState extends State<GuestHomePage> {
       if (mounted) setState(() => _categorias = categorias);
     } catch (_) {
       // Mantém apenas "Todos" se a API estiver indisponível.
-    }
-  }
-
-  Future<void> _carregarLojas() async {
-    try {
-      final lojas = await _storeService.getActive();
-      if (mounted) setState(() => _lojas = lojas);
-    } catch (_) {
-      // Mapa fica vazio se a API estiver indisponível.
-    } finally {
-      if (mounted) setState(() => _isLoadingLojas = false);
     }
   }
 
@@ -111,9 +90,9 @@ class _GuestHomePageState extends State<GuestHomePage> {
             color: ColorsPalette.whiteBackground,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -155,11 +134,20 @@ class _GuestHomePageState extends State<GuestHomePage> {
   }
 
   Widget _buildConteudo() {
-    if (_isLoadingLojas) {
-      return const Center(
-        child: CircularProgressIndicator(color: ColorsPalette.redComponents),
-      );
-    }
-    return NearbyStoresSection(stores: _lojasFiltradas);
+    return ListenableBuilder(
+      listenable: ActiveStoresManager.instance,
+      builder: (context, _) {
+        final manager = ActiveStoresManager.instance;
+        if (manager.isLoading && manager.stores.isEmpty) {
+          return const Center(
+            child: CircularProgressIndicator(color: ColorsPalette.redComponents),
+          );
+        }
+        final lojas = _filtroAtivo == 'Todos'
+            ? manager.stores
+            : manager.stores.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
+        return NearbyStoresSection(stores: lojas);
+      },
+    );
   }
 }

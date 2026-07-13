@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
 import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
+import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 
 /// Dados iniciais comuns a qualquer perfil editável (consumidor/comerciante).
 typedef ProfileBasicData = ({
@@ -60,8 +64,16 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
+  final _celularFormatter = MaskTextInputFormatter(
+    mask: '(##) #####-####',
+    filter: {"#": RegExp(r'[0-9]')},
+  );
+
   int? _id;
   String? _imagemUrl;
+  String _originalNome = '';
+  String _originalEmail = '';
+  String _originalCelular = '';
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -74,10 +86,21 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
   void initState() {
     super.initState();
     _carregarDados();
+    // Reconstrói a tela a cada tecla digitada para o PopScope do
+    // UnsavedChangesGuard sempre enxergar o estado (alterado ou não) mais
+    // recente do formulário ao decidir se deve pedir confirmação de saída.
+    for (final controller in [_nomeController, _emailController, _celularController, _senhaController, _confirmarSenhaController]) {
+      controller.addListener(_onFormChanged);
+    }
   }
+
+  void _onFormChanged() => setState(() {});
 
   @override
   void dispose() {
+    for (final controller in [_nomeController, _emailController, _celularController, _senhaController, _confirmarSenhaController]) {
+      controller.removeListener(_onFormChanged);
+    }
     _nomeController.dispose();
     _emailController.dispose();
     _celularController.dispose();
@@ -92,19 +115,17 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
       if (mounted) {
         _id = data.id;
         _imagemUrl = data.imagemUrl;
-        _nomeController.text = data.nome;
-        _emailController.text = data.email;
-        _celularController.text = data.celular ?? '';
+        _originalNome = data.nome;
+        _originalEmail = data.email;
+        _originalCelular = data.celular ?? '';
+        _nomeController.text = _originalNome;
+        _emailController.text = _originalEmail;
+        _celularController.text = _celularFormatter.maskText(_originalCelular);
         setState(() => _isLoading = false);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível carregar seus dados.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppToast.error(context, 'Não foi possível carregar seus dados.');
         Navigator.pop(context);
       }
     }
@@ -122,12 +143,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
       setState(() => _imagemUrl = imagemUrl);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível enviar a foto. Tente novamente.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppToast.error(context, 'Não foi possível enviar a foto. Tente novamente.');
       }
     } finally {
       if (mounted) setState(() => _isUploadingFoto = false);
@@ -146,12 +162,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
       setState(() => _imagemUrl = imagemUrl);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível remover a foto. Tente novamente.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppToast.error(context, 'Não foi possível remover a foto. Tente novamente.');
       }
     } finally {
       if (mounted) setState(() => _isUploadingFoto = false);
@@ -174,26 +185,23 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
       _errorMsg = null;
     });
 
+    final novoNome = _nomeController.text.trim();
+    final novoEmail = _emailController.text.trim();
+
     try {
       await widget.salvar(
-        nome: _nomeController.text.trim(),
-        email: _emailController.text.trim(),
-        celular: _celularController.text.trim(),
+        nome: novoNome,
+        email: novoEmail,
+        celular: _celularController.text.replaceAll(RegExp(r'\D'), ''),
         novaSenha: novaSenha.isNotEmpty ? novaSenha : null,
       );
+      // Sem isso, a sessão salva localmente continuava com o nome/e-mail
+      // antigos (do login), e é dali que o card de Perfil lê — por isso ele
+      // não refletia a edição mesmo com o backend já salvo.
+      await AuthStorage.updateNomeEmail(novoNome, novoEmail);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Perfil atualizado com sucesso!',
-            style: AppText.corpo(context).copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: Colors.green.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
-        ),
-      );
+      AppToast.success(context, 'Perfil atualizado com sucesso!');
       Navigator.pop(context);
     } on AppException catch (e) {
       setState(() => _errorMsg = e.message);
@@ -204,9 +212,19 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     }
   }
 
+  bool get _hasUnsavedChanges =>
+      !_isLoading &&
+      (_nomeController.text != _originalNome ||
+          _emailController.text != _originalEmail ||
+          _celularController.text.replaceAll(RegExp(r'\D'), '') != _originalCelular ||
+          _senhaController.text.isNotEmpty ||
+          _confirmarSenhaController.text.isNotEmpty);
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _hasUnsavedChanges,
+      child: Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       appBar: AppBar(
         backgroundColor: ColorsPalette.whiteBackground,
@@ -218,7 +236,9 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
           style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
         ),
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
+          // maybePop consulta o PopScope do UnsavedChangesGuard antes de
+          // sair — mesmo ajuste feito no StoreMapPage (ver comentário lá).
+          onPressed: () => Navigator.maybePop(context),
           icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
         ),
       ),
@@ -326,6 +346,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         hint: '(XX) 9 XXXX-XXXX',
                         controller: _celularController,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [_celularFormatter],
                       ),
 
                       if (widget.extraFieldBuilder != null) ...[
@@ -428,6 +449,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                 ),
               ),
             ),
+      ),
     );
   }
 

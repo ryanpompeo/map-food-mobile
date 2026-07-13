@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
 import 'package:map_food/features/search/presentation/widgets/login_wall_bottom_sheet.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -37,16 +38,10 @@ class FavoriteButtonWidget extends StatelessWidget {
               try {
                 await FavoritesManager.instance.toggle(store);
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(isFavorite ? "Removido dos favoritos." : "Favoritado com sucesso!"),
-                  backgroundColor: ColorsPalette.redComponents,
-                ));
+                AppToast.success(context, isFavorite ? "Removido dos favoritos." : "Favoritado com sucesso!");
               } catch (_) {
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Não foi possível atualizar seus favoritos. Tente novamente."),
-                  backgroundColor: ColorsPalette.greyText,
-                ));
+                AppToast.error(context, "Não foi possível atualizar seus favoritos. Tente novamente.");
               }
             },
             child: Icon(

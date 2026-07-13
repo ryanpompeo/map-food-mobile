@@ -8,6 +8,7 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
 import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
 import 'package:map_food/core/ui/widgets/xfile_image.dart';
@@ -288,12 +289,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
       if (mounted) setState(() => _store = atualizada);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Não foi possível remover a foto. Tente novamente."),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppToast.error(context, "Não foi possível remover a foto. Tente novamente.");
       }
     } finally {
       if (mounted) setState(() => _isRemovendoCapa = false);
@@ -313,12 +309,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
       if (mounted) setState(() => _store = atualizada);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Não foi possível remover a foto. Tente novamente."),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppToast.error(context, "Não foi possível remover a foto. Tente novamente.");
       }
     } finally {
       if (mounted) setState(() => _removendoGaleriaUrl = null);
@@ -387,26 +378,11 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
           _novasFotosGaleria.clear();
         });
         widget.onStoreUpdated?.call(lojaAtualizada);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Informações atualizadas com sucesso!"),
-            backgroundColor: Colors.green,
-          ),
-        );
+        AppToast.success(context, "Informações atualizadas com sucesso!");
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Erro ao salvar. Tente novamente."),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+        AppToast.error(context, "Erro ao salvar. Tente novamente.");
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -1027,8 +1003,20 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     );
   }
 
+  /// Média calculada a partir de `_avaliacoes` — `widget.store.avaliacao`
+  /// vem sempre nulo, porque os endpoints de loja devolvem a entidade `Loja`
+  /// pura, sem nenhum campo de média calculada pelo backend. Como esta tela
+  /// já busca as avaliações da loja pra listar os comentários, calcular a
+  /// média aqui é de graça — sem isso, o selo de nota nunca aparecia,
+  /// mesmo em lojas com várias avaliações reais.
+  double? get _mediaAvaliacoesCalculada {
+    if (_avaliacoes.isEmpty) return null;
+    final soma = _avaliacoes.fold<int>(0, (acumulado, r) => acumulado + r.nota);
+    return soma / _avaliacoes.length;
+  }
+
   Widget _buildAvaliacoesSection() {
-    final avaliacao = widget.store.avaliacao;
+    final avaliacao = _mediaAvaliacoesCalculada;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

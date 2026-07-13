@@ -17,6 +17,16 @@ class AuthStorage {
     await prefs.setString(_keyUserEmail, response.email);
   }
 
+  /// Atualiza nome/e-mail da sessão salva localmente — chamado depois de um
+  /// "Editar Perfil" bem-sucedido. Sem isso, `getSession()` continuava
+  /// devolvendo o nome antigo (o do login) até o usuário deslogar e logar de
+  /// novo, mesmo com o backend já salvo com o dado novo.
+  static Future<void> updateNomeEmail(String nome, String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUserNome, nome);
+    await prefs.setString(_keyUserEmail, email);
+  }
+
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyToken);

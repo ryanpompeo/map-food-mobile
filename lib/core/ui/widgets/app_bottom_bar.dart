@@ -63,20 +63,22 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        width: 56,
-        height: 56,
-        decoration: const BoxDecoration(shape: BoxShape.circle),
-        child: Center(
-          child: Icon(
-            icon,
-            size: 24.0,
-            color: isSelected ? ColorsPalette.redComponents : ColorsPalette.black.withValues(alpha: 0.6),
+    return RepaintBoundary(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          width: 56,
+          height: 56,
+          decoration: const BoxDecoration(shape: BoxShape.circle),
+          child: Center(
+            child: Icon(
+              icon,
+              size: 24.0,
+              color: isSelected ? ColorsPalette.redComponents : ColorsPalette.black.withValues(alpha: 0.6),
+            ),
           ),
         ),
       ),

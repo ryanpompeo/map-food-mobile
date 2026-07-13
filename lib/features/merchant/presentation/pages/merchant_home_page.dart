@@ -16,6 +16,7 @@ import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/merchant/presentation/widgets/merchant_bottom_bar.dart';
 import 'package:map_food/features/store/presentation/pages/working_page.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
+import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 import 'package:map_food/features/store/presentation/widgets/nearby_stores_section.dart';
 import 'package:map_food/features/store/presentation/widgets/store_switcher_bar.dart';
 
@@ -32,6 +33,10 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
 
   String _userName = '';
   String _userEmail = '';
+  // Muda a cada edição de perfil salva, forçando o MerchantProfilePage a
+  // remontar (novo nome/e-mail/foto) em vez de continuar com os dados
+  // carregados na primeira vez que a aba foi aberta.
+  int _profileRefreshToken = 0;
   List<StoreDto> _stores = [];
   int _lojaSelecionadaIndex = 0;
   bool _isLoading = true;
@@ -41,24 +46,13 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   final _categoriaService = CategoriaService();
   List<CategoriaModel> _categorias = [];
 
-  // Lojas ativas de todos os comerciantes, pro mapa "perto de mim" da aba
-  // Início — diferente de `_stores` (minhas lojas, gerenciadas nas abas
-  // "Loja"/"Perfil da Loja").
-  List<StoreDto> _lojasProximas = [];
-  bool _isLoadingLojasProximas = true;
-
   List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
-
-  List<StoreDto> get _lojasProximasFiltradas => _filtroAtivo == 'Todos'
-      ? _lojasProximas
-      : _lojasProximas.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
 
   @override
   void initState() {
     super.initState();
     _loadData();
     _carregarCategorias();
-    _carregarLojasProximas();
   }
 
   Future<void> _carregarCategorias() async {
@@ -70,15 +64,18 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
     }
   }
 
-  Future<void> _carregarLojasProximas() async {
-    try {
-      final lojas = await _storeService.getActive();
-      if (mounted) setState(() => _lojasProximas = lojas);
-    } catch (_) {
-      // Mapa fica vazio se a API estiver indisponível.
-    } finally {
-      if (mounted) setState(() => _isLoadingLojasProximas = false);
-    }
+  /// Chamado ao voltar da tela de Editar Perfil — recarrega só nome/e-mail
+  /// da sessão (sem repetir o fluxo de `_loadData`, que também busca lojas e
+  /// pode redirecionar) e força o MerchantProfilePage a remontar via key,
+  /// pra também buscar a foto de novo.
+  Future<void> _onProfileUpdated() async {
+    final session = await AuthStorage.getSession();
+    if (!mounted) return;
+    setState(() {
+      _userName = session?.nome ?? '';
+      _userEmail = session?.email ?? '';
+      _profileRefreshToken++;
+    });
   }
 
   Future<void> _loadData() async {
@@ -229,8 +226,10 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                 onStoreUpdated: _onStoreUpdated,
               ),
               MerchantProfilePage(
+                key: ValueKey('profile-$_profileRefreshToken'),
                 userName: _userName,
                 userEmail: _userEmail,
+                onProfileUpdated: _onProfileUpdated,
               ),
             ],
           ),
@@ -260,9 +259,9 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
             color: ColorsPalette.whiteBackground,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -298,11 +297,21 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
           ),
         ),
         Expanded(
-          child: _isLoadingLojasProximas
-              ? const Center(
+          child: ListenableBuilder(
+            listenable: ActiveStoresManager.instance,
+            builder: (context, _) {
+              final manager = ActiveStoresManager.instance;
+              if (manager.isLoading && manager.stores.isEmpty) {
+                return const Center(
                   child: CircularProgressIndicator(color: ColorsPalette.redComponents),
-                )
-              : NearbyStoresSection(stores: _lojasProximasFiltradas),
+                );
+              }
+              final lojas = _filtroAtivo == 'Todos'
+                  ? manager.stores
+                  : manager.stores.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
+              return NearbyStoresSection(stores: lojas);
+            },
+          ),
         ),
       ],
     );
