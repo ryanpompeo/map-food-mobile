@@ -1,7 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/network/cep_service.dart';
+import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
 import 'package:map_food/core/ui/widgets/xfile_image.dart';
@@ -26,6 +30,10 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
   final _nomeController = TextEditingController();
   final _descricaoController = TextEditingController();
+  final _enderecoController = TextEditingController();
+  final _cidadeController = TextEditingController();
+  final _estadoController = TextEditingController();
+  final _cepController = TextEditingController();
 
   final bool _statusLoja = true;
   String? _errorMessage;
@@ -33,6 +41,8 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
   final _storeService = StoreService();
   final _categoriaService = CategoriaService();
+  final _cepService = CepService();
+  bool _buscandoCep = false;
 
   // Estado da Foto Destaque (Capa)
   XFile? _fotoDestaque;
@@ -70,7 +80,59 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   void dispose() {
     _nomeController.dispose();
     _descricaoController.dispose();
+    _enderecoController.dispose();
+    _cidadeController.dispose();
+    _estadoController.dispose();
+    _cepController.dispose();
     super.dispose();
+  }
+
+  /// Converte o endereço digitado (opcional — muitos comércios daqui são
+  /// ambulantes, sem endereço fixo) em lat/lng pra dar um ponto inicial no
+  /// mapa. A posição de verdade vem do GPS ao vivo quando a loja fica
+  /// "Aberta"/Em Ronda (ver `working_page.dart`); isso aqui é só um fallback
+  /// pra quem quer indicar uma área de referência já no cadastro.
+  Future<(double?, double?)> _geocodificarEndereco() async {
+    // O pacote geocoding não tem implementação web.
+    if (kIsWeb) return (null, null);
+    if (_enderecoController.text.trim().isEmpty && _cidadeController.text.trim().isEmpty) {
+      return (null, null);
+    }
+    try {
+      final query = '${_enderecoController.text.trim()}, '
+          '${_cidadeController.text.trim()} - ${_estadoController.text.trim()}, Brasil';
+      final locations = await geocoding.locationFromAddress(query);
+      if (locations.isEmpty) return (null, null);
+      return (locations.first.latitude, locations.first.longitude);
+    } catch (_) {
+      return (null, null);
+    }
+  }
+
+  /// Autofill: ao completar 8 dígitos de CEP, busca no ViaCEP e preenche
+  /// rua/cidade/UF (o usuário pode editar depois). Falha é silenciosa.
+  Future<void> _onCepChanged(String value) async {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 8 || _buscandoCep) return;
+
+    setState(() => _buscandoCep = true);
+    final resultado = await _cepService.buscar(digits);
+    if (!mounted) return;
+
+    setState(() {
+      _buscandoCep = false;
+      if (resultado != null) {
+        if (resultado.logradouro?.isNotEmpty == true) {
+          _enderecoController.text = resultado.logradouro!;
+        }
+        if (resultado.cidade?.isNotEmpty == true) {
+          _cidadeController.text = resultado.cidade!;
+        }
+        if (resultado.uf?.isNotEmpty == true) {
+          _estadoController.text = resultado.uf!;
+        }
+      }
+    });
   }
 
   Future<void> _avancarEtapa() async {
@@ -93,6 +155,8 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     });
 
     try {
+      final (latitude, longitude) = await _geocodificarEndereco();
+
       final request = StoreCreateRequest(
         nome: _nomeController.text.trim(),
         descricao: _descricaoController.text.trim().isEmpty
@@ -100,6 +164,12 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
             : _descricaoController.text.trim(),
         statusLoja: _statusLoja ? 'ATIVA' : 'INATIVA',
         categoriaIds: List<int>.from(_categoriasSelecionadas),
+        endereco: _enderecoController.text.trim().isEmpty ? null : _enderecoController.text.trim(),
+        cidade: _cidadeController.text.trim().isEmpty ? null : _cidadeController.text.trim(),
+        estado: _estadoController.text.trim().isEmpty ? null : _estadoController.text.trim().toUpperCase(),
+        cep: _cepController.text.trim().isEmpty ? null : _cepController.text.trim(),
+        latitude: latitude,
+        longitude: longitude,
       );
 
       final loja = await _storeService.create(request);
@@ -210,6 +280,74 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                   maxLines: 3,
                   validator: (v) =>
                       v == null || v.isEmpty ? 'Obrigatório' : null,
+                ),
+
+                const SizedBox(height: AppSpacing.xl),
+
+                _buildTituloSecao("Endereço (opcional)"),
+                Text(
+                  "Sua loja aparece no mapa pela localização em tempo real quando você ativa 'Loja Aberta' — não precisa de endereço fixo. Preencha aqui só se quiser indicar uma área de referência.",
+                  style: AppText.corpo(
+                    context,
+                  ).copyWith(color: ColorsPalette.greyText),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppFormField(
+                  controller: _cepController,
+                  label: "CEP (preenche o endereço sozinho)",
+                  hint: "00000-000",
+                  icon: LucideIcons.hash,
+                  keyboardType: TextInputType.number,
+                  onChanged: _onCepChanged,
+                  suffixIcon: _buscandoCep
+                      ? const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: SizedBox(
+                            width: 16.0,
+                            height: 16.0,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: ColorsPalette.redComponents,
+                            ),
+                          ),
+                        )
+                      : null,
+                  validator: (v) => v == null || v.isEmpty ? null : FormValidator.cep(v),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                AppFormField(
+                  controller: _enderecoController,
+                  label: "Rua e número",
+                  hint: "Ex: Rua das Flores, 123",
+                  icon: LucideIcons.mapPin,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: AppFormField(
+                        controller: _cidadeController,
+                        label: "Cidade",
+                        hint: "Ex: Campinas",
+                        icon: LucideIcons.building2,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      flex: 1,
+                      child: AppFormField(
+                        controller: _estadoController,
+                        label: "UF",
+                        hint: "SP",
+                        showIcon: false,
+                        textCapitalization: TextCapitalization.characters,
+                        validator: (v) => v == null || v.trim().isEmpty || v.trim().length == 2
+                            ? null
+                            : 'Inválido',
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: AppSpacing.xl),

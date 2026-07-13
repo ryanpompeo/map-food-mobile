@@ -11,6 +11,12 @@ class StoreDto {
   final List<String> galeria; // Fotos internas (cardápio/vitrine)
   final double? avaliacao;
   final int totalAvaliacoes;
+  final String? endereco;
+  final String? cidade;
+  final String? estado;
+  final String? cep;
+  final double? latitude;
+  final double? longitude;
 
   const StoreDto({
     required this.id,
@@ -25,7 +31,26 @@ class StoreDto {
     this.galeria = const [],
     this.avaliacao,
     this.totalAvaliacoes = 0,
+    this.endereco,
+    this.cidade,
+    this.estado,
+    this.cep,
+    this.latitude,
+    this.longitude,
   });
+
+  /// true quando a loja tem coordenadas suficientes para aparecer no mapa.
+  bool get temLocalizacao => latitude != null && longitude != null;
+
+  /// Endereço legível pra exibição (ex: "Rua X, Cidade - UF").
+  String? get enderecoCompleto {
+    final partes = [
+      if (endereco != null && endereco!.isNotEmpty) endereco,
+      if (cidade != null && cidade!.isNotEmpty)
+        estado != null && estado!.isNotEmpty ? '$cidade - $estado' : cidade,
+    ];
+    return partes.isEmpty ? null : partes.join(', ');
+  }
 
   /// Uma foto representativa da loja, pra widgets que só precisam de uma
   /// imagem (cards de busca, favoritos): a capa, ou a primeira da galeria
@@ -50,6 +75,12 @@ class StoreDto {
         avaliacao: (json['mediaAvaliacao'] as num?)?.toDouble() ??
             (json['avaliacao'] as num?)?.toDouble(),
         totalAvaliacoes: (json['totalAvaliacoes'] as num?)?.toInt() ?? 0,
+        endereco: json['endereco'] as String?,
+        cidade: json['cidade'] as String?,
+        estado: json['estado'] as String?,
+        cep: json['cep'] as String?,
+        latitude: (json['latitude'] as num?)?.toDouble(),
+        longitude: (json['longitude'] as num?)?.toDouble(),
       );
 
   /// Extrai o nome da primeira categoria para exibição nos cards.

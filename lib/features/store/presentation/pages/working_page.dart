@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -7,11 +11,25 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
 
 class WorkingPage extends StatefulWidget {
   final StoreDto store;
 
-  const WorkingPage({super.key, required this.store});
+  /// Barra de troca de loja (comerciante com mais de uma loja) — opcional,
+  /// renderizada como topo do body pra não colidir com o AppBar.
+  final Widget? storeSwitcher;
+
+  /// Notifica o pai quando a loja é alterada no backend (toggle de status,
+  /// posição da ronda), pra lista de lojas dele não ficar defasada.
+  final ValueChanged<StoreDto>? onStoreUpdated;
+
+  const WorkingPage({
+    super.key,
+    required this.store,
+    this.storeSwitcher,
+    this.onStoreUpdated,
+  });
 
   @override
   State<WorkingPage> createState() => _WorkingPageState();
@@ -19,15 +37,82 @@ class WorkingPage extends StatefulWidget {
 
 class _WorkingPageState extends State<WorkingPage> {
   late bool _lojaAberta;
-  bool _emRonda = false;
   bool _isUpdatingStatus = false;
+  late StoreDto _store;
+
+  // Assinatura de GPS que atualiza a lat/lng da loja em tempo real enquanto
+  // ela está aberta ("Em Ronda") — só em primeiro plano, cancelada ao
+  // fechar a loja ou sair da tela.
+  StreamSubscription<Position>? _positionSub;
+  bool _rastreioAtivo = false;
 
   final _storeService = StoreService();
 
   @override
   void initState() {
     super.initState();
+    _store = widget.store;
     _lojaAberta = widget.store.statusLoja == 'ATIVA';
+    if (_lojaAberta) _iniciarRastreamento();
+  }
+
+  @override
+  void dispose() {
+    _positionSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _iniciarRastreamento() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      if (mounted) setState(() => _rastreioAtivo = true);
+
+      // Stream compartilhado com o mapa de lojas próximas — um único consumo
+      // de GPS mesmo com as duas telas vivas no IndexedStack.
+      _positionSub = LocationService.positionStream.listen(_enviarNovaPosicao);
+    } catch (_) {
+      // Sem GPS disponível — loja segue aberta, só sem posição ao vivo.
+    }
+  }
+
+  void _pararRastreamento() {
+    _positionSub?.cancel();
+    _positionSub = null;
+    if (mounted) setState(() => _rastreioAtivo = false);
+  }
+
+  Future<void> _enviarNovaPosicao(Position posicao) async {
+    try {
+      // PUT /lojas/{id} faz merge campo-a-campo no backend, então reenviar
+      // nome/descricao/categorias existentes é seguro e não apaga os demais
+      // dados da loja.
+      final atualizada = await _storeService.update(
+        _store.id,
+        StoreCreateRequest(
+          nome: _store.nome,
+          descricao: _store.descricao,
+          statusLoja: _store.statusLoja,
+          categoriaIds: _store.categoriaIds,
+          latitude: posicao.latitude,
+          longitude: posicao.longitude,
+        ),
+      );
+      if (mounted) setState(() => _store = atualizada);
+      widget.onStoreUpdated?.call(atualizada);
+    } catch (_) {
+      // Falha isolada de uma atualização de posição não interrompe o
+      // rastreamento — a próxima tentativa (próximo deslocamento) resolve.
+    }
   }
 
   Future<void> _toggleLojaStatus(bool val) async {
@@ -42,21 +127,28 @@ class _WorkingPageState extends State<WorkingPage> {
       // PUT /lojas/{id} faz merge campo-a-campo no backend (diferente de
       // /comerciantes e /consumidores), então reenviar nome/descricao/
       // categorias existentes é seguro e não apaga os demais dados da loja.
-      await _storeService.update(
-        widget.store.id,
+      final atualizada = await _storeService.update(
+        _store.id,
         StoreCreateRequest(
-          nome: widget.store.nome,
-          descricao: widget.store.descricao,
+          nome: _store.nome,
+          descricao: _store.descricao,
           statusLoja: novoStatus,
-          categoriaIds: widget.store.categoriaIds,
+          categoriaIds: _store.categoriaIds,
         ),
       );
 
       if (mounted) {
         setState(() {
           _lojaAberta = val;
-          if (!val) _emRonda = false;
+          _store = atualizada;
         });
+      }
+      widget.onStoreUpdated?.call(atualizada);
+
+      if (val) {
+        _iniciarRastreamento();
+      } else {
+        _pararRastreamento();
       }
     } catch (_) {
       if (mounted) {
@@ -77,14 +169,6 @@ class _WorkingPageState extends State<WorkingPage> {
     }
   }
 
-  // "Ronda" (compartilhamento de localização em tempo real) ainda não tem
-  // suporte na API — Loja não possui esse campo no backend. Mantido como
-  // estado local até o endpoint existir, para não expor um toggle que
-  // sempre falha.
-  void _toggleRonda(bool val) {
-    setState(() => _emRonda = val);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,7 +180,7 @@ class _WorkingPageState extends State<WorkingPage> {
         centerTitle: true,
         leading: Container(),
         title: Text(
-          widget.store.nome,
+          _store.nome,
           style: AppText.titulo(context).copyWith(
             fontWeight: FontWeight.w900,
             color: ColorsPalette.black,
@@ -107,24 +191,19 @@ class _WorkingPageState extends State<WorkingPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (widget.storeSwitcher != null) widget.storeSwitcher!,
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.md,
             ),
-            child: Row(
-              children: [
-                Expanded(child: _buildLojaStatusCard()),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: _buildRondaStatusCard()),
-              ],
-            ),
+            child: SizedBox(width: double.infinity, child: _buildLojaStatusCard()),
           ),
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             child: Text(
-              "Sua localização",
+              "Sua localização no mapa",
               style: AppText.subtitulo(
                 context,
               ).copyWith(fontWeight: FontWeight.w800),
@@ -135,58 +214,12 @@ class _WorkingPageState extends State<WorkingPage> {
           Expanded(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: ColorsPalette.white,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                image: _emRonda
-                    ? const DecorationImage(
-                        image: NetworkImage(
-                          'https://www.transparenttextures.com/patterns/cubes.png',
-                        ),
-                        opacity: 0.1,
-                        repeat: ImageRepeat.repeat,
-                      )
-                    : null,
               ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: _emRonda
-                            ? ColorsPalette.redComponents.withValues(alpha: 0.1)
-                            : Colors.transparent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _emRonda
-                            ? LucideIcons.radioReceiver
-                            : LucideIcons.mapPinOff,
-                        size: 56.0,
-                        color: _emRonda
-                            ? ColorsPalette.redComponents
-                            : Colors.grey.shade400,
-                      ),
-                    ),
-                    const SizedBox(height: 16.0),
-                    Text(
-                      _emRonda
-                          ? "Compartilhando localização..."
-                          : "Mapa inativo.\nInicie a ronda para rastrear",
-                      textAlign: TextAlign.center,
-                      style: AppText.corpo(context).copyWith(
-                        color: _emRonda
-                            ? ColorsPalette.black
-                            : Colors.grey.shade500,
-                        fontWeight: FontWeight.bold,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              child: StoreMapView(stores: [_store], focusedStore: _store),
             ),
           ),
 
@@ -218,9 +251,42 @@ class _WorkingPageState extends State<WorkingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                LucideIcons.store,
-                color: _lojaAberta ? Colors.white : ColorsPalette.black,
+              Row(
+                children: [
+                  Icon(
+                    LucideIcons.store,
+                    color: _lojaAberta ? Colors.white : ColorsPalette.black,
+                  ),
+                  if (_rastreioAtivo) ...[
+                    const SizedBox(width: 8.0),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
+                      decoration: BoxDecoration(
+                        color: ColorsPalette.redComponents,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6.0,
+                            height: 6.0,
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 4.0),
+                          Text(
+                            "AO VIVO",
+                            style: AppText.legenda(context).copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
               _isUpdatingStatus
                   ? SizedBox(
@@ -263,64 +329,4 @@ class _WorkingPageState extends State<WorkingPage> {
     );
   }
 
-  Widget _buildRondaStatusCard() {
-    final bool canActivateRonda = _lojaAberta;
-
-    return Opacity(
-      opacity: canActivateRonda ? 1.0 : 0.4,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: _emRonda ? ColorsPalette.redComponents : Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: _emRonda
-              ? [
-                  BoxShadow(
-                    color: ColorsPalette.redComponents.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(
-                  LucideIcons.navigation,
-                  color: _emRonda ? Colors.white : ColorsPalette.black,
-                ),
-                Switch(
-                  value: _emRonda,
-                  activeThumbColor: ColorsPalette.whiteBackground,
-                  activeTrackColor: ColorsPalette.black,
-                  inactiveThumbColor: Colors.grey.shade400,
-                  inactiveTrackColor: Colors.grey.shade200,
-                  onChanged: canActivateRonda ? _toggleRonda : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              "Em Ronda",
-              style: AppText.corpo(context).copyWith(
-                fontWeight: FontWeight.w800,
-                color: _emRonda ? Colors.white : ColorsPalette.black,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              _emRonda ? "Atualizando GPS" : "Posição fixa",
-              style: AppText.legenda(context).copyWith(
-                color: _emRonda ? Colors.white70 : Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

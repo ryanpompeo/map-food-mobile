@@ -16,7 +16,6 @@ class ColorsPalette {
   // Cores de fundo
   static const offWhite = Color(0xffF8FAFC);
   static const whiteBackground = Color.fromARGB(255, 243, 244, 245);
-  static const greyBackground = Color(0xff202123);
 
   //Cores atuais de componentes
   static const blackComponents = Color(0xff12172A);
@@ -25,7 +24,5 @@ class ColorsPalette {
   static const greyComponents = Color.fromARGB(255, 59, 61, 64);
 
   //Cores degrade: Modo white
-  static const blackDegrade1 = Color(0xff2E2A3A);
-  static const brownDegrade2 = Color(0xff6B3137);
   static const redDegrade3 = Color(0xffC33B35);
 }

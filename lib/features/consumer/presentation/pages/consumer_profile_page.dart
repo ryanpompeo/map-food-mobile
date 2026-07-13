@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-
-import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
-import 'package:map_food/core/ui/theme/app_dimensions.dart';
-import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/profile_page_scaffold.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_edit_profile.dart';
-import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
+import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
+import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_complaints_page.dart';
 import 'package:map_food/features/reviews/presentation/pages/consumer_review_page.dart';
-import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
-import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
 
-class ConsumerProfilePage extends StatefulWidget {
+class ConsumerProfilePage extends StatelessWidget {
   final String userName;
   final String userEmail;
 
@@ -25,491 +21,63 @@ class ConsumerProfilePage extends StatefulWidget {
   });
 
   @override
-  State<ConsumerProfilePage> createState() => _ConsumerProfilePageState();
-}
-
-class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
-  final _service = ConsumerService();
-  String? _imagemUrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _carregarFoto();
-  }
-
-  Future<void> _carregarFoto() async {
-    try {
-      final session = await AuthStorage.getSession();
-      if (session == null) return;
-      final data = await _service.getById(session.id);
-      if (mounted) setState(() => _imagemUrl = data.imagemUrl);
-    } catch (_) {
-      // Mantém o fallback com as iniciais do nome.
-    }
-  }
-
-  void _logout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(AppSpacing.lg),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        color: ColorsPalette.redComponents.withValues(
-                          alpha: 0.15,
-                        ),
-                      ),
-                      child: const Icon(
-                        LucideIcons.logOut,
-                        color: ColorsPalette.redComponents,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      "Sair da conta",
-                      style: AppText.titulo(
-                        context,
-                      ).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  "Deseja realmente sair?",
-                  style: AppText.corpo(
-                    context,
-                  ).copyWith(color: ColorsPalette.black),
-                ),
-
-                const SizedBox(height: AppSpacing.xl),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: ColorsPalette.transparent,
-                        surfaceTintColor: ColorsPalette.transparent,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        "Cancelar",
-                        style: AppText.botao(
-                          context,
-                        ).copyWith(color: Colors.grey.shade700),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => GuestHomePage(),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsPalette.black,
-                        foregroundColor: ColorsPalette.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                        ),
-                      ),
-                      child: const Text(
-                        "Sair",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final resolvedImagemUrl = resolveImagemUrl(_imagemUrl);
-
-    return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: ColorsPalette.white,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorsPalette.black.withValues(alpha: 0.08),
-                        blurRadius: 24,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 4),
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                        offset: const Offset(-6, -6),
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      border: Border.all(
-                        width: 1.5,
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            // Avatar do Usuário
-                            Container(
-                              height: 64.0,
-                              width: 64.0,
-                              clipBehavior: Clip.antiAlias,
-                              decoration: BoxDecoration(
-                                color: ColorsPalette.blackComponents.withValues(
-                                  alpha: 0.1,
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: resolvedImagemUrl != null
-                                  ? Image.network(
-                                      resolvedImagemUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Center(
-                                        child: Text(
-                                          widget.userName.isNotEmpty
-                                              ? widget.userName[0].toUpperCase()
-                                              : 'U',
-                                          style: AppText.titulo(context).copyWith(
-                                            color: ColorsPalette.blackComponents,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : Center(
-                                      child: Text(
-                                        widget.userName.isNotEmpty
-                                            ? widget.userName[0].toUpperCase()
-                                            : 'U',
-                                        style: AppText.titulo(context).copyWith(
-                                          color: ColorsPalette.blackComponents,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            // Nome e E-mail
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.userName,
-                                    style: AppText.subtitulo(context).copyWith(
-                                      color: ColorsPalette.blackDetails,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: -0.5,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4.0),
-                                  Text(
-                                    widget.userEmail,
-                                    style: AppText.secundario(context).copyWith(
-                                      color: ColorsPalette.greyText,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48.0,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              _logout(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorsPalette.black,
-                              foregroundColor: ColorsPalette.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(LucideIcons.logOut, size: 20.0),
-                                const SizedBox(width: 8.0),
-                                Text(
-                                  "Sair da conta",
-                                  style: AppText.botao(context).copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: ColorsPalette.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Text(
-                  "Minha Conta",
-                  style: AppText.subtitulo(context).copyWith(fontSize: 18.0),
-                ),
-              ),
-              buildListTile(
-                context: context,
-                icon: LucideIcons.userCog,
-                title: "Editar Perfil",
-                subtitle: "Altere seus dados e senha",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ConsumerEditProfile(),
-                    ),
-                  );
-                },
-              ),
-
-              buildListTile(
-                context: context,
-                icon: LucideIcons.star,
-                title: "Minhas avaliações",
-                subtitle: "Lojas que você avaliou",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ConsumerReviewPage(),
-                    ),
-                  );
-                },
-              ),
-              buildListTile(
-                context: context,
-                icon: LucideIcons.flag,
-                title: "Minhas denuncias",
-                subtitle: "Acompanhe a situação de suas denuncias",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ConsumerComplaintsPage(),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.md),
-              Divider(
-                color: Colors.grey.shade200,
-                height: 1.0,
-                indent: AppSpacing.lg,
-                endIndent: AppSpacing.lg,
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Configurações
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Text(
-                  "Configurações",
-                  style: AppText.subtitulo(context).copyWith(fontSize: 18.0),
-                ),
-              ),
-              buildListTile(
-                context: context,
-                icon: LucideIcons.moon,
-                title: "Tema do Aplicativo",
-                subtitle: "Claro, Escuro ou Sistema",
-                onTap: () {},
-              ),
-              buildListTile(
-                context: context,
-                icon: LucideIcons.mapPin,
-                title: "Permissões de Localização",
-                subtitle: "Gerenciar acesso ao GPS",
-                onTap: () {},
-              ),
-
-              const SizedBox(height: AppSpacing.md),
-              Divider(
-                color: Colors.grey.shade200,
-                height: 1.0,
-                indent: AppSpacing.lg,
-                endIndent: AppSpacing.lg,
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Sobre
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.sm,
-                ),
-                child: Text(
-                  "Sobre o MapFood",
-                  style: AppText.subtitulo(context).copyWith(fontSize: 18.0),
-                ),
-              ),
-              buildListTile(
-                context: context,
-                icon: LucideIcons.helpCircle,
-                title: "Como funciona?",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HowItWorksPage()),
-                  );
-                },
-              ),
-              buildListTile(
-                context: context,
-                icon: LucideIcons.fileText,
-                title: "Termos de Uso e Privacidade",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const TermosPage()),
-                  );
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.xxl),
-              const SizedBox(height: 100.0),
-            ],
-          ),
+    return ProfilePageScaffold(
+      userName: userName,
+      userEmail: userEmail,
+      avatarColor: ColorsPalette.blackComponents,
+      logoutBackgroundColor: ColorsPalette.black,
+      logoutForegroundColor: ColorsPalette.white,
+      listIconBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
+      listIconColor: ColorsPalette.redComponents,
+      fetchImagemUrl: () async {
+        final session = await AuthStorage.getSession();
+        if (session == null) return null;
+        final data = await ConsumerService().getById(session.id);
+        return data.imagemUrl;
+      },
+      onDeleteAccount: () async {
+        final session = await AuthStorage.getSession();
+        if (session == null) return;
+        await ConsumerService().delete(session.id);
+      },
+      onLogoutExtra: () => FavoritesManager.instance.clear(),
+      howItWorksPageBuilder: (_) => const HowItWorksPage(),
+      minhaContaItems: [
+        ProfileMenuItem(
+          icon: LucideIcons.userCog,
+          title: "Editar Perfil",
+          subtitle: "Altere seus dados e senha",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ConsumerEditProfile()),
+            );
+          },
         ),
-      ),
-    );
-  }
-
-  Widget buildListTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.sm,
+        ProfileMenuItem(
+          icon: LucideIcons.star,
+          title: "Minhas avaliações",
+          subtitle: "Lojas que você avaliou",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ConsumerReviewPage()),
+            );
+          },
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                color: ColorsPalette.redComponents.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Icon(
-                icon,
-                size: AppIconSize.md,
-                color: ColorsPalette.redComponents,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppText.corpo(context).copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: ColorsPalette.blackDetails,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2.0),
-                    Text(
-                      subtitle,
-                      style: AppText.legenda(
-                        context,
-                      ).copyWith(color: Colors.grey.shade500),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Icon(
-              LucideIcons.chevronRight,
-              size: AppIconSize.sm,
-              color: Colors.grey.shade400,
-            ),
-          ],
+        ProfileMenuItem(
+          icon: LucideIcons.flag,
+          title: "Minhas denuncias",
+          subtitle: "Acompanhe a situação de suas denuncias",
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ConsumerComplaintsPage()),
+            );
+          },
         ),
-      ),
+      ],
     );
   }
 }

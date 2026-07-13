@@ -17,6 +17,16 @@ class RatingService {
         .toList();
   }
 
+  /// Busca as avaliações do consumidor autenticado via GET /avaliacoes/minhas.
+  Future<List<AvaliacaoModel>> getMinhasAvaliacoes() async {
+    final data = await _client.get<List<dynamic>>(
+      '${ApiConstants.avaliacoes}/minhas',
+    );
+    return data
+        .map((e) => AvaliacaoModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Envia uma nova avaliação via POST /avaliacoes.
   /// Requer token JWT de Consumidor (o backend extrai o id_consumidor do token).
   /// [lojaId]    ID da loja avaliada.

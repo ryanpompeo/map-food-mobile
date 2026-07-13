@@ -5,10 +5,12 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/search/data/services/search_history_service.dart';
 import 'package:map_food/features/search/presentation/widgets/category_filters_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/em_alta_section_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/populares_section_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/search_field_widget.dart';
+import 'package:map_food/features/search/presentation/widgets/search_history_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/store_list_widgets.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -29,12 +31,14 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final StoreService _storeService = StoreService();
   final CategoriaService _categoriaService = CategoriaService();
+  final SearchHistoryService _searchHistoryService = SearchHistoryService();
   Timer? _debounce;
   int _selectedFilterIndex = 0;
   bool _isLoading = false;
   String? _errorMessage;
   String _userRole = 'GUEST';
   String _searchQuery = '';
+  List<String> _searchHistory = [];
 
   List<CategoriaModel> _categorias = [];
   List<StoreDto> _allStores = [];
@@ -57,6 +61,31 @@ class _SearchPageState extends State<SearchPage> {
     super.initState();
     _loadUserRole();
     _loadInitialData();
+    _loadSearchHistory();
+  }
+
+  Future<void> _loadSearchHistory() async {
+    final history = await _searchHistoryService.getHistory();
+    if (mounted) setState(() => _searchHistory = history);
+  }
+
+  void _onQueryFromHistory(String query) {
+    setState(() {
+      _searchController.text = query;
+      _selectedFilterIndex = 0;
+      _searchQuery = query;
+    });
+    _applyFilters();
+  }
+
+  Future<void> _removeHistoryQuery(String query) async {
+    await _searchHistoryService.removeQuery(query);
+    _loadSearchHistory();
+  }
+
+  Future<void> _clearSearchHistory() async {
+    await _searchHistoryService.clear();
+    _loadSearchHistory();
   }
 
   Future<void> _loadUserRole() async {
@@ -136,7 +165,10 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final selectedCategory = _filtros[_selectedFilterIndex];
-    final bool isTodos = selectedCategory == 'Todos';
+    // "Em Alta"/"Populares" são a visão de navegação (categoria "Todos" sem
+    // busca ativa). Com uma query digitada, sempre mostra a lista vertical
+    // de resultados, mesmo com o índice de categoria resetado para 0.
+    final bool isTodos = selectedCategory == 'Todos' && _searchQuery.isEmpty;
 
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
@@ -158,6 +190,9 @@ class _SearchPageState extends State<SearchPage> {
                           setState(() => _selectedFilterIndex = 0);
                           _searchQuery = val;
                           _applyFilters();
+                          if (val.trim().isNotEmpty) {
+                            _searchHistoryService.addQuery(val).then((_) => _loadSearchHistory());
+                          }
                         });
                       },
                     ),
@@ -174,6 +209,15 @@ class _SearchPageState extends State<SearchPage> {
                         _applyFilters();
                       },
                     ),
+                    if (_searchQuery.isEmpty && _searchHistory.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xl),
+                      SearchHistoryWidget(
+                        history: _searchHistory,
+                        onQueryTap: _onQueryFromHistory,
+                        onRemove: _removeHistoryQuery,
+                        onClear: _clearSearchHistory,
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
@@ -229,7 +273,7 @@ class _SearchPageState extends State<SearchPage> {
                   child: EmAltaSectionWidget(items: _emAltaStores, userRole: _userRole),
                 ),
               ),
-              const SliverToBoxAdapter(child: PopularesSectionHeaderWidget()),
+              SliverToBoxAdapter(child: PopularesSectionHeaderWidget(populares: _popularesStores, userRole: _userRole)),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
               PopularesGridSliverWidget(populares: _popularesStores, userRole: _userRole),
               const SliverToBoxAdapter(child: SizedBox(height: 120.0)),

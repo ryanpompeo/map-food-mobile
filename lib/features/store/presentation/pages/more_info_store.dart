@@ -11,6 +11,7 @@ import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/core/ui/utils/ui_utils.dart';
 import 'package:map_food/features/reviews/data/services/denuncia_service.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/features/store/presentation/pages/store_map_page.dart';
 
 class MoreInfoStorePage extends StatefulWidget {
   final StoreDto store;
@@ -149,6 +150,23 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     const SizedBox(height: AppSpacing.sm),
                     Wrap(spacing: 6.0, runSpacing: 6.0, children: _buildCategoryChips(context, store)),
                   ],
+                  if (store.enderecoCompleto != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Row(
+                      children: [
+                        Icon(LucideIcons.mapPin, size: 16.0, color: ColorsPalette.greyText),
+                        const SizedBox(width: 4.0),
+                        Expanded(
+                          child: Text(
+                            store.enderecoCompleto!,
+                            style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.xl),
 
                   Text('Sobre o local', style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black)),
@@ -213,7 +231,10 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => StoreMapPage(store: store)),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: ColorsPalette.redComponents,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100.0)),

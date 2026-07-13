@@ -24,6 +24,12 @@ class MerchantService {
     return getById(id);
   }
 
+  /// Exclusão definitiva da conta — o backend já faz cascade (lojas,
+  /// avaliações, denúncias, acessos).
+  Future<void> delete(int id) async {
+    await _client.delete('${ApiConstants.comerciantes}/$id');
+  }
+
   Future<void> register(MerchantRegisterRequest request) async {
     await _client.post<dynamic>(ApiConstants.comerciantes, data: request.toJson());
   }

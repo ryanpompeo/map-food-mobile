@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/widgets/category_filter_chips.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_profile_page.dart';
 import 'package:map_food/features/guest/presentation/widgets/floating_bottom_bar.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
+import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/store/presentation/widgets/nearby_stores_section.dart';
 
 class GuestHomePage extends StatefulWidget {
   const GuestHomePage({super.key});
@@ -24,12 +28,21 @@ class _GuestHomePageState extends State<GuestHomePage> {
   final _categoriaService = CategoriaService();
   List<CategoriaModel> _categorias = [];
 
+  final _storeService = StoreService();
+  List<StoreDto> _lojas = [];
+  bool _isLoadingLojas = true;
+
   List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
+
+  List<StoreDto> get _lojasFiltradas => _filtroAtivo == 'Todos'
+      ? _lojas
+      : _lojas.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
 
   @override
   void initState() {
     super.initState();
     _carregarCategorias();
+    _carregarLojas();
   }
 
   Future<void> _carregarCategorias() async {
@@ -38,6 +51,17 @@ class _GuestHomePageState extends State<GuestHomePage> {
       if (mounted) setState(() => _categorias = categorias);
     } catch (_) {
       // Mantém apenas "Todos" se a API estiver indisponível.
+    }
+  }
+
+  Future<void> _carregarLojas() async {
+    try {
+      final lojas = await _storeService.getActive();
+      if (mounted) setState(() => _lojas = lojas);
+    } catch (_) {
+      // Mapa fica vazio se a API estiver indisponível.
+    } finally {
+      if (mounted) setState(() => _isLoadingLojas = false);
     }
   }
 
@@ -116,49 +140,10 @@ class _GuestHomePageState extends State<GuestHomePage> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              // Tags
-              SizedBox(
-                height: 40.0,
-                child: ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  itemCount: _filtrosMapa.length,
-                  itemBuilder: (context, index) {
-                    final filtro = _filtrosMapa[index];
-                    final bool isSelected = _filtroAtivo == filtro;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12.0),
-                      child: GestureDetector(
-                        onTap: () => setState(() => _filtroAtivo = filtro),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? ColorsPalette.black
-                                : ColorsPalette.white,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                          ),
-                          child: Text(
-                            filtro,
-                            style: AppText.legenda(context).copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.grey.shade700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              CategoryFilterChips(
+                filtros: _filtrosMapa,
+                ativo: _filtroAtivo,
+                onSelect: (filtro) => setState(() => _filtroAtivo = filtro),
               ),
             ],
           ),
@@ -170,23 +155,11 @@ class _GuestHomePageState extends State<GuestHomePage> {
   }
 
   Widget _buildConteudo() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.locateFixed, size: 48, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text("Categoria: $_filtroAtivo", style: AppText.subtitulo(context)),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              "Aqui você verá o mapa somente de $_filtroAtivo",
-              style: AppText.corpo(context).copyWith(color: Colors.grey),
-            ),
-          ),
-        ],
-      ),
-    );
+    if (_isLoadingLojas) {
+      return const Center(
+        child: CircularProgressIndicator(color: ColorsPalette.redComponents),
+      );
+    }
+    return NearbyStoresSection(stores: _lojasFiltradas);
   }
 }

@@ -33,12 +33,21 @@ class FavoriteButtonWidget extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), shape: BoxShape.circle),
           child: GestureDetector(
-            onTap: () {
-              FavoritesManager.instance.toggle(store);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(isFavorite ? "Removido dos favoritos." : "Favoritado com sucesso!"),
-                backgroundColor: ColorsPalette.redComponents,
-              ));
+            onTap: () async {
+              try {
+                await FavoritesManager.instance.toggle(store);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(isFavorite ? "Removido dos favoritos." : "Favoritado com sucesso!"),
+                  backgroundColor: ColorsPalette.redComponents,
+                ));
+              } catch (_) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text("Não foi possível atualizar seus favoritos. Tente novamente."),
+                  backgroundColor: ColorsPalette.greyText,
+                ));
+              }
             },
             child: Icon(
               LucideIcons.heart,

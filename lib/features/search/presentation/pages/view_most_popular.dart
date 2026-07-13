@@ -1,18 +1,23 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/features/search/presentation/widgets/store_list_widgets.dart';
+import 'package:map_food/features/store/data/models/store_dto.dart';
 
-class ViewMostPopular extends StatefulWidget {
-  const ViewMostPopular({super.key});
+class ViewMostPopular extends StatelessWidget {
+  final String titulo;
+  final List<StoreDto> items;
+  final String userRole;
 
-  @override
-  State<ViewMostPopular> createState() => _ViewMostPopularState();
-}
+  const ViewMostPopular({
+    super.key,
+    required this.titulo,
+    required this.items,
+    required this.userRole,
+  });
 
-class _ViewMostPopularState extends State<ViewMostPopular> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +29,7 @@ class _ViewMostPopularState extends State<ViewMostPopular> {
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
-          "",
+          titulo,
           style: AppText.subtitulo(
             context,
           ).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
@@ -41,18 +46,15 @@ class _ViewMostPopularState extends State<ViewMostPopular> {
         ),
       ),
       body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text("Em desenvolvimento"),
-              Text('Área para as lojas mais populares do momento'),
-            ],
-          ),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            VerticalDestaqueSliverWidget(items: items, userRole: userRole),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
+          ],
         ),
       ),
     );
-    
   }
 }

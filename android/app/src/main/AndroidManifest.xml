@@ -3,7 +3,8 @@
     <application
         android:label="map_food"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/launcher_icon"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"

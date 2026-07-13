@@ -24,6 +24,12 @@ class ConsumerService {
     return getById(id);
   }
 
+  /// Exclusão definitiva da conta — o backend já faz cascade (avaliações,
+  /// denúncias).
+  Future<void> delete(int id) async {
+    await _client.delete('${ApiConstants.consumidores}/$id');
+  }
+
   Future<void> register(ConsumerRegisterRequest request) async {
     await _client.post<dynamic>(ApiConstants.consumidores, data: request.toJson());
   }

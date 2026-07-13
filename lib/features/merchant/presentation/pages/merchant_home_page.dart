@@ -5,6 +5,7 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/widgets/category_filter_chips.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
@@ -15,6 +16,8 @@ import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/merchant/presentation/widgets/merchant_bottom_bar.dart';
 import 'package:map_food/features/store/presentation/pages/working_page.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
+import 'package:map_food/features/store/presentation/widgets/nearby_stores_section.dart';
+import 'package:map_food/features/store/presentation/widgets/store_switcher_bar.dart';
 
 class MerchantHomePage extends StatefulWidget {
   const MerchantHomePage({super.key});
@@ -29,7 +32,8 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
 
   String _userName = '';
   String _userEmail = '';
-  StoreDto? _store;
+  List<StoreDto> _stores = [];
+  int _lojaSelecionadaIndex = 0;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -37,13 +41,24 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   final _categoriaService = CategoriaService();
   List<CategoriaModel> _categorias = [];
 
+  // Lojas ativas de todos os comerciantes, pro mapa "perto de mim" da aba
+  // Início — diferente de `_stores` (minhas lojas, gerenciadas nas abas
+  // "Loja"/"Perfil da Loja").
+  List<StoreDto> _lojasProximas = [];
+  bool _isLoadingLojasProximas = true;
+
   List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
+
+  List<StoreDto> get _lojasProximasFiltradas => _filtroAtivo == 'Todos'
+      ? _lojasProximas
+      : _lojasProximas.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
 
   @override
   void initState() {
     super.initState();
     _loadData();
     _carregarCategorias();
+    _carregarLojasProximas();
   }
 
   Future<void> _carregarCategorias() async {
@@ -52,6 +67,17 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
       if (mounted) setState(() => _categorias = categorias);
     } catch (_) {
       // Mantém apenas "Todos" se a API estiver indisponível.
+    }
+  }
+
+  Future<void> _carregarLojasProximas() async {
+    try {
+      final lojas = await _storeService.getActive();
+      if (mounted) setState(() => _lojasProximas = lojas);
+    } catch (_) {
+      // Mapa fica vazio se a API estiver indisponível.
+    } finally {
+      if (mounted) setState(() => _isLoadingLojasProximas = false);
     }
   }
 
@@ -84,7 +110,8 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
       }
 
       setState(() {
-        _store = stores.first;
+        _stores = stores;
+        if (_lojaSelecionadaIndex >= _stores.length) _lojaSelecionadaIndex = 0;
         _isLoading = false;
       });
     } on AppException catch (e) {
@@ -108,6 +135,16 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
     if (_selectedIndex != index) {
       setState(() => _selectedIndex = index);
     }
+  }
+
+  /// Mantém `_stores` em dia quando uma tela filha altera a loja no backend
+  /// (toggle aberta/fechada, edição, posição da ronda) — sem isso, trocar de
+  /// loja no switcher e voltar remontava a tela com o dado velho do boot,
+  /// parecendo que a alteração não persistiu.
+  void _onStoreUpdated(StoreDto atualizada) {
+    final index = _stores.indexWhere((s) => s.id == atualizada.id);
+    if (index == -1) return;
+    setState(() => _stores[index] = atualizada);
   }
 
   @override
@@ -163,7 +200,12 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
       );
     }
 
-    final store = _store!;
+    final store = _stores[_lojaSelecionadaIndex];
+    final switcher = StoreSwitcherBar(
+      stores: _stores,
+      selectedIndex: _lojaSelecionadaIndex,
+      onSelect: (index) => setState(() => _lojaSelecionadaIndex = index),
+    );
 
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
@@ -174,8 +216,18 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
             children: [
               _buildAbaInicio(),
               const SearchPage(),
-              WorkingPage(store: store),
-              MerchantDashboard(store: store),
+              WorkingPage(
+                key: ValueKey('working-${store.id}'),
+                store: store,
+                storeSwitcher: switcher,
+                onStoreUpdated: _onStoreUpdated,
+              ),
+              MerchantDashboard(
+                key: ValueKey('dashboard-${store.id}'),
+                store: store,
+                storeSwitcher: switcher,
+                onStoreUpdated: _onStoreUpdated,
+              ),
               MerchantProfilePage(
                 userName: _userName,
                 userEmail: _userEmail,
@@ -237,51 +289,20 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              SizedBox(
-                height: 40.0,
-                child: ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  itemCount: _filtrosMapa.length,
-                  itemBuilder: (context, index) {
-                    final filtro = _filtrosMapa[index];
-                    final bool isSelected = _filtroAtivo == filtro;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12.0),
-                      child: GestureDetector(
-                        onTap: () => setState(() => _filtroAtivo = filtro),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? ColorsPalette.black
-                                : ColorsPalette.white,
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                          child: Text(
-                            filtro,
-                            style: AppText.legenda(context).copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.grey.shade700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              CategoryFilterChips(
+                filtros: _filtrosMapa,
+                ativo: _filtroAtivo,
+                onSelect: (filtro) => setState(() => _filtroAtivo = filtro),
               ),
             ],
           ),
+        ),
+        Expanded(
+          child: _isLoadingLojasProximas
+              ? const Center(
+                  child: CircularProgressIndicator(color: ColorsPalette.redComponents),
+                )
+              : NearbyStoresSection(stores: _lojasProximasFiltradas),
         ),
       ],
     );

@@ -4,6 +4,7 @@ import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/core/network/interceptors/auth_interceptor.dart';
 import 'package:map_food/core/network/interceptors/error_interceptor.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/session/session_manager.dart';
 
 class ApiClient {
   static ApiClient? _instance;
@@ -38,12 +39,22 @@ class ApiClient {
     return data as T;
   }
 
+  /// Converte o DioException em AppException e, se for 401, dispara a
+  /// limpeza de sessão global antes de relançar.
+  Never _throwFrom(DioException e) {
+    final exception = (e.error is AppException) ? e.error as AppException : const NetworkException();
+    if (exception is UnauthorizedException) {
+      SessionManager.handleUnauthorized();
+    }
+    throw exception;
+  }
+
   Future<T> get<T>(String path, {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio.get(path, queryParameters: queryParameters);
       return _parseResponse<T>(response.data);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 
@@ -52,7 +63,7 @@ class ApiClient {
       final response = await _dio.post(path, data: data);
       return _parseResponse<T>(response.data);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 
@@ -61,7 +72,7 @@ class ApiClient {
       final response = await _dio.put(path, data: data);
       return _parseResponse<T>(response.data);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 
@@ -69,7 +80,7 @@ class ApiClient {
     try {
       await _dio.delete(path);
     } on DioException catch (e) {
-      throw (e.error is AppException) ? e.error as AppException : const NetworkException();
+      _throwFrom(e);
     }
   }
 }

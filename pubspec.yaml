@@ -34,11 +34,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  animated_text_kit: ^4.3.0
   google_fonts: ^8.0.2
-  flutter_screenutil: ^5.7.0
-  responsive_framework: ^1.5.1
-  font_awesome_icon_class: ^0.0.6
   cpf_cnpj_validator: 2.0.0-nullsafety
   mask_text_input_formatter: ^2.9.0
   lucide_flutter: ^1.17.0
@@ -46,6 +42,11 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_markdown: 0.7.7+1
   image_picker: ^1.1.2
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+  flutter_map: ^7.0.2
+  flutter_map_cancellable_tile_provider: ^3.0.2
+  latlong2: ^0.9.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -86,27 +87,8 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  fonts:
-    - family: google
-      fonts:
-        - asset: assets/fonts/Inter_24pt-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
-  # pubspec.yaml
-# pubspec.yaml
+  # Fonte usada no app é o Poppins, carregado via google_fonts em main.dart
+  # (não precisa ser declarado aqui).
 
 flutter_launcher_icons:
   android: "launcher_icon"

@@ -21,6 +21,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
     super.initState();
 
     FavoritesManager.instance.addListener(_refresh);
+    FavoritesManager.instance.load();
   }
 
   @override
@@ -38,6 +39,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
   @override
   Widget build(BuildContext context) {
     final favorites = FavoritesManager.instance.favorites;
+    final isLoading = FavoritesManager.instance.isLoading;
 
     return Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
@@ -53,7 +55,9 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
           ).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black),
         ),
       ),
-      body: favorites.isEmpty
+      body: isLoading && favorites.isEmpty
+          ? const Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents))
+          : favorites.isEmpty
           ? _EmptyFavoritesWidget()
           : ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -163,8 +167,19 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                             LucideIcons.heart,
                             color: Colors.red,
                           ),
-                          onPressed: () {
-                            FavoritesManager.instance.toggle(store);
+                          onPressed: () async {
+                            try {
+                              await FavoritesManager.instance.toggle(store);
+                            } catch (_) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Não foi possível remover dos favoritos. Tente novamente.",
+                                  ),
+                                ),
+                              );
+                            }
                           },
                         ),
                       ],

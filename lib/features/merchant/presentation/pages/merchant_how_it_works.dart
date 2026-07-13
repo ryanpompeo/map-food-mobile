@@ -76,9 +76,9 @@ class MerchantHowItWorksPage extends StatelessWidget {
 
                       _buildStepCard(
                         context,
-                        title: "Inicie a Ronda",
+                        title: "Fique em Ronda",
                         description:
-                            "Ao ativar o GPS, seu ponto no mapa se torna dinâmico, permitindo que o cliente siga seu trajeto",
+                            "Enquanto sua loja estiver aberta, sua posição é atualizada automaticamente no mapa conforme você se movimenta",
                         icon: LucideIcons.navigation,
                       ),
                       const SizedBox(height: AppSpacing.lg),

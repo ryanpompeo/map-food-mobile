@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
+import 'package:map_food/features/reviews/data/services/rating_service.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
 class ConsumerReviewPage extends StatefulWidget {
   const ConsumerReviewPage({super.key});
@@ -12,6 +17,55 @@ class ConsumerReviewPage extends StatefulWidget {
 }
 
 class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
+  final _ratingService = RatingService();
+  final _storeService = StoreService();
+
+  List<AvaliacaoModel> _avaliacoes = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarAvaliacoes();
+  }
+
+  Future<void> _carregarAvaliacoes() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final avaliacoes = await _ratingService.getMinhasAvaliacoes();
+      if (mounted) {
+        setState(() {
+          _avaliacoes = avaliacoes;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Não foi possível carregar suas avaliações. Tente novamente.';
+        });
+      }
+    }
+  }
+
+  Future<void> _abrirLoja(int lojaId) async {
+    try {
+      final store = await _storeService.getById(lojaId);
+      if (!mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => MoreInfoStorePage(store: store)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Não foi possível abrir esta loja.")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,29 +94,154 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
         ),
       ),
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.star, size: 48, color: Colors.grey.shade300),
-                const SizedBox(height: 16),
-                const Text(
-                  "Em breve",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'A listagem das avaliações que você fez ainda não está '
-                  'disponível nesta versão do app.',
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: ColorsPalette.redComponents),
+              )
+            : _errorMessage != null
+                ? _buildErro()
+                : _avaliacoes.isEmpty
+                    ? _buildVazio()
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        itemCount: _avaliacoes.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+                        itemBuilder: (context, index) => _buildItem(_avaliacoes[index]),
+                      ),
+      ),
+    );
+  }
+
+  Widget _buildItem(AvaliacaoModel avaliacao) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: avaliacao.lojaId != null ? () => _abrirLoja(avaliacao.lojaId!) : null,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
+          ],
         ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade100,
+              ),
+              child: resolveImagemUrl(avaliacao.lojaImagemUrl) != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        resolveImagemUrl(avaliacao.lojaImagemUrl)!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Icon(LucideIcons.image, color: Colors.grey.shade400),
+                      ),
+                    )
+                  : Icon(LucideIcons.image, color: Colors.grey.shade400),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    avaliacao.lojaNome ?? 'Loja removida',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: List.generate(5, (i) {
+                      return Icon(
+                        LucideIcons.star,
+                        size: 14,
+                        color: i < avaliacao.nota ? Colors.amber.shade600 : Colors.grey.shade300,
+                      );
+                    }),
+                  ),
+                  if (avaliacao.comentario != null && avaliacao.comentario!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      avaliacao.comentario!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVazio() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(LucideIcons.star, color: Colors.amber.shade600, size: 42),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Nenhuma avaliação ainda",
+              style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "As avaliações que você fizer nos comércios aparecerão aqui.",
+              textAlign: TextAlign.center,
+              style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErro() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(LucideIcons.wifiOff, size: 48, color: ColorsPalette.greyText),
+          const SizedBox(height: 16),
+          Text(
+            _errorMessage!,
+            textAlign: TextAlign.center,
+            style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _carregarAvaliacoes,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorsPalette.redComponents,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Tentar novamente'),
+          ),
+        ],
       ),
     );
   }

@@ -235,29 +235,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ],
 
-              const SizedBox(height: AppSpacing.md),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Recuperação de senha em breve'),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    "Esqueceu a senha?",
-                    style: AppText.legenda(context).copyWith(
-                      color: ColorsPalette.blackDetails,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-              ),
-
               const SizedBox(height: AppSpacing.xl),
 
               SizedBox(

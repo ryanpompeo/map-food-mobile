@@ -52,7 +52,7 @@ Para o funcionamento adequado da plataforma, coletamos os seguintes dados:
 **2. Uso de Geolocalização (GPS)**
 A base do MapFood é a localização. Coletamos seus dados de GPS sob as seguintes regras rígidas:
 * **Para Consumidores:** A localização só é rastreada **em primeiro plano** (quando o aplicativo está aberto e em uso). O aplicativo atualiza sua posição conforme você se move para recalcular e exibir os comerciantes mais próximos em tempo real.
-* **Para Comerciantes ("Em Ronda"):** A localização é rastreada de forma contínua enquanto o interruptor de "Loja Aberta" estiver ativado. **Garantia de Privacidade:** Os dados de rastreio e rotas passadas não são retidos permanentemente no nosso banco de dados. Assim que o Comerciante alterar seu status para "Fechado", a rota ativa da ronda é **apagada**, preservando a privacidade do vendedor em seu horário de descanso.
+* **Para Comerciantes ("Em Ronda"):** Enquanto o interruptor de "Loja Aberta" estiver ativado e o aplicativo estiver aberto, sua posição é atualizada conforme você se movimenta, para que os consumidores encontrem sua loja no mapa. **Garantia de Privacidade:** Não armazenamos histórico de trajeto — apenas a posição mais recente da loja é mantida. Ao alterar o status para "Fechado", a loja deixa de ser exibida no mapa e sua posição para de ser atualizada.
 
 **3. Compartilhamento de Dados**
 O MapFood **não vende, não aluga e não compartilha** seus dados pessoais com terceiros para fins publicitários. Os dados do Comerciante (Nome da Loja, Foto, Avaliações e Localização Ativa) são públicos dentro da plataforma para que os consumidores possam encontrá-lo. Dados sensíveis, como CPF e E-mail de Consumidores, são mantidos em sigilo no nosso banco de dados.

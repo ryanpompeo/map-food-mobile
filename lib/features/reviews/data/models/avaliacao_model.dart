@@ -6,6 +6,8 @@ class AvaliacaoModel {
   final String? dataAvaliacao;
   final ConsumidorResumido? consumidor;
   final int? lojaId;
+  final String? lojaNome;
+  final String? lojaImagemUrl;
 
   const AvaliacaoModel({
     required this.id,
@@ -14,6 +16,8 @@ class AvaliacaoModel {
     this.dataAvaliacao,
     this.consumidor,
     this.lojaId,
+    this.lojaNome,
+    this.lojaImagemUrl,
   });
 
   factory AvaliacaoModel.fromJson(Map<String, dynamic> json) {
@@ -23,15 +27,17 @@ class AvaliacaoModel {
       consumidor = ConsumidorResumido.fromJson(c);
     }
 
+    final loja = json['loja'] as Map<String, dynamic>?;
+
     return AvaliacaoModel(
       id: (json['id'] as num).toInt(),
       nota: (json['nota'] as num).toInt(),
       comentario: json['comentario'] as String?,
       dataAvaliacao: json['dataAvaliacao']?.toString(),
       consumidor: consumidor,
-      lojaId: (json['loja'] as Map<String, dynamic>?)?['id'] != null
-          ? ((json['loja'] as Map<String, dynamic>)['id'] as num).toInt()
-          : null,
+      lojaId: loja?['id'] != null ? (loja!['id'] as num).toInt() : null,
+      lojaNome: loja?['nome'] as String?,
+      lojaImagemUrl: loja?['imagemUrl'] as String?,
     );
   }
 

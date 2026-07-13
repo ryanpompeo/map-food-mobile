@@ -14,7 +14,10 @@ import 'package:map_food/features/store/presentation/pages/more_info_store.dart'
 /// para que o grid abaixo possa ser um sliver de verdade, rolando junto com
 /// o resto da página em vez de um carrossel horizontal isolado.
 class PopularesSectionHeaderWidget extends StatelessWidget {
-  const PopularesSectionHeaderWidget({super.key});
+  final List<StoreDto> populares;
+  final String userRole;
+
+  const PopularesSectionHeaderWidget({super.key, required this.populares, required this.userRole});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +38,7 @@ class PopularesSectionHeaderWidget extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ViewMostPopular())),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ViewMostPopular(titulo: "Populares", items: populares, userRole: userRole))),
             child: Text("ver todas", style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600)),
           ),
         ],
