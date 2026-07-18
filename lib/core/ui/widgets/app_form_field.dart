@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/core/ui/theme/app_dimensions.dart';
 
 class AppFormField extends StatelessWidget {
   final TextEditingController controller;
@@ -96,35 +95,6 @@ class AppFormField extends StatelessWidget {
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.0,
               vertical: maxLines > 1 ? 16.0 : 14.0,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(color: ColorsPalette.white),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(color: ColorsPalette.white),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(
-                color: ColorsPalette.black,
-                width: 1.2,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(
-                color: ColorsPalette.redComponents,
-                width: 1.2,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(
-                color: ColorsPalette.redComponents,
-                width: 1.2,
-              ),
             ),
           ),
         ),

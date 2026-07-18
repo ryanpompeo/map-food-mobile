@@ -19,4 +19,12 @@ class ApiConstants {
   static const String categorias = '/categorias';
   static const String denuncias = '/denuncias';
   static const String favoritos = '/favoritos';
+
+  // Endpoints aditivos da Fase 4 (backend), exclusivos do mobile — não
+  // afetam nem são usados pela Web. Exclusão de loja/conta usa os endpoints
+  // legados acima (hard delete, mesmo caminho da Web) — não há rota mobile
+  // própria pra isso.
+  static const String mobileLojas = '/mobile/api/v1/lojas';
+  static const String mobileAvaliacoes = '/mobile/api/v1/avaliacoes';
+  static const String mobileDenuncias = '/mobile/api/v1/denuncias';
 }

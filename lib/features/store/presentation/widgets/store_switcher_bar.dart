@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -45,7 +46,7 @@ class StoreSwitcherBar extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const StoreRegisterPage()),
+                    appPageRoute(builder: (_) => const StoreRegisterPage()),
                   ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -58,7 +59,7 @@ class StoreSwitcherBar extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.plus, size: 16.0, color: ColorsPalette.redComponents),
+                        const Icon(PhosphorIconsRegular.plus, size: 16.0, color: ColorsPalette.redComponents),
                         const SizedBox(width: 4.0),
                         Text(
                           "Nova loja",

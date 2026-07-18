@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -10,8 +12,9 @@ import 'package:map_food/features/reviews/data/services/rating_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/core/ui/utils/ui_utils.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
+import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/features/reviews/data/services/denuncia_service.dart';
-import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/pages/store_map_page.dart';
 import 'package:map_food/features/store/presentation/widgets/store_gallery_viewer.dart';
 
@@ -26,6 +29,7 @@ class MoreInfoStorePage extends StatefulWidget {
 
 class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   final RatingService _ratingService = RatingService();
+  final StoreService _storeService = StoreService();
 
   List<AvaliacaoModel> _avaliacoes = [];
   bool _isLoadingRatings = true;
@@ -37,6 +41,22 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   // API sempre devolve a lista completa; o filtro é só client-side.
   int? _filtroEstrelas;
 
+  // Agregação de avaliação vinda do backend (Fase 4) — não é mais calculada
+  // no cliente. Começa com o que já veio em `widget.store` (pode já estar
+  // populado se a tela de origem usou /mobile/api/v1/lojas) e é atualizada
+  // com o dado mais fresco assim que a busca abaixo responde.
+  double? _mediaAvaliacao;
+
+  // Guard de "sair sem salvar": true enquanto o usuário tiver nota/comentário
+  // digitados no ConsumerReviewWidget sem enviar — a página inteira precisa
+  // saber disso porque o widget de avaliação é só uma seção dela, não uma
+  // tela própria.
+  bool _hasUnsavedReview = false;
+
+  void _onReviewUnsavedChanged(bool value) {
+    if (mounted) setState(() => _hasUnsavedReview = value);
+  }
+
   List<AvaliacaoModel> get _avaliacoesFiltradas => _filtroEstrelas == null
       ? _avaliacoes
       : _avaliacoes.where((r) => r.nota == _filtroEstrelas).toList();
@@ -44,7 +64,9 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   @override
   void initState() {
     super.initState();
+    _mediaAvaliacao = widget.store.avaliacao;
     _fetchRatings();
+    _fetchResumoLoja();
     _loadUserRole();
   }
 
@@ -75,29 +97,31 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
     }
   }
 
+  /// Busca a agregação de avaliação pronta do backend — garante o selo de
+  /// nota correto independente de `widget.store` ter vindo de uma tela que
+  /// já usa o endpoint novo ou de uma que ainda não (ex: Favoritos).
+  Future<void> _fetchResumoLoja() async {
+    try {
+      final resumo = await _storeService.getResumo(widget.store.id);
+      if (!mounted) return;
+      setState(() => _mediaAvaliacao = resumo.avaliacao);
+    } catch (_) {
+      // Mantém o que já tinha (de widget.store, ou "Novo") se a busca falhar.
+    }
+  }
+
   String _formatRating(double? rating) {
     if (rating == null || rating == 0.0) return 'Novo';
     return rating.toStringAsFixed(1);
-  }
-
-  /// Média calculada a partir das avaliações já buscadas — `store.avaliacao`
-  /// vem sempre nulo, porque os endpoints de loja (`GET /lojas`, `/ativas`,
-  /// etc.) devolvem a entidade `Loja` pura, sem nenhum campo de média
-  /// calculada pelo backend. Como esta tela já busca as avaliações da loja
-  /// pra listar os comentários, é de graça calcular a média aqui também —
-  /// sem essa conta, o selo de nota mostrava "Novo" mesmo em lojas com
-  /// várias avaliações reais.
-  double? get _mediaCalculada {
-    if (_avaliacoes.isEmpty) return null;
-    final soma = _avaliacoes.fold<int>(0, (acumulado, r) => acumulado + r.nota);
-    return soma / _avaliacoes.length;
   }
 
   @override
   Widget build(BuildContext context) {
     final store = widget.store;
 
-    return Scaffold(
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _hasUnsavedReview,
+      child: Scaffold(
       backgroundColor: ColorsPalette.whiteBackground,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -117,8 +141,8 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
-                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
+                  onPressed: () => Navigator.maybePop(context),
                 ),
               ),
             ),
@@ -132,10 +156,10 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                         ? ClipRRect(
                             child: Image.network(
                               resolveImagemUrl(store.capaUrl)!, fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, size: 64.0, color: Colors.grey)),
+                              errorBuilder: (context, error, stackTrace) => const Center(child: Icon(PhosphorIconsRegular.image, size: 64.0, color: Colors.grey)),
                             ),
                           )
-                        : const Center(child: Icon(LucideIcons.image, size: 64.0, color: Colors.grey)),
+                        : const Center(child: Icon(PhosphorIconsRegular.image, size: 64.0, color: Colors.grey)),
                   ),
                   Positioned(
                     bottom: 0, left: 0, right: 0, height: 80,
@@ -177,7 +201,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: [
-                        Icon(LucideIcons.mapPin, size: 16.0, color: ColorsPalette.greyText),
+                        Icon(PhosphorIconsRegular.mapPin, size: 16.0, color: ColorsPalette.greyText),
                         const SizedBox(width: 4.0),
                         Expanded(
                           child: Text(
@@ -228,7 +252,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                                   ? null
                                   : () => Navigator.push(
                                         context,
-                                        MaterialPageRoute(
+                                        appPageRoute(
                                           builder: (_) => StoreGalleryViewer(
                                             imagens: galeriaResolvida,
                                             initialIndex: indiceResolvido < 0 ? 0 : indiceResolvido,
@@ -241,8 +265,8 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(16.0),
                                   child: url != null
-                                      ? Image.network(url, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)))
-                                      : const Center(child: Icon(LucideIcons.image, color: Colors.grey, size: 32.0)),
+                                      ? Image.network(url, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Center(child: Icon(PhosphorIconsRegular.image, color: Colors.grey, size: 32.0)))
+                                      : const Center(child: Icon(PhosphorIconsRegular.image, color: Colors.grey, size: 32.0)),
                                 ),
                               ),
                             );
@@ -260,7 +284,11 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
 
                   if (_userRole == 'CONSUMIDOR') ...[
                     const SizedBox(height: AppSpacing.xl),
-                    ConsumerReviewWidget(lojaId: store.id, onReviewSubmitted: _fetchRatings),
+                    ConsumerReviewWidget(
+                      lojaId: store.id,
+                      onReviewSubmitted: _fetchRatings,
+                      onUnsavedChanged: _onReviewUnsavedChanged,
+                    ),
                   ],
 
                   const SizedBox(height: 120.0),
@@ -278,7 +306,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
           child: ElevatedButton(
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => StoreMapPage(store: store)),
+              appPageRoute(builder: (_) => StoreMapPage(store: store)),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: ColorsPalette.redComponents,
@@ -293,6 +321,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
     );
   }
 
@@ -327,7 +356,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                 children: [
                   const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
                   const SizedBox(width: 4),
-                  Text(_formatRating(_mediaCalculada), style: AppText.subtitulo(context).copyWith(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
+                  Text(_formatRating(_mediaAvaliacao), style: AppText.subtitulo(context).copyWith(color: Colors.amber.shade900, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -378,7 +407,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
             const SizedBox(width: 8.0),
             _FiltroEstrelaChip(
               label: '$estrelas',
-              icon: LucideIcons.star,
+              icon: PhosphorIconsRegular.star,
               isSelected: _filtroEstrelas == estrelas,
               onTap: () => setState(() => _filtroEstrelas = estrelas),
             ),
@@ -503,7 +532,7 @@ class _RatingsErrorWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
         child: Column(
           children: [
-            Icon(LucideIcons.alertCircle, size: 36, color: Colors.grey.shade400),
+            Icon(PhosphorIconsRegular.warningCircle, size: 36, color: Colors.grey.shade400),
             const SizedBox(height: AppSpacing.md),
             Text('Não foi possível carregar as avaliações.', style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText), textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.md),
@@ -523,7 +552,7 @@ class _RatingsEmptyWidget extends StatelessWidget {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16.0), border: Border.all(color: Colors.grey.shade200)),
       child: Column(
         children: [
-          Icon(LucideIcons.messageSquare, size: 36, color: Colors.grey.shade300),
+          Icon(PhosphorIconsRegular.chatCircle, size: 36, color: Colors.grey.shade300),
           const SizedBox(height: AppSpacing.md),
           Text('Nenhuma avaliação ainda', style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w700, color: ColorsPalette.black)),
           const SizedBox(height: AppSpacing.xs),
@@ -544,105 +573,7 @@ class ConsumerActionWidget extends StatelessWidget {
       onTap: () {
         showDialog(
           context: context,
-          builder: (BuildContext context) {
-            String motivoSelecionado = 'Outro';
-            bool isSubmitting = false;
-            final DenunciaService denunciaService = DenunciaService();
-
-            return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-              backgroundColor: Colors.white,
-              surfaceTintColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(AppSpacing.lg),
-              child: StatefulBuilder(
-                builder: (context, setModalState) {
-                  return SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(LucideIcons.flag, color: ColorsPalette.redComponents, size: 20),
-                                  const SizedBox(width: 8),
-                                  Text("Denunciar loja", style: AppText.titulo(context).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              IconButton(icon: const Icon(LucideIcons.x, size: 20, color: Colors.grey), onPressed: () => Navigator.pop(context), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text("Seu relatório será analisado pela nossa equipe. Obrigado por manter a plataforma segura.", style: AppText.corpo(context).copyWith(color: Colors.brown.shade800, fontSize: 13)),
-                          const SizedBox(height: AppSpacing.lg),
-                          Text("Motivo", style: AppText.legenda(context).copyWith(fontWeight: FontWeight.bold, color: Colors.black)),
-                          const SizedBox(height: AppSpacing.xs),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12.0), border: Border.all(color: ColorsPalette.redComponents.withValues(alpha: 0.3), width: 1.2)),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: motivoSelecionado,
-                                isExpanded: true,
-                                dropdownColor: const Color(0xFFFCF9F9),
-                                borderRadius: BorderRadius.circular(12.0),
-                                icon: const Icon(LucideIcons.chevronDown, size: 18, color: Colors.black87),
-                                items: ['Conteúdo inapropriado', 'Fraude ou golpe', 'Informações falsas', 'Spam', 'Outro'].map((String motivo) {
-                                  return DropdownMenuItem<String>(value: motivo, child: Text(motivo, style: AppText.corpo(context).copyWith(color: Colors.black87)));
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  if (newValue != null) setModalState(() => motivoSelecionado = newValue);
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancelar", style: AppText.botao(context).copyWith(color: Colors.brown.shade800))),
-                              const SizedBox(width: AppSpacing.sm),
-                              ElevatedButton(
-                                onPressed: isSubmitting ? null : () async {
-                                  setModalState(() => isSubmitting = true);
-                                  try {
-                                    await denunciaService.create(
-                                      lojaId: lojaId,
-                                      motivo: motivoSelecionado,
-                                    );
-                                    if (!context.mounted) return;
-                                    Navigator.pop(context);
-                                    AppToast.success(context, "Denúncia enviada.");
-                                  } catch (e) {
-                                    if (!context.mounted) return;
-                                    setModalState(() => isSubmitting = false);
-                                    Navigator.pop(context);
-                                    if (e.toString().contains('409') || (e is AppException && e.statusCode == 409)) {
-                                      UIUtils.showErrorDialog(context, "Você já possui uma denúncia registrada para este comércio. Acesse seu perfil para gerenciá-la.");
-                                    } else {
-                                      UIUtils.showErrorDialog(context, "Erro ao enviar denúncia. Tente novamente.");
-                                    }
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(backgroundColor: ColorsPalette.redComponents, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill))),
-                                child: isSubmitting
-                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                    : const Text("Enviar denúncia", style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          },
+          builder: (context) => _DenunciaDialog(lojaId: lojaId),
         );
       },
       child: Container(
@@ -650,7 +581,7 @@ class ConsumerActionWidget extends StatelessWidget {
         decoration: BoxDecoration(color: ColorsPalette.redComponents.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(100)),
         child: Row(
           children: [
-            const Icon(LucideIcons.flag, size: 14, color: ColorsPalette.redComponents),
+            const Icon(PhosphorIconsRegular.flag, size: 14, color: ColorsPalette.redComponents),
             const SizedBox(width: 6),
             Text("Denunciar", style: AppText.legenda(context).copyWith(color: ColorsPalette.redComponents, fontWeight: FontWeight.bold)),
           ],
@@ -660,11 +591,171 @@ class ConsumerActionWidget extends StatelessWidget {
   }
 }
 
+class _DenunciaDialog extends StatefulWidget {
+  final int lojaId;
+  const _DenunciaDialog({required this.lojaId});
+
+  @override
+  State<_DenunciaDialog> createState() => _DenunciaDialogState();
+}
+
+class _DenunciaDialogState extends State<_DenunciaDialog> {
+  static const _motivos = ['Conteúdo inapropriado', 'Fraude ou golpe', 'Informações falsas', 'Spam', 'Outro'];
+  static const _motivoPadrao = 'Outro';
+
+  String _motivoSelecionado = _motivoPadrao;
+  bool _isSubmitting = false;
+  final _descricaoController = TextEditingController();
+  final _denunciaService = DenunciaService();
+
+  // Guard de "sair sem salvar": só considera alterado se o usuário fugiu do
+  // motivo padrão ou escreveu alguma descrição — evita perguntar confirmação
+  // pra quem só abriu o dialog e fechou sem preencher nada.
+  bool get _hasUnsavedChanges =>
+      _motivoSelecionado != _motivoPadrao || _descricaoController.text.trim().isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    // Reconstrói o dialog a cada tecla digitada para o PopScope sempre
+    // enxergar o estado mais recente da descrição ao decidir se pede
+    // confirmação de saída.
+    _descricaoController.addListener(_onFormChanged);
+  }
+
+  void _onFormChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    _descricaoController.removeListener(_onFormChanged);
+    _descricaoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _enviar() async {
+    setState(() => _isSubmitting = true);
+    try {
+      await _denunciaService.create(
+        lojaId: widget.lojaId,
+        motivo: _motivoSelecionado,
+        descricao: _descricaoController.text.trim(),
+      );
+      if (!mounted) return;
+      // pop() direto (não maybePop): já foi salvo, então fecha sem passar
+      // pela confirmação de "sair sem salvar" do PopScope abaixo.
+      Navigator.pop(context);
+      AppToast.success(context, "Denúncia enviada.");
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      Navigator.pop(context);
+      // Upsert (Fase 4/5): não existe mais 409 de
+      // duplicidade — reenviar edita a denúncia
+      // existente em vez de criar outra.
+      UIUtils.showErrorDialog(context, "Erro ao enviar denúncia. Tente novamente.");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return UnsavedChangesGuard(
+      hasUnsavedChanges: _hasUnsavedChanges,
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(AppSpacing.lg),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(PhosphorIconsRegular.flag, color: ColorsPalette.redComponents, size: 20),
+                        const SizedBox(width: 8),
+                        Text("Denunciar loja", style: AppText.titulo(context).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    IconButton(icon: const Icon(PhosphorIconsRegular.x, size: 20, color: Colors.grey), onPressed: () => Navigator.maybePop(context), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text("Seu relatório será analisado pela nossa equipe. Obrigado por manter a plataforma segura.", style: AppText.corpo(context).copyWith(color: Colors.brown.shade800, fontSize: 13)),
+                const SizedBox(height: AppSpacing.lg),
+                Text("Motivo", style: AppText.legenda(context).copyWith(fontWeight: FontWeight.bold, color: Colors.black)),
+                const SizedBox(height: AppSpacing.xs),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12.0), border: Border.all(color: ColorsPalette.redComponents.withValues(alpha: 0.3), width: 1.2)),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _motivoSelecionado,
+                      isExpanded: true,
+                      dropdownColor: const Color(0xFFFCF9F9),
+                      borderRadius: BorderRadius.circular(12.0),
+                      icon: const Icon(PhosphorIconsRegular.caretDown, size: 18, color: Colors.black87),
+                      items: _motivos.map((String motivo) {
+                        return DropdownMenuItem<String>(value: motivo, child: Text(motivo, style: AppText.corpo(context).copyWith(color: Colors.black87)));
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) setState(() => _motivoSelecionado = newValue);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Text("Descrição (opcional)", style: AppText.legenda(context).copyWith(fontWeight: FontWeight.bold, color: Colors.black)),
+                const SizedBox(height: AppSpacing.xs),
+                TextField(
+                  controller: _descricaoController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Conte mais detalhes sobre o ocorrido...',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0), borderSide: const BorderSide(color: ColorsPalette.redComponents)),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(onPressed: () => Navigator.maybePop(context), child: Text("Cancelar", style: AppText.botao(context).copyWith(color: Colors.brown.shade800))),
+                    const SizedBox(width: AppSpacing.sm),
+                    ElevatedButton(
+                      onPressed: _isSubmitting ? null : _enviar,
+                      style: ElevatedButton.styleFrom(backgroundColor: ColorsPalette.redComponents, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill))),
+                      child: _isSubmitting
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text("Enviar denúncia", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ConsumerReviewWidget extends StatefulWidget {
   final int lojaId;
   final VoidCallback onReviewSubmitted;
+  final ValueChanged<bool>? onUnsavedChanged;
 
-  const ConsumerReviewWidget({super.key, required this.lojaId, required this.onReviewSubmitted});
+  const ConsumerReviewWidget({
+    super.key,
+    required this.lojaId,
+    required this.onReviewSubmitted,
+    this.onUnsavedChanged,
+  });
 
   @override
   State<ConsumerReviewWidget> createState() => _ConsumerReviewWidgetState();
@@ -676,6 +767,16 @@ class _ConsumerReviewWidgetState extends State<ConsumerReviewWidget> {
   bool _isSubmitting = false;
   final RatingService _ratingService = RatingService();
 
+  bool get _hasUnsavedChanges => _rating > 0 || _commentController.text.trim().isNotEmpty;
+
+  void _notifyUnsavedChanged() => widget.onUnsavedChanged?.call(_hasUnsavedChanges);
+
+  @override
+  void initState() {
+    super.initState();
+    _commentController.addListener(_notifyUnsavedChanged);
+  }
+
   Future<void> _submit() async {
     if (_rating == 0) {
       AppToast.error(context, 'Selecione uma nota de 1 a 5 estrelas.');
@@ -683,32 +784,42 @@ class _ConsumerReviewWidgetState extends State<ConsumerReviewWidget> {
     }
 
     setState(() => _isSubmitting = true);
-    
+
     try {
       await _ratingService.submitRating(
         lojaId: widget.lojaId,
         nota: _rating,
         comentario: _commentController.text,
       );
-      
+
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
         _rating = 0;
         _commentController.clear();
       });
+      _notifyUnsavedChanged();
       AppToast.success(context, 'Avaliação enviada com sucesso!');
       widget.onReviewSubmitted();
+    } on AppException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      UIUtils.showErrorDialog(
+        context,
+        'Erro ao enviar avaliação (${e.statusCode ?? 's/ status'}): ${e.message}',
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      UIUtils.showErrorDialog(context, 'Erro ao enviar avaliação. Tente novamente mais tarde.');
+      UIUtils.showErrorDialog(context, 'Erro inesperado ao enviar avaliação: $e');
     }
   }
 
   @override
   void dispose() {
+    _commentController.removeListener(_notifyUnsavedChanged);
     _commentController.dispose();
+    widget.onUnsavedChanged?.call(false);
     super.dispose();
   }
 

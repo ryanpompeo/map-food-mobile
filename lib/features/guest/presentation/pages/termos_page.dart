@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -83,7 +83,7 @@ A qualquer momento, você pode solicitar através das configurações do aplicat
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(
-            LucideIcons.chevronLeft,
+            PhosphorIconsRegular.caretLeft,
             color: ColorsPalette.redComponents,
             size: AppIconSize.lg,
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -54,11 +55,21 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
     }
   }
 
+  String _formatDate(String? rawDate) {
+    if (rawDate == null) return '';
+    try {
+      final dt = DateTime.parse(rawDate).toLocal();
+      return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    } catch (_) {
+      return '';
+    }
+  }
+
   Future<void> _abrirLoja(int lojaId) async {
     try {
       final store = await _storeService.getById(lojaId);
       if (!mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (_) => MoreInfoStorePage(store: store)));
+      Navigator.push(context, appPageRoute(builder: (_) => MoreInfoStorePage(store: store)));
     } catch (_) {
       if (!mounted) return;
       AppToast.error(context, "Não foi possível abrir esta loja.");
@@ -86,7 +97,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
             Navigator.pop(context);
           },
           icon: Icon(
-            LucideIcons.chevronLeft,
+            PhosphorIconsRegular.caretLeft,
             color: ColorsPalette.redComponents,
             size: AppIconSize.lg,
           ),
@@ -142,10 +153,10 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                         resolveImagemUrl(avaliacao.lojaImagemUrl)!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            Icon(LucideIcons.image, color: Colors.grey.shade400),
+                            Icon(PhosphorIconsRegular.image, color: Colors.grey.shade400),
                       ),
                     )
-                  : Icon(LucideIcons.image, color: Colors.grey.shade400),
+                  : Icon(PhosphorIconsRegular.image, color: Colors.grey.shade400),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -162,7 +173,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                   Row(
                     children: List.generate(5, (i) {
                       return Icon(
-                        LucideIcons.star,
+                        PhosphorIconsRegular.star,
                         size: 14,
                         color: i < avaliacao.nota ? Colors.amber.shade600 : Colors.grey.shade300,
                       );
@@ -175,6 +186,13 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText),
+                    ),
+                  ],
+                  if (_formatDate(avaliacao.dataAvaliacao).isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _formatDate(avaliacao.dataAvaliacao),
+                      style: AppText.legenda(context).copyWith(color: Colors.grey),
                     ),
                   ],
                 ],
@@ -199,7 +217,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                 color: Colors.amber.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(LucideIcons.star, color: Colors.amber.shade600, size: 42),
+              child: Icon(PhosphorIconsRegular.star, color: Colors.amber.shade600, size: 42),
             ),
             const SizedBox(height: 20),
             Text(
@@ -223,7 +241,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(LucideIcons.wifiOff, size: 48, color: ColorsPalette.greyText),
+          const Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: ColorsPalette.greyText),
           const SizedBox(height: 16),
           Text(
             _errorMessage!,

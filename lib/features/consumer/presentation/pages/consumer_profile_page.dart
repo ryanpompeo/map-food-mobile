@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/widgets/profile_page_scaffold.dart';
@@ -35,8 +36,6 @@ class ConsumerProfilePage extends StatelessWidget {
       avatarColor: ColorsPalette.blackComponents,
       logoutBackgroundColor: ColorsPalette.black,
       logoutForegroundColor: ColorsPalette.white,
-      listIconBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
-      listIconColor: ColorsPalette.redComponents,
       fetchImagemUrl: () async {
         final session = await AuthStorage.getSession();
         if (session == null) return null;
@@ -52,47 +51,47 @@ class ConsumerProfilePage extends StatelessWidget {
       howItWorksPageBuilder: (_) => const HowItWorksPage(),
       minhaContaItems: [
         ProfileMenuItem(
-          icon: LucideIcons.userCog,
+          icon: PhosphorIconsRegular.userGear,
           title: "Editar Perfil",
           subtitle: "Altere seus dados e senha",
           onTap: () async {
             await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ConsumerEditProfile()),
+              appPageRoute(builder: (context) => ConsumerEditProfile()),
             );
             onProfileUpdated?.call();
           },
         ),
         ProfileMenuItem(
-          icon: LucideIcons.heart,
+          icon: PhosphorIconsRegular.heart,
           title: "Favoritos",
           subtitle: "Lojas que você salvou",
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ConsumerFavoritesPage()),
+              appPageRoute(builder: (context) => ConsumerFavoritesPage()),
             );
           },
         ),
         ProfileMenuItem(
-          icon: LucideIcons.star,
+          icon: PhosphorIconsRegular.star,
           title: "Minhas avaliações",
           subtitle: "Lojas que você avaliou",
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ConsumerReviewPage()),
+              appPageRoute(builder: (context) => ConsumerReviewPage()),
             );
           },
         ),
         ProfileMenuItem(
-          icon: LucideIcons.flag,
+          icon: PhosphorIconsRegular.flag,
           title: "Minhas denuncias",
           subtitle: "Acompanhe a situação de suas denuncias",
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const ConsumerComplaintsPage()),
+              appPageRoute(builder: (context) => const ConsumerComplaintsPage()),
             );
           },
         ),

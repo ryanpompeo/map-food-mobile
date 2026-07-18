@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:image_picker/image_picker.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/network/cep_service.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -53,6 +53,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   late TextEditingController _cidadeController;
   late TextEditingController _estadoController;
   late TextEditingController _cepController;
+  static const int _maxCategorias = 3;
   late List<int> _categoriasSelecionadas;
 
   // Foto de capa/galeria já salvas no servidor (`_store.capaUrl`/`galeria`) são
@@ -76,12 +77,26 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   List<AvaliacaoModel> _avaliacoes = [];
   bool _isLoadingAvaliacoes = true;
 
+  // Agregação de avaliação vinda do backend (Fase 4) — não é mais calculada
+  // no cliente a partir de `_avaliacoes`.
+  double? _mediaAvaliacao;
+
   @override
   void initState() {
     super.initState();
     _inicializarDados();
     _carregarCategorias();
     _carregarAvaliacoes();
+    _carregarMediaAvaliacao();
+  }
+
+  Future<void> _carregarMediaAvaliacao() async {
+    try {
+      final resumo = await _storeService.getResumo(widget.store.id);
+      if (mounted) setState(() => _mediaAvaliacao = resumo.avaliacao);
+    } catch (_) {
+      // Mantém null ("Novo") se a busca falhar.
+    }
   }
 
   void _inicializarDados() {
@@ -207,7 +222,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  LucideIcons.checkCircle,
+                  PhosphorIconsRegular.checkCircle,
                   color: Colors.green,
                   size: 28,
                 ),
@@ -452,7 +467,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                             child: Row(
                               children: [
                                 const Icon(
-                                  LucideIcons.edit2,
+                                  PhosphorIconsRegular.pencilSimple,
                                   size: 16,
                                   color: ColorsPalette.black,
                                 ),
@@ -571,7 +586,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                         ),
                       )
                     : const Icon(
-                        LucideIcons.save,
+                        PhosphorIconsRegular.floppyDisk,
                         color: Colors.white,
                         size: 20,
                       ),
@@ -634,7 +649,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                               errorBuilder: (context, error, stackTrace) =>
                                   const Center(
                                     child: Icon(
-                                      LucideIcons.image,
+                                      PhosphorIconsRegular.image,
                                       color: ColorsPalette.redComponents,
                                       size: 48.0,
                                     ),
@@ -666,7 +681,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                       ),
                                     )
                                   : const Icon(
-                                      LucideIcons.trash2,
+                                      PhosphorIconsRegular.trash,
                                       size: 16.0,
                                       color: ColorsPalette.redComponents,
                                     ),
@@ -679,7 +694,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        LucideIcons.imagePlus,
+                        PhosphorIconsRegular.imagesSquare,
                         color: Colors.grey.shade400,
                         size: 32.0,
                       ),
@@ -731,7 +746,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
-                          LucideIcons.plus,
+                          PhosphorIconsRegular.plus,
                           color: ColorsPalette.redComponents,
                         ),
                         const SizedBox(height: 4.0),
@@ -767,7 +782,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                 errorBuilder: (context, error, stackTrace) =>
                                     const Center(
                                       child: Icon(
-                                        LucideIcons.image,
+                                        PhosphorIconsRegular.image,
                                         color: Colors.grey,
                                         size: 32.0,
                                       ),
@@ -775,7 +790,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                               )
                             : const Center(
                                 child: Icon(
-                                  LucideIcons.image,
+                                  PhosphorIconsRegular.image,
                                   color: Colors.grey,
                                   size: 32.0,
                                 ),
@@ -806,7 +821,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                       ),
                                     )
                                   : const Icon(
-                                      LucideIcons.x,
+                                      PhosphorIconsRegular.x,
                                       size: 14.0,
                                       color: Colors.black,
                                     ),
@@ -845,7 +860,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                 border: Border.all(color: Colors.grey.shade200),
                               ),
                               child: const Icon(
-                                LucideIcons.x,
+                                PhosphorIconsRegular.x,
                                 size: 14.0,
                                 color: Colors.black,
                               ),
@@ -962,6 +977,10 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               return GestureDetector(
                 onTap: _isEditing
                     ? () {
+                        if (!isSelected && _categoriasSelecionadas.length >= _maxCategorias) {
+                          AppToast.error(context, 'Escolha no máximo $_maxCategorias categorias.');
+                          return;
+                        }
                         setState(() {
                           if (isSelected) {
                             _categoriasSelecionadas.remove(cat.id);
@@ -1003,20 +1022,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     );
   }
 
-  /// Média calculada a partir de `_avaliacoes` — `widget.store.avaliacao`
-  /// vem sempre nulo, porque os endpoints de loja devolvem a entidade `Loja`
-  /// pura, sem nenhum campo de média calculada pelo backend. Como esta tela
-  /// já busca as avaliações da loja pra listar os comentários, calcular a
-  /// média aqui é de graça — sem isso, o selo de nota nunca aparecia,
-  /// mesmo em lojas com várias avaliações reais.
-  double? get _mediaAvaliacoesCalculada {
-    if (_avaliacoes.isEmpty) return null;
-    final soma = _avaliacoes.fold<int>(0, (acumulado, r) => acumulado + r.nota);
-    return soma / _avaliacoes.length;
-  }
-
   Widget _buildAvaliacoesSection() {
-    final avaliacao = _mediaAvaliacoesCalculada;
+    final avaliacao = _mediaAvaliacao;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

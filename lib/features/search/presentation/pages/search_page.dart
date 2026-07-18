@@ -1,21 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/features/search/data/services/search_history_service.dart';
 import 'package:map_food/features/search/presentation/widgets/category_filters_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/em_alta_section_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/populares_section_widget.dart';
+import 'package:map_food/features/search/presentation/widgets/em_alta_list_widget.dart';
+import 'package:map_food/features/search/presentation/widgets/perto_de_voce_carrossel_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/search_field_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/search_history_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/store_list_widgets.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
-import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 
 /// Quantidade máxima de lojas exibidas em cada seção da aba "Todos".
 const int _maxSectionItems = 10;
@@ -29,9 +30,9 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  final StoreService _storeService = StoreService();
   final CategoriaService _categoriaService = CategoriaService();
   final SearchHistoryService _searchHistoryService = SearchHistoryService();
+  final ActiveStoresManager _activeStoresManager = ActiveStoresManager.instance;
   Timer? _debounce;
   int _selectedFilterIndex = 0;
   bool _isLoading = false;
@@ -47,12 +48,16 @@ class _SearchPageState extends State<SearchPage> {
   /// quando uma categoria específica está selecionada.
   List<StoreDto> _filteredStores = [];
 
-  /// "Em Alta": melhores notas dentro do filtro atual.
+  /// "Em Alta": lojas com avaliação acima de 4.5 dentro do filtro atual.
   List<StoreDto> _emAltaStores = [];
 
-  /// "Populares": mais avaliadas pela comunidade, excluindo quem já
-  /// aparece em "Em Alta" para não repetir a mesma loja duas vezes.
-  List<StoreDto> _popularesStores = [];
+  /// "Perto de você": lojas com localização cadastrada, ordenadas pela
+  /// distância até o usuário. Sem `_userLat`/`_userLng` (sem permissão/GPS
+  /// indisponível), cai no fallback de mostrar a lista sem ordenar por
+  /// distância — melhor que esconder a seção inteira.
+  double? _userLat;
+  double? _userLng;
+  List<StoreDto> _pertoDeVoceStores = [];
 
   List<String> get _filtros => ['Todos', ..._categorias.map((c) => c.nome)];
 
@@ -60,8 +65,51 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     _loadUserRole();
+    _allStores = _activeStoresManager.stores;
+    _activeStoresManager.addListener(_onActiveStoresChanged);
     _loadInitialData();
     _loadSearchHistory();
+    _carregarLocalizacaoUsuario();
+  }
+
+  /// Busca a posição atual uma única vez (sem stream contínuo — o carrossel
+  /// "Perto de você" não precisa reordenar a cada passo do usuário, ao
+  /// contrário do mapa da aba "Início").
+  Future<void> _carregarLocalizacaoUsuario() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      final posicao = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      if (!mounted) return;
+      setState(() {
+        _userLat = posicao.latitude;
+        _userLng = posicao.longitude;
+      });
+      _applyFilters();
+    } catch (_) {
+      // Sem GPS disponível — "Perto de você" cai no fallback sem ordenar por distância.
+    }
+  }
+
+  /// Chamado quando o `ActiveStoresManager` (polling a cada 20s, compartilhado
+  /// com as home pages) atualiza a lista de lojas ativas — sem isso, a Search
+  /// Page buscava as lojas uma única vez no initState e nunca via uma loja
+  /// que acabou de ser ativada enquanto a aba já estava montada.
+  void _onActiveStoresChanged() {
+    if (!mounted) return;
+    setState(() => _allStores = _activeStoresManager.stores);
+    _applyFilters();
   }
 
   Future<void> _loadSearchHistory() async {
@@ -106,14 +154,10 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     try {
-      final results = await Future.wait([
-        _categoriaService.getAll(),
-        _storeService.getActive(),
-      ]);
+      final categorias = await _categoriaService.getAll();
       if (!mounted) return;
       setState(() {
-        _categorias = results[0] as List<CategoriaModel>;
-        _allStores = results[1] as List<StoreDto>;
+        _categorias = categorias;
         _isLoading = false;
       });
       _applyFilters();
@@ -127,36 +171,46 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _applyFilters() {
-    final categoryId = _selectedFilterIndex == 0
+    // Filtra por nome, não por id: o endpoint que alimenta `_allStores`
+    // (/mobile/api/v1/lojas, via ActiveStoresManager) devolve `categorias`
+    // como lista de nomes crus, sem id (ver StoreDto._parseCategoriaIds) —
+    // filtrar por `categoriaIds` aqui nunca daria match e zerava a lista
+    // pra qualquer categoria selecionada.
+    final categoryName = _selectedFilterIndex == 0
         ? null
-        : _categorias[_selectedFilterIndex - 1].id;
+        : _categorias[_selectedFilterIndex - 1].nome;
 
     var list = _allStores;
-    if (categoryId != null) {
-      list = list.where((s) => s.categoriaIds.contains(categoryId)).toList();
+    if (categoryName != null) {
+      list = list.where((s) => s.categoriaNomes.contains(categoryName)).toList();
     }
     if (_searchQuery.trim().isNotEmpty) {
       final q = _searchQuery.trim().toLowerCase();
       list = list.where((s) => s.nome.toLowerCase().contains(q)).toList();
     }
 
-    final emAlta = [...list]
+    final emAlta = list.where((s) => (s.avaliacao ?? 0) > 4.5).toList()
       ..sort((a, b) => (b.avaliacao ?? 0).compareTo(a.avaliacao ?? 0));
-    final emAltaTop = emAlta.take(_maxSectionItems).toList();
-    final emAltaIds = emAltaTop.map((s) => s.id).toSet();
 
-    final populares = list.where((s) => !emAltaIds.contains(s.id)).toList()
-      ..sort((a, b) => b.totalAvaliacoes.compareTo(a.totalAvaliacoes));
+    List<StoreDto> pertoDeVoce;
+    if (_userLat != null && _userLng != null) {
+      double distancia(StoreDto s) => Geolocator.distanceBetween(_userLat!, _userLng!, s.latitude!, s.longitude!);
+      pertoDeVoce = list.where((s) => s.temLocalizacao).toList()
+        ..sort((a, b) => distancia(a).compareTo(distancia(b)));
+    } else {
+      pertoDeVoce = list;
+    }
 
     setState(() {
       _filteredStores = list;
-      _emAltaStores = emAltaTop;
-      _popularesStores = populares.take(_maxSectionItems).toList();
+      _emAltaStores = emAlta.take(_maxSectionItems).toList();
+      _pertoDeVoceStores = pertoDeVoce.take(_maxSectionItems).toList();
     });
   }
 
   @override
   void dispose() {
+    _activeStoresManager.removeListener(_onActiveStoresChanged);
     _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
@@ -165,12 +219,13 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final selectedCategory = _filtros[_selectedFilterIndex];
-    // "Em Alta"/"Populares" são a visão de navegação (categoria "Todos" sem
-    // busca ativa). Com uma query digitada, sempre mostra a lista vertical
-    // de resultados, mesmo com o índice de categoria resetado para 0.
+    // "Perto de você" é a visão de navegação (categoria "Todos" sem busca
+    // ativa). Com uma query digitada, sempre mostra a lista vertical de
+    // resultados, mesmo com o índice de categoria resetado para 0.
     final bool isTodos = selectedCategory == 'Todos' && _searchQuery.isEmpty;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: ColorsPalette.whiteBackground,
       body: SafeArea(
         child: CustomScrollView(
@@ -238,7 +293,7 @@ class _SearchPageState extends State<SearchPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
-                        LucideIcons.wifiOff,
+                        PhosphorIconsRegular.wifiSlash,
                         size: 48,
                         color: ColorsPalette.greyText,
                       ),
@@ -270,12 +325,12 @@ class _SearchPageState extends State<SearchPage> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                  child: EmAltaSectionWidget(items: _emAltaStores, userRole: _userRole),
+                  child: PertoDeVoceCarrosselWidget(items: _pertoDeVoceStores, userRole: _userRole),
                 ),
               ),
-              const SliverToBoxAdapter(child: PopularesSectionHeaderWidget()),
+              const SliverToBoxAdapter(child: EmAltaSectionHeaderWidget()),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-              PopularesGridSliverWidget(populares: _popularesStores, userRole: _userRole),
+              EmAltaListSliverWidget(lojas: _emAltaStores, userRole: _userRole),
               const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
             ] else ...[
               VerticalDestaqueSliverWidget(items: _filteredStores, userRole: _userRole),

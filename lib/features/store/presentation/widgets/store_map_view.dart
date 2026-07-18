@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -26,9 +28,12 @@ class StoreMapView extends StatefulWidget {
   final double? initialLatitude;
   final double? initialLongitude;
 
-  /// Posição do usuário — desenha o marker "minha posição" (bolinha azul).
-  final double? userLatitude;
-  final double? userLongitude;
+  /// Posição "ao vivo" do usuário — desenha o marker "minha posição" (bolinha
+  /// azul) num MarkerLayer isolado via ValueListenableBuilder. Propositalmente
+  /// um ValueListenable em vez de double/double: assim, quem alimenta isso a
+  /// cada tick de GPS (ex: NearbyStoresSection) atualiza só esse marcador,
+  /// sem reconstruir StoreMapView inteiro nem os marcadores das lojas.
+  final ValueListenable<LatLng?>? userPosition;
 
   /// Traçado de rota (ex: usuário → loja no "Visualizar no mapa"),
   /// desenhado sob os markers.
@@ -45,8 +50,7 @@ class StoreMapView extends StatefulWidget {
     this.focusedStore,
     this.initialLatitude,
     this.initialLongitude,
-    this.userLatitude,
-    this.userLongitude,
+    this.userPosition,
     this.routePoints,
     this.floatingControlsBottomPadding = 16.0,
   });
@@ -145,12 +149,10 @@ class _StoreMapViewState extends State<StoreMapView> {
   /// o zoom atual — ou um zoom mínimo de "rua" se o usuário estiver com o
   /// mapa muito distante.
   void _centralizarNaMinhaPosicao() {
-    if (widget.userLatitude == null || widget.userLongitude == null) return;
+    final pos = widget.userPosition?.value;
+    if (pos == null) return;
     final zoomAtual = _mapController.camera.zoom;
-    _mapController.move(
-      LatLng(widget.userLatitude!, widget.userLongitude!),
-      zoomAtual < 15.0 ? 16.0 : zoomAtual,
-    );
+    _mapController.move(pos, zoomAtual < 15.0 ? 16.0 : zoomAtual);
   }
 
   /// Alterna o travamento de rotação do mapa. Ao travar, alinha o mapa de
@@ -188,6 +190,11 @@ class _StoreMapViewState extends State<StoreMapView> {
               ? Image.network(
                   imagemUrl,
                   fit: BoxFit.cover,
+                  // Marcador é um círculo de 42-52dp — sem isso, cada pin no
+                  // mapa decodificava a foto inteira da loja, pesando muito
+                  // no pan/zoom quando há vários marcadores com foto na tela.
+                  cacheWidth: (tamanho * MediaQuery.devicePixelRatioOf(context)).round(),
+                  cacheHeight: (tamanho * MediaQuery.devicePixelRatioOf(context)).round(),
                   errorBuilder: (context, error, stackTrace) => _buildStoreMarkerFallback(isFocused),
                 )
               : _buildStoreMarkerFallback(isFocused),
@@ -200,7 +207,7 @@ class _StoreMapViewState extends State<StoreMapView> {
     return Container(
       color: isFocused ? ColorsPalette.redComponents : ColorsPalette.redComponents.withValues(alpha: 0.12),
       child: Icon(
-        LucideIcons.store,
+        PhosphorIconsRegular.storefront,
         color: isFocused ? Colors.white : ColorsPalette.redComponents,
         size: isFocused ? 24.0 : 18.0,
       ),
@@ -228,21 +235,34 @@ class _StoreMapViewState extends State<StoreMapView> {
   }
 
   Widget _buildFloatingControls() {
+    final userPosition = widget.userPosition;
     return Positioned(
       right: AppSpacing.md,
       bottom: widget.floatingControlsBottomPadding,
       child: Column(
         children: [
-          if (widget.userLatitude != null && widget.userLongitude != null) ...[
-            _MapControlButton(
-              icon: LucideIcons.locate,
-              tooltip: 'Centralizar na minha posição',
-              onTap: _centralizarNaMinhaPosicao,
+          // Botão "Centralizar" só existe se há um ValueListenable de posição
+          // — reconstrói só este pedaço pequeno (não o mapa inteiro) quando a
+          // posição chega pela primeira vez ou muda.
+          if (userPosition != null)
+            ValueListenableBuilder<LatLng?>(
+              valueListenable: userPosition,
+              builder: (context, pos, _) {
+                if (pos == null) return const SizedBox.shrink();
+                return Column(
+                  children: [
+                    _MapControlButton(
+                      icon: PhosphorIconsRegular.gpsFix,
+                      tooltip: 'Centralizar na minha posição',
+                      onTap: _centralizarNaMinhaPosicao,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
           _MapControlButton(
-            icon: _rotacaoTravada ? LucideIcons.lock : LucideIcons.compass,
+            icon: _rotacaoTravada ? PhosphorIconsRegular.lock : PhosphorIconsRegular.compass,
             tooltip: _rotacaoTravada ? 'Destravar rotação do mapa' : 'Travar rotação do mapa',
             isActive: _rotacaoTravada,
             onTap: _alternarTravaDeRotacao,
@@ -289,32 +309,48 @@ class _StoreMapViewState extends State<StoreMapView> {
                   ),
                 ],
               ),
+            // Marcadores de loja num MarkerLayer próprio — só reconstrói
+            // quando `stores`/`focusedStore` mudam (ou seja, quando
+            // StoreMapView.build() roda de novo), não a cada tick de GPS.
             MarkerLayer(
-              markers: [
-                if (widget.userLatitude != null && widget.userLongitude != null)
-                  Marker(
-                    point: LatLng(widget.userLatitude!, widget.userLongitude!),
-                    width: 22.0,
-                    height: 22.0,
-                    child: _buildUserMarker(),
-                  ),
-                ...comLocalizacao.map((store) {
-                  final isFocused = widget.focusedStore?.id == store.id;
-                  return Marker(
-                    point: LatLng(store.latitude!, store.longitude!),
-                    width: isFocused ? 60.0 : 48.0,
-                    height: isFocused ? 60.0 : 48.0,
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => MoreInfoStorePage(store: store)),
-                      ),
-                      child: _buildStoreMarker(store, isFocused: isFocused),
+              markers: comLocalizacao.map((store) {
+                final isFocused = widget.focusedStore?.id == store.id;
+                return Marker(
+                  point: LatLng(store.latitude!, store.longitude!),
+                  width: isFocused ? 60.0 : 48.0,
+                  height: isFocused ? 60.0 : 48.0,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      appPageRoute(builder: (_) => MoreInfoStorePage(store: store)),
                     ),
-                  );
-                }),
-              ],
+                    child: _buildStoreMarker(store, isFocused: isFocused),
+                  ),
+                );
+              }).toList(),
             ),
+            // Marcador "minha posição" isolado num MarkerLayer próprio,
+            // dentro de um ValueListenableBuilder: cada tick de GPS reconstrói
+            // só esta bolinha azul, sem tocar no MarkerLayer das lojas acima
+            // nem em StoreMapView.build() como um todo.
+            if (widget.userPosition != null)
+              ValueListenableBuilder<LatLng?>(
+                valueListenable: widget.userPosition!,
+                builder: (context, pos, _) {
+                  return MarkerLayer(
+                    markers: pos == null
+                        ? const []
+                        : [
+                            Marker(
+                              point: pos,
+                              width: 22.0,
+                              height: 22.0,
+                              child: _buildUserMarker(),
+                            ),
+                          ],
+                  );
+                },
+              ),
           ],
         ),
         _buildFloatingControls(),

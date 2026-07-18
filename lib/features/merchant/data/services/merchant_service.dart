@@ -24,8 +24,11 @@ class MerchantService {
     return getById(id);
   }
 
-  /// Exclusão definitiva da conta — o backend já faz cascade (lojas,
-  /// avaliações, denúncias, acessos).
+  /// Exclusão definitiva da conta — hard delete via o endpoint legado (mesmo
+  /// caminho da Web): o backend já faz cascade (lojas, avaliações,
+  /// denúncias, acessos). Decisão revertida do soft delete da Fase 4 — sem
+  /// isso, uma conta "excluída" pelo mobile continuava plenamente
+  /// utilizável pela Web, já que ela não sabia de nenhum estado intermediário.
   Future<void> delete(int id) async {
     await _client.delete('${ApiConstants.comerciantes}/$id');
   }

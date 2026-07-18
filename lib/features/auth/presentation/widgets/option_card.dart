@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -58,7 +58,7 @@ Widget optionCard({
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isCustomer ? LucideIcons.user2 : LucideIcons.store,
+                isCustomer ? PhosphorIconsRegular.user : PhosphorIconsRegular.storefront,
                 color: ColorsPalette.white,
                 size: AppIconSize.md,
               ),
@@ -89,7 +89,7 @@ Widget optionCard({
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(
-                  LucideIcons.checkCircle2,
+                  PhosphorIconsRegular.checkCircle,
                   color: ColorsPalette.white.withValues(alpha: 0.6),
                   size: AppIconSize.sm,
                 ),

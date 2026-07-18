@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -46,7 +46,7 @@ class LoginWallHelper {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    LucideIcons.heart,
+                    PhosphorIconsRegular.heart,
                     color: ColorsPalette.redComponents,
                     size: 32.0,
                   ),

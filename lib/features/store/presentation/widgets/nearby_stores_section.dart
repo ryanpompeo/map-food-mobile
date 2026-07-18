@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -35,16 +36,22 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   // km; null representa "Todos" (sem filtro de distância).
   static const List<double?> _raiosKm = [1.0, 5.0, 10.0, 20.0, null];
 
+  static const double _limiarAtualizarListaMetros = 15.0;
+
   double? _raioSelecionadoKm = 5.0;
   double? _lat;
   double? _lng;
   StreamSubscription<Position>? _positionSub;
+
+  final ValueNotifier<LatLng?> _userPosition = ValueNotifier(null);
 
   @override
   void initState() {
     super.initState();
     _lat = widget.initialLatitude;
     _lng = widget.initialLongitude;
+    if (_lat != null && _lng != null)
+      _userPosition.value = LatLng(_lat!, _lng!);
     _iniciarRastreamento();
   }
 
@@ -57,16 +64,24 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         return;
       }
 
       if (_lat == null || _lng == null) {
         try {
           final posicao = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+            ),
           );
-          if (mounted) setState(() { _lat = posicao.latitude; _lng = posicao.longitude; });
+          _userPosition.value = LatLng(posicao.latitude, posicao.longitude);
+          if (mounted)
+            setState(() {
+              _lat = posicao.latitude;
+              _lng = posicao.longitude;
+            });
         } catch (_) {
           // Segue sem posição inicial — o mapa cai no fallback padrão.
         }
@@ -75,7 +90,29 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
       // Stream compartilhado com a ronda do comerciante — um único consumo
       // de GPS mesmo com as duas telas vivas no IndexedStack.
       _positionSub = LocationService.positionStream.listen((posicao) {
-        if (mounted) setState(() { _lat = posicao.latitude; _lng = posicao.longitude; });
+        // Sempre atualiza o marcador ao vivo — barato, não reconstrói a seção
+        // nem os marcadores de loja do StoreMapView.
+        _userPosition.value = LatLng(posicao.latitude, posicao.longitude);
+
+        // Só reconstrói a lista de lojas/câmera se andou o suficiente pra
+        // fazer diferença no filtro de raio — evita rebuild em massa a cada
+        // tick de GPS.
+        final andouOSuficiente =
+            _lat == null ||
+            _lng == null ||
+            Geolocator.distanceBetween(
+                  _lat!,
+                  _lng!,
+                  posicao.latitude,
+                  posicao.longitude,
+                ) >
+                _limiarAtualizarListaMetros;
+        if (andouOSuficiente && mounted) {
+          setState(() {
+            _lat = posicao.latitude;
+            _lng = posicao.longitude;
+          });
+        }
       });
     } catch (_) {
       // Sem GPS disponível — mapa mostra todas as lojas recebidas, sem filtro de raio.
@@ -85,15 +122,22 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   @override
   void dispose() {
     _positionSub?.cancel();
+    _userPosition.dispose();
     super.dispose();
   }
 
   List<StoreDto> get _lojasNoRaio {
-    if (_raioSelecionadoKm == null || _lat == null || _lng == null) return widget.stores;
+    if (_raioSelecionadoKm == null || _lat == null || _lng == null)
+      return widget.stores;
     final raioMetros = _raioSelecionadoKm! * 1000;
     return widget.stores.where((loja) {
       if (!loja.temLocalizacao) return false;
-      final distancia = Geolocator.distanceBetween(_lat!, _lng!, loja.latitude!, loja.longitude!);
+      final distancia = Geolocator.distanceBetween(
+        _lat!,
+        _lng!,
+        loja.latitude!,
+        loja.longitude!,
+      );
       return distancia <= raioMetros;
     }).toList();
   }
@@ -124,15 +168,20 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
                       padding: const EdgeInsets.symmetric(horizontal: 14.0),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isSelected ? ColorsPalette.redComponents : Colors.white,
+                        color: isSelected
+                            ? ColorsPalette.redComponents
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(18.0),
-                        border: Border.all(color: isSelected ? ColorsPalette.redComponents : Colors.grey.shade300),
                       ),
                       child: Text(
                         _labelRaio(raio),
                         style: AppText.legenda(context).copyWith(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                          color: isSelected ? Colors.white : Colors.grey.shade700,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : Colors.grey.shade700,
                         ),
                       ),
                     ),
@@ -148,8 +197,7 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
             stores: _lojasNoRaio,
             initialLatitude: _lat,
             initialLongitude: _lng,
-            userLatitude: _lat,
-            userLongitude: _lng,
+            userPosition: _userPosition,
             // A bottom bar flutuante (glass) fica por cima do mapa aqui —
             // sem esse respiro os botões de câmera ficariam embaixo dela.
             floatingControlsBottomPadding: 110.0,

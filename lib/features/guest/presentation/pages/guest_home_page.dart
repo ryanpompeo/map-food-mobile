@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/widgets/category_filter_chips.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -56,12 +56,15 @@ class _GuestHomePageState extends State<GuestHomePage> {
       backgroundColor: ColorsPalette.whiteBackground,
       body: Stack(
         children: [
+          // RepaintBoundary em cada aba: isola o layer de pintura de cada uma
+          // — a troca de aba passa a ser só trocar qual layer já pronto
+          // mostrar, sem repintar o mapa das abas que não mudaram.
           IndexedStack(
             index: _selectedIndex,
             children: [
-              _buildAbaInicio(),
-              const SearchPage(),
-              const GuestProfilePage(),
+              RepaintBoundary(child: _buildAbaInicio()),
+              const RepaintBoundary(child: SearchPage()),
+              const RepaintBoundary(child: GuestProfilePage()),
             ],
           ),
           Positioned(
@@ -104,7 +107,7 @@ class _GuestHomePageState extends State<GuestHomePage> {
                 child: Row(
                   children: [
                     const Icon(
-                      LucideIcons.mapPin,
+                      PhosphorIconsRegular.mapPin,
                       color: ColorsPalette.redComponents,
                       size: 28.0,
                     ),
@@ -127,7 +130,8 @@ class _GuestHomePageState extends State<GuestHomePage> {
             ],
           ),
         ),
-
+  
+        const SizedBox(height: 8),
         Expanded(child: _buildConteudo()),
       ],
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -28,7 +28,7 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
                     color: ColorsPalette.redComponents.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(LucideIcons.trash2, color: ColorsPalette.redComponents, size: 18),
+                  child: const Icon(PhosphorIconsRegular.trash, color: ColorsPalette.redComponents, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text("Remover foto", style: AppText.titulo(ctx).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -69,64 +69,89 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
 /// ação irreversível que também apaga loja(s), avaliações e denúncias
 /// associadas (cascade feito pelo backend). Devolve `true` se confirmado.
 Future<bool> confirmarExclusaoConta(BuildContext context) async {
+  const palavraChave = 'EXCLUIR';
+  final controller = TextEditingController();
+
   final confirmou = await showDialog<bool>(
     context: context,
-    builder: (ctx) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(AppSpacing.lg),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) {
+        final habilitado = controller.text.trim() == palavraChave;
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(AppSpacing.lg),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: ColorsPalette.redComponents.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: const Icon(LucideIcons.triangleAlert, color: ColorsPalette.redComponents, size: 18),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: ColorsPalette.redComponents.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: const Icon(PhosphorIconsRegular.warning, color: ColorsPalette.redComponents, size: 18),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text("Excluir conta", style: AppText.titulo(ctx).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text("Excluir conta", style: AppText.titulo(ctx).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  "Essa ação é irreversível. Sua conta, loja(s), avaliações e denúncias associadas serão apagadas permanentemente.",
+                  style: AppText.corpo(ctx).copyWith(color: ColorsPalette.black),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  "Digite $palavraChave para confirmar:",
+                  style: AppText.corpo(ctx).copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  controller: controller,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: palavraChave,
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: Text("Cancelar", style: AppText.botao(ctx).copyWith(color: Colors.grey.shade700)),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    ElevatedButton(
+                      onPressed: habilitado ? () => Navigator.pop(ctx, true) : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorsPalette.redComponents,
+                        disabledBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.4),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                      ),
+                      child: const Text("Excluir conta", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              "Essa ação é irreversível. Sua conta, loja(s), avaliações e denúncias associadas serão apagadas permanentemente.",
-              style: AppText.corpo(ctx).copyWith(color: ColorsPalette.black),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text("Cancelar", style: AppText.botao(ctx).copyWith(color: Colors.grey.shade700)),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsPalette.redComponents,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                  ),
-                  child: const Text("Excluir conta", style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     ),
   );
   return confirmou ?? false;

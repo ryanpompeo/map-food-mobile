@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
@@ -239,7 +239,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
           // maybePop consulta o PopScope do UnsavedChangesGuard antes de
           // sair — mesmo ajuste feito no StoreMapPage (ver comentário lá).
           onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
         ),
       ),
       body: _isLoading
@@ -288,7 +288,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                                     shape: BoxShape.circle,
                                     border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 2.0)),
                                   ),
-                                  child: const Icon(LucideIcons.camera, size: 14.0, color: Colors.white),
+                                  child: const Icon(PhosphorIconsRegular.camera, size: 14.0, color: Colors.white),
                                 ),
                               ),
                               if (_imagemUrl != null && !_isUploadingFoto)
@@ -304,7 +304,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                                         shape: BoxShape.circle,
                                         border: Border.fromBorderSide(BorderSide(color: ColorsPalette.redComponents, width: 1.5)),
                                       ),
-                                      child: const Icon(LucideIcons.x, size: 12.0, color: ColorsPalette.redComponents),
+                                      child: const Icon(PhosphorIconsRegular.x, size: 12.0, color: ColorsPalette.redComponents),
                                     ),
                                   ),
                                 ),
@@ -368,7 +368,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         controller: _senhaController,
                         obscureText: !_showSenha,
                         suffixIcon: IconButton(
-                          icon: Icon(_showSenha ? LucideIcons.eyeOff : LucideIcons.eye, size: 20, color: ColorsPalette.greyText),
+                          icon: Icon(_showSenha ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye, size: 20, color: ColorsPalette.greyText),
                           onPressed: () => setState(() => _showSenha = !_showSenha),
                         ),
                         validator: (v) {
@@ -387,7 +387,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         obscureText: !_showConfirmarSenha,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _showConfirmarSenha ? LucideIcons.eyeOff : LucideIcons.eye,
+                            _showConfirmarSenha ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
                             size: 20,
                             color: ColorsPalette.greyText,
                           ),
@@ -405,7 +405,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(LucideIcons.alertCircle, color: ColorsPalette.redComponents, size: 18),
+                              const Icon(PhosphorIconsRegular.warningCircle, color: ColorsPalette.redComponents, size: 18),
                               const SizedBox(width: AppSpacing.sm),
                               Expanded(
                                 child: Text(

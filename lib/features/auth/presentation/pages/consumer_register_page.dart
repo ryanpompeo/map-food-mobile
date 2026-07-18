@@ -1,7 +1,8 @@
 import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
@@ -60,7 +61,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
       ..onTap = () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => TermosPage()),
+          appPageRoute(builder: (_) => TermosPage()),
         );
       };
 
@@ -68,7 +69,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
       ..onTap = () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => TermosPage()),
+          appPageRoute(builder: (_) => TermosPage()),
         );
       };
   }
@@ -133,7 +134,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
+        appPageRoute(
           builder: (_) => const ConsumerHomePage(),
         ),
         (route) => false,
@@ -171,7 +172,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
-            LucideIcons.chevronLeft,
+            PhosphorIconsRegular.caretLeft,
             color: ColorsPalette.redComponents,
             size: AppIconSize.lg,
           ),
@@ -210,7 +211,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   controller: _nomeController,
                   label: "Nome Completo",
                   hint: "João da Silva",
-                  icon: LucideIcons.user,
+                  icon: PhosphorIconsRegular.user,
                   keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
                   validator: FormValidator.nome,
@@ -221,7 +222,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   controller: _emailController,
                   label: "E-mail",
                   hint: "joao@exemplo.com",
-                  icon: LucideIcons.mail,
+                  icon: PhosphorIconsRegular.envelope,
                   keyboardType: TextInputType.emailAddress,
                   validator: FormValidator.email,
                 ),
@@ -231,7 +232,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   controller: _cpfController,
                   label: "CPF",
                   hint: "000.000.000-00",
-                  icon: LucideIcons.creditCard,
+                  icon: PhosphorIconsRegular.creditCard,
                   keyboardType: TextInputType.number,
                   inputFormatters: [_cpfFormatter],
                   validator: FormValidator.cpf,
@@ -242,7 +243,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   controller: _telefoneController,
                   label: "Celular",
                   hint: "(11) 90000-0000",
-                  icon: LucideIcons.smartphone,
+                  icon: PhosphorIconsRegular.deviceMobile,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [_telefoneFormatter],
                   validator: FormValidator.telefone,
@@ -253,11 +254,11 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   controller: _senhaController,
                   label: "Senha",
                   hint: "Mínimo 6 caracteres",
-                  icon: LucideIcons.lock,
+                  icon: PhosphorIconsRegular.lock,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                      _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
                       color: Colors.grey.shade500,
                       size: AppIconSize.md,
                     ),
@@ -400,7 +401,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                               ),
                               const SizedBox(width: AppSpacing.sm),
                               Icon(
-                                LucideIcons.chevronRight,
+                                PhosphorIconsRegular.caretRight,
                                 color: ColorsPalette.white,
                                 size: AppIconSize.md,
                               ),

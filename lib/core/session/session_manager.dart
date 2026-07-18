@@ -16,7 +16,7 @@ class SessionManager {
 
   /// Só age se havia sessão salva: um 401 de senha errada na tela de login
   /// não tem token salvo ainda, então não deve disparar esse fluxo.
-  static Future<void> handleUnauthorized() async {
+  static Future<void> handleUnauthorized([String? message]) async {
     if (_handling) return;
     _handling = true;
     try {
@@ -29,6 +29,13 @@ class SessionManager {
         AppRoutes.login,
         (route) => false,
       );
+
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message ?? 'Sessão expirada. Faça login novamente.')),
+        );
+      }
     } finally {
       _handling = false;
     }

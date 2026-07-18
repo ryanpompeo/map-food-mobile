@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -33,7 +33,7 @@ class HowItWorksPage extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: const Icon(
-                        LucideIcons.chevronLeft,
+                        PhosphorIconsRegular.caretLeft,
                         color: ColorsPalette.redComponents,
                       ),
                       onPressed: () => Navigator.pop(context),
@@ -79,7 +79,7 @@ class HowItWorksPage extends StatelessWidget {
                         title: "Explore o Mapa",
                         description:
                             "Navegue pelo mapa interativo e encontre vendedores de rua próximos a você em tempo real",
-                        icon: LucideIcons.mapPin,
+                        icon: PhosphorIconsRegular.mapPin,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -94,7 +94,7 @@ class HowItWorksPage extends StatelessWidget {
                         title: "Escolha sua Categoria",
                         description:
                             "Use os filtros inteligentes para encontrar exatamente o que deseja: de espetinhos e lanches até doces e açaí",
-                        icon: LucideIcons.slidersHorizontal,
+                        icon: PhosphorIconsRegular.slidersHorizontal,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -109,7 +109,7 @@ class HowItWorksPage extends StatelessWidget {
                         title: "Siga a Rota",
                         description:
                             "Toque em 'Visualizar no mapa' para traçar a rota exata até o comércio escolhido e aproveite",
-                        icon: LucideIcons.navigation,
+                        icon: PhosphorIconsRegular.navigationArrow,
                       ),
 
                       const SizedBox(height: 140.0),
@@ -163,7 +163,7 @@ class HowItWorksPage extends StatelessWidget {
                         ),
                         const SizedBox(width: AppSpacing.sm),
                         Icon(
-                          LucideIcons.chevronRight,
+                          PhosphorIconsRegular.caretRight,
                           color: Colors.white,
                           size: AppIconSize.md,
                         ),

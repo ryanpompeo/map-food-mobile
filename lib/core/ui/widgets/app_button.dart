@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -53,7 +53,7 @@ class AppButton extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Icon(
-              LucideIcons.chevronRight,
+              PhosphorIconsRegular.caretRight,
               color: isDark
                   ? ColorsPalette.blackComponents
                   : ColorsPalette.redComponents,

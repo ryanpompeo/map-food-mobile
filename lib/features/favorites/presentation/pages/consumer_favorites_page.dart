@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -51,7 +52,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
         ),
         title: Text(
           "Favoritos",
@@ -77,7 +78,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      appPageRoute(
                         builder: (_) => MoreInfoStorePage(store: store),
                       ),
                     );
@@ -111,13 +112,17 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                                   child: Image.network(
                                     resolveImagemUrl(store.capaUrl)!,
                                     fit: BoxFit.cover,
+                                    // Container é 80x80 — decodifica só nesse
+                                    // tamanho físico em vez da resolução cheia.
+                                    cacheWidth: (80.0 * MediaQuery.devicePixelRatioOf(context)).round(),
+                                    cacheHeight: (80.0 * MediaQuery.devicePixelRatioOf(context)).round(),
                                     errorBuilder: (context, error, stackTrace) => Icon(
-                                      LucideIcons.image,
+                                      PhosphorIconsRegular.image,
                                       color: Colors.grey.shade400,
                                     ),
                                   ),
                                 )
-                              : Icon(LucideIcons.image, color: Colors.grey.shade400),
+                              : Icon(PhosphorIconsRegular.image, color: Colors.grey.shade400),
                         ),
 
                         const SizedBox(width: 12),
@@ -152,7 +157,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                               Row(
                                 children: [
                                   Icon(
-                                    LucideIcons.star,
+                                    PhosphorIconsRegular.star,
                                     size: 14,
                                     color: Colors.amber.shade600,
                                   ),
@@ -169,7 +174,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
 
                         IconButton(
                           icon: const Icon(
-                            LucideIcons.heart,
+                            PhosphorIconsRegular.heart,
                             color: Colors.red,
                           ),
                           onPressed: () async {
@@ -209,7 +214,7 @@ class _EmptyFavoritesWidget extends StatelessWidget {
                 color: Colors.red.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(LucideIcons.heart, color: Colors.red, size: 42),
+              child: const Icon(PhosphorIconsRegular.heart, color: Colors.red, size: 42),
             ),
 
             const SizedBox(height: 20),

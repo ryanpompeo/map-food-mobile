@@ -69,11 +69,55 @@ class StoreService {
         .toList();
   }
 
+  /// Lojas ativas — repontado para o endpoint aditivo da Fase 4
+  /// (`/mobile/api/v1/lojas`), que já devolve `mediaAvaliacao`/
+  /// `totalAvaliacoes` calculados no banco (o antigo `/lojas/ativas`
+  /// devolvia a entidade pura, sem esses campos — daí o "Novo" nos cards).
   Future<List<StoreDto>> getActive() async {
-    final data = await _client.get<List<dynamic>>(ApiConstants.lojasAtivas);
+    final data = await _client.get<List<dynamic>>(
+      ApiConstants.mobileLojas,
+      queryParameters: {'status': 'ATIVA'},
+    );
     return data
         .map((e) => StoreDto.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Ranking de popularidade (mais acessadas, via pi_acesso_loja) — já vem
+  /// com a mesma agregação de avaliação do endpoint acima.
+  Future<List<StoreDto>> getPopulares({int limit = 10}) async {
+    final data = await _client.get<List<dynamic>>(
+      '${ApiConstants.mobileLojas}/populares',
+      queryParameters: {'limit': limit},
+    );
+    return data
+        .map((e) => StoreDto.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Detalhe de uma loja com a agregação de avaliação pronta — usado onde
+  /// hoje só temos o `id` (ex: comerciante vendo a nota da própria loja) e
+  /// não queremos mais calcular a média na mão no cliente.
+  Future<StoreDto> getResumo(int id) async {
+    final data = await _client.get<Map<String, dynamic>>('${ApiConstants.mobileLojas}/$id');
+    return StoreDto.fromJson(data);
+  }
+
+  /// Troca só o status (ATIVA/INATIVA) — o backend rejeita SUSPENSA vinda
+  /// do mobile (exclusiva de administrador).
+  Future<StoreDto> atualizarStatus(int id, String status) async {
+    final data = await _client.patch<Map<String, dynamic>>(
+      '${ApiConstants.mobileLojas}/$id/status',
+      data: {'status': status},
+    );
+    return StoreDto.fromJson(data);
+  }
+
+  /// Exclusão de loja — hard delete via o endpoint legado (mesmo caminho da
+  /// Web): apaga a loja e cascade de avaliações/denúncias/acessos de vez,
+  /// sem ficar "meio excluída" só num dos dois clientes.
+  Future<void> excluirLoja(int id) async {
+    await _client.delete('${ApiConstants.lojas}/$id');
   }
 
   Future<List<StoreDto>> searchByName(String nome) async {

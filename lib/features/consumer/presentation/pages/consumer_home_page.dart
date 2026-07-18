@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -131,30 +131,46 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
       );
     }
 
+    final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: ColorsPalette.whiteBackground,
       body: Stack(
         children: [
+          // RepaintBoundary em cada aba: isola o layer de pintura de cada uma
+          // — a troca de aba passa a ser só trocar qual layer já pronto
+          // mostrar, sem repintar o mapa/formulário das abas que não mudaram.
           IndexedStack(
             index: _selectedIndex,
             children: [
-              _buildAbaInicio(),
-              const SearchPage(),
-              ConsumerProfilePage(
-                key: ValueKey(_profileRefreshToken),
-                userName: _userName,
-                userEmail: _userEmail,
-                onProfileUpdated: _onProfileUpdated,
+              RepaintBoundary(child: _buildAbaInicio()),
+              const RepaintBoundary(child: SearchPage()),
+              RepaintBoundary(
+                child: ConsumerProfilePage(
+                  key: ValueKey(_profileRefreshToken),
+                  userName: _userName,
+                  userEmail: _userEmail,
+                  onProfileUpdated: _onProfileUpdated,
+                ),
               ),
             ],
           ),
+          // resizeToAvoidBottomInset:false trava o Stack no lugar (a barra
+          // não "sobe" agarrada ao teclado); esse Slide é o que dá a saída
+          // suave por baixo da tela ao focar um campo, estilo iFood.
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: ConsumerBottomBar(
-              selectedIndex: _selectedIndex,
-              onItemTapped: _onItemTapped,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              offset: keyboardVisible ? const Offset(0, 1) : Offset.zero,
+              child: ConsumerBottomBar(
+                selectedIndex: _selectedIndex,
+                onItemTapped: _onItemTapped,
+              ),
             ),
           ),
         ],
@@ -191,7 +207,7 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
                   child: Row(
                     children: [
                       const Icon(
-                        LucideIcons.mapPin,
+                        PhosphorIconsRegular.mapPin,
                         color: ColorsPalette.redComponents,
                         size: 28.0,
                       ),
@@ -225,6 +241,11 @@ class _ConsumerHomePage extends State<ConsumerHomePage> {
             ],
           ),
         ),
+        // Respiro entre o cabeçalho (que tem boxShadow própria) e o conteúdo
+        // abaixo — sem isso, a sombra do cabeçalho caía direto em cima dos
+        // chips de km/categoria do NearbyStoresSection, dando a impressão de
+        // um sombreado "grudado" neles que não é deles.
+        const SizedBox(height: 8),
         Expanded(child: _buildConteudo()),
       ],
     );

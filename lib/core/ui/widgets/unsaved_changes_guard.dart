@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -34,7 +34,7 @@ Future<bool> _confirmarSaida(
                     color: ColorsPalette.redComponents.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(LucideIcons.triangleAlert, color: ColorsPalette.redComponents, size: 18),
+                  child: const Icon(PhosphorIconsRegular.warning, color: ColorsPalette.redComponents, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(

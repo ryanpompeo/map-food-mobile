@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -69,7 +69,7 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
         ),
       ),
       body: SafeArea(
@@ -149,9 +149,19 @@ class _DenunciaCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  _motivoLabels[denuncia.motivo] ?? denuncia.motivo,
-                  style: AppText.corpo(context).copyWith(fontWeight: FontWeight.bold),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      denuncia.lojaNome,
+                      style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _motivoLabels[denuncia.motivo] ?? denuncia.motivo,
+                      style: AppText.legenda(context).copyWith(color: Colors.grey.shade600),
+                    ),
+                  ],
                 ),
               ),
               Container(
@@ -199,7 +209,7 @@ class _EmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(color: ColorsPalette.redComponents.withValues(alpha: 0.08), shape: BoxShape.circle),
-              child: const Icon(LucideIcons.flag, color: ColorsPalette.redComponents, size: 42),
+              child: const Icon(PhosphorIconsRegular.flag, color: ColorsPalette.redComponents, size: 42),
             ),
             const SizedBox(height: 20),
             Text("Nenhuma denúncia registrada", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800)),
@@ -229,7 +239,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.wifiOff, size: 48, color: ColorsPalette.greyText),
+            const Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: ColorsPalette.greyText),
             const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center, style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText)),
             const SizedBox(height: AppSpacing.lg),

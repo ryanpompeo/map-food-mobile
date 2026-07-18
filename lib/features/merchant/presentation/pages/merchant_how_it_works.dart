@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -32,7 +32,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: const Icon(
-                        LucideIcons.chevronLeft,
+                        PhosphorIconsRegular.caretLeft,
                         color: ColorsPalette.redComponents,
                       ),
                       onPressed: () => Navigator.pop(context),
@@ -70,7 +70,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
                         title: "Ative sua Loja",
                         description:
                             "Interaja com o botão 'Loja Aberta' para aparecer no mapa e ser encontrado pelos clientes na hora",
-                        icon: LucideIcons.store,
+                        icon: PhosphorIconsRegular.storefront,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -79,7 +79,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
                         title: "Fique em Ronda",
                         description:
                             "Enquanto sua loja estiver aberta, sua posição é atualizada automaticamente no mapa conforme você se movimenta",
-                        icon: LucideIcons.navigation,
+                        icon: PhosphorIconsRegular.navigationArrow,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -88,7 +88,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
                         title: "Gerencie Avaliações",
                         description:
                             "Acompanhe o feedback dos seus clientes e mantenha sua reputação sempre em alta",
-                        icon: LucideIcons.star,
+                        icon: PhosphorIconsRegular.star,
                       ),
 
                       const SizedBox(height: 140.0),

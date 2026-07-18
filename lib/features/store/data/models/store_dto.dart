@@ -96,14 +96,16 @@ class StoreDto {
   }
 
   /// Extrai todos os nomes de categoria para exibição na tela de detalhes.
-  /// Suporta: `categorias: [{id, nome}]`.
+  /// Suporta: `categorias: [{id, nome}]` (endpoints legados) ou
+  /// `categorias: ["nome", ...]` (endpoints /mobile/api/v1/lojas, que não
+  /// expõem id — só nome, pra listagem/leitura, não pra edição).
   static List<String> _parseCategoriaNames(Map<String, dynamic> json) {
     final cats = json['categorias'];
     if (cats is List) {
       return cats
           .map<String>((e) {
             if (e is Map) return e['nome']?.toString() ?? '';
-            return '';
+            return e.toString();
           })
           .where((name) => name.isNotEmpty)
           .toList();
@@ -113,15 +115,21 @@ class StoreDto {
     return [];
   }
 
-  /// Extrai lista de IDs das categorias.
-  /// Suporta: `categorias: [{id, nome}]` ou `categorias: [int]`
+  /// Extrai lista de IDs das categorias. Suporta `categorias: [{id, nome}]`
+  /// ou `categorias: [int]`; entradas sem id (ex: lista de nomes crus vinda
+  /// de /mobile/api/v1/lojas) são ignoradas — essas telas não editam a loja,
+  /// só listam/exibem.
   static List<int> _parseCategoriaIds(Map<String, dynamic> json) {
     final cats = json['categorias'];
     if (cats is List) {
-      return cats.map<int>((e) {
-        if (e is Map) return (e['id'] as num).toInt();
-        return (e as num).toInt();
-      }).toList();
+      return cats
+          .map<int?>((e) {
+            if (e is Map) return (e['id'] as num?)?.toInt();
+            if (e is num) return e.toInt();
+            return null;
+          })
+          .whereType<int>()
+          .toList();
     }
     return [];
   }

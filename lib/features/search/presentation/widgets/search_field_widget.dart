@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -8,7 +8,11 @@ class SearchFieldWidget extends StatefulWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
-  const SearchFieldWidget({super.key, required this.controller, required this.onChanged});
+  const SearchFieldWidget({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+  });
 
   @override
   State<SearchFieldWidget> createState() => _SearchFieldWidgetState();
@@ -39,10 +43,10 @@ class _SearchFieldWidgetState extends State<SearchFieldWidget> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Container(
-        height: 54.0,
+        // 1. ALTURA FIXA REMOVIDA: A altura agora é ditada pelo conteúdo interno.
         decoration: BoxDecoration(
           color: ColorsPalette.white,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           boxShadow: [
             BoxShadow(
               color: ColorsPalette.black.withValues(alpha: 0.03),
@@ -53,19 +57,38 @@ class _SearchFieldWidgetState extends State<SearchFieldWidget> {
         ),
         child: TextField(
           controller: widget.controller,
-          style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w500, color: ColorsPalette.black),
+          textAlignVertical: TextAlignVertical.center,
+          style: AppText.corpo(
+            context,
+          ).copyWith(fontWeight: FontWeight.w500, color: ColorsPalette.black),
           decoration: InputDecoration(
+            isDense: true,
             hintText: "Buscar por comércios...",
-            hintStyle: AppText.corpo(context).copyWith(color: Colors.grey.shade400),
-            prefixIcon: const Icon(LucideIcons.search, color: ColorsPalette.redComponents, size: 20.0),
+            hintStyle: AppText.corpo(
+              context,
+            ).copyWith(color: Colors.grey.shade400),
+            prefixIcon: Icon(
+              PhosphorIconsRegular.magnifyingGlass,
+              color: Colors.grey.shade400,
+              size: 20.0,
+            ),
             suffixIcon: widget.controller.text.isEmpty
                 ? null
                 : IconButton(
-                    icon: Icon(LucideIcons.x, color: Colors.grey.shade400, size: 18.0),
+                    icon: Icon(
+                      PhosphorIconsRegular.x,
+                      color: Colors.grey.shade400,
+                      size: 18.0,
+                    ),
                     onPressed: _limpar,
                   ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
+            // 2. PADDING SIMÉTRICO: 16px top + ~22px conteúdo + 16px bottom = ~54px totais
+            // Isso garante centralização absoluta no eixo Y.
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16.0,
+              horizontal: 16.0,
+            ),
           ),
           onChanged: widget.onChanged,
           onSubmitted: widget.onChanged,

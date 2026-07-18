@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/widgets/app_bottom_bar.dart';
 
 class MerchantBottomBar extends StatelessWidget {
@@ -19,11 +19,11 @@ class MerchantBottomBar extends StatelessWidget {
       onItemTapped: onItemTapped,
       itemSpacing: 4.0,
       items: const [
-        BottomBarItem(LucideIcons.house),
-        BottomBarItem(LucideIcons.search),
-        BottomBarItem(LucideIcons.navigation),
-        BottomBarItem(LucideIcons.store),
-        BottomBarItem(LucideIcons.user),
+        BottomBarItem(PhosphorIconsRegular.house),
+        BottomBarItem(PhosphorIconsRegular.magnifyingGlass),
+        BottomBarItem(PhosphorIconsRegular.navigationArrow),
+        BottomBarItem(PhosphorIconsRegular.storefront),
+        BottomBarItem(PhosphorIconsRegular.user),
       ],
     );
   }

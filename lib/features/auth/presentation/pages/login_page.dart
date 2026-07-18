@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/errors/exception.dart';
@@ -99,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: Icon(
-            LucideIcons.chevronLeft,
+            PhosphorIconsRegular.caretLeft,
             color: ColorsPalette.redComponents,
             size: AppIconSize.lg,
           ),
@@ -203,7 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                 controller: _emailController,
                 label: "E-mail",
                 hint: "seu@email.com",
-                icon: LucideIcons.mail,
+                icon: PhosphorIconsRegular.envelope,
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => null,
               ),
@@ -213,12 +213,12 @@ class _LoginPageState extends State<LoginPage> {
                 controller: _senhaController,
                 label: "Senha",
                 hint: "Digite sua senha",
-                icon: LucideIcons.lock,
+                icon: PhosphorIconsRegular.lock,
                 obscureText: _obscurePassword,
                 validator: (v) => null,
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                    _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
                     color: Colors.grey.shade500,
                     size: AppIconSize.md,
                   ),

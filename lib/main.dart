@@ -51,6 +51,20 @@ class MyApp extends StatelessWidget {
           selectionColor: ColorsPalette.black.withValues(alpha: 0.15),
           selectionHandleColor: ColorsPalette.black,
         ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: ColorsPalette.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: BorderSide(color: ColorsPalette.white)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: BorderSide(color: ColorsPalette.white)),
+          disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: BorderSide(color: ColorsPalette.white)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: const BorderSide(color: ColorsPalette.black, width: 1.2)),
+          errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: const BorderSide(color: ColorsPalette.redComponents, width: 1.2)),
+          focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(50), borderSide: const BorderSide(color: ColorsPalette.redComponents, width: 1.2)),
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: ColorsPalette.redComponents,
+        ),
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: CupertinoPageTransitionsBuilder(),

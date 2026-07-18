@@ -27,8 +27,10 @@ class RatingService {
         .toList();
   }
 
-  /// Envia uma nova avaliação via POST /avaliacoes.
-  /// Requer token JWT de Consumidor (o backend extrai o id_consumidor do token).
+  /// Cria ou edita a avaliação do consumidor autenticado para a loja, via
+  /// POST /mobile/api/v1/avaliacoes (upsert — Fase 4/5). O backend decide
+  /// INSERT vs UPDATE pelo par (consumidor, loja); nunca mais devolve 409
+  /// de duplicidade, então o chamador não precisa mais tratar esse caso.
   /// [lojaId]    ID da loja avaliada.
   /// [nota]      Nota inteira de 1 a 5.
   /// [comentario] Comentário opcional.
@@ -38,15 +40,24 @@ class RatingService {
     String? comentario,
   }) async {
     final body = <String, dynamic>{
-      'loja': {'id': lojaId},
+      'lojaId': lojaId,
       'nota': nota,
       if (comentario != null && comentario.trim().isNotEmpty)
         'comentario': comentario.trim(),
     };
     final data = await _client.post<Map<String, dynamic>>(
-      ApiConstants.avaliacoes,
+      ApiConstants.mobileAvaliacoes,
       data: body,
     );
     return AvaliacaoModel.fromJson(data);
+  }
+
+  /// Avaliação já existente do consumidor autenticado para essa loja, ou
+  /// `null` se ele ainda não avaliou — usado pra pré-preencher edição.
+  Future<AvaliacaoModel?> getMinhaAvaliacao(int lojaId) async {
+    final data = await _client.get<Map<String, dynamic>?>(
+      '${ApiConstants.mobileAvaliacoes}/minha/$lojaId',
+    );
+    return data == null ? null : AvaliacaoModel.fromJson(data);
   }
 }

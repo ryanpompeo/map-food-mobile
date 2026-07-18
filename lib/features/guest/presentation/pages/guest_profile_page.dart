@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -64,7 +65,7 @@ class GuestProfilePage extends StatelessWidget {
                             ),
                           ),
                           child: Icon(
-                            LucideIcons.userPlus,
+                            PhosphorIconsRegular.userPlus,
                             color: ColorsPalette.redComponents,
                             size: AppIconSize.lg,
                           ),
@@ -93,8 +94,10 @@ class GuestProfilePage extends StatelessWidget {
                           width: double.infinity,
                           height: 52.0,
                           child: ElevatedButton(
-                            onPressed: () =>
-                                Navigator.pushNamed(context, AppRoutes.accountType),
+                            onPressed: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.accountType,
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: ColorsPalette.redComponents,
                               foregroundColor: Colors.white,
@@ -118,7 +121,7 @@ class GuestProfilePage extends StatelessWidget {
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
                                 Icon(
-                                  LucideIcons.chevronRight,
+                                  PhosphorIconsRegular.caretRight,
                                   color: Colors.white,
                                   size: AppIconSize.md,
                                 ),
@@ -179,16 +182,16 @@ class GuestProfilePage extends StatelessWidget {
               ),
               buildListTile(
                 context: context,
-                icon: LucideIcons.moon,
+                icon: PhosphorIconsRegular.moon,
                 title: "Tema do Aplicativo",
-                subtitle: "Claro, Escuro ou Sistema",
+
                 onTap: () {},
               ),
               buildListTile(
                 context: context,
-                icon: LucideIcons.mapPin,
+                icon: PhosphorIconsRegular.mapPin,
                 title: "Permissões de Localização",
-                subtitle: "Gerenciar acesso ao GPS",
+
                 onTap: () => Geolocator.openAppSettings(),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -211,23 +214,23 @@ class GuestProfilePage extends StatelessWidget {
               ),
               buildListTile(
                 context: context,
-                icon: LucideIcons.helpCircle,
+                icon: PhosphorIconsRegular.question,
                 title: "Como funciona?",
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => HowItWorksPage()),
+                    appPageRoute(builder: (_) => HowItWorksPage()),
                   );
                 },
               ),
               buildListTile(
                 context: context,
-                icon: LucideIcons.fileText,
+                icon: PhosphorIconsRegular.fileText,
                 title: "Termos de Uso e Privacidade",
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TermosPage()),
+                    appPageRoute(builder: (_) => TermosPage()),
                   );
                 },
               ),
@@ -259,13 +262,12 @@ class GuestProfilePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: ColorsPalette.redComponents.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 icon,
-                size: AppIconSize.md,
-                color: ColorsPalette.redComponents,
+                size: AppIconSize.lg,
+                color: ColorsPalette.blackDetails,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -293,9 +295,9 @@ class GuestProfilePage extends StatelessWidget {
               ),
             ),
             Icon(
-              LucideIcons.chevronRight,
+              PhosphorIconsRegular.caretRight,
               size: AppIconSize.sm,
-              color: Colors.grey.shade400,
+              color: ColorsPalette.redComponents.withValues(alpha: 0.8),
             ),
           ],
         ),

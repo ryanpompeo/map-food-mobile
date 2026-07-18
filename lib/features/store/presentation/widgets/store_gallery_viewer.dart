@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 
 /// Visualização fullscreen da galeria de fotos de uma loja — swipe lateral
@@ -79,7 +79,7 @@ class _StoreGalleryViewerState extends State<StoreGalleryViewer> {
                   widget.imagens[index],
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) => const Icon(
-                    LucideIcons.image,
+                    PhosphorIconsRegular.image,
                     color: Colors.white38,
                     size: 64.0,
                   ),
@@ -92,7 +92,7 @@ class _StoreGalleryViewerState extends State<StoreGalleryViewer> {
             right: AppSpacing.md,
             child: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(LucideIcons.x, color: Colors.white, size: 28.0),
+              icon: const Icon(PhosphorIconsRegular.x, color: Colors.white, size: 28.0),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.black.withValues(alpha: 0.35),
                 shape: const CircleBorder(),

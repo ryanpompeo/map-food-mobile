@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -125,18 +125,9 @@ class _WorkingPageState extends State<WorkingPage> {
       if (session == null) return;
 
       final novoStatus = val ? 'ATIVA' : 'INATIVA';
-      // PUT /lojas/{id} faz merge campo-a-campo no backend (diferente de
-      // /comerciantes e /consumidores), então reenviar nome/descricao/
-      // categorias existentes é seguro e não apaga os demais dados da loja.
-      final atualizada = await _storeService.update(
-        _store.id,
-        StoreCreateRequest(
-          nome: _store.nome,
-          descricao: _store.descricao,
-          statusLoja: novoStatus,
-          categoriaIds: _store.categoriaIds,
-        ),
-      );
+      // Endpoint aditivo da Fase 4 — troca só o status (o backend já
+      // rejeitaria SUSPENSA vinda do mobile, embora este toggle nunca a envie).
+      final atualizada = await _storeService.atualizarStatus(_store.id, novoStatus);
 
       if (mounted) {
         setState(() {
@@ -245,7 +236,7 @@ class _WorkingPageState extends State<WorkingPage> {
               Row(
                 children: [
                   Icon(
-                    LucideIcons.store,
+                    PhosphorIconsRegular.storefront,
                     color: _lojaAberta ? Colors.white : ColorsPalette.black,
                   ),
                   if (_rastreioAtivo) ...[

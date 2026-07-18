@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -101,7 +102,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
         // Sem loja cadastrada → redireciona obrigatoriamente para criação
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const StoreRegisterPage()),
+          appPageRoute(builder: (_) => const StoreRegisterPage()),
         );
         return;
       }
@@ -161,7 +162,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  LucideIcons.wifiOff,
+                  PhosphorIconsRegular.wifiSlash,
                   size: 48,
                   color: ColorsPalette.greyText,
                 ),
@@ -204,42 +205,64 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
       onSelect: (index) => setState(() => _lojaSelecionadaIndex = index),
     );
 
+    final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: ColorsPalette.whiteBackground,
       body: Stack(
         children: [
+          // RepaintBoundary em cada aba: sem isso, o Stack/Compositor trata a
+          // troca de aba do IndexedStack como parte do mesmo layer de pintura
+          // das outras abas (mesmo as invisíveis) — isolando cada uma, a troca
+          // vira só uma questão de qual layer já pronto mostrar, sem repintar
+          // o mapa/formulários das abas que não mudaram.
           IndexedStack(
             index: _selectedIndex,
             children: [
-              _buildAbaInicio(),
-              const SearchPage(),
-              WorkingPage(
-                key: ValueKey('working-${store.id}'),
-                store: store,
-                storeSwitcher: switcher,
-                onStoreUpdated: _onStoreUpdated,
+              RepaintBoundary(child: _buildAbaInicio()),
+              const RepaintBoundary(child: SearchPage()),
+              RepaintBoundary(
+                child: WorkingPage(
+                  key: ValueKey('working-${store.id}'),
+                  store: store,
+                  storeSwitcher: switcher,
+                  onStoreUpdated: _onStoreUpdated,
+                ),
               ),
-              MerchantDashboard(
-                key: ValueKey('dashboard-${store.id}'),
-                store: store,
-                storeSwitcher: switcher,
-                onStoreUpdated: _onStoreUpdated,
+              RepaintBoundary(
+                child: MerchantDashboard(
+                  key: ValueKey('dashboard-${store.id}'),
+                  store: store,
+                  storeSwitcher: switcher,
+                  onStoreUpdated: _onStoreUpdated,
+                ),
               ),
-              MerchantProfilePage(
-                key: ValueKey('profile-$_profileRefreshToken'),
-                userName: _userName,
-                userEmail: _userEmail,
-                onProfileUpdated: _onProfileUpdated,
+              RepaintBoundary(
+                child: MerchantProfilePage(
+                  key: ValueKey('profile-$_profileRefreshToken'),
+                  userName: _userName,
+                  userEmail: _userEmail,
+                  onProfileUpdated: _onProfileUpdated,
+                ),
               ),
             ],
           ),
+          // resizeToAvoidBottomInset:false trava o Stack no lugar (a barra
+          // não "sobe" agarrada ao teclado); esse Slide é o que dá a saída
+          // suave por baixo da tela ao focar um campo, estilo iFood.
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            child: MerchantBottomBar(
-              selectedIndex: _selectedIndex,
-              onItemTapped: _onItemTapped,
+            child: AnimatedSlide(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              offset: keyboardVisible ? const Offset(0, 1) : Offset.zero,
+              child: MerchantBottomBar(
+                selectedIndex: _selectedIndex,
+                onItemTapped: _onItemTapped,
+              ),
             ),
           ),
         ],
@@ -273,7 +296,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
                 child: Row(
                   children: [
                     const Icon(
-                      LucideIcons.mapPin,
+                      PhosphorIconsRegular.mapPin,
                       color: ColorsPalette.redComponents,
                       size: 28.0,
                     ),
@@ -296,6 +319,11 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
             ],
           ),
         ),
+        // Respiro entre o cabeçalho (que tem boxShadow própria) e o conteúdo
+        // abaixo — sem isso, a sombra do cabeçalho caía direto em cima dos
+        // chips de km/categoria abaixo, dando a impressão de um sombreado
+        // "grudado" neles que não é deles.
+        const SizedBox(height: 8),
         Expanded(
           child: ListenableBuilder(
             listenable: ActiveStoresManager.instance,

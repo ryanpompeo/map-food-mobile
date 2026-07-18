@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -30,7 +30,7 @@ class AccountTypePage extends StatelessWidget {
             Navigator.pop(context);
           },
           icon: Icon(
-            LucideIcons.chevronLeft,
+            PhosphorIconsRegular.caretLeft,
             color: ColorsPalette.redComponents,
             size: AppIconSize.lg,
           ),

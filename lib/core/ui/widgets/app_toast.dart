@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -102,7 +102,7 @@ class _AppToastWidgetState extends State<_AppToastWidget>
   Widget build(BuildContext context) {
     final isSuccess = widget.type == _AppToastType.success;
     final accentColor = isSuccess ? const Color(0xFF16A34A) : ColorsPalette.redComponents;
-    final icon = isSuccess ? LucideIcons.checkCircle2 : LucideIcons.alertCircle;
+    final icon = isSuccess ? PhosphorIconsRegular.checkCircle : PhosphorIconsRegular.warningCircle;
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + AppSpacing.sm,

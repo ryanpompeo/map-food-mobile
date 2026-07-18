@@ -16,6 +16,11 @@ class AppBottomBar extends StatelessWidget {
   final ValueChanged<int> onItemTapped;
   final double itemSpacing;
 
+  // Área de toque de cada item (56x56, padrão ergonômico Material/Apple) e
+  // diâmetro do indicador de seleção que desliza por trás dos ícones.
+  static const double _itemSize = 56.0;
+  static const double _indicatorSize = 48.0;
+
   const AppBottomBar({
     super.key,
     required this.items,
@@ -31,18 +36,51 @@ class AppBottomBar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(bottom: 32.0, left: 24.0, right: 24.0),
         child: GlassContainer(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (int i = 0; i < items.length; i++) ...[
-                if (i > 0) SizedBox(width: itemSpacing),
-                _NavItem(
-                  icon: items[i].icon,
-                  isSelected: i == selectedIndex,
-                  onTap: () => onItemTapped(i),
+          child: SizedBox(
+            height: _itemSize,
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                // Indicador único que desliza de um ícone pro outro — em vez
+                // de cada item ligar/desligar seu próprio fundo, só um deles
+                // se move, o que lê como transição contínua ao trocar de aba.
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  left: selectedIndex * (_itemSize + itemSpacing),
+                  top: 0,
+                  child: const SizedBox(
+                    width: _itemSize,
+                    height: _itemSize,
+                    child: Center(
+                      child: SizedBox(
+                        width: _indicatorSize,
+                        height: _indicatorSize,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: ColorsPalette.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (int i = 0; i < items.length; i++) ...[
+                      if (i > 0) SizedBox(width: itemSpacing),
+                      _NavItem(
+                        icon: items[i].icon,
+                        isSelected: i == selectedIndex,
+                        onTap: () => onItemTapped(i),
+                      ),
+                    ],
+                  ],
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -67,17 +105,21 @@ class _NavItem extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          width: 56,
-          height: 56,
-          decoration: const BoxDecoration(shape: BoxShape.circle),
+        child: SizedBox(
+          width: AppBottomBar._itemSize,
+          height: AppBottomBar._itemSize,
           child: Center(
-            child: Icon(
-              icon,
-              size: 24.0,
-              color: isSelected ? ColorsPalette.redComponents : ColorsPalette.black.withValues(alpha: 0.6),
+            // Só a cor do ícone é animada aqui — o fundo circular já é o
+            // indicador deslizante do AppBottomBar, compartilhado entre itens.
+            child: TweenAnimationBuilder<Color?>(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              tween: ColorTween(
+                end: isSelected
+                    ? ColorsPalette.redComponents
+                    : ColorsPalette.black.withValues(alpha: 0.6),
+              ),
+              builder: (context, color, child) => Icon(icon, size: 24.0, color: color),
             ),
           ),
         ),

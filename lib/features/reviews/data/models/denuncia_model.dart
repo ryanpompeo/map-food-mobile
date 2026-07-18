@@ -5,6 +5,7 @@ class DenunciaModel {
   final String? descricao;
   final String statusDenuncia;
   final String? dataDenuncia;
+  final String lojaNome;
 
   const DenunciaModel({
     required this.id,
@@ -12,6 +13,7 @@ class DenunciaModel {
     this.descricao,
     required this.statusDenuncia,
     this.dataDenuncia,
+    required this.lojaNome,
   });
 
   factory DenunciaModel.fromJson(Map<String, dynamic> json) => DenunciaModel(
@@ -20,6 +22,7 @@ class DenunciaModel {
         descricao: json['descricao'] as String?,
         statusDenuncia: json['statusDenuncia']?.toString() ?? 'PENDENTE',
         dataDenuncia: json['dataDenuncia']?.toString(),
+        lojaNome: (json['loja'] as Map<String, dynamic>?)?['nome']?.toString() ?? 'Comércio removido',
       );
 }
 

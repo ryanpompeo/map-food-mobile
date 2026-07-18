@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
@@ -25,8 +25,7 @@ class StoreMapPage extends StatefulWidget {
 class _StoreMapPageState extends State<StoreMapPage> {
   final _routeService = RouteService();
 
-  double? _userLat;
-  double? _userLng;
+  final ValueNotifier<LatLng?> _userPosition = ValueNotifier(null);
   List<LatLng>? _routePoints;
   double? _distanciaMetros;
   bool _carregandoRota = false;
@@ -36,6 +35,12 @@ class _StoreMapPageState extends State<StoreMapPage> {
   void initState() {
     super.initState();
     _carregarPosicaoERota();
+  }
+
+  @override
+  void dispose() {
+    _userPosition.dispose();
+    super.dispose();
   }
 
   Future<void> _carregarPosicaoERota() async {
@@ -91,9 +96,8 @@ class _StoreMapPageState extends State<StoreMapPage> {
   Future<void> _tracarRotaPara(LatLng origem, LatLng destino) async {
     final rota = await _routeService.getRoute(origem, destino);
     if (!mounted) return;
+    _userPosition.value = origem;
     setState(() {
-      _userLat = origem.latitude;
-      _userLng = origem.longitude;
       if (rota != null) {
         _routePoints = rota.pontos;
         _distanciaMetros = rota.distanciaMetros;
@@ -131,7 +135,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
           // depois de já ter saído, então o diálogo nunca chegava a aparecer
           // pelo botão visual (só pelo gesto/botão físico de voltar).
           onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(LucideIcons.chevronLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
         ),
         title: Text(
           widget.store.nome,
@@ -143,8 +147,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
           StoreMapView(
             stores: [widget.store],
             focusedStore: widget.store,
-            userLatitude: _userLat,
-            userLongitude: _userLng,
+            userPosition: _userPosition,
             routePoints: _routePoints,
           ),
           if (_carregandoRota)
@@ -164,7 +167,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(LucideIcons.footprints, size: 16.0, color: ColorsPalette.redComponents),
+                      const Icon(PhosphorIconsRegular.footprints, size: 16.0, color: ColorsPalette.redComponents),
                       const SizedBox(width: 6.0),
                       Text(
                         _distanciaLabel,

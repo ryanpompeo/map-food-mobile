@@ -37,7 +37,6 @@ dependencies:
   google_fonts: ^8.0.2
   cpf_cnpj_validator: 2.0.0-nullsafety
   mask_text_input_formatter: ^2.9.0
-  lucide_flutter: ^1.17.0
   dio: ^5.8.0+1
   shared_preferences: ^2.5.3
   flutter_markdown: 0.7.7+1
@@ -47,9 +46,13 @@ dependencies:
   flutter_map: ^7.0.2
   flutter_map_cancellable_tile_provider: ^3.0.2
   latlong2: ^0.9.1
+  phosphoricons_flutter: ^1.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_dynamic_launcher_icon: ^0.0.2
+
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -58,6 +61,11 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/isologo.png"
 
 # Força path_provider_foundation para a última versão sem objective_c.
 # objective_c foi introduzido em 2.5.0 e causa falha de compilação

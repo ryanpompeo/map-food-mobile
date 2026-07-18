@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -40,9 +41,6 @@ class ProfilePageScaffold extends StatefulWidget {
   final Color avatarColor;
   final Color logoutBackgroundColor;
   final Color logoutForegroundColor;
-  final Color listIconBackgroundColor;
-  final Color listIconColor;
-  final Color listIconBorderColor;
 
   final List<ProfileMenuItem> minhaContaItems;
   final WidgetBuilder howItWorksPageBuilder;
@@ -50,7 +48,8 @@ class ProfilePageScaffold extends StatefulWidget {
   /// Hook extra no logout (ex: limpar favoritos do consumidor).
   final VoidCallback? onLogoutExtra;
 
-  /// Exclui a conta no backend (DELETE /comerciantes|consumidores/{id}).
+  /// Exclui a conta no backend (DELETE /comerciantes|consumidores/{id}) —
+  /// hard delete definitivo nos dois papéis, mesmo endpoint usado pela Web.
   final Future<void> Function() onDeleteAccount;
 
   const ProfilePageScaffold({
@@ -61,9 +60,6 @@ class ProfilePageScaffold extends StatefulWidget {
     required this.avatarColor,
     required this.logoutBackgroundColor,
     required this.logoutForegroundColor,
-    required this.listIconBackgroundColor,
-    required this.listIconColor,
-    this.listIconBorderColor = const Color(0xFFE5E7EB),
     required this.minhaContaItems,
     required this.howItWorksPageBuilder,
     this.onLogoutExtra,
@@ -118,7 +114,7 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                         color: ColorsPalette.redComponents.withValues(alpha: 0.15),
                       ),
                       child: const Icon(
-                        LucideIcons.logOut,
+                        PhosphorIconsRegular.signOut,
                         color: ColorsPalette.redComponents,
                         size: 18,
                       ),
@@ -158,7 +154,7 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                         if (!context.mounted) return;
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (context) => GuestHomePage()),
+                          appPageRoute(builder: (context) => GuestHomePage()),
                           (route) => false,
                         );
                       },
@@ -191,7 +187,7 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
       if (!context.mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => GuestHomePage()),
+        appPageRoute(builder: (context) => GuestHomePage()),
         (route) => false,
       );
     } catch (_) {
@@ -306,7 +302,7 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(LucideIcons.logOut, size: 20.0),
+                                const Icon(PhosphorIconsRegular.signOut, size: 20.0),
                                 const SizedBox(width: 8.0),
                                 Text(
                                   "Sair da conta",
@@ -340,14 +336,14 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
               _buildSectionTitle(context, "Configurações"),
               _buildListTile(
                 context: context,
-                icon: LucideIcons.mapPin,
+                icon: PhosphorIconsRegular.mapPin,
                 title: "Permissões de Localização",
                 subtitle: "Gerenciar acesso ao GPS",
                 onTap: () => Geolocator.openAppSettings(),
               ),
               _buildListTile(
                 context: context,
-                icon: LucideIcons.trash2,
+                icon: PhosphorIconsRegular.trash,
                 iconColor: ColorsPalette.redComponents,
                 iconBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
                 title: "Excluir conta",
@@ -360,18 +356,18 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
               _buildSectionTitle(context, "Sobre o MapFood"),
               _buildListTile(
                 context: context,
-                icon: LucideIcons.helpCircle,
+                icon: PhosphorIconsRegular.question,
                 title: "Como funciona?",
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: widget.howItWorksPageBuilder));
+                  Navigator.push(context, appPageRoute(builder: widget.howItWorksPageBuilder));
                 },
               ),
               _buildListTile(
                 context: context,
-                icon: LucideIcons.fileText,
+                icon: PhosphorIconsRegular.fileText,
                 title: "Termos de Uso e Privacidade",
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const TermosPage()));
+                  Navigator.push(context, appPageRoute(builder: (_) => const TermosPage()));
                 },
               ),
 
@@ -428,11 +424,10 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
             Container(
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: iconBackgroundColor ?? widget.listIconBackgroundColor,
+                color: iconBackgroundColor,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: widget.listIconBorderColor),
               ),
-              child: Icon(icon, size: AppIconSize.md, color: iconColor ?? widget.listIconColor),
+              child: Icon(icon, size: AppIconSize.lg, color: iconColor ?? ColorsPalette.blackDetails),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -450,7 +445,7 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                 ],
               ),
             ),
-            Icon(LucideIcons.chevronRight, size: AppIconSize.sm, color: Colors.grey.shade400),
+            Icon(PhosphorIconsRegular.caretRight, size: AppIconSize.sm, color: ColorsPalette.redComponents.withValues(alpha: 0.8)),
           ],
         ),
       ),

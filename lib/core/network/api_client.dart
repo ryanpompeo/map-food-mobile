@@ -44,7 +44,7 @@ class ApiClient {
   Never _throwFrom(DioException e) {
     final exception = (e.error is AppException) ? e.error as AppException : const NetworkException();
     if (exception is UnauthorizedException) {
-      SessionManager.handleUnauthorized();
+      SessionManager.handleUnauthorized(exception.message);
     }
     throw exception;
   }
@@ -70,6 +70,15 @@ class ApiClient {
   Future<T> put<T>(String path, {dynamic data}) async {
     try {
       final response = await _dio.put(path, data: data);
+      return _parseResponse<T>(response.data);
+    } on DioException catch (e) {
+      _throwFrom(e);
+    }
+  }
+
+  Future<T> patch<T>(String path, {dynamic data}) async {
+    try {
+      final response = await _dio.patch(path, data: data);
       return _parseResponse<T>(response.data);
     } on DioException catch (e) {
       _throwFrom(e);
