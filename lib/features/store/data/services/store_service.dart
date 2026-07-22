@@ -69,15 +69,12 @@ class StoreService {
         .toList();
   }
 
-  /// Lojas ativas — repontado para o endpoint aditivo da Fase 4
-  /// (`/mobile/api/v1/lojas`), que já devolve `mediaAvaliacao`/
-  /// `totalAvaliacoes` calculados no banco (o antigo `/lojas/ativas`
-  /// devolvia a entidade pura, sem esses campos — daí o "Novo" nos cards).
+  /// Lojas ativas com mediaAvaliacao/totalAvaliacoes já agregados
+  /// (`GET /lojas/ativas/completa`, endpoint aditivo da API geral — o antigo
+  /// `/lojas/ativas` devolvia a entidade pura, sem esses campos, daí o
+  /// "Novo" indevido nos cards).
   Future<List<StoreDto>> getActive() async {
-    final data = await _client.get<List<dynamic>>(
-      ApiConstants.mobileLojas,
-      queryParameters: {'status': 'ATIVA'},
-    );
+    final data = await _client.get<List<dynamic>>('${ApiConstants.lojas}/ativas/completa');
     return data
         .map((e) => StoreDto.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -87,7 +84,7 @@ class StoreService {
   /// com a mesma agregação de avaliação do endpoint acima.
   Future<List<StoreDto>> getPopulares({int limit = 10}) async {
     final data = await _client.get<List<dynamic>>(
-      '${ApiConstants.mobileLojas}/populares',
+      '${ApiConstants.lojas}/populares',
       queryParameters: {'limit': limit},
     );
     return data
@@ -99,18 +96,30 @@ class StoreService {
   /// hoje só temos o `id` (ex: comerciante vendo a nota da própria loja) e
   /// não queremos mais calcular a média na mão no cliente.
   Future<StoreDto> getResumo(int id) async {
-    final data = await _client.get<Map<String, dynamic>>('${ApiConstants.mobileLojas}/$id');
+    final data = await _client.get<Map<String, dynamic>>('${ApiConstants.lojas}/$id/completa');
     return StoreDto.fromJson(data);
   }
 
-  /// Troca só o status (ATIVA/INATIVA) — o backend rejeita SUSPENSA vinda
-  /// do mobile (exclusiva de administrador).
+  /// Troca só o status (ATIVA/INATIVA). A rota geral `PUT /lojas/{id}` exige
+  /// o objeto Loja completo (`@Valid`) — não existe mais um PATCH exclusivo
+  /// de status, então busca o estado atual antes de reenviar com o status
+  /// alterado. O backend continua rejeitando SUSPENSA vinda daqui (exclusiva
+  /// de administrador).
   Future<StoreDto> atualizarStatus(int id, String status) async {
-    final data = await _client.patch<Map<String, dynamic>>(
-      '${ApiConstants.mobileLojas}/$id/status',
-      data: {'status': status},
+    final atual = await getById(id);
+    final request = StoreCreateRequest(
+      nome: atual.nome,
+      descricao: atual.descricao,
+      statusLoja: status,
+      categoriaIds: atual.categoriaIds,
+      endereco: atual.endereco,
+      cidade: atual.cidade,
+      estado: atual.estado,
+      cep: atual.cep,
+      latitude: atual.latitude,
+      longitude: atual.longitude,
     );
-    return StoreDto.fromJson(data);
+    return update(id, request);
   }
 
   /// Exclusão de loja — hard delete via o endpoint legado (mesmo caminho da

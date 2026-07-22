@@ -6,7 +6,10 @@ class FavoritoService {
   final _client = ApiClient.instance;
 
   Future<List<StoreDto>> getFavoritos() async {
-    final data = await _client.get<List<dynamic>>(ApiConstants.favoritos);
+    // GET /favoritos/completo (não o /favoritos legado): mesma listagem, mas
+    // com mediaAvaliacao/totalAvaliacoes já agregados, pra não mostrar "Novo"
+    // em lojas favoritadas que já têm avaliações.
+    final data = await _client.get<List<dynamic>>('${ApiConstants.favoritos}/completo');
     return data
         .map((e) => StoreDto.fromJson(e as Map<String, dynamic>))
         .toList();
