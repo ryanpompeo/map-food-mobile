@@ -6,6 +6,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class TermosPage extends StatelessWidget {
   const TermosPage({super.key});
@@ -67,11 +68,11 @@ A qualquer momento, você pode solicitar através das configurações do aplicat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
-        foregroundColor: ColorsPalette.black,
-        surfaceTintColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
+        foregroundColor: context.mapColors.primaryText,
+        surfaceTintColor: context.mapColors.mainBackground,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -104,12 +105,13 @@ A qualquer momento, você pode solicitar através das configurações do aplicat
               color: ColorsPalette.redComponents,
               fontWeight: FontWeight.bold,
             ),
-            p: AppText.corpo(
-              context,
-            ).copyWith(color: ColorsPalette.greyText, height: 1.5),
-            strong: const TextStyle(
+            // Sem override de cor: corpo() já herda o texto primário do
+            // tema — parágrafo de texto legal não deve ficar esmaecido
+            // como um texto secundário.
+            p: AppText.corpo(context).copyWith(height: 1.5),
+            strong: TextStyle(
               fontWeight: FontWeight.bold,
-              color: ColorsPalette.black,
+              color: context.mapColors.primaryText,
             ),
             listBullet: const TextStyle(color: ColorsPalette.redComponents),
           ),

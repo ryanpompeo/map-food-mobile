@@ -11,6 +11,7 @@ import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
 import 'package:map_food/features/merchant/data/models/merchant_register_request.dart';
@@ -42,9 +43,6 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  // ==========================================
-  // DEFINIÇÃO DAS MÁSCARAS
-  // ==========================================
   final _cpfFormatter = MaskTextInputFormatter(
     mask: '###.###.###-##',
     filter: {"#": RegExp(r'[0-9]')},
@@ -114,7 +112,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
       final request = MerchantRegisterRequest(
         nome: _nomeController.text.trim(),
-        email: _emailController.text.trim(),
+        email: _emailController.text.trim().toLowerCase(),
         cpf: _cpfFormatter.getUnmaskedText(),
         cnpj: cnpjDigits.isEmpty ? null : cnpjDigits,
         celular: _celularFormatter.getUnmaskedText(),
@@ -126,15 +124,13 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
 
       if (!mounted) return;
 
-      // Login automático após cadastro
       try {
         await _authService.login(
-          _emailController.text.trim(),
+          _emailController.text.trim().toLowerCase(),
           _senhaController.text,
           'COMERCIANTE',
         );
       } on AppException {
-        // Se o login automático falhar, direciona para a tela de login
         if (!mounted) return;
         Navigator.pushReplacementNamed(
           context,
@@ -175,11 +171,11 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
-        foregroundColor: ColorsPalette.whiteBackground,
-        surfaceTintColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
+        foregroundColor: context.mapColors.mainBackground,
+        surfaceTintColor: context.mapColors.mainBackground,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -295,7 +291,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
-                      color: Colors.grey.shade500,
+                      color: context.mapColors.iconMuted,
                       size: AppIconSize.md,
                     ),
                     onPressed: () {
@@ -327,7 +323,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                                   borderRadius: BorderRadius.circular(6.0),
                                 ),
                                 side: BorderSide(
-                                  color: Colors.grey.shade400,
+                                  color: context.mapColors.border,
                                   width: 1.5,
                                 ),
                                 onChanged: (value) {
@@ -361,7 +357,7 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
                                         style: AppText.secundario(context)
                                             .copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: ColorsPalette.black,
+                                              color: context.mapColors.primaryText,
                                               decoration:
                                                   TextDecoration.underline,
                                             ),

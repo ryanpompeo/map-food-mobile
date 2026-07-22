@@ -4,6 +4,7 @@ import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/auth/presentation/widgets/option_card.dart';
 
 class AccountTypePage extends StatelessWidget {
@@ -12,18 +13,18 @@ class AccountTypePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         elevation: 0,
-        foregroundColor: ColorsPalette.whiteBackground,
+        foregroundColor: context.mapColors.mainBackground,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
           "Selecione o tipo de conta",
           style: AppText.subtitulo(
             context,
-          ).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+          ).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
         ),
         leading: IconButton(
           onPressed: () {

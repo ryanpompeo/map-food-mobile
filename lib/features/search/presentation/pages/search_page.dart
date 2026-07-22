@@ -6,13 +6,14 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/search/data/services/search_history_service.dart';
-import 'package:map_food/features/search/presentation/widgets/category_filters_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/em_alta_list_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/perto_de_voce_carrossel_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/search_field_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/search_history_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/store_list_widgets.dart';
+import 'package:map_food/features/search/presentation/widgets/category_filters.dart';
+import 'package:map_food/features/store/presentation/widgets/em_alta_list_widget.dart';
+import 'package:map_food/features/store/presentation/widgets/perto_de_voce_carrossel_widget.dart';
+import 'package:map_food/features/search/presentation/widgets/search_field.dart';
+import 'package:map_food/features/search/presentation/widgets/search_history.dart';
+import 'package:map_food/features/store/presentation/widgets/store_list_widgets.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
@@ -118,6 +119,9 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _onQueryFromHistory(String query) {
+    // Cancela um debounce de digitação pendente — senão ele dispara ~500ms
+    // depois com o texto antigo e desfaz essa seleção do histórico.
+    _debounce?.cancel();
     setState(() {
       _searchController.text = query;
       _selectedFilterIndex = 0;
@@ -180,29 +184,29 @@ class _SearchPageState extends State<SearchPage> {
         ? null
         : _categorias[_selectedFilterIndex - 1].nome;
 
-    var list = _allStores;
+    var lojasFiltradas = _allStores;
     if (categoryName != null) {
-      list = list.where((s) => s.categoriaNomes.contains(categoryName)).toList();
+      lojasFiltradas = lojasFiltradas.where((s) => s.categoriaNomes.contains(categoryName)).toList();
     }
     if (_searchQuery.trim().isNotEmpty) {
-      final q = _searchQuery.trim().toLowerCase();
-      list = list.where((s) => s.nome.toLowerCase().contains(q)).toList();
+      final termoBuscaNormalizado = _searchQuery.trim().toLowerCase();
+      lojasFiltradas = lojasFiltradas.where((s) => s.nome.toLowerCase().contains(termoBuscaNormalizado)).toList();
     }
 
-    final emAlta = list.where((s) => (s.avaliacao ?? 0) > 4.5).toList()
+    final emAlta = lojasFiltradas.where((s) => (s.avaliacao ?? 0) > 4.5).toList()
       ..sort((a, b) => (b.avaliacao ?? 0).compareTo(a.avaliacao ?? 0));
 
     List<StoreDto> pertoDeVoce;
     if (_userLat != null && _userLng != null) {
       double distancia(StoreDto s) => Geolocator.distanceBetween(_userLat!, _userLng!, s.latitude!, s.longitude!);
-      pertoDeVoce = list.where((s) => s.temLocalizacao).toList()
+      pertoDeVoce = lojasFiltradas.where((s) => s.temLocalizacao).toList()
         ..sort((a, b) => distancia(a).compareTo(distancia(b)));
     } else {
-      pertoDeVoce = list;
+      pertoDeVoce = lojasFiltradas;
     }
 
     setState(() {
-      _filteredStores = list;
+      _filteredStores = lojasFiltradas;
       _emAltaStores = emAlta.take(_maxSectionItems).toList();
       _pertoDeVoceStores = pertoDeVoce.take(_maxSectionItems).toList();
     });
@@ -226,7 +230,7 @@ class _SearchPageState extends State<SearchPage> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -256,6 +260,9 @@ class _SearchPageState extends State<SearchPage> {
                       filtros: _filtros,
                       selectedIndex: _selectedFilterIndex,
                       onFilterChanged: (index) {
+                        // Idem: cancela um debounce de digitação pendente pra
+                        // ele não sobrescrever essa troca de categoria depois.
+                        _debounce?.cancel();
                         setState(() {
                           _selectedFilterIndex = index;
                           _searchController.clear();
@@ -292,10 +299,10 @@ class _SearchPageState extends State<SearchPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         PhosphorIconsRegular.wifiSlash,
                         size: 48,
-                        color: ColorsPalette.greyText,
+                        color: context.mapColors.iconMuted,
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -303,7 +310,7 @@ class _SearchPageState extends State<SearchPage> {
                         textAlign: TextAlign.center,
                         style: AppText.corpo(
                           context,
-                        ).copyWith(color: ColorsPalette.greyText),
+                        ).copyWith(color: context.mapColors.secondaryText),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(

@@ -5,6 +5,7 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
@@ -44,10 +45,10 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
     final isLoading = FavoritesManager.instance.isLoading;
 
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         leading: IconButton(
@@ -58,7 +59,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
           "Favoritos",
           style: AppText.subtitulo(
             context,
-          ).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black),
+          ).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText),
         ),
       ),
       body: isLoading && favorites.isEmpty
@@ -86,9 +87,9 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.mapColors.cardSurface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade100),
+                      border: Border.all(color: context.mapColors.border),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.03),
@@ -102,9 +103,11 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                         Container(
                           width: 80,
                           height: 80,
+                          // Um tom abaixo do cardSurface do card que envolve esta
+                          // miniatura (mesmo padrão de superfície aninhada dos lotes anteriores).
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
-                            color: Colors.grey.shade100,
+                            color: context.mapColors.mainBackground,
                           ),
                           child: resolveImagemUrl(store.capaUrl) != null
                               ? ClipRRect(
@@ -118,11 +121,11 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                                     cacheHeight: (80.0 * MediaQuery.devicePixelRatioOf(context)).round(),
                                     errorBuilder: (context, error, stackTrace) => Icon(
                                       PhosphorIconsRegular.image,
-                                      color: Colors.grey.shade400,
+                                      color: context.mapColors.iconMuted,
                                     ),
                                   ),
                                 )
-                              : Icon(PhosphorIconsRegular.image, color: Colors.grey.shade400),
+                              : Icon(PhosphorIconsRegular.image, color: context.mapColors.iconMuted),
                         ),
 
                         const SizedBox(width: 12),
@@ -137,7 +140,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                                 overflow: TextOverflow.ellipsis,
                                 style: AppText.corpo(context).copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: ColorsPalette.black,
+                                  color: context.mapColors.primaryText,
                                 ),
                               ),
 
@@ -147,9 +150,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                                 store.categoria.isNotEmpty
                                     ? store.categoria
                                     : "Sem categoria",
-                                style: AppText.legenda(
-                                  context,
-                                ).copyWith(color: Colors.grey.shade600),
+                                style: AppText.legenda(context),
                               ),
 
                               const SizedBox(height: 6),
@@ -233,7 +234,7 @@ class _EmptyFavoritesWidget extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppText.corpo(
                 context,
-              ).copyWith(color: ColorsPalette.greyText),
+              ).copyWith(color: context.mapColors.secondaryText),
             ),
           ],
         ),

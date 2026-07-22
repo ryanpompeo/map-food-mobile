@@ -9,6 +9,7 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
@@ -44,6 +45,11 @@ class StoreMapView extends StatefulWidget {
   /// pills que ficam por cima do mapa em algumas telas.
   final double floatingControlsBottomPadding;
 
+  /// Distância do topo pro banner de "sem lojas com localização" — precisa
+  /// crescer quando há uma busca/filtro flutuante por cima do mapa, senão o
+  /// banner nasce embaixo desses controles.
+  final double topBannerOffset;
+
   const StoreMapView({
     super.key,
     required this.stores,
@@ -53,6 +59,7 @@ class StoreMapView extends StatefulWidget {
     this.userPosition,
     this.routePoints,
     this.floatingControlsBottomPadding = 16.0,
+    this.topBannerOffset = 16.0,
   });
 
   @override
@@ -356,13 +363,14 @@ class _StoreMapViewState extends State<StoreMapView> {
         _buildFloatingControls(),
         if (comLocalizacao.isEmpty)
           Positioned(
-            top: 16.0,
+            top: widget.topBannerOffset,
             left: 16.0,
             right: 16.0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               decoration: BoxDecoration(
-                color: Colors.white,
+                // Elemento flutuante sobre o mapa — cardSurface (Lote 4B).
+                color: context.mapColors.cardSurface,
                 borderRadius: BorderRadius.circular(100.0),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2)),
@@ -371,7 +379,8 @@ class _StoreMapViewState extends State<StoreMapView> {
               child: Text(
                 "Nenhuma loja com localização cadastrada por aqui ainda",
                 textAlign: TextAlign.center,
-                style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText, fontWeight: FontWeight.w600),
+                // Sem override de cor: legenda() já resolve pra secondaryText.
+                style: AppText.legenda(context).copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -401,7 +410,9 @@ class _MapControlButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: isActive ? ColorsPalette.redComponents : Colors.white,
+        // Botão circular flutuante sobre o mapa — cardSurface quando
+        // inativo (Lote 4B); ativo mantém a cor de marca, intocada.
+        color: isActive ? ColorsPalette.redComponents : context.mapColors.cardSurface,
         shape: const CircleBorder(),
         elevation: 3.0,
         shadowColor: Colors.black.withValues(alpha: 0.3),
@@ -413,7 +424,7 @@ class _MapControlButton extends StatelessWidget {
             child: Icon(
               icon,
               size: AppIconSize.md,
-              color: isActive ? Colors.white : ColorsPalette.black,
+              color: isActive ? Colors.white : context.mapColors.primaryText,
             ),
           ),
         ),

@@ -2,10 +2,6 @@ import 'package:cpf_cnpj_validator/cpf_validator.dart';
 import 'package:cpf_cnpj_validator/cnpj_validator.dart';
 
 class FormValidator {
-  // =============================
-  // VALIDAÇÃO GENÉRICA
-  // =============================
-
   static String? required(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
       return "$fieldName é obrigatório";
@@ -19,10 +15,6 @@ class FormValidator {
     }
     return null;
   }
-
-  // =============================
-  // NOME
-  // =============================
 
   static String? nome(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -48,10 +40,6 @@ class FormValidator {
     return null;
   }
 
-  // =============================
-  // EMAIL
-  // =============================
-
   static String? email(String? value) {
     if (value == null || value.trim().isEmpty) {
       return "Email é obrigatório";
@@ -65,10 +53,6 @@ class FormValidator {
 
     return null;
   }
-
-  // =============================
-  // TELEFONE
-  // =============================
 
   static String? telefone(String? value) {
     if (value == null || value.trim().isEmpty) {
@@ -89,10 +73,6 @@ class FormValidator {
     return telefone(value);
   }
 
-  // =============================
-  // CEP
-  // =============================
-
   static String? cep(String? value) {
     if (value == null || value.trim().isEmpty) {
       return "CEP é obrigatório";
@@ -106,10 +86,6 @@ class FormValidator {
 
     return null;
   }
-
-  // =============================
-  // CPF E CNPJ
-  // =============================
 
   static String? cpf(String? value) {
     if (value == null || value.isEmpty) {
@@ -154,10 +130,6 @@ class FormValidator {
     }
   }
 
-  // =============================
-  // SENHA
-  // =============================
-
   static String? senha(String? value) {
     if (value == null || value.isEmpty) {
       return "Senha obrigatória";
@@ -192,10 +164,6 @@ class FormValidator {
 
     return null;
   }
-
-  // =============================
-  // TERMOS DE USO
-  // =============================
 
   static String? termos(bool? value) {
     if (value == null || value == false) {

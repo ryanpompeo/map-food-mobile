@@ -12,6 +12,7 @@ import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
 import 'package:map_food/features/consumer/data/models/consumer_register_request.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
@@ -162,11 +163,11 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
-        foregroundColor: ColorsPalette.whiteBackground,
-        surfaceTintColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
+        foregroundColor: context.mapColors.mainBackground,
+        surfaceTintColor: context.mapColors.mainBackground,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -259,7 +260,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
-                      color: Colors.grey.shade500,
+                      color: context.mapColors.iconMuted,
                       size: AppIconSize.md,
                     ),
                     onPressed: () {
@@ -292,7 +293,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                                   borderRadius: BorderRadius.circular(6.0),
                                 ),
                                 side: BorderSide(
-                                  color: Colors.grey.shade400,
+                                  color: context.mapColors.border,
                                   width: 1.5,
                                 ),
                                 onChanged: (value) {
@@ -325,7 +326,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                                         style: AppText.secundario(context)
                                             .copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.black,
+                                              color: context.mapColors.primaryText,
                                               decoration:
                                                   TextDecoration.underline,
                                             ),
@@ -337,7 +338,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
                                         style: AppText.secundario(context)
                                             .copyWith(
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.black,
+                                              color: context.mapColors.primaryText,
                                               decoration:
                                                   TextDecoration.underline,
                                             ),

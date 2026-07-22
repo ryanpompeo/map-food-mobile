@@ -15,6 +15,7 @@ import 'package:map_food/core/ui/widgets/xfile_image.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
@@ -47,10 +48,8 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   final _cepService = CepService();
   bool _buscandoCep = false;
 
-  // Estado da Foto Destaque (Capa)
   XFile? _fotoDestaque;
 
-  // Estado da Galeria Interna
   final List<XFile> _fotosGaleria = [];
   final int _maxFotos = 10;
 
@@ -119,7 +118,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   /// Converte o endereço digitado (opcional — muitos comércios daqui são
   /// ambulantes, sem endereço fixo) em lat/lng pra dar um ponto inicial no
   /// mapa. A posição de verdade vem do GPS ao vivo quando a loja fica
-  /// "Aberta"/Em Ronda (ver `working_page.dart`); isso aqui é só um fallback
+  /// "Aberta"/Em Ronda (ver `merchant_working_page.dart`); isso aqui é só um fallback
   /// pra quem quer indicar uma área de referência já no cadastro.
   Future<(double?, double?)> _geocodificarEndereco() async {
     // O pacote geocoding não tem implementação web.
@@ -147,7 +146,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     if (digits.length != 8 || _buscandoCep) return;
 
     setState(() => _buscandoCep = true);
-    final resultado = await _cepService.buscar(digits);
+    final resultado = await _cepService.buscarEnderecoPorCep(digits);
     if (!mounted) return;
 
     setState(() {
@@ -264,10 +263,10 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     return UnsavedChangesGuard(
       hasUnsavedChanges: _hasUnsavedChanges,
       child: Scaffold(
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         appBar: AppBar(
-          backgroundColor: ColorsPalette.whiteBackground,
-          foregroundColor: ColorsPalette.black,
+          backgroundColor: context.mapColors.mainBackground,
+          foregroundColor: context.mapColors.primaryText,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
@@ -276,7 +275,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
             "Configuração da Loja",
             style: AppText.subtitulo(
               context,
-            ).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+            ).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
           ),
         ),
         body: SafeArea(
@@ -325,7 +324,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     "Sua loja aparece no mapa pela localização em tempo real quando você ativa 'Loja Aberta' — não precisa de endereço fixo. Preencha aqui só se quiser indicar uma área de referência.",
                     style: AppText.corpo(
                       context,
-                    ).copyWith(color: ColorsPalette.greyText),
+                    ).copyWith(color: context.mapColors.secondaryText),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppFormField(
@@ -397,7 +396,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     "Selecione o que você vende para os clientes te encontrarem mais fácil",
                     style: AppText.corpo(
                       context,
-                    ).copyWith(color: ColorsPalette.greyText),
+                    ).copyWith(color: context.mapColors.secondaryText),
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -445,9 +444,12 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                               vertical: 10.0,
                             ),
                             decoration: BoxDecoration(
+                              // Chip flutuante sobre a página — cardSurface
+                              // quando não selecionado; selecionado fica
+                              // sólido preto de propósito (CTA do Lote 1).
                               color: isSelected
                                   ? ColorsPalette.black
-                                  : Colors.white,
+                                  : context.mapColors.cardSurface,
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
@@ -457,7 +459,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                               style: AppText.corpo(context).copyWith(
                                 color: isSelected
                                     ? Colors.white
-                                    : ColorsPalette.greyText,
+                                    : context.mapColors.secondaryText,
                                 fontWeight: isSelected
                                     ? FontWeight.bold
                                     : FontWeight.w600,
@@ -565,7 +567,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         titulo,
         style: AppText.subtitulo(
           context,
-        ).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+        ).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
       ),
     );
   }
@@ -597,7 +599,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         ),
         Text(
           "Esta será a imagem principal da sua loja exibida nas buscas dos clientes",
-          style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+          style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
         ),
         const SizedBox(height: AppSpacing.md),
         GestureDetector(
@@ -610,9 +612,11 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
             width: double.infinity,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
+              // Estado vazio: superfície flutuante sobre a página. Estado
+              // preenchido mantém o tingimento de marca, intocado.
               color: _fotoDestaque != null
                   ? ColorsPalette.redComponents.withValues(alpha: 0.05)
-                  : Colors.white,
+                  : context.mapColors.cardSurface,
               borderRadius: BorderRadius.circular(24.0),
             ),
             child: _fotoDestaque != null
@@ -626,8 +630,10 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                           onTap: () => setState(() => _fotoDestaque = null),
                           child: Container(
                             padding: const EdgeInsets.all(8.0),
+                            // Botão flutuante sobre a foto do usuário —
+                            // cardSurface, não Colors.white literal.
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: context.mapColors.cardSurface,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
@@ -651,13 +657,16 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(12.0),
+                        // Um tom abaixo do cardSurface do container que
+                        // envolve este ícone (mesmo padrão de superfície
+                        // aninhada do Lote 4A/2).
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
+                          color: context.mapColors.mainBackground,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           PhosphorIconsRegular.imagesSquare,
-                          color: Colors.grey.shade500,
+                          color: context.mapColors.iconMuted,
                           size: 28.0,
                         ),
                       ),
@@ -666,7 +675,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                         "Adicionar Foto de Capa",
                         style: AppText.legenda(context).copyWith(
                           fontWeight: FontWeight.bold,
-                          color: ColorsPalette.black,
+                          color: context.mapColors.primaryText,
                         ),
                       ),
                     ],
@@ -684,7 +693,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
         _buildTituloSecao("Galeria Interna"),
         Text(
           "Adicione até $_maxFotos imagens para o seu cardápio ou vitrine",
-          style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+          style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
         ),
         const SizedBox(height: AppSpacing.md),
         SingleChildScrollView(
@@ -704,12 +713,13 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     width: 110.0,
                     margin: const EdgeInsets.only(right: 16.0),
                     decoration: BoxDecoration(
-                      color: ColorsPalette.white,
+                      // Tile flutuante sobre a página — cardSurface.
+                      color: context.mapColors.cardSurface,
                       borderRadius: BorderRadius.circular(20.0),
 
                       boxShadow: [
                         BoxShadow(
-                          color: ColorsPalette.black.withValues(alpha: 0.02),
+                          color: Colors.black.withValues(alpha: 0.02),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -737,7 +747,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                           "Adicionar",
                           style: AppText.legenda(context).copyWith(
                             fontWeight: FontWeight.w700,
-                            color: ColorsPalette.blackDetails,
+                            color: context.mapColors.primaryText,
                           ),
                         ),
                       ],
@@ -778,8 +788,9 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
               },
               child: Container(
                 padding: const EdgeInsets.all(6.0),
+                // Botão flutuante sobre a foto do usuário — cardSurface.
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.mapColors.cardSurface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -788,10 +799,10 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   PhosphorIconsRegular.x,
                   size: 14.0,
-                  color: ColorsPalette.black,
+                  color: context.mapColors.primaryText,
                 ),
               ),
             ),

@@ -12,11 +12,17 @@ class FavoritesManager extends ChangeNotifier {
   final List<StoreDto> _favorites = [];
   bool _loading = false;
 
+  // Evita duas chamadas concorrentes de toggle() pro mesmo storeId (ex:
+  // double-tap no coração antes da primeira resposta da API chegar), que
+  // podiam disparar add/remove em paralelo e deixar o ícone dessincronizado
+  // do que ficou persistido no backend.
+  final Set<int> _pending = {};
+
   List<StoreDto> get favorites => List.unmodifiable(_favorites);
   bool get isLoading => _loading;
 
-  bool isFavorite(int storeId) {
-    return _favorites.any((store) => store.id == storeId);
+  bool isFavorite(int lojaId) {
+    return _favorites.any((store) => store.id == lojaId);
   }
 
   /// Busca os favoritos do consumidor autenticado na API. Seguro de chamar
@@ -38,6 +44,9 @@ class FavoritesManager extends ChangeNotifier {
   /// Atualização otimista: alterna localmente e notifica antes de confirmar
   /// com a API. Reverte e relança o erro se a chamada falhar.
   Future<void> toggle(StoreDto store) async {
+    if (_pending.contains(store.id)) return;
+    _pending.add(store.id);
+
     final wasFavorite = isFavorite(store.id);
 
     if (wasFavorite) {
@@ -61,6 +70,8 @@ class FavoritesManager extends ChangeNotifier {
       }
       notifyListeners();
       rethrow;
+    } finally {
+      _pending.remove(store.id);
     }
   }
 
@@ -68,6 +79,7 @@ class FavoritesManager extends ChangeNotifier {
   /// favoritos de uma conta para a sessão seguinte no mesmo aparelho.
   void clear() {
     _favorites.clear();
+    _pending.clear();
     notifyListeners();
   }
 }

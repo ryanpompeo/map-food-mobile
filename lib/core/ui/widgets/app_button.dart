@@ -3,6 +3,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class AppButton extends StatelessWidget {
   final String text;
@@ -32,7 +33,10 @@ class AppButton extends StatelessWidget {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          backgroundColor: ColorsPalette.whiteBackground,
+          // Botão secundário: fundo de superfície (se adapta ao tema); o
+          // texto/ícone de marca abaixo NÃO se adapta — é escolhido por
+          // quem chama via `isDark`, não pelo ThemeMode do app.
+          backgroundColor: context.mapColors.cardSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),

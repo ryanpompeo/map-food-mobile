@@ -5,9 +5,10 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/features/search/presentation/utils/rating_format.dart';
-import 'package:map_food/features/search/presentation/widgets/favorite_button_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/store_card_badges.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/utils/rating_format.dart';
+import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
+import 'package:map_food/features/store/presentation/widgets/store_card_badges.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
@@ -41,7 +42,7 @@ class _PertoDeVoceCarrosselWidgetState extends State<PertoDeVoceCarrosselWidget>
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Text("Perto de você", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black)),
+          child: Text("Perto de você", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText)),
         ),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
@@ -70,7 +71,7 @@ class _PertoDeVoceCarrosselWidgetState extends State<PertoDeVoceCarrosselWidget>
                   width: isActive ? 20.0 : 6.0,
                   height: 6.0,
                   decoration: BoxDecoration(
-                    color: isActive ? ColorsPalette.redComponents : Colors.grey.shade300,
+                    color: isActive ? ColorsPalette.redComponents : context.mapColors.border,
                     borderRadius: BorderRadius.circular(3.0),
                   ),
                 );
@@ -105,10 +106,10 @@ class DestaqueCardWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12.0),
         decoration: BoxDecoration(
-          color: ColorsPalette.white,
+          color: context.mapColors.cardSurface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: [
-            BoxShadow(color: ColorsPalette.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 8)),
           ],
         ),
         child: Column(
@@ -130,7 +131,10 @@ class DestaqueCardWidget extends StatelessWidget {
                   RepaintBoundary(
                     child: Container(
                       height: 180.0, width: double.infinity,
-                      color: Colors.grey.shade200,
+                      // Um tom abaixo do cardSurface do card que envolve a
+                      // foto, senão o placeholder fica invisível contra o
+                      // próprio card antes da imagem carregar.
+                      color: context.mapColors.mainBackground,
                       child: resolveImagemUrl(destaque.capaUrl) != null
                           ? Image.network(
                               resolveImagemUrl(destaque.capaUrl)!, fit: BoxFit.cover,
@@ -138,9 +142,9 @@ class DestaqueCardWidget extends StatelessWidget {
                               // nesse tamanho físico em vez da resolução cheia da
                               // foto, que pode ter vários MB.
                               cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
-                              errorBuilder: (context, error, stackTrace) => Icon(PhosphorIconsRegular.image, size: 48.0, color: Colors.grey.shade400),
+                              errorBuilder: (context, error, stackTrace) => Icon(PhosphorIconsRegular.image, size: 48.0, color: context.mapColors.iconMuted),
                             )
-                          : Icon(PhosphorIconsRegular.image, size: 48.0, color: Colors.grey.shade300),
+                          : Icon(PhosphorIconsRegular.image, size: 48.0, color: context.mapColors.iconMuted),
                     ),
                   ),
                   Positioned(
@@ -164,7 +168,7 @@ class DestaqueCardWidget extends StatelessWidget {
                       Expanded(
                         child: Text(
                           destaque.nome,
-                          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black, fontSize: 19.0),
+                          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText, fontSize: 19.0),
                           maxLines: 1, overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -177,13 +181,14 @@ class DestaqueCardWidget extends StatelessWidget {
                           const SizedBox(width: 3),
                           Text(
                             formatRating(destaque.avaliacao),
-                            style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black, fontSize: 19.0),
+                            style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText, fontSize: 19.0),
                           ),
                           if (destaque.totalAvaliacoes > 0) ...[
                             const SizedBox(width: 4),
                             Text(
                               "(${destaque.totalAvaliacoes})",
-                              style: AppText.legenda(context).copyWith(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                              // Sem override de cor: legenda() já resolve pra secondaryText.
+                              style: AppText.legenda(context).copyWith(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ],
@@ -194,7 +199,8 @@ class DestaqueCardWidget extends StatelessWidget {
                     const SizedBox(height: 4.0),
                     Text(
                       endereco,
-                      style: AppText.legenda(context).copyWith(color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                      // Sem override de cor: legenda() já resolve pra secondaryText.
+                      style: AppText.legenda(context).copyWith(fontWeight: FontWeight.w500),
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                     ),
                   ],

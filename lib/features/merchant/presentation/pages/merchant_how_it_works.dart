@@ -3,6 +3,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class MerchantHowItWorksPage extends StatelessWidget {
   const MerchantHowItWorksPage({super.key});
@@ -10,7 +11,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       body: Stack(
         children: [
           CustomScrollView(
@@ -19,15 +20,15 @@ class MerchantHowItWorksPage extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 80,
                 pinned: true,
-                backgroundColor: ColorsPalette.whiteBackground,
-                foregroundColor: ColorsPalette.whiteBackground,
-                surfaceTintColor: ColorsPalette.whiteBackground,
+                backgroundColor: context.mapColors.mainBackground,
+                foregroundColor: context.mapColors.mainBackground,
+                surfaceTintColor: context.mapColors.mainBackground,
                 elevation: 0,
                 leading: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Container(
-                    decoration: const BoxDecoration(
-                      color: ColorsPalette.whiteBackground,
+                    decoration: BoxDecoration(
+                      color: context.mapColors.mainBackground,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
@@ -53,7 +54,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
                         style: AppText.titulo(context).copyWith(
                           fontWeight: FontWeight.w900,
                           fontSize: 28.0,
-                          color: ColorsPalette.black,
+                          color: context.mapColors.primaryText,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
@@ -61,7 +62,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
                         "Veja como dominar o MapFood e atrair mais clientes para o seu ponto de venda",
                         style: AppText.corpo(
                           context,
-                        ).copyWith(color: ColorsPalette.greyText, height: 1.4),
+                        ).copyWith(color: context.mapColors.secondaryText, height: 1.4),
                       ),
                       const SizedBox(height: AppSpacing.xl),
 
@@ -138,9 +139,9 @@ class MerchantHowItWorksPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.mapColors.cardSurface,
         borderRadius: BorderRadius.circular(24.0),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: context.mapColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -179,7 +180,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
                   description,
                   style: AppText.corpo(
                     context,
-                  ).copyWith(color: ColorsPalette.greyText),
+                  ).copyWith(color: context.mapColors.secondaryText),
                 ),
               ],
             ),

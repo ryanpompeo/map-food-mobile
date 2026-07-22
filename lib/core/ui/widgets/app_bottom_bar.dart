@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/glass_container.dart';
 
 class BottomBarItem {
@@ -49,7 +50,7 @@ class AppBottomBar extends StatelessWidget {
                   curve: Curves.easeOutCubic,
                   left: selectedIndex * (_itemSize + itemSpacing),
                   top: 0,
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: _itemSize,
                     height: _itemSize,
                     child: Center(
@@ -59,7 +60,7 @@ class AppBottomBar extends StatelessWidget {
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: ColorsPalette.white,
+                            color: context.mapColors.cardSurface,
                           ),
                         ),
                       ),
@@ -117,7 +118,7 @@ class _NavItem extends StatelessWidget {
               tween: ColorTween(
                 end: isSelected
                     ? ColorsPalette.redComponents
-                    : ColorsPalette.black.withValues(alpha: 0.6),
+                    : context.mapColors.iconMuted,
               ),
               builder: (context, color, child) => Icon(icon, size: 24.0, color: color),
             ),

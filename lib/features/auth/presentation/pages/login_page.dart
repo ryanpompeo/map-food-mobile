@@ -6,6 +6,7 @@ import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -90,10 +91,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
-        foregroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
+        foregroundColor: context.mapColors.mainBackground,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
@@ -120,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                 style: AppText.display(context).copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: -1.5,
-                  color: ColorsPalette.black,
+                  color: context.mapColors.primaryText,
                   height: 1.1,
                 ),
               ),
@@ -137,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
               // Seletor de tipo de conta
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: context.mapColors.cardSurface,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Row(
@@ -160,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                             style: AppText.legenda(context).copyWith(
                               color: _tipoLogin == 'CONSUMIDOR'
                                   ? Colors.white
-                                  : Colors.grey.shade600,
+                                  : context.mapColors.secondaryText,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -186,7 +187,7 @@ class _LoginPageState extends State<LoginPage> {
                             style: AppText.legenda(context).copyWith(
                               color: _tipoLogin == 'COMERCIANTE'
                                   ? Colors.white
-                                  : Colors.grey.shade600,
+                                  : context.mapColors.secondaryText,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -219,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
-                    color: Colors.grey.shade500,
+                    color: context.mapColors.iconMuted,
                     size: AppIconSize.md,
                   ),
                   onPressed: () =>
@@ -274,9 +275,9 @@ class _LoginPageState extends State<LoginPage> {
 
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.grey.shade200)),
+                  Expanded(child: Divider(color: context.mapColors.border)),
 
-                  Expanded(child: Divider(color: Colors.grey.shade200)),
+                  Expanded(child: Divider(color: context.mapColors.border)),
                 ],
               ),
 
@@ -293,7 +294,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextSpan(
                           text: "Cadastre-se",
                           style: AppText.secundario(context).copyWith(
-                            color: ColorsPalette.blackDetails,
+                            color: context.mapColors.primaryText,
                             fontWeight: FontWeight.bold,
                             decoration: TextDecoration.underline,
                           ),

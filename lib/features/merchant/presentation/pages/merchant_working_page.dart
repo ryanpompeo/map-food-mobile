@@ -8,13 +8,14 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
 
-class WorkingPage extends StatefulWidget {
+class MerchantWorkingPage extends StatefulWidget {
   final StoreDto store;
 
   /// Barra de troca de loja (comerciante com mais de uma loja) — opcional,
@@ -25,7 +26,7 @@ class WorkingPage extends StatefulWidget {
   /// posição da ronda), pra lista de lojas dele não ficar defasada.
   final ValueChanged<StoreDto>? onStoreUpdated;
 
-  const WorkingPage({
+  const MerchantWorkingPage({
     super.key,
     required this.store,
     this.storeSwitcher,
@@ -33,10 +34,10 @@ class WorkingPage extends StatefulWidget {
   });
 
   @override
-  State<WorkingPage> createState() => _WorkingPageState();
+  State<MerchantWorkingPage> createState() => _MerchantWorkingPageState();
 }
 
-class _WorkingPageState extends State<WorkingPage> {
+class _MerchantWorkingPageState extends State<MerchantWorkingPage> {
   late bool _lojaAberta;
   bool _isUpdatingStatus = false;
   late StoreDto _store;
@@ -46,6 +47,10 @@ class _WorkingPageState extends State<WorkingPage> {
   // fechar a loja ou sair da tela.
   StreamSubscription<Position>? _positionSub;
   bool _rastreioAtivo = false;
+  // Incrementado a cada posição recebida — usado pra descartar a resposta de
+  // um PUT antigo que chegue depois de um mais recente (rede lenta +
+  // deslocamento rápido podem inverter a ordem de chegada das respostas).
+  int _posicaoSeq = 0;
 
   final _storeService = StoreService();
 
@@ -76,7 +81,11 @@ class _WorkingPageState extends State<WorkingPage> {
         return;
       }
 
-      if (mounted) setState(() => _rastreioAtivo = true);
+      // O diálogo de permissão do SO pode levar segundos — se a tela já foi
+      // fechada nesse meio-tempo, não assina o stream (senão a subscription
+      // nunca é cancelada e o GPS fica ligado à toa).
+      if (!mounted) return;
+      setState(() => _rastreioAtivo = true);
 
       // Stream compartilhado com o mapa de lojas próximas — um único consumo
       // de GPS mesmo com as duas telas vivas no IndexedStack.
@@ -93,6 +102,7 @@ class _WorkingPageState extends State<WorkingPage> {
   }
 
   Future<void> _enviarNovaPosicao(Position posicao) async {
+    final seq = ++_posicaoSeq;
     try {
       // PUT /lojas/{id} faz merge campo-a-campo no backend, então reenviar
       // nome/descricao/categorias existentes é seguro e não apaga os demais
@@ -108,6 +118,9 @@ class _WorkingPageState extends State<WorkingPage> {
           longitude: posicao.longitude,
         ),
       );
+      // Descarta a resposta se uma posição mais recente já foi enviada
+      // enquanto esta estava em voo — evita regredir a posição exibida.
+      if (seq != _posicaoSeq) return;
       if (mounted) setState(() => _store = atualizada);
       widget.onStoreUpdated?.call(atualizada);
     } catch (_) {
@@ -154,9 +167,9 @@ class _WorkingPageState extends State<WorkingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -165,7 +178,7 @@ class _WorkingPageState extends State<WorkingPage> {
           _store.nome,
           style: AppText.titulo(context).copyWith(
             fontWeight: FontWeight.w900,
-            color: ColorsPalette.black,
+            color: context.mapColors.primaryText,
             fontSize: 20.0,
           ),
         ),
@@ -198,7 +211,7 @@ class _WorkingPageState extends State<WorkingPage> {
               margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: ColorsPalette.white,
+                color: context.mapColors.cardSurface,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: StoreMapView(stores: [_store], focusedStore: _store),
@@ -215,7 +228,9 @@ class _WorkingPageState extends State<WorkingPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: _lojaAberta ? ColorsPalette.black : Colors.white,
+        // Aberta: card sólido preto de propósito, como um CTA (Lote 1).
+        // Fechada: superfície neutra, adapta ao tema.
+        color: _lojaAberta ? ColorsPalette.black : context.mapColors.cardSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: _lojaAberta
             ? [
@@ -237,7 +252,7 @@ class _WorkingPageState extends State<WorkingPage> {
                 children: [
                   Icon(
                     PhosphorIconsRegular.storefront,
-                    color: _lojaAberta ? Colors.white : ColorsPalette.black,
+                    color: _lojaAberta ? Colors.white : context.mapColors.primaryText,
                   ),
                   if (_rastreioAtivo) ...[
                     const SizedBox(width: 8.0),
@@ -296,14 +311,16 @@ class _WorkingPageState extends State<WorkingPage> {
             _lojaAberta ? "Loja Aberta" : "Loja Fechada",
             style: AppText.corpo(context).copyWith(
               fontWeight: FontWeight.w800,
-              color: _lojaAberta ? Colors.white : ColorsPalette.black,
+              color: _lojaAberta ? Colors.white : context.mapColors.primaryText,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             _lojaAberta ? "Visível aos clientes" : "Invisível no mapa",
+            // Aberta: cinza claro fixo, emparelhado com o card preto sólido
+            // acima (que também não muda com o tema). Fechada: secondaryText.
             style: AppText.legenda(context).copyWith(
-              color: _lojaAberta ? Colors.grey.shade400 : Colors.grey.shade500,
+              color: _lojaAberta ? Colors.grey.shade400 : null,
             ),
           ),
         ],

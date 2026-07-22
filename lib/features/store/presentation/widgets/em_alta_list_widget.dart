@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/features/search/presentation/widgets/store_list_widgets.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/features/store/presentation/widgets/store_list_widgets.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
 /// Cabeçalho ("Em Alta"). Fica separado da lista pra que ela abaixo continue
@@ -14,7 +14,7 @@ class EmAltaSectionHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Text("Em Alta", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black)),
+      child: Text("Em Alta", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText)),
     );
   }
 }
@@ -34,7 +34,7 @@ class EmAltaListSliverWidget extends StatelessWidget {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
-          child: Center(child: Text("Nenhuma loja em alta no momento", style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText))),
+          child: Center(child: Text("Nenhuma loja em alta no momento", style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText))),
         ),
       );
     }

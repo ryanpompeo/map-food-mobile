@@ -4,8 +4,9 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/features/reviews/data/models/denuncia_model.dart';
-import 'package:map_food/features/reviews/data/services/denuncia_service.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/features/denuncias/data/models/denuncia_model.dart';
+import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
 
 class ConsumerComplaintsPage extends StatefulWidget {
   const ConsumerComplaintsPage({super.key});
@@ -56,16 +57,16 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
           "Minhas Denúncias",
           style: AppText.subtitulo(context)
-              .copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+              .copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
@@ -135,9 +136,9 @@ class _DenunciaCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.mapColors.cardSurface,
         borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: context.mapColors.border),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 4)),
         ],
@@ -157,9 +158,10 @@ class _DenunciaCard extends StatelessWidget {
                       style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 2),
+                    // Sem override de cor: legenda() já resolve pra secondaryText.
                     Text(
                       _motivoLabels[denuncia.motivo] ?? denuncia.motivo,
-                      style: AppText.legenda(context).copyWith(color: Colors.grey.shade600),
+                      style: AppText.legenda(context),
                     ),
                   ],
                 ),
@@ -181,13 +183,14 @@ class _DenunciaCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               denuncia.descricao!,
-              style: AppText.corpo(context).copyWith(color: Colors.grey.shade700, height: 1.4),
+              style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText, height: 1.4),
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
+          // Sem override de cor: legenda() já resolve pra secondaryText.
           Text(
             _formatDate(denuncia.dataDenuncia),
-            style: AppText.legenda(context).copyWith(color: Colors.grey),
+            style: AppText.legenda(context),
           ),
         ],
       ),
@@ -217,7 +220,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               "As denúncias que você fizer aparecerão aqui.",
               textAlign: TextAlign.center,
-              style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+              style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
             ),
           ],
         ),
@@ -239,9 +242,9 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: ColorsPalette.greyText),
+            Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: context.mapColors.iconMuted),
             const SizedBox(height: AppSpacing.md),
-            Text(message, textAlign: TextAlign.center, style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText)),
+            Text(message, textAlign: TextAlign.center, style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText)),
             const SizedBox(height: AppSpacing.lg),
             ElevatedButton(
               onPressed: onRetry,

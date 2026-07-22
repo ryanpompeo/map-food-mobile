@@ -54,9 +54,9 @@ class ErrorInterceptor extends Interceptor {
     if (data is! Map) return null;
 
     for (final key in ['fieldErrors', 'errors']) {
-      final list = data[key];
-      if (list is List && list.isNotEmpty) {
-        final first = list.first;
+      final errosDeValidacao = data[key];
+      if (errosDeValidacao is List && errosDeValidacao.isNotEmpty) {
+        final first = errosDeValidacao.first;
         if (first is Map) {
           final msg =
               first['defaultMessage']?.toString() ??

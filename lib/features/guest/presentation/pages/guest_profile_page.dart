@@ -6,6 +6,8 @@ import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/theme_mode_sheet.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
@@ -15,7 +17,7 @@ class GuestProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
 
       body: SafeArea(
         child: SingleChildScrollView(
@@ -27,7 +29,7 @@ class GuestProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: ColorsPalette.white,
+                    color: context.mapColors.cardSurface,
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     boxShadow: [
                       BoxShadow(
@@ -74,7 +76,7 @@ class GuestProfilePage extends StatelessWidget {
                         Text(
                           "Faça parte do MapFood",
                           style: AppText.subtitulo(context).copyWith(
-                            color: ColorsPalette.blackDetails,
+                            color: context.mapColors.primaryText,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.8,
                           ),
@@ -83,7 +85,7 @@ class GuestProfilePage extends StatelessWidget {
                         Text(
                           "Descubra novos sabores e salve favoritos, ou crie sua conta de parceiro para vender",
                           style: AppText.secundario(context).copyWith(
-                            color: ColorsPalette.greyText,
+                            color: context.mapColors.secondaryText,
                             height: 1.3,
                             fontWeight: FontWeight.w500,
                           ),
@@ -145,7 +147,7 @@ class GuestProfilePage extends StatelessWidget {
                                 TextSpan(
                                   text: "Já tem uma conta? ",
                                   style: AppText.secundario(context).copyWith(
-                                    color: ColorsPalette.greyText,
+                                    color: context.mapColors.secondaryText,
                                     fontWeight: FontWeight.w500,
                                   ),
                                   children: [
@@ -153,7 +155,7 @@ class GuestProfilePage extends StatelessWidget {
                                       text: "Entrar",
                                       style: AppText.secundario(context)
                                           .copyWith(
-                                            color: ColorsPalette.blackDetails,
+                                            color: context.mapColors.primaryText,
                                             fontWeight: FontWeight.bold,
                                             decoration:
                                                 TextDecoration.underline,
@@ -185,7 +187,7 @@ class GuestProfilePage extends StatelessWidget {
                 icon: PhosphorIconsRegular.moon,
                 title: "Tema do Aplicativo",
 
-                onTap: () {},
+                onTap: () => showThemeModeSheet(context),
               ),
               buildListTile(
                 context: context,
@@ -196,7 +198,7 @@ class GuestProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               Divider(
-                color: Colors.grey.shade200,
+                color: context.mapColors.border,
                 height: 1.0,
                 indent: AppSpacing.lg,
                 endIndent: AppSpacing.lg,
@@ -267,7 +269,7 @@ class GuestProfilePage extends StatelessWidget {
               child: Icon(
                 icon,
                 size: AppIconSize.lg,
-                color: ColorsPalette.blackDetails,
+                color: context.mapColors.primaryText,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -279,7 +281,7 @@ class GuestProfilePage extends StatelessWidget {
                     title,
                     style: AppText.corpo(context).copyWith(
                       fontWeight: FontWeight.w600,
-                      color: ColorsPalette.blackDetails,
+                      color: context.mapColors.primaryText,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -288,7 +290,7 @@ class GuestProfilePage extends StatelessWidget {
                       subtitle,
                       style: AppText.legenda(
                         context,
-                      ).copyWith(color: Colors.grey.shade500),
+                      ).copyWith(color: context.mapColors.secondaryText),
                     ),
                   ],
                 ],

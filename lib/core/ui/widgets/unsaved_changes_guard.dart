@@ -3,6 +3,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 /// Diálogo genérico de confirmação de saída, usado tanto para formulários
 /// com alterações pendentes quanto para operações em andamento (ex: cálculo
@@ -17,7 +18,7 @@ Future<bool> _confirmarSaida(
     context: context,
     builder: (ctx) => Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      backgroundColor: Colors.white,
+      backgroundColor: ctx.mapColors.cardSurface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(AppSpacing.lg),
       child: Padding(
@@ -45,7 +46,7 @@ Future<bool> _confirmarSaida(
             const SizedBox(height: AppSpacing.md),
             Text(
               mensagem,
-              style: AppText.corpo(ctx).copyWith(color: ColorsPalette.black),
+              style: AppText.corpo(ctx).copyWith(color: ctx.mapColors.primaryText),
             ),
             const SizedBox(height: AppSpacing.xl),
             Row(
@@ -53,7 +54,7 @@ Future<bool> _confirmarSaida(
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: Text("Continuar", style: AppText.botao(ctx).copyWith(color: Colors.grey.shade700)),
+                  child: Text("Continuar", style: AppText.botao(ctx).copyWith(color: ctx.mapColors.secondaryText)),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 ElevatedButton(

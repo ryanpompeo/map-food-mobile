@@ -39,5 +39,14 @@ class MotivosDenuncia {
   static String toApi(String uiLabel) =>
       uiParaApi[uiLabel] ?? 'OUTRO';
 
+  /// Converte o enum da API de volta pro label da UI — usado pra
+  /// pré-preencher o dropdown quando o consumidor já denunciou a loja.
+  static String fromApi(String apiValue) {
+    for (final entry in uiParaApi.entries) {
+      if (entry.value == apiValue) return entry.key;
+    }
+    return 'Outro';
+  }
+
   static List<String> get uiLabels => uiParaApi.keys.toList();
 }

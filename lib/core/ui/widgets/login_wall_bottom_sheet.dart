@@ -4,6 +4,7 @@ import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class LoginWallHelper {
   static void showLoginWallBottomSheet(BuildContext context) {
@@ -13,9 +14,9 @@ class LoginWallHelper {
       isScrollControlled: true,
       builder: (BuildContext bc) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: bc.mapColors.cardSurface,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(AppRadius.xl),
               topRight: Radius.circular(AppRadius.xl),
             ),
@@ -34,7 +35,7 @@ class LoginWallHelper {
                   width: 40.0,
                   height: 4.0,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: bc.mapColors.border,
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
@@ -57,7 +58,7 @@ class LoginWallHelper {
                   textAlign: TextAlign.center,
                   style: AppText.subtitulo(context).copyWith(
                     fontWeight: FontWeight.w900,
-                    color: ColorsPalette.black,
+                    color: context.mapColors.primaryText,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -67,7 +68,7 @@ class LoginWallHelper {
                   textAlign: TextAlign.center,
                   style: AppText.corpo(
                     context,
-                  ).copyWith(color: ColorsPalette.greyText, height: 1.3),
+                  ).copyWith(color: context.mapColors.secondaryText, height: 1.3),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 SizedBox(
@@ -105,7 +106,7 @@ class LoginWallHelper {
                     child: Text(
                       "Já tenho uma conta",
                       style: AppText.legenda(context).copyWith(
-                        color: ColorsPalette.blackDetails,
+                        color: context.mapColors.primaryText,
                         fontWeight: FontWeight.bold,
                         decoration: TextDecoration.underline,
                       ),

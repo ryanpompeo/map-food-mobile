@@ -3,6 +3,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class HowItWorksPage extends StatelessWidget {
   const HowItWorksPage({super.key});
@@ -10,7 +11,7 @@ class HowItWorksPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
 
       body: Stack(
         children: [
@@ -20,16 +21,16 @@ class HowItWorksPage extends StatelessWidget {
               SliverAppBar(
                 expandedHeight: 80,
                 pinned: true,
-                backgroundColor: ColorsPalette.whiteBackground,
-                foregroundColor: ColorsPalette.whiteBackground,
-                surfaceTintColor: ColorsPalette.whiteBackground,
+                backgroundColor: context.mapColors.mainBackground,
+                foregroundColor: context.mapColors.mainBackground,
+                surfaceTintColor: context.mapColors.mainBackground,
                 elevation: 0,
                 leading: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      color: ColorsPalette.whiteBackground,
+                      color: context.mapColors.mainBackground,
                     ),
                     child: IconButton(
                       icon: const Icon(
@@ -54,7 +55,7 @@ class HowItWorksPage extends StatelessWidget {
                         style: AppText.titulo(context).copyWith(
                           fontWeight: FontWeight.w900,
                           fontSize: 28.0,
-                          color: ColorsPalette.black,
+                          color: context.mapColors.primaryText,
                           height: 1.1,
                           letterSpacing: -0.5,
                         ),
@@ -64,10 +65,15 @@ class HowItWorksPage extends StatelessWidget {
                         "Descubra os melhores comércios e vendedores de rua da sua cidade em 3 passos simples",
                         style: AppText.corpo(
                           context,
-                        ).copyWith(color: ColorsPalette.greyText, height: 1.4),
+                        ).copyWith(color: context.mapColors.secondaryText, height: 1.4),
                       ),
                       const SizedBox(height: AppSpacing.xl),
 
+                      // Card 1: ilustração de marca (vermelho) — cores
+                      // literais de propósito, inclusive colorText (que
+                      // reaproveita ColorsPalette.whiteBackground como um
+                      // branco-gelo de TEXTO sobre o card, não como fundo de
+                      // página — não confundir com context.mapColors.mainBackground).
                       _buildStepCard(
                         context,
                         stepNumber: "1",
@@ -83,12 +89,14 @@ class HowItWorksPage extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
+                      // Card 2: card neutro (não é ilustração de marca) —
+                      // este sim usa os tokens de superfície/texto.
                       _buildStepCard(
-                        colorCard: ColorsPalette.whiteBackground,
+                        colorCard: context.mapColors.cardSurface,
                         colorIcon: ColorsPalette.redComponents,
-                        colorText: ColorsPalette.black,
+                        colorText: context.mapColors.primaryText,
                         colorBorder: ColorsPalette.transparent,
-                        colorStep: ColorsPalette.greyText,
+                        colorStep: context.mapColors.secondaryText,
                         context,
                         stepNumber: "2",
                         title: "Escolha sua Categoria",

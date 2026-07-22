@@ -3,6 +3,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 /// Mostra um dialog de confirmação antes de remover uma foto já salva no
 /// servidor. Devolve `true` se o usuário confirmou.
@@ -11,7 +12,7 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
     context: context,
     builder: (ctx) => Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      backgroundColor: Colors.white,
+      backgroundColor: ctx.mapColors.cardSurface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(AppSpacing.lg),
       child: Padding(
@@ -35,14 +36,14 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            Text("Tem certeza que deseja remover esta foto?", style: AppText.corpo(ctx).copyWith(color: ColorsPalette.black)),
+            Text("Tem certeza que deseja remover esta foto?", style: AppText.corpo(ctx).copyWith(color: ctx.mapColors.primaryText)),
             const SizedBox(height: AppSpacing.xl),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: Text("Cancelar", style: AppText.botao(ctx).copyWith(color: Colors.grey.shade700)),
+                  child: Text("Cancelar", style: AppText.botao(ctx).copyWith(color: ctx.mapColors.secondaryText)),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 ElevatedButton(
@@ -79,7 +80,7 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
         final habilitado = controller.text.trim() == palavraChave;
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-          backgroundColor: Colors.white,
+          backgroundColor: ctx.mapColors.cardSurface,
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(AppSpacing.lg),
           child: Padding(
@@ -107,7 +108,7 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   "Essa ação é irreversível. Sua conta, loja(s), avaliações e denúncias associadas serão apagadas permanentemente.",
-                  style: AppText.corpo(ctx).copyWith(color: ColorsPalette.black),
+                  style: AppText.corpo(ctx).copyWith(color: ctx.mapColors.primaryText),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
@@ -131,7 +132,7 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, false),
-                      child: Text("Cancelar", style: AppText.botao(ctx).copyWith(color: Colors.grey.shade700)),
+                      child: Text("Cancelar", style: AppText.botao(ctx).copyWith(color: ctx.mapColors.secondaryText)),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     ElevatedButton(
@@ -154,5 +155,6 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
       },
     ),
   );
+  controller.dispose();
   return confirmou ?? false;
 }

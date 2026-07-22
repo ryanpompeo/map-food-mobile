@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/features/search/presentation/utils/rating_format.dart';
-import 'package:map_food/features/search/presentation/widgets/favorite_button_widget.dart';
-import 'package:map_food/features/search/presentation/widgets/store_card_badges.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/utils/rating_format.dart';
+import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
+import 'package:map_food/features/store/presentation/widgets/store_card_badges.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
@@ -23,7 +23,7 @@ class VerticalDestaqueSliverWidget extends StatelessWidget {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xl),
-          child: Center(child: Text("Nenhum comércio encontrado para esta categoria", style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText))),
+          child: Center(child: Text("Nenhum comércio encontrado para esta categoria", style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText))),
         ),
       );
     }
@@ -56,7 +56,7 @@ class StoreListItemWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.mapColors.cardSurface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
         ),
@@ -64,7 +64,10 @@ class StoreListItemWidget extends StatelessWidget {
           children: [
             Container(
               width: 76.0, height: 76.0,
-              decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(AppRadius.lg)),
+              // Um tom abaixo do cardSurface do card que envolve esta miniatura,
+              // senão o placeholder fica invisível contra o próprio card antes
+              // da imagem carregar (mesmo raciocínio do InfoChip, Lote 4A).
+              decoration: BoxDecoration(color: context.mapColors.mainBackground, borderRadius: BorderRadius.circular(AppRadius.lg)),
               child: resolveImagemUrl(store.capaUrl) != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -76,17 +79,17 @@ class StoreListItemWidget extends StatelessWidget {
                         // exibir num quadrado de 76px, pesando no scroll.
                         cacheWidth: (76.0 * MediaQuery.devicePixelRatioOf(context)).round(),
                         cacheHeight: (76.0 * MediaQuery.devicePixelRatioOf(context)).round(),
-                        errorBuilder: (context, error, stackTrace) => Icon(PhosphorIconsRegular.image, size: 24.0, color: Colors.grey.shade400),
+                        errorBuilder: (context, error, stackTrace) => Icon(PhosphorIconsRegular.image, size: 24.0, color: context.mapColors.iconMuted),
                       ),
                     )
-                  : Icon(PhosphorIconsRegular.image, size: 24.0, color: Colors.grey.shade400),
+                  : Icon(PhosphorIconsRegular.image, size: 24.0, color: context.mapColors.iconMuted),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(store.nome, style: AppText.corpo(context).copyWith(fontSize: 14, fontWeight: FontWeight.w800, color: ColorsPalette.black), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(store.nome, style: AppText.corpo(context).copyWith(fontSize: 14, fontWeight: FontWeight.w800, color: context.mapColors.primaryText), maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 8.0),
                   Row(
                     mainAxisSize: MainAxisSize.min,

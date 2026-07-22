@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/route_service.dart';
@@ -123,9 +124,9 @@ class _StoreMapPageState extends State<StoreMapPage> {
       hasUnsavedChanges: _carregandoRota,
       confirmDialog: confirmarSairDuranteCalculoDeRota,
       child: Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
@@ -139,7 +140,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
         ),
         title: Text(
           widget.store.nome,
-          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
         ),
       ),
       body: Stack(
@@ -173,7 +174,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
                         _distanciaLabel,
                         style: AppText.legenda(context).copyWith(
                           fontWeight: FontWeight.bold,
-                          color: ColorsPalette.black,
+                          color: context.mapColors.primaryText,
                         ),
                       ),
                     ],
@@ -191,8 +192,8 @@ class _StoreMapPageState extends State<StoreMapPage> {
                   child: Text(
                     "Ative a localização para traçar a rota até a loja",
                     textAlign: TextAlign.center,
+                    // Sem override de cor: legenda() já resolve pra secondaryText.
                     style: AppText.legenda(context).copyWith(
-                      color: ColorsPalette.greyText,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -209,7 +210,8 @@ class _StoreMapPageState extends State<StoreMapPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        // Elemento flutuante sobre o mapa — cardSurface (Lote 4B).
+        color: context.mapColors.cardSurface,
         borderRadius: BorderRadius.circular(100.0),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 8, offset: const Offset(0, 2)),
@@ -231,8 +233,8 @@ class _StoreMapPageState extends State<StoreMapPage> {
         const SizedBox(width: 8.0),
         Text(
           "Traçando rota...",
+          // Sem override de cor: legenda() já resolve pra secondaryText.
           style: AppText.legenda(context).copyWith(
-            color: ColorsPalette.greyText,
             fontWeight: FontWeight.w600,
           ),
         ),

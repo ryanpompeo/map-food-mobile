@@ -4,6 +4,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
 
@@ -27,7 +28,7 @@ class StoreSwitcherBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       decoration: BoxDecoration(
-        color: ColorsPalette.whiteBackground,
+        color: context.mapColors.mainBackground,
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
         ],
@@ -52,9 +53,9 @@ class StoreSwitcherBar extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.mapColors.cardSurface,
                       borderRadius: BorderRadius.circular(20.0),
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(color: context.mapColors.border),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -85,7 +86,7 @@ class StoreSwitcherBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isSelected ? ColorsPalette.black : ColorsPalette.white,
+                    color: isSelected ? ColorsPalette.black : context.mapColors.cardSurface,
                     borderRadius: BorderRadius.circular(20.0),
                   ),
                   child: Row(
@@ -94,6 +95,8 @@ class StoreSwitcherBar extends StatelessWidget {
                       Container(
                         width: 8.0,
                         height: 8.0,
+                        // Indicador de status operacional (aberta/fechada) —
+                        // verde/cinza absolutos, não tokenizados (Lote 6).
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: aberta ? Colors.greenAccent.shade400 : Colors.grey.shade400,
@@ -104,9 +107,10 @@ class StoreSwitcherBar extends StatelessWidget {
                         store.nome,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        // Não-selecionado sem override: legenda() já resolve pra secondaryText.
                         style: AppText.legenda(context).copyWith(
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                          color: isSelected ? Colors.white : Colors.grey.shade700,
+                          color: isSelected ? Colors.white : null,
                         ),
                       ),
                     ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class AppFormField extends StatelessWidget {
   final TextEditingController controller;
@@ -43,7 +43,7 @@ class AppFormField extends StatelessWidget {
     final effectivePrefixIcon =
         prefixIcon ??
         (showIcon && icon != null
-            ? Icon(icon, color: ColorsPalette.greyText, size: 20.0)
+            ? Icon(icon, color: context.mapColors.iconMuted, size: 20.0)
             : null);
 
     return Column(
@@ -53,8 +53,8 @@ class AppFormField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
           child: Text(
             label,
-            style: const TextStyle(
-              color: ColorsPalette.black,
+            style: TextStyle(
+              color: context.mapColors.primaryText,
               fontSize: 14.0,
               fontWeight: FontWeight.w700,
               letterSpacing: 0,
@@ -74,8 +74,8 @@ class AppFormField extends StatelessWidget {
           textAlignVertical: maxLines > 1
               ? TextAlignVertical.top
               : TextAlignVertical.center,
-          style: const TextStyle(
-            color: ColorsPalette.black,
+          style: TextStyle(
+            color: context.mapColors.primaryText,
             fontSize: 15.0,
             fontWeight: FontWeight.w500,
             letterSpacing: 0,
@@ -83,13 +83,13 @@ class AppFormField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: Colors.grey.shade500,
+              color: context.mapColors.secondaryText,
               fontSize: 15.0,
               fontWeight: FontWeight.w400,
               letterSpacing: 0,
             ),
             filled: true,
-            fillColor: ColorsPalette.white,
+            fillColor: context.mapColors.cardSurface,
             prefixIcon: effectivePrefixIcon,
             suffixIcon: suffixIcon,
             contentPadding: EdgeInsets.symmetric(

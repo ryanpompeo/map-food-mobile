@@ -8,12 +8,13 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
 import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
 import 'package:map_food/core/ui/widgets/xfile_image.dart';
-import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
-import 'package:map_food/features/reviews/data/services/rating_service.dart';
+import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
+import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -67,7 +68,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   final int _maxFotosGaleria = 10;
   final _storeService = StoreService();
   final _categoriaService = CategoriaService();
-  final _ratingService = RatingService();
+  final _avaliacaoService = AvaliacaoService();
   final _cepService = CepService();
   bool _buscandoCep = false;
 
@@ -130,7 +131,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
 
   Future<void> _carregarAvaliacoes() async {
     try {
-      final avaliacoes = await _ratingService.getStoreRatings(widget.store.id);
+      final avaliacoes = await _avaliacaoService.buscarAvaliacoesDaLoja(widget.store.id);
       if (mounted) {
         setState(() {
           _avaliacoes = avaliacoes;
@@ -181,7 +182,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
     if (digits.length != 8 || _buscandoCep) return;
 
     setState(() => _buscandoCep = true);
-    final resultado = await _cepService.buscar(digits);
+    final resultado = await _cepService.buscarEnderecoPorCep(digits);
     if (!mounted) return;
 
     setState(() {
@@ -207,7 +208,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.0),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: context.mapColors.cardSurface,
         surfaceTintColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(AppSpacing.lg),
         child: Padding(
@@ -240,7 +241,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                 textAlign: TextAlign.center,
                 style: AppText.corpo(
                   context,
-                ).copyWith(color: ColorsPalette.greyText),
+                ).copyWith(color: context.mapColors.secondaryText),
               ),
               const SizedBox(height: AppSpacing.xl),
               Row(
@@ -250,7 +251,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.grey.shade300),
+                        side: BorderSide(color: context.mapColors.border),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
@@ -259,7 +260,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                         "Cancelar",
                         style: AppText.botao(
                           context,
-                        ).copyWith(color: ColorsPalette.black),
+                        ).copyWith(color: context.mapColors.primaryText),
                       ),
                     ),
                   ),
@@ -271,6 +272,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                         _efetivarSalvamento();
                       },
                       style: ElevatedButton.styleFrom(
+                        // CTA sólido preto de propósito (Lote 1), não tokenizado.
                         backgroundColor: ColorsPalette.black,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -422,7 +424,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       body: Column(
         children: [
           if (widget.storeSwitcher != null)
@@ -459,24 +461,26 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: ColorsPalette.black.withValues(
+                              // Scrim sutil na cor do texto (não um literal
+                              // fixo) — inverte corretamente entre claro/escuro.
+                              color: context.mapColors.primaryText.withValues(
                                 alpha: 0.05,
                               ),
                               borderRadius: BorderRadius.circular(100),
                             ),
                             child: Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   PhosphorIconsRegular.pencilSimple,
                                   size: 16,
-                                  color: ColorsPalette.black,
+                                  color: context.mapColors.primaryText,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   "Editar",
                                   style: AppText.legenda(context).copyWith(
                                     fontWeight: FontWeight.bold,
-                                    color: ColorsPalette.black,
+                                    color: context.mapColors.primaryText,
                                   ),
                                 ),
                               ],
@@ -629,7 +633,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             decoration: BoxDecoration(
               color: _novaCapa != null || _store.capaUrl != null
                   ? ColorsPalette.redComponents.withValues(alpha: 0.05)
-                  : Colors.grey.shade100,
+                  : context.mapColors.cardSurface,
               borderRadius: BorderRadius.circular(16.0),
               border: Border.all(
                 color: _isEditing
@@ -667,8 +671,8 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                 : _removerCapaSalva,
                             child: Container(
                               padding: const EdgeInsets.all(8.0),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
+                              decoration: BoxDecoration(
+                                color: context.mapColors.cardSurface,
                                 shape: BoxShape.circle,
                               ),
                               child: _isRemovendoCapa
@@ -695,7 +699,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     children: [
                       Icon(
                         PhosphorIconsRegular.imagesSquare,
-                        color: Colors.grey.shade400,
+                        color: context.mapColors.iconMuted,
                         size: 32.0,
                       ),
                       if (_isEditing) ...[
@@ -739,7 +743,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     width: 100.0,
                     margin: const EdgeInsets.only(right: 12.0),
                     decoration: BoxDecoration(
-                      color: ColorsPalette.white,
+                      color: context.mapColors.cardSurface,
                       borderRadius: BorderRadius.circular(16.0),
                     ),
                     child: Column(
@@ -769,7 +773,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   margin: const EdgeInsets.only(right: 12.0),
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: ColorsPalette.black.withValues(alpha: 0.05),
+                    color: context.mapColors.cardSurface,
                     borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: Stack(
@@ -780,18 +784,18 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                 url,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    const Center(
+                                    Center(
                                       child: Icon(
                                         PhosphorIconsRegular.image,
-                                        color: Colors.grey,
+                                        color: context.mapColors.iconMuted,
                                         size: 32.0,
                                       ),
                                     ),
                               )
-                            : const Center(
+                            : Center(
                                 child: Icon(
                                   PhosphorIconsRegular.image,
-                                  color: Colors.grey,
+                                  color: context.mapColors.iconMuted,
                                   size: 32.0,
                                 ),
                               ),
@@ -807,9 +811,9 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                             child: Container(
                               padding: const EdgeInsets.all(4.0),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.mapColors.cardSurface,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey.shade200),
+                                border: Border.all(color: context.mapColors.border),
                               ),
                               child: removendo
                                   ? const SizedBox(
@@ -820,10 +824,10 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                                         color: ColorsPalette.redComponents,
                                       ),
                                     )
-                                  : const Icon(
+                                  : Icon(
                                       PhosphorIconsRegular.x,
                                       size: 14.0,
-                                      color: Colors.black,
+                                      color: context.mapColors.primaryText,
                                     ),
                             ),
                           ),
@@ -839,7 +843,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   margin: const EdgeInsets.only(right: 12.0),
                   clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: ColorsPalette.black.withValues(alpha: 0.05),
+                    color: context.mapColors.cardSurface,
                     borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: Stack(
@@ -855,14 +859,14 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                             child: Container(
                               padding: const EdgeInsets.all(4.0),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.mapColors.cardSurface,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey.shade200),
+                                border: Border.all(color: context.mapColors.border),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 PhosphorIconsRegular.x,
                                 size: 14.0,
-                                color: Colors.black,
+                                color: context.mapColors.primaryText,
                               ),
                             ),
                           ),
@@ -874,9 +878,10 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               if (!_isEditing &&
                   _store.galeria.isEmpty &&
                   _novasFotosGaleria.isEmpty)
+                // Sem override de cor: legenda() já resolve pra secondaryText.
                 Text(
                   "Nenhuma foto na galeria.",
-                  style: AppText.legenda(context).copyWith(color: Colors.grey),
+                  style: AppText.legenda(context),
                 ),
             ],
           ),
@@ -910,26 +915,29 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             readOnly: !_isEditing,
             onChanged: _isEditing ? onChanged : null,
             style: AppText.corpo(context).copyWith(
-              color: _isEditing ? ColorsPalette.black : Colors.grey.shade700,
+              color: _isEditing ? context.mapColors.primaryText : context.mapColors.secondaryText,
               fontWeight: _isEditing ? FontWeight.normal : FontWeight.w500,
             ),
             decoration: InputDecoration(
               filled: true,
-              fillColor: _isEditing ? Colors.white : Colors.grey.shade50,
+              fillColor: _isEditing ? context.mapColors.cardSurface : context.mapColors.mainBackground,
               suffixIcon: suffixIcon,
               contentPadding: const EdgeInsets.all(16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 borderSide: BorderSide(
+                  // Somente-leitura: borda "invisível", emparelhada com o
+                  // mesmo tom do fillColor acima — não usar o token `border`
+                  // aqui criaria um contorno visível que não existia antes.
                   color: _isEditing
                       ? ColorsPalette.redComponents.withValues(alpha: 0.3)
-                      : ColorsPalette.whiteBackground,
+                      : context.mapColors.mainBackground,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
                 borderSide: BorderSide(
-                  color: _isEditing ? Colors.grey.shade300 : Colors.transparent,
+                  color: _isEditing ? context.mapColors.border : Colors.transparent,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -997,18 +1005,23 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                     vertical: 8.0,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? ColorsPalette.black : Colors.white,
+                    color: isSelected ? ColorsPalette.black : context.mapColors.cardSurface,
                     borderRadius: BorderRadius.circular(100.0),
+                    // Não-selecionado: borda na mesma cor do fundo, pra
+                    // manter o contorno "invisível" como no design original
+                    // (não usar o token `border`, que criaria um contorno
+                    // visível que não existia antes).
                     border: Border.all(
                       color: isSelected
                           ? ColorsPalette.black
-                          : ColorsPalette.whiteBackground,
+                          : context.mapColors.cardSurface,
                     ),
                   ),
                   child: Text(
                     cat.nome,
+                    // Não-selecionado sem override: legenda() já resolve pra secondaryText.
                     style: AppText.legenda(context).copyWith(
-                      color: isSelected ? Colors.white : Colors.grey.shade700,
+                      color: isSelected ? Colors.white : null,
                       fontWeight: isSelected
                           ? FontWeight.bold
                           : FontWeight.w600,
@@ -1045,7 +1058,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                   "O que dizem sobre você",
                   style: AppText.corpo(
                     context,
-                  ).copyWith(color: ColorsPalette.greyText),
+                  ).copyWith(color: context.mapColors.secondaryText),
                 ),
               ],
             ),
@@ -1096,15 +1109,15 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.mapColors.cardSurface,
               borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: context.mapColors.border),
             ),
             child: Text(
               'Nenhuma avaliação recebida ainda.',
               style: AppText.corpo(
                 context,
-              ).copyWith(color: ColorsPalette.greyText),
+              ).copyWith(color: context.mapColors.secondaryText),
             ),
           )
         else
@@ -1114,7 +1127,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
               margin: const EdgeInsets.only(bottom: AppSpacing.md),
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.mapColors.cardSurface,
                 borderRadius: BorderRadius.circular(16.0),
                 boxShadow: [
                   BoxShadow(
@@ -1134,12 +1147,14 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                         children: [
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: Colors.grey.shade100,
+                            // Um tom abaixo do cardSurface do card que
+                            // envolve este avatar (superfície aninhada).
+                            backgroundColor: context.mapColors.mainBackground,
                             child: Text(
                               nome.isNotEmpty ? nome[0].toUpperCase() : '?',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                color: context.mapColors.primaryText,
                               ),
                             ),
                           ),
@@ -1152,11 +1167,10 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                           ),
                         ],
                       ),
+                      // Sem override de cor: legenda() já resolve pra secondaryText.
                       Text(
                         _formatDate(review.dataAvaliacao),
-                        style: AppText.legenda(
-                          context,
-                        ).copyWith(color: Colors.grey),
+                        style: AppText.legenda(context),
                       ),
                     ],
                   ),
@@ -1179,7 +1193,7 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
                       review.comentario!,
                       style: AppText.corpo(
                         context,
-                      ).copyWith(color: Colors.grey.shade700, height: 1.4),
+                      ).copyWith(color: context.mapColors.secondaryText, height: 1.4),
                     ),
                   ],
                 ],

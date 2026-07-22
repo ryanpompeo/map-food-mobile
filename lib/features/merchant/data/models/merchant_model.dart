@@ -13,6 +13,7 @@ class MerchantModel {
   final String? telefone;
   final String? cnpj;
   final String? imagemUrl;
+  final String? dataCadastro;
 
   const MerchantModel({
     required this.id,
@@ -23,6 +24,7 @@ class MerchantModel {
     this.telefone,
     this.cnpj,
     this.imagemUrl,
+    this.dataCadastro,
   });
 
   factory MerchantModel.fromJson(Map<String, dynamic> json) => MerchantModel(
@@ -34,6 +36,7 @@ class MerchantModel {
         telefone: json['telefone'] as String?,
         cnpj: json['cnpj'] as String?,
         imagemUrl: json['imagemUrl'] as String?,
+        dataCadastro: json['dataCadastro'] as String?,
       );
 
   Map<String, dynamic> toJson() => {

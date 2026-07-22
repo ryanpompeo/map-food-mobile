@@ -6,20 +6,17 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/core/ui/widgets/category_filter_chips.dart';
-import 'package:map_food/features/store/data/models/categoria_model.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
-import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
-import 'package:map_food/features/store/presentation/pages/merchant_dashboard.dart';
+import 'package:map_food/features/merchant/presentation/pages/merchant_dashboard.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_profile_page.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/merchant/presentation/widgets/merchant_bottom_bar.dart';
-import 'package:map_food/features/store/presentation/pages/working_page.dart';
+import 'package:map_food/features/merchant/presentation/pages/merchant_working_page.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
-import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
-import 'package:map_food/features/store/presentation/widgets/nearby_stores_section.dart';
-import 'package:map_food/features/store/presentation/widgets/store_switcher_bar.dart';
+import 'package:map_food/features/store/presentation/widgets/home_map_explorer.dart';
+import 'package:map_food/features/merchant/presentation/widgets/store_switcher_bar.dart';
 
 class MerchantHomePage extends StatefulWidget {
   const MerchantHomePage({super.key});
@@ -30,7 +27,6 @@ class MerchantHomePage extends StatefulWidget {
 
 class _MerchantHomePageState extends State<MerchantHomePage> {
   int _selectedIndex = 0;
-  String _filtroAtivo = 'Todos';
 
   String _userName = '';
   String _userEmail = '';
@@ -44,25 +40,11 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   String? _errorMessage;
 
   final _storeService = StoreService();
-  final _categoriaService = CategoriaService();
-  List<CategoriaModel> _categorias = [];
-
-  List<String> get _filtrosMapa => ['Todos', ..._categorias.map((c) => c.nome)];
 
   @override
   void initState() {
     super.initState();
     _loadData();
-    _carregarCategorias();
-  }
-
-  Future<void> _carregarCategorias() async {
-    try {
-      final categorias = await _categoriaService.getAll();
-      if (mounted) setState(() => _categorias = categorias);
-    } catch (_) {
-      // Mantém apenas "Todos" se a API estiver indisponível.
-    }
   }
 
   /// Chamado ao voltar da tela de Editar Perfil — recarrega só nome/e-mail
@@ -161,17 +143,17 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   PhosphorIconsRegular.wifiSlash,
                   size: 48,
-                  color: ColorsPalette.greyText,
+                  color: context.mapColors.iconMuted,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   _errorMessage!,
                   textAlign: TextAlign.center,
                   style: AppText.corpo(context)
-                      .copyWith(color: ColorsPalette.greyText),
+                      .copyWith(color: context.mapColors.secondaryText),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 ElevatedButton(
@@ -209,7 +191,7 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       body: Stack(
         children: [
           // RepaintBoundary em cada aba: sem isso, o Stack/Compositor trata a
@@ -220,10 +202,12 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
           IndexedStack(
             index: _selectedIndex,
             children: [
-              RepaintBoundary(child: _buildAbaInicio()),
+              RepaintBoundary(
+                child: HomeMapExplorer(onSearchTap: () => _onItemTapped(1)),
+              ),
               const RepaintBoundary(child: SearchPage()),
               RepaintBoundary(
-                child: WorkingPage(
+                child: MerchantWorkingPage(
                   key: ValueKey('working-${store.id}'),
                   store: store,
                   storeSwitcher: switcher,
@@ -270,78 +254,4 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
     );
   }
 
-  Widget _buildAbaInicio() {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 12.0,
-            bottom: AppSpacing.md,
-          ),
-          decoration: BoxDecoration(
-            color: ColorsPalette.whiteBackground,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: Row(
-                  children: [
-                    const Icon(
-                      PhosphorIconsRegular.mapPin,
-                      color: ColorsPalette.redComponents,
-                      size: 28.0,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'MapFood',
-                      style: AppText.titulo(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              CategoryFilterChips(
-                filtros: _filtrosMapa,
-                ativo: _filtroAtivo,
-                onSelect: (filtro) => setState(() => _filtroAtivo = filtro),
-              ),
-            ],
-          ),
-        ),
-        // Respiro entre o cabeçalho (que tem boxShadow própria) e o conteúdo
-        // abaixo — sem isso, a sombra do cabeçalho caía direto em cima dos
-        // chips de km/categoria abaixo, dando a impressão de um sombreado
-        // "grudado" neles que não é deles.
-        const SizedBox(height: 8),
-        Expanded(
-          child: ListenableBuilder(
-            listenable: ActiveStoresManager.instance,
-            builder: (context, _) {
-              final manager = ActiveStoresManager.instance;
-              if (manager.isLoading && manager.stores.isEmpty) {
-                return const Center(
-                  child: CircularProgressIndicator(color: ColorsPalette.redComponents),
-                );
-              }
-              final lojas = _filtroAtivo == 'Todos'
-                  ? manager.stores
-                  : manager.stores.where((l) => l.categoriaNomes.contains(_filtroAtivo)).toList();
-              return NearbyStoresSection(stores: lojas);
-            },
-          ),
-        ),
-      ],
-    );
-  }
 }

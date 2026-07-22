@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class AppText {
-  // Título de grande destaque
   static TextStyle display(BuildContext context) {
     return Theme.of(context).textTheme.headlineMedium!.copyWith(
-      fontSize: 32.0, // Absoluto
+      fontSize: 32.0,
       fontWeight: FontWeight.bold,
     );
   }
 
-  // Título principal da página
   static TextStyle titulo(BuildContext context) {
     return Theme.of(context).textTheme.titleLarge!.copyWith(
       fontSize: 24.0,
@@ -18,7 +17,6 @@ class AppText {
     );
   }
 
-  // Subtítulo / Seções
   static TextStyle subtitulo(BuildContext context) {
     return Theme.of(context).textTheme.titleMedium!.copyWith(
       fontSize: 20.0,
@@ -26,26 +24,24 @@ class AppText {
     );
   }
 
-  // Texto principal
   static TextStyle corpo(BuildContext context) {
     return Theme.of(context).textTheme.bodyMedium!.copyWith(fontSize: 16.0);
   }
 
-  // Texto secundário
   static TextStyle secundario(BuildContext context) {
-    return Theme.of(
-      context,
-    ).textTheme.bodyMedium!.copyWith(fontSize: 14.0, color: Colors.grey[700]);
+    return Theme.of(context).textTheme.bodyMedium!.copyWith(
+      fontSize: 14.0,
+      color: context.mapColors.secondaryText,
+    );
   }
 
-  // Detalhes pequenos
   static TextStyle legenda(BuildContext context) {
-    return Theme.of(
-      context,
-    ).textTheme.bodySmall!.copyWith(fontSize: 12.0, color: Colors.grey[600]);
+    return Theme.of(context).textTheme.bodySmall!.copyWith(
+      fontSize: 12.0,
+      color: context.mapColors.secondaryText,
+    );
   }
 
-  // Texto de destaque
   static TextStyle destaque(BuildContext context) {
     return Theme.of(context).textTheme.bodyMedium!.copyWith(
       fontSize: 14.0,
@@ -55,7 +51,6 @@ class AppText {
     );
   }
 
-  // Texto de botão
   static TextStyle botao(BuildContext context) {
     return Theme.of(context).textTheme.labelLarge!.copyWith(
       fontSize: 16.0,

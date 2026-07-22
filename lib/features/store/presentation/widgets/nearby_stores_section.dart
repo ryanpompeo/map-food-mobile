@@ -4,16 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:map_food/core/location/location_service.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/core/ui/theme/app_dimensions.dart';
-import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
 
-/// Mapa de lojas próximas com filtro de raio ajustável, usado na aba
-/// "Início" de guest, consumidor e comerciante. Mantém sua própria
-/// assinatura de GPS (só em primeiro plano) pra atualizar a posição do
-/// usuário conforme ele anda, recalculando quais lojas caem dentro do raio.
+/// Mapa de lojas próximas em tela cheia, usado na aba "Início" de guest,
+/// consumidor e comerciante. Mantém sua própria assinatura de GPS (só em
+/// primeiro plano) pra atualizar a posição do usuário conforme ele anda,
+/// recalculando quais lojas caem dentro do raio. O raio em si é controlado
+/// de fora (modal de filtros da home) — este widget só aplica o corte.
 class NearbyStoresSection extends StatefulWidget {
   /// Lojas já filtradas por categoria pelo widget pai — este widget só
   /// aplica o filtro de distância por cima.
@@ -21,11 +19,15 @@ class NearbyStoresSection extends StatefulWidget {
   final double? initialLatitude;
   final double? initialLongitude;
 
+  /// Raio em km escolhido no modal de filtros; null = "Todos" (sem corte).
+  final double? raioKm;
+
   const NearbyStoresSection({
     super.key,
     required this.stores,
     this.initialLatitude,
     this.initialLongitude,
+    this.raioKm,
   });
 
   @override
@@ -33,12 +35,8 @@ class NearbyStoresSection extends StatefulWidget {
 }
 
 class _NearbyStoresSectionState extends State<NearbyStoresSection> {
-  // km; null representa "Todos" (sem filtro de distância).
-  static const List<double?> _raiosKm = [1.0, 5.0, 10.0, 20.0, null];
-
   static const double _limiarAtualizarListaMetros = 15.0;
 
-  double? _raioSelecionadoKm = 5.0;
   double? _lat;
   double? _lng;
   StreamSubscription<Position>? _positionSub;
@@ -68,6 +66,10 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
           permission == LocationPermission.deniedForever) {
         return;
       }
+      // O diálogo de permissão do SO pode levar segundos pra ser respondido —
+      // se o widget já foi descartado nesse meio-tempo, não assina o stream
+      // (senão a subscription nunca é cancelada e o GPS fica ligado à toa).
+      if (!mounted) return;
 
       if (_lat == null || _lng == null) {
         try {
@@ -86,6 +88,10 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
           // Segue sem posição inicial — o mapa cai no fallback padrão.
         }
       }
+
+      // getCurrentPosition acima também pode ter levado um tempo — confere
+      // de novo antes de assinar o stream compartilhado.
+      if (!mounted) return;
 
       // Stream compartilhado com a ronda do comerciante — um único consumo
       // de GPS mesmo com as duas telas vivas no IndexedStack.
@@ -127,9 +133,9 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   }
 
   List<StoreDto> get _lojasNoRaio {
-    if (_raioSelecionadoKm == null || _lat == null || _lng == null)
-      return widget.stores;
-    final raioMetros = _raioSelecionadoKm! * 1000;
+    final raio = widget.raioKm;
+    if (raio == null || _lat == null || _lng == null) return widget.stores;
+    final raioMetros = raio * 1000;
     return widget.stores.where((loja) {
       if (!loja.temLocalizacao) return false;
       final distancia = Geolocator.distanceBetween(
@@ -142,68 +148,18 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
     }).toList();
   }
 
-  String _labelRaio(double? km) => km == null ? 'Todos' : '${km.toInt()} km';
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 36.0,
-          child: ListView.builder(
-            physics: const BouncingScrollPhysics(),
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            itemCount: _raiosKm.length,
-            itemBuilder: (context, index) {
-              final raio = _raiosKm[index];
-              final bool isSelected = _raioSelecionadoKm == raio;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: RepaintBoundary(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _raioSelecionadoKm = raio),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? ColorsPalette.redComponents
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(18.0),
-                      ),
-                      child: Text(
-                        _labelRaio(raio),
-                        style: AppText.legenda(context).copyWith(
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.w600,
-                          color: isSelected
-                              ? Colors.white
-                              : Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Expanded(
-          child: StoreMapView(
-            stores: _lojasNoRaio,
-            initialLatitude: _lat,
-            initialLongitude: _lng,
-            userPosition: _userPosition,
-            // A bottom bar flutuante (glass) fica por cima do mapa aqui —
-            // sem esse respiro os botões de câmera ficariam embaixo dela.
-            floatingControlsBottomPadding: 110.0,
-          ),
-        ),
-      ],
+    return StoreMapView(
+      stores: _lojasNoRaio,
+      initialLatitude: _lat,
+      initialLongitude: _lng,
+      userPosition: _userPosition,
+      // A bottom bar flutuante (glass) e a busca/filtro flutuantes ficam por
+      // cima do mapa aqui — sem esse respiro, os controles de câmera e o
+      // banner de "sem lojas" ficariam embaixo deles.
+      floatingControlsBottomPadding: 110.0,
+      topBannerOffset: 84.0,
     );
   }
 }

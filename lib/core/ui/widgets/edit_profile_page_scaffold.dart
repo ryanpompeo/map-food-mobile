@@ -7,6 +7,7 @@ import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
@@ -225,15 +226,15 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     return UnsavedChangesGuard(
       hasUnsavedChanges: _hasUnsavedChanges,
       child: Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
           'Editar Perfil',
-          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
         ),
         leading: IconButton(
           // maybePop consulta o PopScope do UnsavedChangesGuard antes de
@@ -299,8 +300,8 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                                     onTap: _removerFoto,
                                     child: Container(
                                       padding: const EdgeInsets.all(4.0),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
+                                      decoration: BoxDecoration(
+                                        color: context.mapColors.cardSurface,
                                         shape: BoxShape.circle,
                                         border: Border.fromBorderSide(BorderSide(color: ColorsPalette.redComponents, width: 1.5)),
                                       ),
@@ -368,7 +369,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         controller: _senhaController,
                         obscureText: !_showSenha,
                         suffixIcon: IconButton(
-                          icon: Icon(_showSenha ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye, size: 20, color: ColorsPalette.greyText),
+                          icon: Icon(_showSenha ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye, size: 20, color: context.mapColors.iconMuted),
                           onPressed: () => setState(() => _showSenha = !_showSenha),
                         ),
                         validator: (v) {
@@ -389,7 +390,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                           icon: Icon(
                             _showConfirmarSenha ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
                             size: 20,
-                            color: ColorsPalette.greyText,
+                            color: context.mapColors.iconMuted,
                           ),
                           onPressed: () => setState(() => _showConfirmarSenha = !_showConfirmarSenha),
                         ),

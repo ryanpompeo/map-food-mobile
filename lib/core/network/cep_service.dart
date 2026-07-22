@@ -22,7 +22,7 @@ class CepService {
 
   /// Devolve o endereço do [cep] (8 dígitos, com ou sem hífen), ou null se
   /// o CEP não existir ou a busca falhar — quem chama segue sem autofill.
-  Future<CepResult?> buscar(String cep) async {
+  Future<CepResult?> buscarEnderecoPorCep(String cep) async {
     final digits = cep.replaceAll(RegExp(r'\D'), '');
     if (digits.length != 8) return null;
 

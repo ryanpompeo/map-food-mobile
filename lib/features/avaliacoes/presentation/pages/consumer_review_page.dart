@@ -5,9 +5,10 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
-import 'package:map_food/features/reviews/data/models/avaliacao_model.dart';
-import 'package:map_food/features/reviews/data/services/rating_service.dart';
+import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
+import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
@@ -19,7 +20,7 @@ class ConsumerReviewPage extends StatefulWidget {
 }
 
 class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
-  final _ratingService = RatingService();
+  final _avaliacaoService = AvaliacaoService();
   final _storeService = StoreService();
 
   List<AvaliacaoModel> _avaliacoes = [];
@@ -38,7 +39,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       _errorMessage = null;
     });
     try {
-      final avaliacoes = await _ratingService.getMinhasAvaliacoes();
+      final avaliacoes = await _avaliacaoService.getMinhasAvaliacoes();
       if (mounted) {
         setState(() {
           _avaliacoes = avaliacoes;
@@ -79,18 +80,18 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorsPalette.whiteBackground,
+      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: ColorsPalette.whiteBackground,
+        backgroundColor: context.mapColors.mainBackground,
         elevation: 0,
-        foregroundColor: ColorsPalette.whiteBackground,
+        foregroundColor: context.mapColors.mainBackground,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
           "Minhas Avaliações",
           style: AppText.subtitulo(
             context,
-          ).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+          ).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
         ),
         leading: IconButton(
           onPressed: () {
@@ -129,9 +130,9 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.mapColors.cardSurface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade100),
+          border: Border.all(color: context.mapColors.border),
           boxShadow: [
             BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
           ],
@@ -142,9 +143,11 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
             Container(
               width: 56,
               height: 56,
+              // Um tom abaixo do cardSurface do card que envolve esta
+              // miniatura (mesmo padrão de superfície aninhada dos lotes anteriores).
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.grey.shade100,
+                color: context.mapColors.mainBackground,
               ),
               child: resolveImagemUrl(avaliacao.lojaImagemUrl) != null
                   ? ClipRRect(
@@ -153,10 +156,10 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                         resolveImagemUrl(avaliacao.lojaImagemUrl)!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            Icon(PhosphorIconsRegular.image, color: Colors.grey.shade400),
+                            Icon(PhosphorIconsRegular.image, color: context.mapColors.iconMuted),
                       ),
                     )
-                  : Icon(PhosphorIconsRegular.image, color: Colors.grey.shade400),
+                  : Icon(PhosphorIconsRegular.image, color: context.mapColors.iconMuted),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -167,7 +170,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                     avaliacao.lojaNome ?? 'Loja removida',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w800, color: ColorsPalette.black),
+                    style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -185,14 +188,14 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                       avaliacao.comentario!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.legenda(context).copyWith(color: ColorsPalette.greyText),
+                      style: AppText.legenda(context),
                     ),
                   ],
                   if (_formatDate(avaliacao.dataAvaliacao).isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
                       _formatDate(avaliacao.dataAvaliacao),
-                      style: AppText.legenda(context).copyWith(color: Colors.grey),
+                      style: AppText.legenda(context),
                     ),
                   ],
                 ],
@@ -228,7 +231,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
             Text(
               "As avaliações que você fizer nos comércios aparecerão aqui.",
               textAlign: TextAlign.center,
-              style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+              style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
             ),
           ],
         ),
@@ -241,12 +244,12 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: ColorsPalette.greyText),
+          Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: context.mapColors.iconMuted),
           const SizedBox(height: 16),
           Text(
             _errorMessage!,
             textAlign: TextAlign.center,
-            style: AppText.corpo(context).copyWith(color: ColorsPalette.greyText),
+            style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
           ),
           const SizedBox(height: 16),
           ElevatedButton(

@@ -4,6 +4,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 /// Abre um bottom sheet com as opções "Tirar foto" / "Escolher da galeria"
 /// e devolve o arquivo escolhido, ou `null` se o usuário cancelar.
@@ -16,18 +17,18 @@ Future<XFile?> pickImageFromSheet(BuildContext context) async {
     builder: (context) {
       return Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(AppRadius.xl), topRight: Radius.circular(AppRadius.xl)),
+        decoration: BoxDecoration(
+          color: context.mapColors.cardSurface,
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(AppRadius.xl), topRight: Radius.circular(AppRadius.xl)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40.0, height: 4.0, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10.0))),
+            Container(width: 40.0, height: 4.0, decoration: BoxDecoration(color: context.mapColors.border, borderRadius: BorderRadius.circular(10.0))),
             const SizedBox(height: AppSpacing.lg),
             Text(
               "Escolher foto",
-              style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: ColorsPalette.black),
+              style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
             ),
             const SizedBox(height: AppSpacing.lg),
             _SheetOption(
@@ -69,9 +70,13 @@ class _SheetOption extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          // Um tom abaixo do cardSurface do sheet (mainBackground é sempre
+          // mais "recuado"/escuro que cardSurface nos dois temas — ver
+          // map_food_colors.dart), pra continuar destacando a linha da
+          // opção sem precisar de um terceiro token de superfície.
+          color: context.mapColors.mainBackground,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: context.mapColors.border),
         ),
         child: Row(
           children: [
@@ -81,7 +86,7 @@ class _SheetOption extends StatelessWidget {
               child: Icon(icon, color: ColorsPalette.redComponents, size: AppIconSize.md),
             ),
             const SizedBox(width: AppSpacing.md),
-            Text(label, style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w600, color: ColorsPalette.blackDetails)),
+            Text(label, style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w600, color: context.mapColors.primaryText)),
           ],
         ),
       ),
