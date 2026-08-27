@@ -1,7 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -28,9 +30,11 @@ class GuestProfilePage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Container(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: context.mapColors.cardSurface,
                     borderRadius: BorderRadius.circular(AppRadius.xl),
+                    border: Border.all(color: context.mapColors.border),
                     boxShadow: [
                       BoxShadow(
                         color: ColorsPalette.black.withValues(alpha: 0.08),
@@ -38,137 +42,92 @@ class GuestProfilePage extends StatelessWidget {
                         spreadRadius: 0,
                         offset: const Offset(0, 4),
                       ),
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                        offset: const Offset(-6, -6),
-                      ),
                     ],
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      border: Border.all(
-                        width: 1.5,
-                        color: Colors.white.withValues(alpha: 0.6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          color: ColorsPalette.redComponents.withValues(
+                            alpha: 0.08,
+                          ),
+                        ),
+                        child: Icon(
+                          AppIcons.userPlus,
+                          color: ColorsPalette.redComponents,
+                          size: AppIconSize.lg,
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                            color: ColorsPalette.redComponents.withValues(
-                              alpha: 0.08,
-                            ),
-                          ),
-                          child: Icon(
-                            PhosphorIconsRegular.userPlus,
-                            color: ColorsPalette.redComponents,
-                            size: AppIconSize.lg,
-                          ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        "Faça parte do MapFood",
+                        style: AppText.subtitulo(context).copyWith(
+                          color: context.mapColors.primaryText,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          "Faça parte do MapFood",
-                          style: AppText.subtitulo(context).copyWith(
-                            color: context.mapColors.primaryText,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.8,
-                          ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        "Descubra novos sabores e salve favoritos, ou crie sua conta de parceiro para vender",
+                        style: AppText.secundario(context).copyWith(
+                          color: context.mapColors.secondaryText,
+                          height: 1.3,
+                          fontWeight: FontWeight.w500,
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          "Descubra novos sabores e salve favoritos, ou crie sua conta de parceiro para vender",
-                          style: AppText.secundario(context).copyWith(
-                            color: context.mapColors.secondaryText,
-                            height: 1.3,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
 
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52.0,
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.pushNamed(
-                              context,
-                              AppRoutes.accountType,
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorsPalette.redComponents,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.pill,
-                                ),
-                              ),
-                              elevation: 4,
-                              shadowColor: ColorsPalette.redComponents
-                                  .withValues(alpha: 0.5),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Criar Conta",
-                                  style: AppText.botao(
-                                    context,
-                                  ).copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(width: AppSpacing.sm),
-                                Icon(
-                                  PhosphorIconsRegular.caretRight,
-                                  color: Colors.white,
-                                  size: AppIconSize.md,
-                                ),
-                              ],
-                            ),
-                          ),
+                      // O caret que ficava à direita do rótulo saiu junto: era
+                      // decoração ("acrescenta informação" é o critério do
+                      // AppButton para ícone), e num botão de largura total já
+                      // não indicava direção nenhuma.
+                      AppButton(
+                        label: 'Criar Conta',
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.accountType,
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        Center(
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.pushNamed(context, AppRoutes.login);
-                            },
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: AppSpacing.sm,
-                                horizontal: AppSpacing.md,
-                              ),
-                              child: Text.rich(
-                                TextSpan(
-                                  text: "Já tem uma conta? ",
-                                  style: AppText.secundario(context).copyWith(
-                                    color: context.mapColors.secondaryText,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: "Entrar",
-                                      style: AppText.secundario(context)
-                                          .copyWith(
-                                            color: context.mapColors.primaryText,
-                                            fontWeight: FontWeight.bold,
-                                            decoration:
-                                                TextDecoration.underline,
-                                          ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Center(
+                        child: SemanticTapArea(
+                          label: 'Entrar',
+                          hint: 'Abre a tela de entrar com uma conta existente',
+                          onTap: () {
+                            Navigator.pushNamed(context, AppRoutes.login);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.sm,
+                              horizontal: AppSpacing.md,
+                            ),
+                            child: Text.rich(
+                              TextSpan(
+                                text: "Já tem uma conta? ",
+                                style: AppText.secundario(context).copyWith(
+                                  color: context.mapColors.secondaryText,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: "Entrar",
+                                    style: AppText.secundario(context).copyWith(
+                                      color: context.mapColors.primaryText,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -184,14 +143,14 @@ class GuestProfilePage extends StatelessWidget {
               ),
               buildListTile(
                 context: context,
-                icon: PhosphorIconsRegular.moon,
+                icon: AppIcons.moon,
                 title: "Tema do Aplicativo",
 
                 onTap: () => showThemeModeSheet(context),
               ),
               buildListTile(
                 context: context,
-                icon: PhosphorIconsRegular.mapPin,
+                icon: AppIcons.mapPin,
                 title: "Permissões de Localização",
 
                 onTap: () => Geolocator.openAppSettings(),
@@ -216,7 +175,7 @@ class GuestProfilePage extends StatelessWidget {
               ),
               buildListTile(
                 context: context,
-                icon: PhosphorIconsRegular.question,
+                icon: AppIcons.question,
                 title: "Como funciona?",
                 onTap: () {
                   Navigator.push(
@@ -227,7 +186,7 @@ class GuestProfilePage extends StatelessWidget {
               ),
               buildListTile(
                 context: context,
-                icon: PhosphorIconsRegular.fileText,
+                icon: AppIcons.fileText,
                 title: "Termos de Uso e Privacidade",
                 onTap: () {
                   Navigator.push(
@@ -297,7 +256,7 @@ class GuestProfilePage extends StatelessWidget {
               ),
             ),
             Icon(
-              PhosphorIconsRegular.caretRight,
+              AppIcons.caretRight,
               size: AppIconSize.sm,
               color: ColorsPalette.redComponents.withValues(alpha: 0.8),
             ),

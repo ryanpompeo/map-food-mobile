@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/utils/text_scale.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -34,7 +36,7 @@ class HowItWorksPage extends StatelessWidget {
                     ),
                     child: IconButton(
                       icon: const Icon(
-                        PhosphorIconsRegular.caretLeft,
+                        AppIcons.caretLeft,
                         color: ColorsPalette.redComponents,
                       ),
                       onPressed: () => Navigator.pop(context),
@@ -85,7 +87,7 @@ class HowItWorksPage extends StatelessWidget {
                         title: "Explore o Mapa",
                         description:
                             "Navegue pelo mapa interativo e encontre vendedores de rua próximos a você em tempo real",
-                        icon: PhosphorIconsRegular.mapPin,
+                        icon: AppIcons.mapPin,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -102,7 +104,7 @@ class HowItWorksPage extends StatelessWidget {
                         title: "Escolha sua Categoria",
                         description:
                             "Use os filtros inteligentes para encontrar exatamente o que deseja: de espetinhos e lanches até doces e açaí",
-                        icon: PhosphorIconsRegular.slidersHorizontal,
+                        icon: AppIcons.slidersHorizontal,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -117,7 +119,7 @@ class HowItWorksPage extends StatelessWidget {
                         title: "Siga a Rota",
                         description:
                             "Toque em 'Visualizar no mapa' para traçar a rota exata até o comércio escolhido e aproveite",
-                        icon: PhosphorIconsRegular.navigationArrow,
+                        icon: AppIcons.navigationArrow,
                       ),
 
                       const SizedBox(height: 140.0),
@@ -136,8 +138,10 @@ class HowItWorksPage extends StatelessWidget {
                 left: AppSpacing.lg,
                 right: AppSpacing.lg,
               ),
-              child: Container(
-                height: 56,
+              // A sombra tingida fica no container; o botão em si é AppButton.
+              // O caret à direita saiu junto: num botão de largura total ele
+              // não apontava para lugar nenhum.
+              child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   boxShadow: [
@@ -148,36 +152,9 @@ class HowItWorksPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: ElevatedButton(
+                child: AppButton(
+                  label: 'Começar a explorar',
                   onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsPalette.redComponents,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Começar a explorar",
-                          style: AppText.botao(context).copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16.0,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Icon(
-                          PhosphorIconsRegular.caretRight,
-                          color: Colors.white,
-                          size: AppIconSize.md,
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ),
@@ -216,12 +193,13 @@ class HowItWorksPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48.0,
-            height: 100,
-
+          // Coluna do ícone ao lado do texto do passo: a altura existe para
+          // acompanhar o bloco de texto ao lado, então escala junto com ele.
+          SizedBox(
+            width: escalaComTeto(context, 48.0),
+            height: escalaComTeto(context, 100.0),
             child: Center(
-              child: Icon(icon, color: colorIcon, size: AppIconSize.xl),
+              child: Icon(icon, color: colorIcon, size: escalaIcone(context, AppIconSize.xl)),
             ),
           ),
           const SizedBox(width: AppSpacing.md),

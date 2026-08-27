@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
+import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/denuncias/data/models/denuncia_model.dart';
 import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
 
@@ -34,12 +35,12 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
       _errorMessage = null;
     });
     try {
-      final session = await AuthStorage.getSession();
-      if (session == null) {
+      final consumidorId = SessionStore.instance.userId;
+      if (consumidorId == null) {
         if (mounted) Navigator.pop(context);
         return;
       }
-      final denuncias = await _denunciaService.getMyComplaints(session.id);
+      final denuncias = await _denunciaService.getMyComplaints(consumidorId);
       if (!mounted) return;
       setState(() {
         _denuncias = denuncias;
@@ -70,23 +71,41 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
         ),
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(AppIcons.caretLeft, color: ColorsPalette.redComponents),
         ),
       ),
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents))
             : _errorMessage != null
-                ? _ErrorState(message: _errorMessage!, onRetry: _carregar)
+                // Estas duas telas tinham cópias privadas de "vazio" e
+                // "erro", cada uma com seu próprio tamanho de ícone e botão.
+                // Agora usam o EmptyState compartilhado.
+                ? Center(
+                    child: EmptyState(
+                      icon: AppIcons.wifiSlash,
+                      title: 'Não foi possível carregar',
+                      description: _errorMessage!,
+                      actionLabel: 'Tentar novamente',
+                      onAction: _carregar,
+                      tone: EmptyStateTone.error,
+                    ),
+                  )
                 : _denuncias.isEmpty
-                    ? const _EmptyState()
+                    ? const Center(
+                        child: EmptyState(
+                          icon: AppIcons.flag,
+                          title: 'Nenhuma denúncia registrada',
+                          description: 'As denúncias que você fizer aparecerão aqui.',
+                        ),
+                      )
                     : RefreshIndicator(
                         onRefresh: _carregar,
                         color: ColorsPalette.redComponents,
                         child: ListView.separated(
                           padding: const EdgeInsets.all(AppSpacing.lg),
                           itemCount: _denuncias.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+                          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
                           itemBuilder: (context, index) => _DenunciaCard(denuncia: _denuncias[index]),
                         ),
                       ),
@@ -137,7 +156,7 @@ class _DenunciaCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: context.mapColors.cardSurface,
-        borderRadius: BorderRadius.circular(16.0),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: context.mapColors.border),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 4)),
@@ -170,7 +189,7 @@ class _DenunciaCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: status.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(100),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
                   status.label,
@@ -198,66 +217,3 @@ class _DenunciaCard extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: ColorsPalette.redComponents.withValues(alpha: 0.08), shape: BoxShape.circle),
-              child: const Icon(PhosphorIconsRegular.flag, color: ColorsPalette.redComponents, size: 42),
-            ),
-            const SizedBox(height: 20),
-            Text("Nenhuma denúncia registrada", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            Text(
-              "As denúncias que você fizer aparecerão aqui.",
-              textAlign: TextAlign.center,
-              style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: context.mapColors.iconMuted),
-            const SizedBox(height: AppSpacing.md),
-            Text(message, textAlign: TextAlign.center, style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText)),
-            const SizedBox(height: AppSpacing.lg),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorsPalette.redComponents,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-              ),
-              child: const Text('Tentar novamente'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

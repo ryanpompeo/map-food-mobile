@@ -1,12 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
+import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
@@ -70,7 +73,8 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
     try {
       final store = await _storeService.getById(lojaId);
       if (!mounted) return;
-      Navigator.push(context, appPageRoute(builder: (_) => MoreInfoStorePage(store: store)));
+      unawaited(Navigator.push(
+          context, appPageRoute(builder: (_) => MoreInfoStorePage(store: store))));
     } catch (_) {
       if (!mounted) return;
       AppToast.error(context, "Não foi possível abrir esta loja.");
@@ -98,7 +102,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
             Navigator.pop(context);
           },
           icon: Icon(
-            PhosphorIconsRegular.caretLeft,
+            AppIcons.caretLeft,
             color: ColorsPalette.redComponents,
             size: AppIconSize.lg,
           ),
@@ -116,7 +120,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         itemCount: _avaliacoes.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+                        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
                         itemBuilder: (context, index) => _buildItem(_avaliacoes[index]),
                       ),
       ),
@@ -125,13 +129,13 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
 
   Widget _buildItem(AvaliacaoModel avaliacao) {
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: avaliacao.lojaId != null ? () => _abrirLoja(avaliacao.lojaId!) : null,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: context.mapColors.cardSurface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: context.mapColors.border),
           boxShadow: [
             BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
@@ -146,20 +150,25 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
               // Um tom abaixo do cardSurface do card que envolve esta
               // miniatura (mesmo padrão de superfície aninhada dos lotes anteriores).
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 color: context.mapColors.mainBackground,
               ),
               child: resolveImagemUrl(avaliacao.lojaImagemUrl) != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: Image.network(
                         resolveImagemUrl(avaliacao.lojaImagemUrl)!,
                         fit: BoxFit.cover,
+                        // Decorativa: o nome da loja já aparece como texto ao lado.
+                        excludeFromSemantics: true,
+                        // Só cacheWidth: com os dois definidos o decoder
+                        // ignora a proporção original e estica a imagem.
+                        cacheWidth: (56.0 * MediaQuery.devicePixelRatioOf(context)).round(),
                         errorBuilder: (context, error, stackTrace) =>
-                            Icon(PhosphorIconsRegular.image, color: context.mapColors.iconMuted),
+                            Icon(AppIcons.image, color: context.mapColors.iconMuted),
                       ),
                     )
-                  : Icon(PhosphorIconsRegular.image, color: context.mapColors.iconMuted),
+                  : Icon(AppIcons.image, color: context.mapColors.iconMuted),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -176,9 +185,9 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                   Row(
                     children: List.generate(5, (i) {
                       return Icon(
-                        PhosphorIconsRegular.star,
+                        AppIcons.star,
                         size: 14,
-                        color: i < avaliacao.nota ? Colors.amber.shade600 : Colors.grey.shade300,
+                        color: i < avaliacao.nota ? ColorsPalette.ratingStar : context.mapColors.border,
                       );
                     }),
                   ),
@@ -208,60 +217,24 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
   }
 
   Widget _buildVazio() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(PhosphorIconsRegular.star, color: Colors.amber.shade600, size: 42),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Nenhuma avaliação ainda",
-              style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "As avaliações que você fizer nos comércios aparecerão aqui.",
-              textAlign: TextAlign.center,
-              style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
-            ),
-          ],
-        ),
+    return const Center(
+      child: EmptyState(
+        icon: AppIcons.star,
+        title: "Nenhuma avaliação ainda",
+        description: "As avaliações que você fizer nos comércios aparecerão aqui.",
       ),
     );
   }
 
   Widget _buildErro() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(PhosphorIconsRegular.wifiSlash, size: 48, color: context.mapColors.iconMuted),
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage!,
-            textAlign: TextAlign.center,
-            style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _carregarAvaliacoes,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ColorsPalette.redComponents,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Tentar novamente'),
-          ),
-        ],
+      child: EmptyState(
+        icon: AppIcons.wifiSlash,
+        title: 'Não foi possível carregar',
+        description: _errorMessage!,
+        actionLabel: 'Tentar novamente',
+        onAction: _carregarAvaliacoes,
+        tone: EmptyStateTone.error,
       ),
     );
   }
