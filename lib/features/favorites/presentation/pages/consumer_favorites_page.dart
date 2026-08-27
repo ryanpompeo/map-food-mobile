@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/theme/app_elevation.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/category_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/utils/category_icons.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
+import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
 import '../controllers/favorites_manager.dart';
@@ -24,7 +30,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
     super.initState();
 
     FavoritesManager.instance.addListener(_refresh);
-    FavoritesManager.instance.load();
+    unawaited(FavoritesManager.instance.load());
   }
 
   @override
@@ -43,6 +49,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
   Widget build(BuildContext context) {
     final favorites = FavoritesManager.instance.favorites;
     final isLoading = FavoritesManager.instance.isLoading;
+    final errorMessage = FavoritesManager.instance.errorMessage;
 
     return Scaffold(
       backgroundColor: context.mapColors.mainBackground,
@@ -53,7 +60,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
         centerTitle: true,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(AppIcons.caretLeft, color: ColorsPalette.redComponents),
         ),
         title: Text(
           "Favoritos",
@@ -64,18 +71,36 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
       ),
       body: isLoading && favorites.isEmpty
           ? const Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents))
+          // Erro tem precedência sobre o vazio: sem isso, uma falha de rede
+          // aparecia como "nenhum favorito ainda" e o usuário concluía que
+          // tinha perdido o que salvou.
+          : (errorMessage != null && favorites.isEmpty)
+          ? Center(
+              child: EmptyState(
+                icon: AppIcons.wifiSlash,
+                title: 'Não foi possível carregar',
+                description: errorMessage,
+                actionLabel: 'Tentar novamente',
+                onAction: () => FavoritesManager.instance.load(),
+                tone: EmptyStateTone.error,
+              ),
+            )
           : favorites.isEmpty
           ? _EmptyFavoritesWidget()
           : ListView.separated(
               padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: favorites.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 final store = favorites[index];
+                final categoriaPrincipal = store.categoriaNomes.isNotEmpty
+                    ? store.categoriaNomes.first
+                    : (store.categoria.isNotEmpty ? store.categoria : null);
+                final corCategoria = categoriaPrincipal != null ? corParaCategoria(categoriaPrincipal) : null;
 
                 return InkWell(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -88,44 +113,59 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: context.mapColors.cardSurface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(color: context.mapColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      boxShadow: AppElevation.soft,
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          // Um tom abaixo do cardSurface do card que envolve esta
-                          // miniatura (mesmo padrão de superfície aninhada dos lotes anteriores).
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: context.mapColors.mainBackground,
-                          ),
-                          child: resolveImagemUrl(store.capaUrl) != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    resolveImagemUrl(store.capaUrl)!,
-                                    fit: BoxFit.cover,
-                                    // Container é 80x80 — decodifica só nesse
-                                    // tamanho físico em vez da resolução cheia.
-                                    cacheWidth: (80.0 * MediaQuery.devicePixelRatioOf(context)).round(),
-                                    cacheHeight: (80.0 * MediaQuery.devicePixelRatioOf(context)).round(),
-                                    errorBuilder: (context, error, stackTrace) => Icon(
-                                      PhosphorIconsRegular.image,
-                                      color: context.mapColors.iconMuted,
-                                    ),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              // Um tom abaixo do cardSurface do card que envolve esta
+                              // miniatura (mesmo padrão de superfície aninhada dos lotes anteriores).
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                color: context.mapColors.mainBackground,
+                              ),
+                              child: resolveImagemUrl(store.capaUrl) != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                                      child: Image.network(
+                                        resolveImagemUrl(store.capaUrl)!,
+                                        fit: BoxFit.cover,
+                                        // Decorativa: o nome da loja já aparece como texto no card.
+                                        excludeFromSemantics: true,
+                                        // Só cacheWidth: com os dois definidos o
+                                        // decoder ignora a proporção e estica a imagem.
+                                        cacheWidth: (80.0 * MediaQuery.devicePixelRatioOf(context)).round(),
+                                        errorBuilder: (context, error, stackTrace) => Icon(
+                                          AppIcons.image,
+                                          color: context.mapColors.iconMuted,
+                                        ),
+                                      ),
+                                    )
+                                  : Icon(AppIcons.image, color: context.mapColors.iconMuted),
+                            ),
+                            // Selo de canto com a cor de identidade da categoria
+                            // principal — mesma paleta usada nos filtros.
+                            if (categoriaPrincipal != null)
+                              Positioned(
+                                bottom: -4.0, right: -4.0,
+                                child: Container(
+                                  width: 24.0, height: 24.0,
+                                  decoration: BoxDecoration(
+                                    color: corCategoria,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: context.mapColors.cardSurface, width: 2.0),
                                   ),
-                                )
-                              : Icon(PhosphorIconsRegular.image, color: context.mapColors.iconMuted),
+                                  child: Icon(iconeParaCategoria(categoriaPrincipal), size: 12.0, color: Colors.white),
+                                ),
+                              ),
+                          ],
                         ),
 
                         const SizedBox(width: 12),
@@ -158,9 +198,9 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                               Row(
                                 children: [
                                   Icon(
-                                    PhosphorIconsRegular.star,
+                                    AppIcons.star,
                                     size: 14,
-                                    color: Colors.amber.shade600,
+                                    color: ColorsPalette.ratingStar,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -175,7 +215,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
 
                         IconButton(
                           icon: const Icon(
-                            PhosphorIconsRegular.heart,
+                            AppIcons.heart,
                             color: Colors.red,
                           ),
                           onPressed: () async {
@@ -203,41 +243,11 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
 class _EmptyFavoritesWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(PhosphorIconsRegular.heart, color: Colors.red, size: 42),
-            ),
-
-            const SizedBox(height: 20),
-
-            Text(
-              "Nenhum favorito ainda",
-              style: AppText.subtitulo(
-                context,
-              ).copyWith(fontWeight: FontWeight.w800),
-            ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              "Os comércios que você favoritar aparecerão aqui.",
-              textAlign: TextAlign.center,
-              style: AppText.corpo(
-                context,
-              ).copyWith(color: context.mapColors.secondaryText),
-            ),
-          ],
-        ),
+    return const Center(
+      child: EmptyState(
+        icon: AppIcons.heart,
+        title: "Nenhum favorito ainda",
+        description: "Os comércios que você favoritar aparecerão aqui.",
       ),
     );
   }

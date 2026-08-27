@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -7,7 +9,19 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class LoginWallHelper {
-  static void showLoginWallBottomSheet(BuildContext context) {
+  /// Sheet de "precisa de conta pra isso". Os textos são parametrizados
+  /// porque a mesma parede agora barra três ações diferentes (favoritar,
+  /// avaliar, denunciar) — anunciar "Salve seus comércios favoritos!" para
+  /// quem tocou em "Denunciar" não explica nada. Os defaults são os textos
+  /// originais de favoritos, então quem já chamava sem argumentos continua
+  /// vendo exatamente o mesmo sheet.
+  static void showLoginWallBottomSheet(
+    BuildContext context, {
+    IconData icon = AppIcons.heart,
+    String title = "Salve seus comércios favoritos!",
+    String description =
+        "Crie uma conta gratuita em segundos para salvar, avaliar e denunciar comércios na sua cidade.",
+  }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -36,7 +50,7 @@ class LoginWallHelper {
                   height: 4.0,
                   decoration: BoxDecoration(
                     color: bc.mapColors.border,
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -46,15 +60,15 @@ class LoginWallHelper {
                     color: ColorsPalette.redComponents.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    PhosphorIconsRegular.heart,
+                  child: Icon(
+                    icon,
                     color: ColorsPalette.redComponents,
                     size: 32.0,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
-                  "Salve seus comércios favoritos!",
+                  title,
                   textAlign: TextAlign.center,
                   style: AppText.subtitulo(context).copyWith(
                     fontWeight: FontWeight.w900,
@@ -64,39 +78,24 @@ class LoginWallHelper {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  "Crie uma conta gratuita em segundos para salvar, avaliar e denunciar comércios na sua cidade.",
+                  description,
                   textAlign: TextAlign.center,
                   style: AppText.corpo(
                     context,
                   ).copyWith(color: context.mapColors.secondaryText, height: 1.3),
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52.0,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, AppRoutes.accountType);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorsPalette.redComponents,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      "Criar Conta Gratuita",
-                      style: AppText.botao(
-                        context,
-                      ).copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                AppButton(
+                  label: 'Criar Conta Gratuita',
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, AppRoutes.accountType);
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
-                GestureDetector(
+                SemanticTapArea(
+                  label: 'Já tenho uma conta',
+                  hint: 'Abre a tela de entrar',
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, AppRoutes.login);
