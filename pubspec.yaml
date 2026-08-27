@@ -33,9 +33,11 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-  google_fonts: ^8.0.2
-  cpf_cnpj_validator: 2.0.0-nullsafety
+  cupertino_icons: ^1.0.9
+  # google_fonts removido: nenhuma referência a `GoogleFonts` em lib/. A
+  # tipografia do app é a família Inter declarada em `fonts:` no fim deste
+  # arquivo e consumida por `core/ui/theme/app_typography.dart`.
+  cpf_cnpj_validator: ^2.0.0
   mask_text_input_formatter: ^2.9.0
   dio: ^5.8.0+1
   shared_preferences: ^2.5.3
@@ -50,7 +52,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_dynamic_launcher_icon: ^0.0.2
 
 
 
@@ -62,14 +63,21 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
 
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/isologo.png"
+# O bloco `flutter_icons:` que existia aqui foi removido: era a configuração do
+# `flutter_dynamic_launcher_icon` e apontava para `assets/images/isologo.png`,
+# enquanto o `flutter_launcher_icons:` no fim do arquivo aponta para
+# `assets/icon/app_icon.png`. Com os dois geradores instalados, o ícone final
+# dependia de qual comando tinha rodado por último. Ficou só o segundo.
 
 # Força path_provider_foundation para a última versão sem objective_c.
 # objective_c foi introduzido em 2.5.0 e causa falha de compilação
 # quando o Flutter SDK está instalado em caminho com espaços (Windows).
+#
+# ATENÇÃO: este override congela um plugin **Darwin** por causa de um problema
+# de ambiente **Windows**. Num build iOS de CI ele silenciosamente entrega uma
+# versão defasada. Condição de saída: remover assim que o Flutter SDK desta
+# máquina deixar de morar num caminho com espaços — e então testar
+# `flutter build ios` antes de fechar.
 dependency_overrides:
   path_provider_foundation: 2.4.4
 
@@ -94,9 +102,20 @@ flutter:
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
-
-  # Fonte usada no app é o Poppins, carregado via google_fonts em main.dart
-  # (não precisa ser declarado aqui).
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter_18pt-Regular.ttf
+        - asset: assets/fonts/Inter_18pt-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter_18pt-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter_18pt-Bold.ttf
+          weight: 700
+  # A família acima é a única fonte do app (ver core/ui/theme/app_typography.dart).
+  # O comentário anterior aqui dizia que o app usava Poppins via google_fonts —
+  # isso deixou de valer na v2 do design system, quando a Inter passou a ser
+  # empacotada em assets/ (ver o cabeçalho de core/ui/theme/app_theme.dart).
 
 flutter_launcher_icons:
   android: "launcher_icon"

@@ -77,10 +77,10 @@ packages:
     dependency: "direct main"
     description:
       name: cpf_cnpj_validator
-      sha256: "4fb2b53d8075f74c61ecf574218954cf48421e15ae340d77c409d7cb74be4f1a"
+      sha256: "2d52caefe720f7428d8fd12b5dc3a9603e137ae4eafe032b8f1bd104d3656bfb"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.0-nullsafety"
+    version: "2.0.0"
   cross_file:
     dependency: transitive
     description:
@@ -101,10 +101,10 @@ packages:
     dependency: "direct main"
     description:
       name: cupertino_icons
-      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
+      sha256: "41e005c33bd814be4d3096aff55b1908d419fde52ca656c8c47719ec745873cd"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.8"
+    version: "1.0.9"
   dart_earcut:
     dependency: transitive
     description:
@@ -198,14 +198,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_dynamic_launcher_icon:
-    dependency: "direct dev"
-    description:
-      name: flutter_dynamic_launcher_icon
-      sha256: "760284ab702b7a73be1a16c3fc2b0befbc29748f3fd9ed3075ee38b8878a1600"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.2"
   flutter_launcher_icons:
     dependency: "direct dev"
     description:
@@ -344,14 +336,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.5"
-  google_fonts:
-    dependency: "direct main"
-    description:
-      name: google_fonts
-      sha256: db9df7a5898d894eeda4c78143f35c30a243558be439518972366880b80bf88e
-      url: "https://pub.dev"
-    source: hosted
-    version: "8.0.2"
   http:
     dependency: transitive
     description:
@@ -576,22 +560,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
-  path_provider:
-    dependency: transitive
-    description:
-      name: path_provider
-      sha256: "50c5dd5b6e1aaf6fb3a78b33f6aa3afca52bf903a8a5298f53101fdaee55bbcd"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.5"
-  path_provider_android:
-    dependency: transitive
-    description:
-      name: path_provider_android
-      sha256: f2c65e21139ce2c3dad46922be8272bb5963516045659e71bb16e151c93b580e
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.22"
   path_provider_foundation:
     dependency: "direct overridden"
     description:
