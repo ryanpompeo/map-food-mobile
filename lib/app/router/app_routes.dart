@@ -2,6 +2,7 @@ class AppRoutes {
   const AppRoutes._();
 
   static const root = '/';
+  static const onboarding = '/onboarding';
   static const login = '/login';
   static const howItWorks = '/howItWorks';
   static const accountType = '/accountType';

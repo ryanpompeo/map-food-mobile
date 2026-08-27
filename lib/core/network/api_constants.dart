@@ -10,6 +10,15 @@ class ApiConstants {
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 15);
 
+  /// Governa o **envio** do corpo da requisição. Sem ele, um upload multipart
+  /// em rede ruim ficava pendurado indefinidamente — era o único timeout que
+  /// faltava, e justamente o da operação mais longa do app.
+  static const Duration sendTimeout = Duration(seconds: 60);
+
+  /// Upload de imagem (capa, galeria de até 10 fotos, foto de perfil): os 15s
+  /// padrão de recebimento estouram antes de o envio terminar em 4G fraco.
+  static const Duration uploadTimeout = Duration(seconds: 90);
+
   static const String login = '/auth/login';
   static const String consumidores = '/consumidores';
   static const String comerciantes = '/comerciantes';

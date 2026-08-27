@@ -26,3 +26,17 @@ class ServerException extends AppException {
 class NetworkException extends AppException {
   const NetworkException([super.message = 'Sem conexão. Verifique sua internet.']);
 }
+
+/// A resposta chegou, mas em formato que o app não consegue interpretar.
+///
+/// Distinta de [NetworkException] (não chegou) e [ServerException] (o servidor
+/// falhou): esta indica **quebra de contrato** entre cliente e API — campo
+/// obrigatório ausente, tipo trocado, corpo vazio onde se esperava uma lista.
+///
+/// Existe porque esses casos antes viravam `TypeError` cru: por não serem
+/// [AppException], atravessavam todo `on AppException catch` do app e caíam
+/// nos `catch (_)` genéricos das telas, que os exibiam como erro de rede — ou
+/// não exibiam nada.
+class ParseException extends AppException {
+  const ParseException([super.message = 'Resposta inesperada do servidor.']);
+}

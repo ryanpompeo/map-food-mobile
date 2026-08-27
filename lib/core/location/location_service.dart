@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
-/// Resultado da tentativa de obter a localização legível do usuário.
+
 enum LocationStatus { granted, denied, serviceDisabled }
 
 class LocationResult {
@@ -65,9 +65,6 @@ class LocationService {
     final position = await Geolocator.getCurrentPosition(
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
     );
-
-    // O pacote geocoding não tem implementação web — devolve as coordenadas
-    // sem label em vez de estourar MissingPluginException.
     if (kIsWeb) {
       return LocationResult(
         LocationStatus.granted,
