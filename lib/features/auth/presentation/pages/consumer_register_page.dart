@@ -1,22 +1,23 @@
-import 'package:map_food/core/ui/validators/form_validator.dart';
-import 'package:flutter/gestures.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:map_food/core/ui/navigation/app_page_route.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:map_food/app/router/app_routes.dart';
-import 'package:map_food/core/ui/widgets/app_form_field.dart';
-import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
-import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/validators/form_validator.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
+import 'package:map_food/features/auth/presentation/widgets/terms_checkbox.dart';
 import 'package:map_food/features/consumer/data/models/consumer_register_request.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_home_page.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class ConsumerRegisterPage extends StatefulWidget {
   const ConsumerRegisterPage({super.key});
@@ -33,6 +34,14 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
   final _cpfController = TextEditingController();
   final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
+
+  // Encadeamento do teclado: cada campo manda o foco pro próximo, e o último
+  // envia o formulário. Antes todos abriam "concluído", o que fechava o
+  // teclado a cada campo e obrigava a tocar de novo na tela.
+  final _emailFocus = FocusNode();
+  final _cpfFocus = FocusNode();
+  final _telefoneFocus = FocusNode();
+  final _senhaFocus = FocusNode();
 
   final _consumerService = ConsumerService();
   final _authService = AuthService();
@@ -52,48 +61,29 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
     filter: {"#": RegExp(r'[0-9]')},
   );
 
-  late TapGestureRecognizer _termosRecognizer;
-  late TapGestureRecognizer _privacidadeRecognizer;
-
-  @override
-  void initState() {
-    super.initState();
-    _termosRecognizer = TapGestureRecognizer()
-      ..onTap = () {
-        Navigator.push(
-          context,
-          appPageRoute(builder: (_) => TermosPage()),
-        );
-      };
-
-    _privacidadeRecognizer = TapGestureRecognizer()
-      ..onTap = () {
-        Navigator.push(
-          context,
-          appPageRoute(builder: (_) => TermosPage()),
-        );
-      };
-  }
-
   @override
   void dispose() {
-    _termosRecognizer.dispose();
-    _privacidadeRecognizer.dispose();
     _nomeController.dispose();
     _emailController.dispose();
     _cpfController.dispose();
     _telefoneController.dispose();
     _senhaController.dispose();
+    _emailFocus.dispose();
+    _cpfFocus.dispose();
+    _telefoneFocus.dispose();
+    _senhaFocus.dispose();
     super.dispose();
   }
 
   Future<void> _cadastrar() async {
     if (_isLoading) return;
 
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    if (!_aceitouTermos) {
-      _mostrarErro('Você precisa aceitar os Termos de Uso.');
+    // O aceite dos termos virou um FormField (ver TermsCheckbox), então entra
+    // nesta mesma validação e o erro aparece embaixo do checkbox — antes era
+    // um toast no topo da tela, longe do que precisava ser corrigido.
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      // Tira o foco pra o teclado não cobrir os campos em erro.
+      FocusScope.of(context).unfocus();
       return;
     }
 
@@ -120,31 +110,22 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
         await _authService.login(email, senha, 'CONSUMIDOR');
       } on AppException {
         if (!mounted) return;
-        _mostrarErro(
-          'Conta criada, mas não foi possível entrar automaticamente. Faça login.',
-        );
-        Navigator.pushReplacementNamed(
-          context,
-          AppRoutes.login,
-          arguments: 'CONSUMIDOR',
-        );
+        setState(() => _errorMessage =
+            'Conta criada, mas não foi possível entrar automaticamente. Faça login.');
+        unawaited(Navigator.pushReplacementNamed(context, AppRoutes.login,
+            arguments: 'CONSUMIDOR'));
         return;
       }
 
       if (!mounted) return;
 
-      Navigator.pushAndRemoveUntil(
+      unawaited(Navigator.pushAndRemoveUntil(
         context,
-        appPageRoute(
-          builder: (_) => const ConsumerHomePage(),
-        ),
+        appPageRoute(builder: (_) => const ConsumerHomePage()),
         (route) => false,
-      );
+      ));
     } on AppException catch (e) {
-      final msg = e.statusCode == 409
-          ? 'E-mail ou CPF já cadastrado.'
-          : e.message;
-      _mostrarErro(msg);
+      _mostrarErro(e.statusCode == 409 ? 'E-mail ou CPF já cadastrado.' : e.message);
     } catch (e, st) {
       debugPrint('Erro no cadastro de consumidor: $e');
       debugPrint('$st');
@@ -154,263 +135,142 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
     }
   }
 
+  /// Só o banner inline: antes a mesma frase aparecia duas vezes (banner +
+  /// toast), e a versão do toast sumia sozinha antes de ser lida.
   void _mostrarErro(String msg) {
     if (!mounted) return;
     setState(() => _errorMessage = msg);
-    AppToast.error(context, msg);
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.mapColors;
+
     return Scaffold(
-      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: context.mapColors.mainBackground,
-        foregroundColor: context.mapColors.mainBackground,
-        surfaceTintColor: context.mapColors.mainBackground,
-        elevation: 0,
-        centerTitle: true,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            PhosphorIconsRegular.caretLeft,
-            color: ColorsPalette.redComponents,
-            size: AppIconSize.lg,
-          ),
+          icon: const Icon(AppIcons.caretLeft),
+          color: colors.textPrimary,
         ),
       ),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
+          padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.sm, Spacing.lg, Spacing.xxl),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // O papel da conta vira um rótulo discreto acima do título,
+                // em vez de tingir o próprio título de preto ou vermelho.
+                Text('CONTA DE CLIENTE', style: AppText.overline(context)),
+                const SizedBox(height: Spacing.sm),
+                Text('Crie sua conta', style: AppText.display(context)),
+                const SizedBox(height: Spacing.md),
                 Text(
-                  "Crie sua conta",
-                  style: AppText.display(context).copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1.0,
-                    color: ColorsPalette.blackComponents,
-                  ),
+                  'Preencha seus dados para descobrir os melhores comércios da sua região',
+                  style: AppText.body(context).copyWith(color: colors.textSecondary),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  "Preencha seus dados para começar a pedir as melhores comidas da região",
-                  style: AppText.secundario(
-                    context,
-                  ).copyWith(fontSize: 15.0, height: 1.4),
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: Spacing.xxl),
 
                 AppFormField(
                   controller: _nomeController,
-                  label: "Nome Completo",
-                  hint: "João da Silva",
-                  icon: PhosphorIconsRegular.user,
+                  label: 'Nome completo',
+                  hint: 'João da Silva',
+                  icon: AppIcons.user,
                   keyboardType: TextInputType.name,
                   textCapitalization: TextCapitalization.words,
                   validator: FormValidator.nome,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _emailFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _emailController,
-                  label: "E-mail",
-                  hint: "joao@exemplo.com",
-                  icon: PhosphorIconsRegular.envelope,
+                  focusNode: _emailFocus,
+                  label: 'E-mail',
+                  hint: 'joao@exemplo.com',
+                  icon: AppIcons.envelope,
                   keyboardType: TextInputType.emailAddress,
                   validator: FormValidator.email,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _cpfFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _cpfController,
-                  label: "CPF",
-                  hint: "000.000.000-00",
-                  icon: PhosphorIconsRegular.creditCard,
+                  focusNode: _cpfFocus,
+                  label: 'CPF',
+                  hint: '000.000.000-00',
+                  icon: AppIcons.identificationCard,
                   keyboardType: TextInputType.number,
                   inputFormatters: [_cpfFormatter],
                   validator: FormValidator.cpf,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _telefoneFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _telefoneController,
-                  label: "Celular",
-                  hint: "(11) 90000-0000",
-                  icon: PhosphorIconsRegular.deviceMobile,
+                  focusNode: _telefoneFocus,
+                  label: 'Celular',
+                  hint: '(11) 90000-0000',
+                  icon: AppIcons.deviceMobile,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [_telefoneFormatter],
                   validator: FormValidator.telefone,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _senhaFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _senhaController,
-                  label: "Senha",
-                  hint: "Mínimo 6 caracteres",
-                  icon: PhosphorIconsRegular.lock,
+                  focusNode: _senhaFocus,
+                  label: 'Senha',
+                  hint: 'Mínimo 6 caracteres',
+                  icon: AppIcons.lock,
                   obscureText: _obscurePassword,
+                  validator: FormValidator.senha,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _cadastrar(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
-                      color: context.mapColors.iconMuted,
+                      _obscurePassword ? AppIcons.eyeClosed : AppIcons.eye,
+                      color: colors.textTertiary,
                       size: AppIconSize.md,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
-                  validator: FormValidator.senha,
                 ),
 
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: Spacing.xl),
 
-                FormField<bool>(
-                  initialValue: _aceitouTermos,
-                  builder: (FormFieldState<bool> state) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              height: AppIconSize.lg,
-                              width: AppIconSize.lg,
-                              child: Checkbox(
-                                value: _aceitouTermos,
-                                activeColor: ColorsPalette.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6.0),
-                                ),
-                                side: BorderSide(
-                                  color: context.mapColors.border,
-                                  width: 1.5,
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _aceitouTermos = value ?? false;
-                                  });
-                                  state.didChange(_aceitouTermos);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12.0),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _aceitouTermos = !_aceitouTermos;
-                                  });
-                                  state.didChange(_aceitouTermos);
-                                },
-                                child: Text.rich(
-                                  TextSpan(
-                                    text: "Eu li e concordo com os ",
-                                    style: AppText.secundario(
-                                      context,
-                                    ).copyWith(height: 1.4),
-                                    children: [
-                                      TextSpan(
-                                        text: "Termos de Uso",
-                                        recognizer: _termosRecognizer,
-                                        style: AppText.secundario(context)
-                                            .copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: context.mapColors.primaryText,
-                                              decoration:
-                                                  TextDecoration.underline,
-                                            ),
-                                      ),
-                                      const TextSpan(text: " e a "),
-                                      TextSpan(
-                                        text: "Política de Privacidade",
-                                        recognizer: _privacidadeRecognizer,
-                                        style: AppText.secundario(context)
-                                            .copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: context.mapColors.primaryText,
-                                              decoration:
-                                                  TextDecoration.underline,
-                                            ),
-                                      ),
-                                      const TextSpan(text: "."),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
+                TermsCheckbox(
+                  value: _aceitouTermos,
+                  onChanged: (value) => setState(() => _aceitouTermos = value),
                 ),
 
                 if (_errorMessage != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    _errorMessage!,
-                    style: AppText.legenda(
-                      context,
-                    ).copyWith(color: Colors.red.shade600),
-                  ),
+                  const SizedBox(height: Spacing.lg),
+                  FormErrorBanner(message: _errorMessage),
                 ],
 
-                const SizedBox(height: AppSpacing.xxl),
+                const SizedBox(height: Spacing.xl),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52.0,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _cadastrar,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorsPalette.blackComponents,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.black.withValues(
-                        alpha: 0.6,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: AppIconSize.lg,
-                            width: AppIconSize.lg,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Criar conta",
-                                style: AppText.botao(context),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Icon(
-                                PhosphorIconsRegular.caretRight,
-                                color: ColorsPalette.white,
-                                size: AppIconSize.md,
-                              ),
-                            ],
-                          ),
-                  ),
+                AppButton(
+                  label: 'Criar conta',
+                  loading: _isLoading,
+                  onPressed: _cadastrar,
+                  variant: AppButtonVariant.inverse,
                 ),
-                const SizedBox(height: AppSpacing.lg),
               ],
             ),
           ),

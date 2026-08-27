@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/app/router/app_routes.dart';
-import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/validators/form_validator.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
+import 'package:map_food/features/auth/presentation/widgets/account_type_switch.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,8 +23,10 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
+  final _senhaFocus = FocusNode();
   final _authService = AuthService();
 
   bool _obscurePassword = true;
@@ -42,23 +50,17 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _senhaController.dispose();
+    _senhaFocus.dispose();
     super.dispose();
   }
 
   Future<void> _fazerLogin() async {
     if (_isLoading) return;
 
-    final email = _emailController.text.trim().toLowerCase();
-    final senha = _senhaController.text;
-
-    if (email.isEmpty || senha.isEmpty) {
-      setState(() => _errorMessage = 'Preencha e-mail e senha.');
-      return;
-    }
-    if (!email.contains('@') || !email.contains('.')) {
-      setState(() => _errorMessage = 'Digite um e-mail válido.');
-      return;
-    }
+    // Validação pelo mesmo FormValidator das telas de cadastro — antes esta
+    // tela tinha regra própria (`email.contains('@')`), então "a@b" passava
+    // aqui e era recusado no cadastro.
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() {
       _isLoading = true;
@@ -66,7 +68,11 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final response = await _authService.login(email, senha, _tipoLogin);
+      final response = await _authService.login(
+        _emailController.text.trim().toLowerCase(),
+        _senhaController.text,
+        _tipoLogin,
+      );
 
       if (!mounted) return;
 
@@ -76,13 +82,14 @@ class _LoginPageState extends State<LoginPage> {
       // pushNamedAndRemoveUntil (não pushReplacementNamed) para limpar todo o
       // histórico de navegação do Guest — sem isso o botão "voltar" do
       // celular retornava ao perfil Guest depois de logado.
-      Navigator.pushNamedAndRemoveUntil(context, destino, (route) => false);
+      unawaited(
+          Navigator.pushNamedAndRemoveUntil(context, destino, (route) => false));
     } on UnauthorizedException {
       setState(() => _errorMessage = 'E-mail ou senha incorretos.');
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);
-    } catch (e) {
-      setState(() => _errorMessage = 'Erro: ${e.runtimeType} — $e');
+    } catch (_) {
+      setState(() => _errorMessage = 'Não foi possível entrar. Tente novamente.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -90,222 +97,127 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.mapColors;
+    final isComerciante = _tipoLogin == 'COMERCIANTE';
+
     return Scaffold(
-      backgroundColor: context.mapColors.mainBackground,
+      // Sem AuthHeroBand: o gradiente vermelho com bolhas coloridas competia
+      // com o formulário e era o elemento mais datado da tela. O que abre a
+      // tela agora é a tipografia.
       appBar: AppBar(
-        backgroundColor: context.mapColors.mainBackground,
-        foregroundColor: context.mapColors.mainBackground,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            PhosphorIconsRegular.caretLeft,
-            color: ColorsPalette.redComponents,
-            size: AppIconSize.lg,
-          ),
+          icon: const Icon(AppIcons.caretLeft),
+          color: colors.textPrimary,
         ),
       ),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Bem-vindo\nde volta",
-                style: AppText.display(context).copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1.5,
-                  color: context.mapColors.primaryText,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                "Acesse sua conta para continuar no MapFood",
-                style: AppText.secundario(
-                  context,
-                ).copyWith(fontSize: 15.0, height: 1.4),
-              ),
-
-              const SizedBox(height: AppSpacing.xl),
-
-              // Seletor de tipo de conta
-              Container(
-                decoration: BoxDecoration(
-                  color: context.mapColors.cardSurface,
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _tipoLogin = 'CONSUMIDOR'),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          decoration: BoxDecoration(
-                            color: _tipoLogin == 'CONSUMIDOR'
-                                ? ColorsPalette.blackComponents
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Consumidor',
-                            style: AppText.legenda(context).copyWith(
-                              color: _tipoLogin == 'CONSUMIDOR'
-                                  ? Colors.white
-                                  : context.mapColors.secondaryText,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _tipoLogin = 'COMERCIANTE'),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          decoration: BoxDecoration(
-                            color: _tipoLogin == 'COMERCIANTE'
-                                ? ColorsPalette.redComponents
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Comerciante',
-                            style: AppText.legenda(context).copyWith(
-                              color: _tipoLogin == 'COMERCIANTE'
-                                  ? Colors.white
-                                  : context.mapColors.secondaryText,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.lg),
-
-              AppFormField(
-                controller: _emailController,
-                label: "E-mail",
-                hint: "seu@email.com",
-                icon: PhosphorIconsRegular.envelope,
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) => null,
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              AppFormField(
-                controller: _senhaController,
-                label: "Senha",
-                hint: "Digite sua senha",
-                icon: PhosphorIconsRegular.lock,
-                obscureText: _obscurePassword,
-                validator: (v) => null,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
-                    color: context.mapColors.iconMuted,
-                    size: AppIconSize.md,
-                  ),
-                  onPressed: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                ),
-              ),
-
-              if (_errorMessage != null) ...[
-                const SizedBox(height: AppSpacing.sm),
+          padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.sm, Spacing.lg, Spacing.xxl),
+          child: Form(
+            key: _formKey,
+            // Revalida a cada tecla só depois da primeira tentativa: avisar
+            // "e-mail inválido" enquanto a pessoa ainda está digitando a
+            // primeira letra é ruído.
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Bem-vindo\nde volta', style: AppText.display(context)),
+                const SizedBox(height: Spacing.md),
                 Text(
-                  _errorMessage!,
-                  style: AppText.legenda(
-                    context,
-                  ).copyWith(color: Colors.red.shade600),
+                  'Acesse sua conta para continuar no MapFood',
+                  style: AppText.body(context).copyWith(color: colors.textSecondary),
+                ),
+                const SizedBox(height: Spacing.xxl),
+
+                AccountTypeSwitch(
+                  value: _tipoLogin,
+                  onChanged: (tipo) => setState(() => _tipoLogin = tipo),
+                ),
+                const SizedBox(height: Spacing.xl),
+
+                AppFormField(
+                  controller: _emailController,
+                  label: 'E-mail',
+                  hint: 'seu@email.com',
+                  icon: AppIcons.envelope,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: FormValidator.email,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _senhaFocus.requestFocus(),
+                ),
+                const SizedBox(height: Spacing.base),
+
+                AppFormField(
+                  controller: _senhaController,
+                  focusNode: _senhaFocus,
+                  label: 'Senha',
+                  hint: 'Digite sua senha',
+                  icon: AppIcons.lock,
+                  obscureText: _obscurePassword,
+                  // Só "campo obrigatório" aqui: as regras de força valem no
+                  // cadastro. Aplicá-las no login barraria quem tem senha
+                  // antiga, mais curta que a regra atual.
+                  validator: (v) => FormValidator.required(v, 'Senha'),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _fazerLogin(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? AppIcons.eyeClosed : AppIcons.eye,
+                      color: colors.textTertiary,
+                      size: AppIconSize.md,
+                    ),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: Spacing.base),
+                  FormErrorBanner(message: _errorMessage),
+                ],
+
+                const SizedBox(height: Spacing.xl),
+
+                AppButton(
+                  label: 'Entrar',
+                  loading: _isLoading,
+                  onPressed: _fazerLogin,
+                  // Consumidor entra pelo CTA neutro; comerciante pelo
+                  // vermelho — mesma distinção de papel do seletor acima.
+                  variant: isComerciante ? AppButtonVariant.primary : AppButtonVariant.inverse,
+                ),
+                const SizedBox(height: Spacing.xl),
+
+                Center(
+                  child: SemanticTapArea(
+                    label: 'Cadastre-se',
+                    hint: 'Abre a criação de conta',
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.accountType),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'Não tem uma conta? ',
+                          style: AppText.secondary(context),
+                          children: [
+                            TextSpan(
+                              text: 'Cadastre-se',
+                              style: AppText.secondary(context).copyWith(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
-
-              const SizedBox(height: AppSpacing.xl),
-
-              SizedBox(
-                width: double.infinity,
-                height: 52.0,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _fazerLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _tipoLogin == 'COMERCIANTE'
-                        ? ColorsPalette.redComponents
-                        : ColorsPalette.blackComponents,
-                    foregroundColor: ColorsPalette.white,
-                    disabledBackgroundColor: ColorsPalette.black.withValues(
-                      alpha: 0.6,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: AppIconSize.lg,
-                          width: AppIconSize.lg,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : Text("Entrar", style: AppText.botao(context)),
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.xl),
-
-              Row(
-                children: [
-                  Expanded(child: Divider(color: context.mapColors.border)),
-
-                  Expanded(child: Divider(color: context.mapColors.border)),
-                ],
-              ),
-
-              const SizedBox(height: AppSpacing.xxl),
-
-              Center(
-                child: GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.accountType),
-                  child: Text.rich(
-                    TextSpan(
-                      text: "Não tem uma conta? ",
-                      style: AppText.secundario(context),
-                      children: [
-                        TextSpan(
-                          text: "Cadastre-se",
-                          style: AppText.secundario(context).copyWith(
-                            color: context.mapColors.primaryText,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-            ],
+            ),
           ),
         ),
       ),

@@ -1,32 +1,35 @@
-import 'package:flutter/gestures.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:map_food/core/ui/navigation/app_page_route.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:map_food/core/ui/validators/form_validator.dart';
-import 'package:map_food/core/ui/widgets/app_form_field.dart';
-import 'package:map_food/core/ui/widgets/app_toast.dart';
-import 'package:map_food/core/errors/exception.dart';
-import 'package:map_food/core/ui/theme/app_dimensions.dart';
-import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
-import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
-import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/app/router/app_routes.dart';
+import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
+import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/validators/form_validator.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
+import 'package:map_food/features/auth/presentation/widgets/terms_checkbox.dart';
 import 'package:map_food/features/merchant/data/models/merchant_register_request.dart';
 import 'package:map_food/features/merchant/data/services/merchant_service.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_home_page.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class MerchantRegisterPage extends StatefulWidget {
   const MerchantRegisterPage({super.key});
 
   @override
-  State<MerchantRegisterPage> createState() => _MerchantRegisterPageSizeState();
+  State<MerchantRegisterPage> createState() => _MerchantRegisterPageState();
 }
 
-class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
+class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
   final _formKey = GlobalKey<FormState>();
+
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
   final _cpfController = TextEditingController();
@@ -34,6 +37,15 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
   final _celularController = TextEditingController();
   final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
+
+  // Encadeamento do teclado — o formulário tem sete campos, é onde a falta
+  // do "próximo" mais custava: era um toque a mais na tela por campo.
+  final _cpfFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _cnpjFocus = FocusNode();
+  final _celularFocus = FocusNode();
+  final _telefoneFocus = FocusNode();
+  final _senhaFocus = FocusNode();
 
   final _merchantService = MerchantService();
   final _authService = AuthService();
@@ -63,24 +75,8 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
     filter: {"#": RegExp(r'[0-9]')},
   );
 
-  late TapGestureRecognizer _termosParceiroRecognizer;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _termosParceiroRecognizer = TapGestureRecognizer()
-      ..onTap = () {
-        Navigator.push(
-          context,
-          appPageRoute(builder: (_) => TermosPage()),
-        );
-      };
-  }
-
   @override
   void dispose() {
-    _termosParceiroRecognizer.dispose();
     _nomeController.dispose();
     _emailController.dispose();
     _cpfController.dispose();
@@ -88,16 +84,22 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
     _celularController.dispose();
     _telefoneController.dispose();
     _senhaController.dispose();
+    _cpfFocus.dispose();
+    _emailFocus.dispose();
+    _cnpjFocus.dispose();
+    _celularFocus.dispose();
+    _telefoneFocus.dispose();
+    _senhaFocus.dispose();
     super.dispose();
   }
 
   Future<void> _cadastrar() async {
     if (_isLoading) return;
 
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    if (!_aceitouTermos) {
-      _mostrarErro('Você precisa aceitar os Termos de Uso.');
+    // O aceite entra na validação do Form (ver TermsCheckbox), então o erro
+    // aparece embaixo do checkbox em vez de um toast no topo da tela.
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      FocusScope.of(context).unfocus();
       return;
     }
 
@@ -132,27 +134,23 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
         );
       } on AppException {
         if (!mounted) return;
-        Navigator.pushReplacementNamed(
-          context,
-          AppRoutes.login,
-          arguments: 'COMERCIANTE',
-        );
+        unawaited(Navigator.pushReplacementNamed(context, AppRoutes.login,
+            arguments: 'COMERCIANTE'));
         return;
       }
 
       if (!mounted) return;
 
       // MerchantHomePage detecta que não há loja e redireciona para StoreRegisterPage
-      Navigator.pushAndRemoveUntil(
+      unawaited(Navigator.pushAndRemoveUntil(
         context,
         appPageRoute(builder: (_) => const MerchantHomePage()),
         (route) => false,
-      );
+      ));
     } on AppException catch (e) {
-      final msg = e.statusCode == 409
-          ? 'E-mail, CPF ou CNPJ já cadastrado.'
-          : e.message;
-      _mostrarErro(msg);
+      _mostrarErro(
+        e.statusCode == 409 ? 'E-mail, CPF ou CNPJ já cadastrado.' : e.message,
+      );
     } catch (e, st) {
       debugPrint('Erro no cadastro de comerciante: $e');
       debugPrint('$st');
@@ -162,279 +160,189 @@ class _MerchantRegisterPageSizeState extends State<MerchantRegisterPage> {
     }
   }
 
+  /// Só o banner inline: o par banner + toast repetia a mesma frase duas
+  /// vezes, e a do toast sumia sozinha antes de ser lida.
   void _mostrarErro(String msg) {
     if (!mounted) return;
     setState(() => _errorMessage = msg);
-    AppToast.error(context, msg);
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.mapColors;
+
     return Scaffold(
-      backgroundColor: context.mapColors.mainBackground,
       appBar: AppBar(
-        backgroundColor: context.mapColors.mainBackground,
-        foregroundColor: context.mapColors.mainBackground,
-        surfaceTintColor: context.mapColors.mainBackground,
-        elevation: 0,
-        centerTitle: true,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            PhosphorIconsRegular.caretLeft,
-            color: ColorsPalette.redComponents,
-            size: AppIconSize.lg,
-          ),
+          icon: const Icon(AppIcons.caretLeft),
+          color: colors.textPrimary,
         ),
       ),
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.md,
-          ),
+          padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.sm, Spacing.lg, Spacing.xxl),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('CONTA DE COMERCIANTE', style: AppText.overline(context)),
+                const SizedBox(height: Spacing.sm),
+                Text('Crie sua conta', style: AppText.display(context)),
+                const SizedBox(height: Spacing.md),
                 Text(
-                  "Crie sua conta",
-                  style: AppText.display(context).copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1.0,
-                    color: ColorsPalette.redComponents,
-                  ),
+                  'Cadastre seu negócio e alcance mais clientes na sua região',
+                  style: AppText.body(context).copyWith(color: colors.textSecondary),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  "Cadastre seu negócio e aumente suas vendas alcançando mais clientes",
-                  style: AppText.secundario(
-                    context,
-                  ).copyWith(fontSize: 15.0, height: 1.4),
-                ),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: Spacing.xxl),
+
+                _secao(context, 'Dados pessoais'),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _nomeController,
-                  label: "Nome Completo",
-                  hint: "João da Silva",
-                  icon: PhosphorIconsRegular.user,
+                  label: 'Nome completo',
+                  hint: 'João da Silva',
+                  icon: AppIcons.user,
                   keyboardType: TextInputType.name,
-                  validator: FormValidator.nome,
                   textCapitalization: TextCapitalization.words,
+                  validator: FormValidator.nome,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _cpfFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
-
-                AppFormField(
-                  controller: _emailController,
-                  label: "E-mail de Contato",
-                  hint: "contato@exemplo.com",
-                  icon: PhosphorIconsRegular.envelope,
-                  validator: FormValidator.email,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _cpfController,
-                  label: "CPF",
-                  hint: "000.000.000-00",
-                  icon: PhosphorIconsRegular.creditCard,
+                  focusNode: _cpfFocus,
+                  label: 'CPF',
+                  hint: '000.000.000-00',
+                  icon: AppIcons.identificationCard,
                   keyboardType: TextInputType.number,
-                  validator: FormValidator.cpf,
                   inputFormatters: [_cpfFormatter],
+                  validator: FormValidator.cpf,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _emailFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+
+                const SizedBox(height: Spacing.xxl),
+                _secao(context, 'Dados do negócio'),
+                const SizedBox(height: Spacing.base),
+
+                AppFormField(
+                  controller: _emailController,
+                  focusNode: _emailFocus,
+                  label: 'E-mail de contato',
+                  hint: 'contato@exemplo.com',
+                  icon: AppIcons.envelope,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: FormValidator.email,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _cnpjFocus.requestFocus(),
+                ),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _cnpjController,
-                  label: "CNPJ (Opcional)",
-                  hint: "00.000.000/0000-00",
-                  icon: PhosphorIconsRegular.building,
+                  focusNode: _cnpjFocus,
+                  label: 'CNPJ (opcional)',
+                  hint: '00.000.000/0000-00',
+                  icon: AppIcons.building,
                   keyboardType: TextInputType.number,
                   inputFormatters: [_cnpjFormatter],
                   validator: FormValidator.cnpjOpcional,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _celularFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _celularController,
-                  label: "Celular / WhatsApp",
-                  hint: "(11) 90000-0000",
-                  icon: PhosphorIconsRegular.deviceMobile,
+                  focusNode: _celularFocus,
+                  label: 'Celular / WhatsApp',
+                  hint: '(11) 90000-0000',
+                  icon: AppIcons.deviceMobile,
                   keyboardType: TextInputType.phone,
-                  validator: FormValidator.telefone,
                   inputFormatters: [_celularFormatter],
+                  validator: FormValidator.telefone,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _telefoneFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _telefoneController,
-                  label: "Telefone Fixo (Opcional)",
-                  hint: "(11) 4000-0000",
-                  icon: PhosphorIconsRegular.phone,
+                  focusNode: _telefoneFocus,
+                  label: 'Telefone fixo (opcional)',
+                  hint: '(11) 4000-0000',
+                  icon: AppIcons.phone,
                   keyboardType: TextInputType.phone,
-                  validator: FormValidator.telefoneOpcional,
                   inputFormatters: [_telefoneFormatter],
+                  validator: FormValidator.telefoneOpcional,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) => _senhaFocus.requestFocus(),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: Spacing.base),
 
                 AppFormField(
                   controller: _senhaController,
-                  label: "Crie uma Senha",
-                  hint: "Mínimo 6 caracteres",
-                  icon: PhosphorIconsRegular.lock,
-                  validator: FormValidator.senha,
+                  focusNode: _senhaFocus,
+                  label: 'Crie uma senha',
+                  hint: 'Mínimo 6 caracteres',
+                  icon: AppIcons.lock,
                   obscureText: _obscurePassword,
+                  validator: FormValidator.senha,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _cadastrar(),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
-                      color: context.mapColors.iconMuted,
+                      _obscurePassword ? AppIcons.eyeClosed : AppIcons.eye,
+                      color: colors.textTertiary,
                       size: AppIconSize.md,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
 
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: Spacing.xl),
 
-                FormField<bool>(
-                  initialValue: _aceitouTermos,
-                  builder: (FormFieldState<bool> state) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              height: AppIconSize.lg,
-                              width: AppIconSize.lg,
-                              child: Checkbox(
-                                value: _aceitouTermos,
-                                activeColor: ColorsPalette.redComponents,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6.0),
-                                ),
-                                side: BorderSide(
-                                  color: context.mapColors.border,
-                                  width: 1.5,
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _aceitouTermos = value ?? false;
-                                  });
-                                  state.didChange(_aceitouTermos);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12.0),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _aceitouTermos = !_aceitouTermos;
-                                  });
-                                  state.didChange(_aceitouTermos);
-                                },
-                                child: Text.rich(
-                                  TextSpan(
-                                    text:
-                                        "Declaro que as informações estão corretas e concordo com os ",
-                                    style: AppText.secundario(
-                                      context,
-                                    ).copyWith(height: 1.4),
-                                    children: [
-                                      TextSpan(
-                                        text: "Termos de Parceiro",
-                                        recognizer: _termosParceiroRecognizer,
-                                        style: AppText.secundario(context)
-                                            .copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: context.mapColors.primaryText,
-                                              decoration:
-                                                  TextDecoration.underline,
-                                            ),
-                                      ),
-                                      const TextSpan(text: "."),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    );
-                  },
+                TermsCheckbox(
+                  value: _aceitouTermos,
+                  onChanged: (value) => setState(() => _aceitouTermos = value),
+                  activeColor: MfColor.brand,
+                  leadingText: 'Declaro que as informações estão corretas e concordo com os ',
+                  primaryLinkLabel: 'Termos de Parceiro',
+                  secondaryLinkLabel: null,
                 ),
 
                 if (_errorMessage != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    _errorMessage!,
-                    style: AppText.legenda(
-                      context,
-                    ).copyWith(color: Colors.red.shade600),
-                  ),
+                  const SizedBox(height: Spacing.lg),
+                  FormErrorBanner(message: _errorMessage),
                 ],
 
-                const SizedBox(height: AppSpacing.xxl),
+                const SizedBox(height: Spacing.xl),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52.0,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _cadastrar,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorsPalette.redComponents,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: ColorsPalette.redComponents
-                          .withValues(alpha: 0.6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.pill),
-                      ),
-                      elevation: 0,
-                    ),
-
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: AppIconSize.lg,
-                            width: AppIconSize.lg,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Criar conta",
-                                style: AppText.botao(context),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Icon(
-                                PhosphorIconsRegular.caretRight,
-                                color: ColorsPalette.white,
-                                size: AppIconSize.md,
-                              ),
-                            ],
-                          ),
-                  ),
+                AppButton(
+                  label: 'Criar conta',
+                  loading: _isLoading,
+                  onPressed: _cadastrar,
                 ),
-                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  /// Rótulo de grupo do formulário. Em caixa alta e pequeno: separa as duas
+  /// metades do cadastro sem competir com o título da tela, que é o único
+  /// texto grande daqui.
+  Widget _secao(BuildContext context, String titulo) {
+    return Text(titulo.toUpperCase(), style: AppText.overline(context));
   }
 }
