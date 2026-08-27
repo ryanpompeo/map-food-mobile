@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/errors/exception.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
+import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
+import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 
@@ -83,19 +86,24 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
   bool _showConfirmarSenha = false;
   String? _errorMsg;
 
+  // ValueNotifier (não bool simples) de propósito: o UnsavedChangesGuard
+  // isola o rebuild no próprio ValueListenableBuilder interno dele, então
+  // atualizar isso não reconstrói mais a página inteira a cada tecla.
+  final ValueNotifier<bool> _hasUnsavedChanges = ValueNotifier(false);
+
   @override
   void initState() {
     super.initState();
     _carregarDados();
-    // Reconstrói a tela a cada tecla digitada para o PopScope do
-    // UnsavedChangesGuard sempre enxergar o estado (alterado ou não) mais
-    // recente do formulário ao decidir se deve pedir confirmação de saída.
     for (final controller in [_nomeController, _emailController, _celularController, _senhaController, _confirmarSenhaController]) {
       controller.addListener(_onFormChanged);
     }
   }
 
-  void _onFormChanged() => setState(() {});
+  void _onFormChanged() {
+    final dirty = _computeHasUnsavedChanges();
+    if (_hasUnsavedChanges.value != dirty) _hasUnsavedChanges.value = dirty;
+  }
 
   @override
   void dispose() {
@@ -107,6 +115,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     _celularController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
+    _hasUnsavedChanges.dispose();
     super.dispose();
   }
 
@@ -196,10 +205,12 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
         celular: _celularController.text.replaceAll(RegExp(r'\D'), ''),
         novaSenha: novaSenha.isNotEmpty ? novaSenha : null,
       );
-      // Sem isso, a sessão salva localmente continuava com o nome/e-mail
-      // antigos (do login), e é dali que o card de Perfil lê — por isso ele
-      // não refletia a edição mesmo com o backend já salvo.
-      await AuthStorage.updateNomeEmail(novoNome, novoEmail);
+      // Sem isso, a sessão continuava com o nome/e-mail antigos (do login), e
+      // é dali que o card de Perfil lê — por isso ele não refletia a edição
+      // mesmo com o backend já salvo. `SessionStore.updateNomeEmail` atualiza
+      // disco **e** memória de uma vez; só o disco deixaria o valor antigo
+      // vivo em quem já leu o store nesta sessão.
+      await SessionStore.instance.updateNomeEmail(novoNome, novoEmail);
 
       if (!mounted) return;
       AppToast.success(context, 'Perfil atualizado com sucesso!');
@@ -213,7 +224,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     }
   }
 
-  bool get _hasUnsavedChanges =>
+  bool _computeHasUnsavedChanges() =>
       !_isLoading &&
       (_nomeController.text != _originalNome ||
           _emailController.text != _originalEmail ||
@@ -226,21 +237,21 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     return UnsavedChangesGuard(
       hasUnsavedChanges: _hasUnsavedChanges,
       child: Scaffold(
-      backgroundColor: context.mapColors.mainBackground,
+      backgroundColor: context.mapColors.background,
       appBar: AppBar(
-        backgroundColor: context.mapColors.mainBackground,
+        backgroundColor: context.mapColors.background,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: true,
         title: Text(
           'Editar Perfil',
-          style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
+          style: AppText.h2(context).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.textPrimary),
         ),
         leading: IconButton(
           // maybePop consulta o PopScope do UnsavedChangesGuard antes de
           // sair — mesmo ajuste feito no StoreMapPage (ver comentário lá).
           onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(AppIcons.caretLeft, color: ColorsPalette.redComponents),
         ),
       ),
       body: _isLoading
@@ -248,14 +259,19 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
           : SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.all(Spacing.lg),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Center(
-                        child: GestureDetector(
+                        child: SemanticTapArea(
+                          label: 'Foto do perfil',
+                          hint: 'Escolhe uma nova foto',
+                          // Durante o upload o toque já está bloqueado; com
+                          // `onTap` nulo o nó também deixa de ser anunciado
+                          // como botão, em vez de prometer uma ação inerte.
                           onTap: _isUploadingFoto ? null : _trocarFoto,
                           child: Stack(
                             children: [
@@ -289,23 +305,24 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                                     shape: BoxShape.circle,
                                     border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 2.0)),
                                   ),
-                                  child: const Icon(PhosphorIconsRegular.camera, size: 14.0, color: Colors.white),
+                                  child: const Icon(AppIcons.camera, size: 14.0, color: Colors.white),
                                 ),
                               ),
                               if (_imagemUrl != null && !_isUploadingFoto)
                                 Positioned(
                                   top: 0,
                                   right: 0,
-                                  child: GestureDetector(
+                                  child: SemanticTapArea(
+                                    label: 'Remover foto do perfil',
                                     onTap: _removerFoto,
                                     child: Container(
                                       padding: const EdgeInsets.all(4.0),
                                       decoration: BoxDecoration(
-                                        color: context.mapColors.cardSurface,
+                                        color: context.mapColors.surface,
                                         shape: BoxShape.circle,
                                         border: Border.fromBorderSide(BorderSide(color: ColorsPalette.redComponents, width: 1.5)),
                                       ),
-                                      child: const Icon(PhosphorIconsRegular.x, size: 12.0, color: ColorsPalette.redComponents),
+                                      child: const Icon(AppIcons.x, size: 12.0, color: ColorsPalette.redComponents),
                                     ),
                                   ),
                                 ),
@@ -313,13 +330,13 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: Spacing.xl),
 
                       Text(
                         widget.sectionTitle,
-                        style: AppText.subtitulo(context).copyWith(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: AppText.h2(context).copyWith(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: Spacing.base),
 
                       AppFormField(
                         label: 'Nome completo',
@@ -327,7 +344,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         controller: _nomeController,
                         validator: (v) => (v == null || v.trim().isEmpty) ? 'Nome obrigatório' : null,
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: Spacing.base),
 
                       AppFormField(
                         label: 'E-mail',
@@ -340,7 +357,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: Spacing.base),
 
                       AppFormField(
                         label: 'Celular',
@@ -351,17 +368,17 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                       ),
 
                       if (widget.extraFieldBuilder != null) ...[
-                        const SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: Spacing.base),
                         widget.extraFieldBuilder!(context),
                       ],
 
-                      const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: Spacing.xl),
 
                       Text(
                         'Alterar Senha (opcional)',
-                        style: AppText.subtitulo(context).copyWith(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: AppText.h2(context).copyWith(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: Spacing.base),
 
                       AppFormField(
                         label: 'Nova senha',
@@ -369,7 +386,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         controller: _senhaController,
                         obscureText: !_showSenha,
                         suffixIcon: IconButton(
-                          icon: Icon(_showSenha ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye, size: 20, color: context.mapColors.iconMuted),
+                          icon: Icon(_showSenha ? AppIcons.eyeClosed : AppIcons.eye, size: 20, color: context.mapColors.textTertiary),
                           onPressed: () => setState(() => _showSenha = !_showSenha),
                         ),
                         validator: (v) {
@@ -379,7 +396,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: Spacing.base),
 
                       AppFormField(
                         label: 'Confirmar nova senha',
@@ -388,63 +405,29 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         obscureText: !_showConfirmarSenha,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _showConfirmarSenha ? PhosphorIconsRegular.eyeClosed : PhosphorIconsRegular.eye,
+                            _showConfirmarSenha ? AppIcons.eyeClosed : AppIcons.eye,
                             size: 20,
-                            color: context.mapColors.iconMuted,
+                            color: context.mapColors.textTertiary,
                           ),
                           onPressed: () => setState(() => _showConfirmarSenha = !_showConfirmarSenha),
                         ),
                       ),
 
+                      // Mesmo banner das telas de auth — era mais um bloco de
+                      // erro montado à mão, com padding e raio próprios.
                       if (_errorMsg != null) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: ColorsPalette.redComponents.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(PhosphorIconsRegular.warningCircle, color: ColorsPalette.redComponents, size: 18),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: Text(
-                                  _errorMsg!,
-                                  style: AppText.corpo(context).copyWith(color: ColorsPalette.redComponents),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        const SizedBox(height: Spacing.base),
+                        FormErrorBanner(message: _errorMsg),
                       ],
 
-                      const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: Spacing.xl),
 
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: _isSaving ? null : _salvar,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorsPalette.redComponents,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                          ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : Text(
-                                  'Salvar alterações',
-                                  style: AppText.botao(context).copyWith(fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                        ),
+                      AppButton(
+                        label: 'Salvar alterações',
+                        loading: _isSaving,
+                        onPressed: _salvar,
                       ),
-                      const SizedBox(height: AppSpacing.xxl),
+                      const SizedBox(height: Spacing.xxl),
                     ],
                   ),
                 ),
@@ -458,7 +441,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     return Center(
       child: Text(
         _nomeController.text.isNotEmpty ? _nomeController.text[0].toUpperCase() : widget.avatarFallbackLetter,
-        style: AppText.titulo(context).copyWith(fontSize: 32, color: ColorsPalette.redComponents, fontWeight: FontWeight.bold),
+        style: AppText.h1(context).copyWith(fontSize: 32, color: ColorsPalette.redComponents, fontWeight: FontWeight.bold),
       ),
     );
   }

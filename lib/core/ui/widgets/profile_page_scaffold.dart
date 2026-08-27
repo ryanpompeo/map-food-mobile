@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:map_food/core/ui/utils/text_scale.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
+import 'package:map_food/core/app_info.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
-import 'package:map_food/core/session/session_manager.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/theme/theme_controller.dart';
-import 'package:map_food/core/ui/widgets/app_toast.dart';
-import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/empty_state.dart';
+import 'package:map_food/core/ui/widgets/logout_dialog.dart';
+import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/core/ui/widgets/profile_stat_card.dart';
 import 'package:map_food/core/ui/widgets/stacked_card_carousel.dart';
 import 'package:map_food/core/ui/widgets/theme_mode_sheet.dart';
-import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
-import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
+import 'package:map_food/features/settings/presentation/pages/settings_page.dart';
 
 /// Item de menu da seção "Minha Conta" — a única parte da tela de perfil
 /// que difere de verdade entre consumidor e comerciante.
@@ -26,11 +27,18 @@ class ProfileMenuItem {
   final String? subtitle;
   final VoidCallback onTap;
 
+  /// Cor de destaque opcional (ex: vermelho pra "Excluir conta") — null usa
+  /// o tratamento neutro padrão da lista.
+  final Color? iconColor;
+  final Color? iconBackgroundColor;
+
   const ProfileMenuItem({
     required this.icon,
     required this.title,
     this.subtitle,
     required this.onTap,
+    this.iconColor,
+    this.iconBackgroundColor,
   });
 }
 
@@ -46,9 +54,6 @@ class ProfilePageScaffold extends StatefulWidget {
   /// Busca a sessão salva e devolve a imagemUrl do usuário (ou null).
   final Future<String?> Function() fetchImagemUrl;
 
-  final Color avatarColor;
-  final Color logoutBackgroundColor;
-  final Color logoutForegroundColor;
 
   final List<ProfileMenuItem> minhaContaItems;
   final WidgetBuilder howItWorksPageBuilder;
@@ -76,8 +81,17 @@ class ProfilePageScaffold extends StatefulWidget {
   /// esconde o link (ex: comerciante não tem uma tela de listagem própria).
   final VoidCallback? onVerTudoFeatured;
 
-  /// Texto do estado vazio da seção de destaque.
+  /// Estado vazio da seção de destaque. Um vazio que só constata ("nada
+  /// aqui") faz o app parecer abandonado; com ícone, título e uma ação, ele
+  /// vira o primeiro passo — por isso os quatro campos, não só a frase.
   final String featuredEmptyMessage;
+  final String featuredEmptyTitle;
+  final IconData featuredEmptyIcon;
+
+  /// Rótulo e ação do botão do estado vazio — `null` nos dois deixa o bloco
+  /// só informativo.
+  final String? featuredEmptyActionLabel;
+  final VoidCallback? onFeaturedEmptyAction;
 
   /// Notifica quando a seção de destaque deve ser buscada de novo (ex:
   /// `FavoritesManager.instance` no consumidor) — sem isso, a busca roda só
@@ -92,9 +106,6 @@ class ProfilePageScaffold extends StatefulWidget {
     required this.userName,
     required this.userEmail,
     required this.fetchImagemUrl,
-    required this.avatarColor,
-    required this.logoutBackgroundColor,
-    required this.logoutForegroundColor,
     required this.minhaContaItems,
     required this.howItWorksPageBuilder,
     this.onLogoutExtra,
@@ -106,6 +117,10 @@ class ProfilePageScaffold extends StatefulWidget {
     required this.onFeaturedItemTap,
     this.onVerTudoFeatured,
     required this.featuredEmptyMessage,
+    required this.featuredEmptyTitle,
+    required this.featuredEmptyIcon,
+    this.featuredEmptyActionLabel,
+    this.onFeaturedEmptyAction,
     this.featuredRefreshListenable,
   });
 
@@ -160,227 +175,53 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
     }
   }
 
-  void _logout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          backgroundColor: context.mapColors.cardSurface,
-          surfaceTintColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(AppSpacing.lg),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        color: ColorsPalette.redComponents.withValues(alpha: 0.15),
-                      ),
-                      child: const Icon(
-                        PhosphorIconsRegular.signOut,
-                        color: ColorsPalette.redComponents,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      "Sair da conta",
-                      style: AppText.titulo(context).copyWith(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  "Deseja realmente sair?",
-                  style: AppText.corpo(context).copyWith(color: context.mapColors.primaryText),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: ColorsPalette.transparent,
-                        surfaceTintColor: ColorsPalette.transparent,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        "Cancelar",
-                        style: AppText.botao(context).copyWith(color: context.mapColors.secondaryText),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    ElevatedButton(
-                      // backgroundColor/foregroundColor ficam de propósito
-                      // como literais: é um CTA sólido preto/branco que deve
-                      // parecer o mesmo nos dois temas, não uma superfície
-                      // que se adapta ao brightness.
-                      onPressed: () async {
-                        await AuthStorage.clear();
-                        // Sempre roda, pros dois papéis — não depende de a
-                        // tela chamadora lembrar de passar onLogoutExtra
-                        // (foi exatamente esse esquecimento, no perfil do
-                        // comerciante, que deixava FavoritesManager vazando
-                        // dados de uma conta pra outra no mesmo aparelho).
-                        SessionManager.clearUserScopedState();
-                        widget.onLogoutExtra?.call();
-                        if (!context.mounted) return;
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          appPageRoute(builder: (context) => GuestHomePage()),
-                          (route) => false,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsPalette.black,
-                        foregroundColor: ColorsPalette.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                      ),
-                      child: const Text("Sair", style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _excluirConta(BuildContext context) async {
-    final confirmou = await confirmarExclusaoConta(context);
-    if (!confirmou || !context.mounted) return;
-
-    try {
-      await widget.onDeleteAccount();
-      await AuthStorage.clear();
-      SessionManager.clearUserScopedState();
-      widget.onLogoutExtra?.call();
-      if (!context.mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        appPageRoute(builder: (context) => GuestHomePage()),
-        (route) => false,
-      );
-    } catch (_) {
-      if (context.mounted) {
-        AppToast.error(context, "Erro ao excluir a conta. Tente novamente.");
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.mapColors.mainBackground,
+      backgroundColor: context.mapColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: Spacing.base),
               _buildHeader(context),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: Spacing.lg),
               ProfileStatsRow(stats: _stats),
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: Spacing.xl),
               _buildFeaturedSection(context),
 
-              const SizedBox(height: AppSpacing.xl),
-              _buildSectionTitle(context, "Minha Conta"),
-              for (final item in widget.minhaContaItems)
-                _buildListTile(
-                  context: context,
-                  icon: item.icon,
-                  title: item.title,
-                  subtitle: item.subtitle,
-                  onTap: item.onTap,
-                ),
+              const SizedBox(height: Spacing.xl),
+              _buildMenuList(context),
 
-              _buildDivider(context),
-
-              _buildSectionTitle(context, "Configurações"),
-              _buildListTile(
-                context: context,
-                icon: PhosphorIconsRegular.mapPin,
-                title: "Permissões de Localização",
-                subtitle: "Gerenciar acesso ao GPS",
-                onTap: () => Geolocator.openAppSettings(),
-              ),
-              _buildListTile(
-                context: context,
-                icon: PhosphorIconsRegular.trash,
-                iconColor: ColorsPalette.redComponents,
-                iconBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
-                title: "Excluir conta",
-                subtitle: "Apaga sua conta e dados permanentemente",
-                onTap: () => _excluirConta(context),
-              ),
-
-              _buildDivider(context),
-
-              _buildSectionTitle(context, "Sobre o MapFood"),
-              _buildListTile(
-                context: context,
-                icon: PhosphorIconsRegular.question,
-                title: "Como funciona?",
-                onTap: () {
-                  Navigator.push(context, appPageRoute(builder: widget.howItWorksPageBuilder));
-                },
-              ),
-              _buildListTile(
-                context: context,
-                icon: PhosphorIconsRegular.fileText,
-                title: "Termos de Uso e Privacidade",
-                onTap: () {
-                  Navigator.push(context, appPageRoute(builder: (_) => const TermosPage()));
-                },
-              ),
-
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: Spacing.xl),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48.0,
-                  child: ElevatedButton(
-                    onPressed: () => _logout(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: widget.logoutBackgroundColor,
-                      foregroundColor: widget.logoutForegroundColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
-                      elevation: 0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(PhosphorIconsRegular.signOut, size: 20.0),
-                        const SizedBox(width: 8.0),
-                        Text(
-                          "Sair da conta",
-                          style: AppText.botao(context).copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: widget.logoutForegroundColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+                // Sair não é ação primária (ninguém abre o perfil para sair)
+                // nem destrutiva — é `secondary`. Antes cada papel pintava o
+                // botão de um jeito: preto sólido no consumidor, vermelho
+                // desbotado no comerciante, sem que a diferença significasse
+                // nada.
+                child: AppButton(
+                  label: 'Sair da conta',
+                  icon: AppIcons.signOut,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () =>
+                      mostrarDialogoLogout(context, onLogoutExtra: widget.onLogoutExtra),
                 ),
               ),
 
-              const SizedBox(height: AppSpacing.xxl),
+              const SizedBox(height: Spacing.lg),
+              Center(
+                child: Text(
+                  'Versão $kAppVersion',
+                  style: AppText.caption(context),
+                ),
+              ),
+
+              const SizedBox(height: Spacing.xxl),
               const SizedBox(height: 100.0),
             ],
           ),
@@ -389,61 +230,74 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
     );
   }
 
+  /// Cabeçalho inspirado no padrão avatar-à-esquerda + nome em destaque de
+  /// apps de referência (ex: iFood) — substitui a saudação genérica
+  /// "Bem-vindo!" pelo e-mail, que é informação de verdade sobre a conta.
   Widget _buildHeader(BuildContext context) {
     final resolvedImagemUrl = resolveImagemUrl(_imagemUrl);
+    const avatarSize = 72.0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Bem-vindo!",
-                  style: AppText.secundario(context).copyWith(
-                    color: context.mapColors.secondaryText,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2.0),
-                Text(
-                  widget.userName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.subtitulo(context).copyWith(
-                    color: context.mapColors.primaryText,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          GestureDetector(
+          SemanticTapArea(
+            label: 'Foto do perfil',
+            hint: 'Abre a edição do perfil',
             onTap: widget.onAvatarTap,
             child: Container(
-              height: 56.0,
-              width: 56.0,
+              height: avatarSize,
+              width: avatarSize,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: widget.avatarColor.withValues(alpha: 0.1),
+                // Superfície do tema, não a cor de papel a 10%: no escuro,
+                // um fundo `ink`/vermelho tão diluído somia contra a tela e
+                // levava a inicial junto.
+                color: context.mapColors.surfaceAlt,
                 shape: BoxShape.circle,
               ),
               child: resolvedImagemUrl != null
                   ? Image.network(
                       resolvedImagemUrl,
                       fit: BoxFit.cover,
+                      // Só cacheWidth: com os dois definidos o decoder
+                      // ignora a proporção original e estica a imagem.
+                      cacheWidth: (avatarSize * MediaQuery.devicePixelRatioOf(context)).round(),
                       errorBuilder: (context, error, stackTrace) => _buildAvatarInitial(context),
                     )
                   : _buildAvatarInitial(context),
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          GestureDetector(
+          const SizedBox(width: Spacing.base),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.userName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.h1(context).copyWith(
+                    color: context.mapColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 2.0),
+                Text(
+                  widget.userEmail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.secondary(context).copyWith(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Spacing.sm),
+          SemanticTapArea(
+            label: 'Tema do aplicativo',
+            hint: 'Escolhe entre claro, escuro e o do sistema',
             onTap: () => showThemeModeSheet(context),
             // Isolamento de rebuild: só este ícone escuta o
             // ThemeController — o resto do header (nome, avatar) não
@@ -456,16 +310,16 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                     (mode == ThemeMode.system &&
                         MediaQuery.platformBrightnessOf(context) == Brightness.dark);
                 return Container(
-                  height: 56.0,
-                  width: 56.0,
+                  height: 44.0,
+                  width: 44.0,
                   decoration: BoxDecoration(
-                    color: context.mapColors.cardSurface,
+                    color: context.mapColors.surface,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isDark ? PhosphorIconsRegular.moon : PhosphorIconsRegular.sun,
-                    color: context.mapColors.iconMuted,
-                    size: AppIconSize.lg,
+                    isDark ? AppIcons.moon : AppIcons.sun,
+                    color: context.mapColors.textTertiary,
+                    size: AppIconSize.md,
                   ),
                 );
               },
@@ -481,21 +335,25 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 widget.featuredSectionTitle,
-                style: AppText.subtitulo(context).copyWith(fontSize: 18.0, fontWeight: FontWeight.w800),
+                style: AppText.h2(context).copyWith(fontSize: 18.0, fontWeight: FontWeight.w800),
               ),
               if (widget.onVerTudoFeatured != null)
-                GestureDetector(
+                SemanticTapArea(
+                  label: 'Ver tudo',
+                  hint: widget.featuredSectionTitle,
                   onTap: widget.onVerTudoFeatured,
                   child: Text(
                     "ver tudo",
-                    style: AppText.legenda(context).copyWith(
-                      color: ColorsPalette.redComponents,
+                    style: AppText.caption(context).copyWith(
+                      // `brandContent`: vermelho como texto sobre a superfície
+                      // da tela — no escuro o tom puro rende 3,28:1.
+                      color: context.mapColors.brandContent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -503,7 +361,7 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: Spacing.base),
         _buildFeaturedContent(context),
       ],
     );
@@ -512,34 +370,27 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
   Widget _buildFeaturedContent(BuildContext context) {
     final items = _featuredItems;
     if (items == null) {
-      return const SizedBox(
-        height: 190.0,
-        child: Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents)),
+      // Mesma altura do carrossel que vai ocupar este espaço, escalada junto
+      // com ele — um placeholder parado faria a página pular ao carregar.
+      return SizedBox(
+        height: escalaComTeto(context, 220.0),
+        child: const Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents)),
       );
     }
     if (items.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl, horizontal: AppSpacing.lg),
-          decoration: BoxDecoration(
-            color: context.mapColors.cardSurface,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: context.mapColors.border),
-          ),
-          child: Text(
-            widget.featuredEmptyMessage,
-            textAlign: TextAlign.center,
-            style: AppText.corpo(context).copyWith(color: context.mapColors.secondaryText),
-          ),
-        ),
+      return EmptyState(
+        icon: widget.featuredEmptyIcon,
+        title: widget.featuredEmptyTitle,
+        description: widget.featuredEmptyMessage,
+        actionLabel: widget.featuredEmptyActionLabel,
+        onAction: widget.onFeaturedEmptyAction,
+        dense: true,
       );
     }
     return StackedCardCarousel(
       items: items,
       onTap: widget.onFeaturedItemTap,
-      horizontalPadding: AppSpacing.xl,
+      horizontalPadding: Spacing.xl,
     );
   }
 
@@ -547,71 +398,56 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
     return Center(
       child: Text(
         widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'U',
-        style: AppText.titulo(context).copyWith(color: widget.avatarColor, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String titulo) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-      child: Text(titulo, style: AppText.subtitulo(context).copyWith(fontSize: 18.0)),
-    );
-  }
-
-  Widget _buildDivider(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: AppSpacing.md),
-        Divider(color: context.mapColors.border, height: 1.0, indent: AppSpacing.lg, endIndent: AppSpacing.lg),
-        const SizedBox(height: AppSpacing.md),
-      ],
-    );
-  }
-
-  Widget _buildListTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    required VoidCallback onTap,
-    Color? iconColor,
-    Color? iconBackgroundColor,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                color: iconBackgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Icon(icon, size: AppIconSize.lg, color: iconColor ?? context.mapColors.primaryText),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w600, color: context.mapColors.primaryText),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2.0),
-                    Text(subtitle, style: AppText.legenda(context).copyWith(color: context.mapColors.secondaryText)),
-                  ],
-                ],
-              ),
-            ),
-            Icon(PhosphorIconsRegular.caretRight, size: AppIconSize.sm, color: ColorsPalette.redComponents.withValues(alpha: 0.8)),
-          ],
+        style: AppText.h1(context).copyWith(
+          color: context.mapColors.textPrimary,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
+
+  /// Duas seções rotuladas — "Minha Conta" (os atalhos que variam por papel)
+  /// e "Configurações" (uma única porta de entrada pra [SettingsPage]).
+  ///
+  /// Antes era uma lista única achatada de seis itens, que misturava atalhos
+  /// de conteúdo do usuário ("Minhas avaliações") com ajustes do app
+  /// ("Permissões de Localização", "Termos") sem nenhuma separação — os
+  /// quatro itens de ajuste migraram pra tela dedicada.
+  Widget _buildMenuList(BuildContext context) {
+    return Column(
+      children: [
+        const MenuSectionLabel(label: "Minha Conta"),
+        for (var i = 0; i < widget.minhaContaItems.length; i++) ...[
+          if (i > 0)
+            Divider(color: context.mapColors.border, height: 1.0, indent: Spacing.lg, endIndent: Spacing.lg),
+          MenuListTile(
+            icon: widget.minhaContaItems[i].icon,
+            title: widget.minhaContaItems[i].title,
+            subtitle: widget.minhaContaItems[i].subtitle,
+            onTap: widget.minhaContaItems[i].onTap,
+            iconColor: widget.minhaContaItems[i].iconColor,
+            iconBackgroundColor: widget.minhaContaItems[i].iconBackgroundColor,
+          ),
+        ],
+        const SizedBox(height: Spacing.lg),
+        const MenuSectionLabel(label: "Configurações"),
+        MenuListTile(
+          icon: AppIcons.gearSix,
+          title: "Configurações",
+          subtitle: "Aparência, permissões, conta e termos",
+          onTap: () => Navigator.push(
+            context,
+            appPageRoute(
+              builder: (_) => SettingsPage(
+                onDeleteAccount: widget.onDeleteAccount,
+                onLogoutExtra: widget.onLogoutExtra,
+                howItWorksPageBuilder: widget.howItWorksPageBuilder,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
 }

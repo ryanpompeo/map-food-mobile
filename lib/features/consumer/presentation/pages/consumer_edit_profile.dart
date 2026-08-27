@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
+import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/ui/widgets/edit_profile_page_scaffold.dart';
 import 'package:map_food/features/consumer/data/models/consumer_model.dart';
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
@@ -21,9 +21,9 @@ class _ConsumerEditProfileState extends State<ConsumerEditProfile> {
       sectionTitle: 'Meus Dados',
       avatarFallbackLetter: 'U',
       fetchInitial: () async {
-        final session = await AuthStorage.getSession();
-        if (session == null) throw Exception('Sessão não encontrada');
-        final data = await _service.getById(session.id);
+        final userId = SessionStore.instance.userId;
+        if (userId == null) throw Exception('Sessão não encontrada');
+        final data = await _service.getById(userId);
         _original = data;
         return (id: data.id, nome: data.nome, email: data.email, celular: data.celular, imagemUrl: data.imagemUrl);
       },
