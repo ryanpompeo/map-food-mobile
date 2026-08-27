@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
+import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
@@ -26,7 +27,7 @@ class RatingBadgePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(PhosphorIconsRegular.star, color: Colors.amber.shade500, size: 12),
+          Icon(AppIcons.star, color: ColorsPalette.ratingStar, size: 12),
           const SizedBox(width: 4),
           Text(rating, style: AppText.legenda(context).copyWith(fontSize: 11, fontWeight: FontWeight.w800, color: context.mapColors.primaryText)),
         ],

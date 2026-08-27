@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/theme/category_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 
 // km; null representa "Todos" (sem filtro de distância).
@@ -59,28 +62,24 @@ class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
 
   List<String> get _categoriasOpcoes => ['Todos', ...widget.categorias.map((c) => c.nome)];
 
-  Widget _buildChip({required String label, required bool selecionado, required VoidCallback onTap, required Color corAtiva}) {
-    return GestureDetector(
+  Widget _buildChip({
+    required String label,
+    required bool selecionado,
+    required VoidCallback onTap,
+    required Color corAtiva,
+    Color corTextoSelecionado = Colors.white,
+  }) {
+    return AppChoiceChip(
+      label: label,
+      selected: selecionado,
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-        decoration: BoxDecoration(
-          // Um tom abaixo do cardSurface do sheet, mesmo raciocínio das
-          // superfícies aninhadas do Lote 4A/2 — senão o chip não-selecionado
-          // fica quase invisível contra o próprio fundo do modal.
-          color: selecionado ? corAtiva : context.mapColors.mainBackground,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Text(
-          label,
-          style: AppText.legenda(context).copyWith(
-            fontWeight: selecionado ? FontWeight.bold : FontWeight.w600,
-            // Não-selecionado sem override: legenda() já resolve pra secondaryText.
-            color: selecionado ? Colors.white : null,
-          ),
-        ),
-      ),
+      // A cor de identidade da categoria substitui o `selectedSurface` padrão.
+      selectedSurface: corAtiva,
+      onSelectedSurface: corTextoSelecionado,
+      // Um tom abaixo do `surface` do sheet, mesmo raciocínio das superfícies
+      // aninhadas do Lote 4A/2 — senão o chip não-selecionado fica quase
+      // invisível contra o próprio fundo do modal.
+      unselectedSurface: context.mapColors.background,
     );
   }
 
@@ -121,10 +120,17 @@ class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
               spacing: 10.0,
               runSpacing: 10.0,
               children: _categoriasOpcoes.map((cat) {
+                // "Todos" não é uma categoria de verdade — mantém o par
+                // preto/branco que já inverte corretamente no tema escuro
+                // (cardSurface escuro deixaria um preto sólido "sumir").
+                // Categorias de verdade usam a própria cor de identidade.
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final isTodos = cat == 'Todos';
                 return _buildChip(
                   label: cat,
                   selecionado: _categoria == cat,
-                  corAtiva: ColorsPalette.black,
+                  corAtiva: isTodos ? (isDark ? Colors.white : ColorsPalette.black) : corParaCategoria(cat),
+                  corTextoSelecionado: isTodos && isDark ? Colors.black : Colors.white,
                   onTap: () => setState(() => _categoria = cat),
                 );
               }).toList(),
@@ -145,26 +151,11 @@ class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
               }).toList(),
             ),
             const SizedBox(height: AppSpacing.xl),
-            SizedBox(
-              width: double.infinity,
-              height: 52.0,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  HomeFilterResult(categoria: _categoria, raioKm: _raio),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorsPalette.redComponents,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                ),
-                child: Text(
-                  'Aplicar filtros',
-                  style: AppText.botao(context).copyWith(fontWeight: FontWeight.bold),
-                ),
+            AppButton(
+              label: 'Aplicar filtros',
+              onPressed: () => Navigator.pop(
+                context,
+                HomeFilterResult(categoria: _categoria, raioKm: _raio),
               ),
             ),
           ],

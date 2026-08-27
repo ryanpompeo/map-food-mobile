@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 
 /// Visualização fullscreen da galeria de fotos de uma loja — swipe lateral
@@ -78,8 +78,11 @@ class _StoreGalleryViewerState extends State<StoreGalleryViewer> {
                 child: Image.network(
                   widget.imagens[index],
                   fit: BoxFit.contain,
+                  // A foto é o próprio conteúdo desta tela — sem texto ao
+                  // redor que sirva de rótulo implícito.
+                  semanticLabel: 'Foto ${index + 1} de ${widget.imagens.length}',
                   errorBuilder: (context, error, stackTrace) => const Icon(
-                    PhosphorIconsRegular.image,
+                    AppIcons.image,
                     color: Colors.white38,
                     size: 64.0,
                   ),
@@ -92,7 +95,7 @@ class _StoreGalleryViewerState extends State<StoreGalleryViewer> {
             right: AppSpacing.md,
             child: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(PhosphorIconsRegular.x, color: Colors.white, size: 28.0),
+              icon: const Icon(AppIcons.x, color: Colors.white, size: 28.0),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.black.withValues(alpha: 0.35),
                 shape: const CircleBorder(),
@@ -116,7 +119,7 @@ class _StoreGalleryViewerState extends State<StoreGalleryViewer> {
                       height: 6.0,
                       decoration: BoxDecoration(
                         color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(3.0),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     );
                   }),

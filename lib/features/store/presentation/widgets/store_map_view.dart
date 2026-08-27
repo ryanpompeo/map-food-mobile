@@ -1,17 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/presentation/controllers/store_map_controller.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
+import 'package:map_food/features/store/presentation/widgets/map_controls.dart';
 
 /// Mapa com pins das lojas, reaproveitado na home (guest/consumer) e no
 /// botão "Visualizar no mapa" da tela de detalhe de uma loja. Lojas sem
@@ -50,6 +53,23 @@ class StoreMapView extends StatefulWidget {
   /// banner nasce embaixo desses controles.
   final double topBannerOffset;
 
+  /// Comando externo da câmera (ver [StoreMapController]). A home usa para
+  /// focar um pin acima do sheet e para o botão de recentralizar, que lá vive
+  /// fora do mapa.
+  final StoreMapController? controller;
+
+  /// Toque num pin. `null` mantém o comportamento padrão — abrir a tela da
+  /// loja —, que é o certo nas telas onde o mapa é a única coisa na tela.
+  final ValueChanged<StoreDto>? onStoreTap;
+
+  /// Desliga os botões de câmera internos. A home desenha os seus, ancorados
+  /// acima da bottom bar flutuante do app.
+  final bool showFloatingControls;
+
+  /// Banner de "nenhuma loja com localização por aqui". Desligado na home,
+  /// onde ele colidia com a barra de busca flutuante.
+  final bool showEmptyBanner;
+
   const StoreMapView({
     super.key,
     required this.stores,
@@ -60,6 +80,10 @@ class StoreMapView extends StatefulWidget {
     this.routePoints,
     this.floatingControlsBottomPadding = 16.0,
     this.topBannerOffset = 16.0,
+    this.controller,
+    this.onStoreTap,
+    this.showFloatingControls = true,
+    this.showEmptyBanner = true,
   });
 
   @override
@@ -78,11 +102,24 @@ class _StoreMapViewState extends State<StoreMapView> {
   final MapController _mapController = MapController();
   static const Distance _distance = Distance();
 
+  /// Controller da tela quando ela fornece um; senão, um próprio. Ter sempre
+  /// um evita duplicar aqui dentro o estado de zoom/rotação que ele já
+  /// guarda — os controles de zoom precisam desse estado tanto na home (onde
+  /// vivem fora do mapa) quanto nas telas que usam os botões internos.
+  late final StoreMapController _ctrl;
+
+  /// `true` quando o controller nasceu aqui — só nesse caso ele é descartado
+  /// aqui; o da tela pertence a quem o criou.
+  late final bool _ctrlProprio;
+
   LatLng? _centroRastreadoAnterior;
   bool _rotacaoTravada = false;
 
   @override
   void dispose() {
+    _ctrl.rotacaoTravada.removeListener(_onRotacaoExternaMudou);
+    _ctrl.detach();
+    if (_ctrlProprio) _ctrl.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -92,7 +129,9 @@ class _StoreMapViewState extends State<StoreMapView> {
   /// (câmera fica livre pro usuário).
   LatLng? get _centroRastreado {
     final focused = widget.focusedStore;
-    if (focused != null && focused.temLocalizacao) {
+    // Com controller externo, quem enquadra o foco é a tela — ela precisa
+    // deslocar o alvo para cima do sheet, e centralizar aqui desfaria isso.
+    if (widget.controller == null && focused != null && focused.temLocalizacao) {
       return LatLng(focused.latitude!, focused.longitude!);
     }
     if (widget.initialLatitude != null && widget.initialLongitude != null) {
@@ -121,6 +160,21 @@ class _StoreMapViewState extends State<StoreMapView> {
   void initState() {
     super.initState();
     _centroRastreadoAnterior = _centroRastreado;
+    _ctrlProprio = widget.controller == null;
+    _ctrl = widget.controller ?? StoreMapController();
+    _ctrl.attach(_mapController);
+    _ctrl.zoom.value = _centroEZoomIniciais().$2;
+    // Com controller externo, quem alterna a trava é o botão da tela (fora
+    // do mapa) — este listener traz a decisão de volta para cá, que é onde
+    // as `interactionOptions` do FlutterMap são montadas.
+    _ctrl.rotacaoTravada.addListener(_onRotacaoExternaMudou);
+  }
+
+  void _onRotacaoExternaMudou() {
+    final travada = _ctrl.rotacaoTravada.value;
+    if (travada != _rotacaoTravada && mounted) {
+      setState(() => _rotacaoTravada = travada);
+    }
   }
 
   @override
@@ -162,12 +216,11 @@ class _StoreMapViewState extends State<StoreMapView> {
     _mapController.move(pos, zoomAtual < 15.0 ? 16.0 : zoomAtual);
   }
 
-  /// Alterna o travamento de rotação do mapa. Ao travar, alinha o mapa de
-  /// volta pro norte — não faz sentido travar "torto".
-  void _alternarTravaDeRotacao() {
-    setState(() => _rotacaoTravada = !_rotacaoTravada);
-    if (_rotacaoTravada) _mapController.rotate(0);
-  }
+  /// Alterna o travamento de rotação do mapa. Delega ao controller (que
+  /// alinha de volta pro norte ao travar) e deixa o `_onRotacaoExternaMudou`
+  /// devolver o novo valor — assim o botão interno e o da tela nunca ficam
+  /// contando histórias diferentes sobre o mesmo mapa.
+  void _alternarTravaDeRotacao() => _ctrl.alternarTravaDeRotacao();
 
   /// Pin de loja: círculo com borda branca contendo a foto do comércio —
   /// cai pro ícone padrão (fundo vermelho) se não houver foto ou a imagem
@@ -197,11 +250,16 @@ class _StoreMapViewState extends State<StoreMapView> {
               ? Image.network(
                   imagemUrl,
                   fit: BoxFit.cover,
+                  // Decorativa: o marcador em si (fora do escopo deste
+                  // widget) já tem o nome da loja acessível na tela de
+                  // detalhe pra onde ele navega ao ser tocado.
+                  excludeFromSemantics: true,
                   // Marcador é um círculo de 42-52dp — sem isso, cada pin no
                   // mapa decodificava a foto inteira da loja, pesando muito
                   // no pan/zoom quando há vários marcadores com foto na tela.
+                  // Só cacheWidth: com os dois definidos o decoder ignora a
+                  // proporção original e estica a imagem.
                   cacheWidth: (tamanho * MediaQuery.devicePixelRatioOf(context)).round(),
-                  cacheHeight: (tamanho * MediaQuery.devicePixelRatioOf(context)).round(),
                   errorBuilder: (context, error, stackTrace) => _buildStoreMarkerFallback(isFocused),
                 )
               : _buildStoreMarkerFallback(isFocused),
@@ -214,7 +272,7 @@ class _StoreMapViewState extends State<StoreMapView> {
     return Container(
       color: isFocused ? ColorsPalette.redComponents : ColorsPalette.redComponents.withValues(alpha: 0.12),
       child: Icon(
-        PhosphorIconsRegular.storefront,
+        AppIcons.storefront,
         color: isFocused ? Colors.white : ColorsPalette.redComponents,
         size: isFocused ? 24.0 : 18.0,
       ),
@@ -248,6 +306,11 @@ class _StoreMapViewState extends State<StoreMapView> {
       bottom: widget.floatingControlsBottomPadding,
       child: Column(
         children: [
+          // Zoom no topo da pilha: é o controle usado com mais frequência, e
+          // aqui fica o mais longe da borda inferior, onde o polegar alcança
+          // com menos esforço em telas grandes.
+          MapZoomControls(controller: _ctrl),
+          const SizedBox(height: AppSpacing.sm),
           // Botão "Centralizar" só existe se há um ValueListenable de posição
           // — reconstrói só este pedaço pequeno (não o mapa inteiro) quando a
           // posição chega pela primeira vez ou muda.
@@ -258,8 +321,8 @@ class _StoreMapViewState extends State<StoreMapView> {
                 if (pos == null) return const SizedBox.shrink();
                 return Column(
                   children: [
-                    _MapControlButton(
-                      icon: PhosphorIconsRegular.gpsFix,
+                    MapControlButton(
+                      icon: AppIcons.gpsFix,
                       tooltip: 'Centralizar na minha posição',
                       onTap: _centralizarNaMinhaPosicao,
                     ),
@@ -268,8 +331,8 @@ class _StoreMapViewState extends State<StoreMapView> {
                 );
               },
             ),
-          _MapControlButton(
-            icon: _rotacaoTravada ? PhosphorIconsRegular.lock : PhosphorIconsRegular.compass,
+          MapControlButton(
+            icon: _rotacaoTravada ? AppIcons.lock : AppIcons.compass,
             tooltip: _rotacaoTravada ? 'Destravar rotação do mapa' : 'Travar rotação do mapa',
             isActive: _rotacaoTravada,
             onTap: _alternarTravaDeRotacao,
@@ -291,6 +354,14 @@ class _StoreMapViewState extends State<StoreMapView> {
           options: MapOptions(
             initialCenter: center,
             initialZoom: zoom,
+            // Mesmos limites dos botões de ampliar/reduzir: pinça e botão
+            // param no mesmo lugar.
+            minZoom: StoreMapController.zoomMinimo,
+            maxZoom: StoreMapController.zoomMaximo,
+            // Realimenta o zoom do controller a cada movimento. Só atualiza um
+            // ValueNotifier — os botões de zoom reconstroem sozinhos, o mapa
+            // não é reconstruído junto.
+            onMapEvent: (evento) => _ctrl.zoom.value = evento.camera.zoom,
             interactionOptions: InteractionOptions(
               flags: _rotacaoTravada ? InteractiveFlag.all & ~InteractiveFlag.rotate : InteractiveFlag.all,
             ),
@@ -326,11 +397,28 @@ class _StoreMapViewState extends State<StoreMapView> {
                   point: LatLng(store.latitude!, store.longitude!),
                   width: isFocused ? 60.0 : 48.0,
                   height: isFocused ? 60.0 : 48.0,
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      appPageRoute(builder: (_) => MoreInfoStorePage(store: store)),
-                    ),
+                  // SemanticTapArea, e não GestureDetector cru: sem o nó de
+                  // semântica os pins são o único conteúdo do mapa e ficavam
+                  // invisíveis ao leitor de tela — quem não enxerga não tinha
+                  // como saber que havia comércios ali, nem como abri-los.
+                  child: SemanticTapArea(
+                    label: store.nome,
+                    hint: 'Abre os detalhes do comércio',
+                    selected: isFocused ? true : null,
+                    // O pin já cresce quando está em foco e é pequeno demais
+                    // para comportar escala de pressão sem tremer.
+                    pressFeedback: false,
+                    onTap: () {
+                      final onTap = widget.onStoreTap;
+                      if (onTap != null) {
+                        onTap(store);
+                        return;
+                      }
+                      Navigator.push(
+                        context,
+                        appPageRoute(builder: (_) => MoreInfoStorePage(store: store)),
+                      );
+                    },
                     child: _buildStoreMarker(store, isFocused: isFocused),
                   ),
                 );
@@ -360,8 +448,8 @@ class _StoreMapViewState extends State<StoreMapView> {
               ),
           ],
         ),
-        _buildFloatingControls(),
-        if (comLocalizacao.isEmpty)
+        if (widget.showFloatingControls) _buildFloatingControls(),
+        if (comLocalizacao.isEmpty && widget.showEmptyBanner)
           Positioned(
             top: widget.topBannerOffset,
             left: 16.0,
@@ -371,7 +459,7 @@ class _StoreMapViewState extends State<StoreMapView> {
               decoration: BoxDecoration(
                 // Elemento flutuante sobre o mapa — cardSurface (Lote 4B).
                 color: context.mapColors.cardSurface,
-                borderRadius: BorderRadius.circular(100.0),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
                 boxShadow: [
                   BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 2)),
                 ],
@@ -389,46 +477,6 @@ class _StoreMapViewState extends State<StoreMapView> {
   }
 }
 
-/// Botão flutuante circular usado pelos controles de câmera do mapa
-/// (centralizar / travar rotação) — mesmo visual dos "pills" de vidro já
-/// usados em outros lugares do app, só que circular.
-class _MapControlButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onTap;
-  final bool isActive;
-
-  const _MapControlButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onTap,
-    this.isActive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        // Botão circular flutuante sobre o mapa — cardSurface quando
-        // inativo (Lote 4B); ativo mantém a cor de marca, intocada.
-        color: isActive ? ColorsPalette.redComponents : context.mapColors.cardSurface,
-        shape: const CircleBorder(),
-        elevation: 3.0,
-        shadowColor: Colors.black.withValues(alpha: 0.3),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Icon(
-              icon,
-              size: AppIconSize.md,
-              color: isActive ? Colors.white : context.mapColors.primaryText,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// O botão flutuante dos controles de câmera virou `MapControlButton`, em
+// `map_controls.dart` — a home desenhava um clone dele, e as duas cópias já
+// tinham divergido em tamanho de alvo (40 aqui, 48 lá) e em superfície.

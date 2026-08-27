@@ -5,6 +5,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/nearby_filter.dart';
+import 'package:map_food/features/store/presentation/controllers/store_map_controller.dart';
 import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
 
 /// Mapa de lojas próximas em tela cheia, usado na aba "Início" de guest,
@@ -22,12 +24,32 @@ class NearbyStoresSection extends StatefulWidget {
   /// Raio em km escolhido no modal de filtros; null = "Todos" (sem corte).
   final double? raioKm;
 
+  /// Loja destacada no mapa (pin maior).
+  final StoreDto? focusedStore;
+
+  final StoreMapController? mapController;
+  final ValueChanged<StoreDto>? onStoreTap;
+  final bool showFloatingControls;
+  final bool showEmptyBanner;
+
+  /// Avisa quem monta esta seção sobre o resultado do corte por raio e a
+  /// posição do usuário — assim a tela dona do mapa reage a essas mudanças
+  /// (ex: o botão de recentralizar da home) sem abrir uma segunda assinatura
+  /// de GPS nem duplicar o cálculo de distância.
+  final void Function(List<StoreDto> lojas, LatLng? posicaoUsuario)? onNearbyChanged;
+
   const NearbyStoresSection({
     super.key,
     required this.stores,
     this.initialLatitude,
     this.initialLongitude,
     this.raioKm,
+    this.focusedStore,
+    this.mapController,
+    this.onStoreTap,
+    this.showFloatingControls = true,
+    this.showEmptyBanner = true,
+    this.onNearbyChanged,
   });
 
   @override
@@ -48,19 +70,27 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
     super.initState();
     _lat = widget.initialLatitude;
     _lng = widget.initialLongitude;
-    if (_lat != null && _lng != null)
+    if (_lat != null && _lng != null) {
       _userPosition.value = LatLng(_lat!, _lng!);
+    }
     _iniciarRastreamento();
   }
 
   Future<void> _iniciarRastreamento() async {
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+          .timeout(const Duration(seconds: 10));
       if (!serviceEnabled) return;
 
-      LocationPermission permission = await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission()
+          .timeout(const Duration(seconds: 10));
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+        // No Flutter Web o prompt é nativo do navegador, fora do canvas do
+        // Flutter — sem timeout, um usuário que não percebe/ignora esse
+        // prompt trava este `await` pra sempre (e junto com ele, qualquer
+        // outro widget esperando o mesmo tipo de permissão, ex: SearchPage).
+        permission = await Geolocator.requestPermission()
+            .timeout(const Duration(seconds: 10));
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
@@ -77,13 +107,14 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
             locationSettings: const LocationSettings(
               accuracy: LocationAccuracy.medium,
             ),
-          );
+          ).timeout(const Duration(seconds: 10));
           _userPosition.value = LatLng(posicao.latitude, posicao.longitude);
-          if (mounted)
+          if (mounted) {
             setState(() {
               _lat = posicao.latitude;
               _lng = posicao.longitude;
             });
+          }
         } catch (_) {
           // Segue sem posição inicial — o mapa cai no fallback padrão.
         }
@@ -132,26 +163,37 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
     super.dispose();
   }
 
-  List<StoreDto> get _lojasNoRaio {
-    final raio = widget.raioKm;
-    if (raio == null || _lat == null || _lng == null) return widget.stores;
-    final raioMetros = raio * 1000;
-    return widget.stores.where((loja) {
-      if (!loja.temLocalizacao) return false;
-      final distancia = Geolocator.distanceBetween(
-        _lat!,
-        _lng!,
-        loja.latitude!,
-        loja.longitude!,
+  /// O corte em si mora em `data/nearby_filter.dart` — função pura, coberta
+  /// por teste. Aqui fica só a ligação com o estado do widget (a posição do
+  /// GPS e o raio vindo do modal de filtros).
+  List<StoreDto> get _lojasNoRaio => lojasDentroDoRaio(
+        widget.stores,
+        lat: _lat,
+        lng: _lng,
+        raioKm: widget.raioKm,
       );
-      return distancia <= raioMetros;
-    }).toList();
-  }
 
   @override
   Widget build(BuildContext context) {
+    final lojas = _lojasNoRaio;
+
+    // Notifica fora do frame de build: chamar setState do pai durante o build
+    // do filho é erro de framework.
+    final aviso = widget.onNearbyChanged;
+    if (aviso != null) {
+      final posicao = _lat != null && _lng != null ? LatLng(_lat!, _lng!) : null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) aviso(lojas, posicao);
+      });
+    }
+
     return StoreMapView(
-      stores: _lojasNoRaio,
+      stores: lojas,
+      focusedStore: widget.focusedStore,
+      controller: widget.mapController,
+      onStoreTap: widget.onStoreTap,
+      showFloatingControls: widget.showFloatingControls,
+      showEmptyBanner: widget.showEmptyBanner,
       initialLatitude: _lat,
       initialLongitude: _lng,
       userPosition: _userPosition,

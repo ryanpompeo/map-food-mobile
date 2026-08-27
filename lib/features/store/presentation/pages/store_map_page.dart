@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
@@ -32,6 +33,11 @@ class _StoreMapPageState extends State<StoreMapPage> {
   bool _carregandoRota = false;
   bool _semPermissao = false;
 
+  // Espelha `_carregandoRota` como ValueListenable pro UnsavedChangesGuard —
+  // ele já muda via setState por outros motivos de UI (o pill de loading no
+  // mapa), então aqui é só refletir o mesmo valor, sem custo extra de rebuild.
+  final ValueNotifier<bool> _hasUnsavedChanges = ValueNotifier(false);
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +47,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
   @override
   void dispose() {
     _userPosition.dispose();
+    _hasUnsavedChanges.dispose();
     super.dispose();
   }
 
@@ -48,6 +55,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
     if (!widget.store.temLocalizacao) return;
 
     setState(() => _carregandoRota = true);
+    _hasUnsavedChanges.value = true;
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       LocationPermission permission = await Geolocator.checkPermission();
@@ -62,6 +70,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
             _semPermissao = true;
             _carregandoRota = false;
           });
+          _hasUnsavedChanges.value = false;
         }
         return;
       }
@@ -86,7 +95,10 @@ class _StoreMapPageState extends State<StoreMapPage> {
       if (!mounted) return;
       await _tracarRotaPara(LatLng(posicaoAtual.latitude, posicaoAtual.longitude), destino);
     } catch (_) {
-      if (mounted) setState(() => _carregandoRota = false);
+      if (mounted) {
+        setState(() => _carregandoRota = false);
+        _hasUnsavedChanges.value = false;
+      }
     }
   }
 
@@ -109,6 +121,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
       }
       _carregandoRota = false;
     });
+    _hasUnsavedChanges.value = false;
   }
 
   String get _distanciaLabel {
@@ -121,7 +134,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
   @override
   Widget build(BuildContext context) {
     return UnsavedChangesGuard(
-      hasUnsavedChanges: _carregandoRota,
+      hasUnsavedChanges: _hasUnsavedChanges,
       confirmDialog: confirmarSairDuranteCalculoDeRota,
       child: Scaffold(
       backgroundColor: context.mapColors.mainBackground,
@@ -136,7 +149,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
           // depois de já ter saído, então o diálogo nunca chegava a aparecer
           // pelo botão visual (só pelo gesto/botão físico de voltar).
           onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(PhosphorIconsRegular.caretLeft, color: ColorsPalette.redComponents),
+          icon: const Icon(AppIcons.caretLeft, color: ColorsPalette.redComponents),
         ),
         title: Text(
           widget.store.nome,
@@ -168,7 +181,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(PhosphorIconsRegular.footprints, size: 16.0, color: ColorsPalette.redComponents),
+                      const Icon(AppIcons.footprints, size: 16.0, color: ColorsPalette.redComponents),
                       const SizedBox(width: 6.0),
                       Text(
                         _distanciaLabel,
@@ -212,7 +225,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
       decoration: BoxDecoration(
         // Elemento flutuante sobre o mapa — cardSurface (Lote 4B).
         color: context.mapColors.cardSurface,
-        borderRadius: BorderRadius.circular(100.0),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 8, offset: const Offset(0, 2)),
         ],

@@ -21,12 +21,11 @@ class EmAltaSectionHeaderWidget extends StatelessWidget {
 
 /// Lista vertical (mesmo formato de card usado na busca filtrada por
 /// categoria, via `StoreListItemWidget`) com as lojas de avaliação acima de
-/// 4.5 — substitui o grid de 2 colunas usado antes para essa seção.
+/// 4.5.
 class EmAltaListSliverWidget extends StatelessWidget {
   final List<StoreDto> lojas;
-  final String userRole;
 
-  const EmAltaListSliverWidget({super.key, required this.lojas, required this.userRole});
+  const EmAltaListSliverWidget({super.key, required this.lojas});
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +42,18 @@ class EmAltaListSliverWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
+          final isLast = index == lojas.length - 1;
           return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: StoreListItemWidget(store: lojas[index], userRole: userRole),
+            padding: EdgeInsets.only(bottom: isLast ? 0 : AppSpacing.md),
+            child: Column(
+              children: [
+                StoreListItemWidget(store: lojas[index]),
+                if (!isLast) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Divider(height: 1, thickness: 1, color: context.mapColors.border),
+                ],
+              ],
+            ),
           );
         }, childCount: lojas.length),
       ),
