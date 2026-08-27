@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/features/favorites/data/services/favorito_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
@@ -7,10 +8,35 @@ class FavoritesManager extends ChangeNotifier {
 
   FavoritesManager._();
 
-  final FavoritoService _service = FavoritoService();
+  FavoritoService _service = FavoritoService();
+
+  /// Troca o service num teste. Necessário porque este controller é um
+  /// singleton de processo: ele resolve o `ApiClient` na construção, ou seja,
+  /// antes de qualquer `ApiClient.overrideInstance` que um teste faça.
+  @visibleForTesting
+  set service(FavoritoService service) => _service = service;
 
   final List<StoreDto> _favorites = [];
+
+  /// Índice de consulta O(1), mantido em paralelo à lista.
+  ///
+  /// `isFavorite` era um `any` linear, e cada card de loja na tela mantém um
+  /// listener neste singleton. Com as abas vivas num IndexedStack são dezenas
+  /// de corações montados ao mesmo tempo: uma única notificação disparava
+  /// O(cards × favoritos) comparações no thread de UI, durante a animação do
+  /// toque.
+  ///
+  /// **Invariante**: `_favorites` só pode ser tocada por [_add], [_remove] e
+  /// [clear] — é o que impede a lista e o índice de divergirem.
+  final Set<int> _favoriteIds = {};
+
   bool _loading = false;
+
+  /// Falha da última carga — null quando deu certo. Existe porque `load()` era
+  /// um `try/finally` sem `catch`: um erro de rede virava exceção assíncrona
+  /// órfã (o chamador não dá await) e a aba ficava em lista vazia silenciosa,
+  /// indistinguível de "você não tem favoritos".
+  String? _errorMessage;
 
   // Evita duas chamadas concorrentes de toggle() pro mesmo storeId (ex:
   // double-tap no coração antes da primeira resposta da API chegar), que
@@ -20,21 +46,37 @@ class FavoritesManager extends ChangeNotifier {
 
   List<StoreDto> get favorites => List.unmodifiable(_favorites);
   bool get isLoading => _loading;
+  String? get errorMessage => _errorMessage;
 
-  bool isFavorite(int lojaId) {
-    return _favorites.any((store) => store.id == lojaId);
+  bool isFavorite(int lojaId) => _favoriteIds.contains(lojaId);
+
+  void _add(StoreDto store) {
+    if (_favoriteIds.add(store.id)) _favorites.add(store);
+  }
+
+  void _remove(int lojaId) {
+    if (_favoriteIds.remove(lojaId)) {
+      _favorites.removeWhere((item) => item.id == lojaId);
+    }
   }
 
   /// Busca os favoritos do consumidor autenticado na API. Seguro de chamar
   /// mais de uma vez (ex: a cada abertura da home/aba de favoritos).
   Future<void> load() async {
     _loading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       final result = await _service.getFavoritos();
-      _favorites
-        ..clear()
-        ..addAll(result);
+      _favorites.clear();
+      _favoriteIds.clear();
+      result.forEach(_add);
+    } on AppException catch (e) {
+      // Falha vira estado observável, não exceção que ninguém pega: quem chama
+      // `load()` normalmente o faz sem await (login, abertura de aba).
+      _errorMessage = e.message;
+    } catch (_) {
+      _errorMessage = 'Não foi possível carregar seus favoritos.';
     } finally {
       _loading = false;
       notifyListeners();
@@ -50,9 +92,9 @@ class FavoritesManager extends ChangeNotifier {
     final wasFavorite = isFavorite(store.id);
 
     if (wasFavorite) {
-      _favorites.removeWhere((item) => item.id == store.id);
+      _remove(store.id);
     } else {
-      _favorites.add(store);
+      _add(store);
     }
     notifyListeners();
 
@@ -63,10 +105,11 @@ class FavoritesManager extends ChangeNotifier {
         await _service.addFavorito(store.id);
       }
     } catch (e) {
+      // Reverte a atualização otimista — lista e índice juntos.
       if (wasFavorite) {
-        _favorites.add(store);
+        _add(store);
       } else {
-        _favorites.removeWhere((item) => item.id == store.id);
+        _remove(store.id);
       }
       notifyListeners();
       rethrow;
@@ -79,7 +122,9 @@ class FavoritesManager extends ChangeNotifier {
   /// favoritos de uma conta para a sessão seguinte no mesmo aparelho.
   void clear() {
     _favorites.clear();
+    _favoriteIds.clear();
     _pending.clear();
+    _errorMessage = null;
     notifyListeners();
   }
 }
