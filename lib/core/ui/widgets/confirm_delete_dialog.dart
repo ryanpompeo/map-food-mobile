@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -11,7 +11,7 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
   final confirmou = await showDialog<bool>(
     context: context,
     builder: (ctx) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
       backgroundColor: ctx.mapColors.cardSurface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(AppSpacing.lg),
@@ -29,7 +29,7 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
                     color: ColorsPalette.redComponents.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(PhosphorIconsRegular.trash, color: ColorsPalette.redComponents, size: 18),
+                  child: const Icon(AppIcons.trash, color: ColorsPalette.redComponents, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text("Remover foto", style: AppText.titulo(ctx).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -79,7 +79,7 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
       builder: (ctx, setState) {
         final habilitado = controller.text.trim() == palavraChave;
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
           backgroundColor: ctx.mapColors.cardSurface,
           surfaceTintColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(AppSpacing.lg),
@@ -97,7 +97,7 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
                         color: ColorsPalette.redComponents.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                      child: const Icon(PhosphorIconsRegular.warning, color: ColorsPalette.redComponents, size: 18),
+                      child: const Icon(AppIcons.warning, color: ColorsPalette.redComponents, size: 18),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(

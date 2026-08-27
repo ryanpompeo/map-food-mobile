@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -14,9 +14,9 @@ class _ThemeModeOption {
 }
 
 const _options = [
-  _ThemeModeOption(ThemeMode.light, "Claro", PhosphorIconsRegular.sun),
-  _ThemeModeOption(ThemeMode.dark, "Escuro", PhosphorIconsRegular.moon),
-  _ThemeModeOption(ThemeMode.system, "Automático (sistema)", PhosphorIconsRegular.deviceMobile),
+  _ThemeModeOption(ThemeMode.light, "Claro", AppIcons.sun),
+  _ThemeModeOption(ThemeMode.dark, "Escuro", AppIcons.moon),
+  _ThemeModeOption(ThemeMode.system, "Automático (sistema)", AppIcons.deviceMobile),
 ];
 
 /// Abre um bottom sheet com as três opções de tema e aplica a escolha via
@@ -111,7 +111,7 @@ class _ThemeOptionTile extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(PhosphorIconsRegular.check, color: ColorsPalette.redComponents, size: 20),
+              const Icon(AppIcons.check, color: ColorsPalette.redComponents, size: 20),
           ],
         ),
       ),

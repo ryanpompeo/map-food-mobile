@@ -1,5 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -17,7 +18,7 @@ Future<bool> _confirmarSaida(
   final confirmou = await showDialog<bool>(
     context: context,
     builder: (ctx) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
       backgroundColor: ctx.mapColors.cardSurface,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(AppSpacing.lg),
@@ -35,7 +36,7 @@ Future<bool> _confirmarSaida(
                     color: ColorsPalette.redComponents.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(PhosphorIconsRegular.warning, color: ColorsPalette.redComponents, size: 18),
+                  child: const Icon(AppIcons.warning, color: ColorsPalette.redComponents, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -98,8 +99,14 @@ Future<bool> confirmarSairDuranteCalculoDeRota(BuildContext context) => _confirm
 /// Envolve uma tela e intercepta a saída (gesto/botão de voltar do Android)
 /// enquanto [hasUnsavedChanges] for `true`, pedindo confirmação — via
 /// [confirmDialog] — em vez de descartar/cancelar silenciosamente.
+///
+/// [hasUnsavedChanges] é um [ValueListenable] (não um `bool` simples) de
+/// propósito: o rebuild fica isolado no [ValueListenableBuilder] interno,
+/// que envolve só o [PopScope] — quem chama atualiza o valor a cada tecla
+/// digitada sem precisar de `setState` na tela inteira (formulário, galeria,
+/// lista de avaliações etc.) só para manter esse booleano em dia.
 class UnsavedChangesGuard extends StatelessWidget {
-  final bool hasUnsavedChanges;
+  final ValueListenable<bool> hasUnsavedChanges;
   final Widget child;
   final Future<bool> Function(BuildContext context) confirmDialog;
 
@@ -112,14 +119,21 @@ class UnsavedChangesGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !hasUnsavedChanges,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        final confirmou = await confirmDialog(context);
-        if (confirmou && context.mounted) Navigator.of(context).pop();
-      },
+    return ValueListenableBuilder<bool>(
+      valueListenable: hasUnsavedChanges,
+      // `child` é passado aqui (não recriado no builder) — o Flutter reusa a
+      // mesma instância entre notificações, então `cachedChild` nunca muda
+      // de identidade e a árvore abaixo do guard não reconstrói junto.
       child: child,
+      builder: (context, dirty, cachedChild) => PopScope(
+        canPop: !dirty,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          final confirmou = await confirmDialog(context);
+          if (confirmou && context.mounted) Navigator.of(context).pop();
+        },
+        child: cachedChild!,
+      ),
     );
   }
 }

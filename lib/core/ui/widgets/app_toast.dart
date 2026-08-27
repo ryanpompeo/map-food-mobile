@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -119,7 +120,7 @@ class _AppToastWidgetState extends State<_AppToastWidget>
   Widget build(BuildContext context) {
     final isSuccess = widget.type == _AppToastType.success;
     final accentColor = isSuccess ? const Color(0xFF16A34A) : ColorsPalette.redComponents;
-    final icon = isSuccess ? PhosphorIconsRegular.checkCircle : PhosphorIconsRegular.warningCircle;
+    final icon = isSuccess ? AppIcons.checkCircle : AppIcons.warningCircle;
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + AppSpacing.sm,
@@ -135,8 +136,14 @@ class _AppToastWidgetState extends State<_AppToastWidget>
               position: _slide,
               child: Material(
                 color: Colors.transparent,
-                child: GestureDetector(
+                child: SemanticTapArea(
+                  // O texto do aviso é lido pelo nó do próprio Text abaixo;
+                  // aqui o rótulo descreve só o que o toque faz.
+                  label: 'Dispensar aviso',
                   onTap: _dismiss,
+                  // O toast já entra e sai animado — encolher no toque
+                  // brigaria com a animação de saída que o toque dispara.
+                  pressFeedback: false,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 340.0),
                     child: Container(

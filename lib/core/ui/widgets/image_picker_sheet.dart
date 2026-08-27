@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -24,7 +24,7 @@ Future<XFile?> pickImageFromSheet(BuildContext context) async {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40.0, height: 4.0, decoration: BoxDecoration(color: context.mapColors.border, borderRadius: BorderRadius.circular(10.0))),
+            Container(width: 40.0, height: 4.0, decoration: BoxDecoration(color: context.mapColors.border, borderRadius: BorderRadius.circular(AppRadius.pill))),
             const SizedBox(height: AppSpacing.lg),
             Text(
               "Escolher foto",
@@ -32,13 +32,13 @@ Future<XFile?> pickImageFromSheet(BuildContext context) async {
             ),
             const SizedBox(height: AppSpacing.lg),
             _SheetOption(
-              icon: PhosphorIconsRegular.camera,
+              icon: AppIcons.camera,
               label: "Tirar foto",
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             const SizedBox(height: AppSpacing.sm),
             _SheetOption(
-              icon: PhosphorIconsRegular.image,
+              icon: AppIcons.image,
               label: "Escolher da galeria",
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
