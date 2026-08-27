@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/widgets/app_bottom_bar.dart';
 
 class FloatingBottomBar extends StatelessWidget {
@@ -18,9 +18,9 @@ class FloatingBottomBar extends StatelessWidget {
       selectedIndex: selectedIndex,
       onItemTapped: onItemTapped,
       items: const [
-        BottomBarItem(PhosphorIconsRegular.mapTrifold),
-        BottomBarItem(PhosphorIconsRegular.magnifyingGlass),
-        BottomBarItem(PhosphorIconsRegular.user),
+        BottomBarItem(AppIcons.house, 'Início'),
+        BottomBarItem(AppIcons.magnifyingGlass, 'Buscar'),
+        BottomBarItem(AppIcons.user, 'Perfil'),
       ],
     );
   }
