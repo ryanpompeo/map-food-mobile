@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:map_food/core/errors/exception.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
-import 'package:map_food/core/ui/theme/app_dimensions.dart';
-import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
+import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/core/ui/utils/async_load_mixin.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/empty_state.dart';
+import 'package:map_food/core/ui/widgets/keyboard_aware_bottom_bar.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_dashboard.dart';
@@ -25,8 +24,15 @@ class MerchantHomePage extends StatefulWidget {
   State<MerchantHomePage> createState() => _MerchantHomePageState();
 }
 
-class _MerchantHomePageState extends State<MerchantHomePage> {
-  int _selectedIndex = 0;
+class _MerchantHomePageState extends State<MerchantHomePage>
+    with AsyncLoadMixin<List<StoreDto>, MerchantHomePage> {
+  /// Aba exibida. `ValueNotifier` e não um campo com `setState`: aqui o
+  /// `IndexedStack` tem **cinco** filhos (mapa, busca, ronda, dashboard,
+  /// perfil), e um `setState` por toque na barra recriava as cinco instâncias
+  /// — o Flutter então descia a árvore inteira, reconstruindo o mapa com os
+  /// pins e o dashboard, só pra mudar qual delas fica visível. Ver a mesma
+  /// nota, mais longa, em `KeyboardAwareBottomBar`.
+  final ValueNotifier<int> _abaAtual = ValueNotifier(0);
 
   String _userName = '';
   String _userEmail = '';
@@ -34,16 +40,21 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   // remontar (novo nome/e-mail/foto) em vez de continuar com os dados
   // carregados na primeira vez que a aba foi aberta.
   int _profileRefreshToken = 0;
-  List<StoreDto> _stores = [];
   int _lojaSelecionadaIndex = 0;
-  bool _isLoading = true;
-  String? _errorMessage;
 
   final _storeService = StoreService();
 
   @override
+  String get genericErrorMessage => 'Erro ao carregar dados da loja.';
+
+  @override
   void initState() {
     super.initState();
+    // O trio isLoading/errorMessage/data do AsyncLoadMixin já nasce
+    // `isLoading: false` por padrão — força `true` aqui, antes do primeiro
+    // build, pra não desenhar um frame de "sem loja" (`data` ainda nulo)
+    // enquanto `_loadData` aguarda a sessão local.
+    asyncState = const AsyncState.loading();
     _loadData();
   }
 
@@ -51,9 +62,8 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   /// da sessão (sem repetir o fluxo de `_loadData`, que também busca lojas e
   /// pode redirecionar) e força o MerchantProfilePage a remontar via key,
   /// pra também buscar a foto de novo.
-  Future<void> _onProfileUpdated() async {
-    final session = await AuthStorage.getSession();
-    if (!mounted) return;
+  void _onProfileUpdated() {
+    final session = SessionStore.instance.value;
     setState(() {
       _userName = session?.nome ?? '';
       _userEmail = session?.email ?? '';
@@ -62,8 +72,9 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
   }
 
   Future<void> _loadData() async {
-    final session = await AuthStorage.getSession();
-    if (!mounted) return;
+    // Sessão em memória (hidratada no `main()`): nome e e-mail saem daqui sem
+    // I/O, e só a busca das lojas continua sendo assíncrona.
+    final session = SessionStore.instance.value;
 
     setState(() {
       _userName = session?.nome ?? '';
@@ -71,180 +82,160 @@ class _MerchantHomePageState extends State<MerchantHomePage> {
     });
 
     if (session == null) {
-      setState(() => _isLoading = false);
+      setState(() => asyncState = const AsyncState(data: []));
       return;
     }
 
-    try {
-      final stores = await _storeService.getByMerchant(session.id);
-
-      if (!mounted) return;
-
-      if (stores.isEmpty) {
-        // Sem loja cadastrada → redireciona obrigatoriamente para criação
-        Navigator.pushReplacement(
-          context,
-          appPageRoute(builder: (_) => const StoreRegisterPage()),
-        );
-        return;
-      }
-
-      setState(() {
-        _stores = stores;
-        if (_lojaSelecionadaIndex >= _stores.length) _lojaSelecionadaIndex = 0;
-        _isLoading = false;
-      });
-    } on AppException catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.message;
-          _isLoading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Erro ao carregar dados da loja.';
-          _isLoading = false;
-        });
-      }
-    }
+    await load(
+      () => _storeService.getByMerchant(session.id),
+      onData: (stores) {
+        if (stores.isEmpty) {
+          // Sem loja cadastrada → redireciona obrigatoriamente para criação.
+          // Devolve `false` pra nunca commitar essa lista vazia em
+          // `asyncState` — a tela está sendo substituída, não faz sentido
+          // ela chegar a renderizar com `stores` vazio antes de sair.
+          Navigator.pushReplacement(
+            context,
+            appPageRoute(builder: (_) => const StoreRegisterPage()),
+          );
+          return false;
+        }
+        if (_lojaSelecionadaIndex >= stores.length) {
+          setState(() => _lojaSelecionadaIndex = 0);
+        }
+        return true;
+      },
+    );
   }
 
   void _onItemTapped(int index) {
-    if (_selectedIndex != index) {
-      setState(() => _selectedIndex = index);
-    }
+    if (_abaAtual.value == index) return;
+    _abaAtual.value = index;
   }
 
-  /// Mantém `_stores` em dia quando uma tela filha altera a loja no backend
-  /// (toggle aberta/fechada, edição, posição da ronda) — sem isso, trocar de
-  /// loja no switcher e voltar remontava a tela com o dado velho do boot,
-  /// parecendo que a alteração não persistiu.
+  @override
+  void dispose() {
+    _abaAtual.dispose();
+    super.dispose();
+  }
+
+  /// Mantém a lista de lojas em dia quando uma tela filha altera a loja no
+  /// backend (toggle aberta/fechada, edição, posição da ronda) — sem isso,
+  /// trocar de loja no switcher e voltar remontava a tela com o dado velho
+  /// do boot, parecendo que a alteração não persistiu.
   void _onStoreUpdated(StoreDto atualizada) {
-    final index = _stores.indexWhere((s) => s.id == atualizada.id);
+    final stores = asyncState.data;
+    if (stores == null) return;
+    final index = stores.indexWhere((s) => s.id == atualizada.id);
     if (index == -1) return;
-    setState(() => _stores[index] = atualizada);
+    final atualizadas = List<StoreDto>.from(stores)..[index] = atualizada;
+    setState(() => asyncState = AsyncState(data: atualizadas));
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (asyncState.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_errorMessage != null) {
+    final errorMessage = asyncState.errorMessage;
+    if (errorMessage != null) {
       return Scaffold(
         body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  PhosphorIconsRegular.wifiSlash,
-                  size: 48,
-                  color: context.mapColors.iconMuted,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  _errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: AppText.corpo(context)
-                      .copyWith(color: context.mapColors.secondaryText),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isLoading = true;
-                      _errorMessage = null;
-                    });
-                    _loadData();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorsPalette.redComponents,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                    ),
-                  ),
-                  child: const Text('Tentar novamente'),
-                ),
-              ],
-            ),
+          child: EmptyState(
+            icon: AppIcons.wifiSlash,
+            title: 'Não foi possível carregar',
+            description: errorMessage,
+            actionLabel: 'Tentar novamente',
+            onAction: _loadData,
+            tone: EmptyStateTone.error,
           ),
         ),
       );
     }
 
-    final store = _stores[_lojaSelecionadaIndex];
+    final stores = asyncState.data ?? const <StoreDto>[];
+    // Sem loja e sem redirecionamento em voo: a sessão sumiu entre o `_loadData`
+    // e este build (ex: 401 concorrente limpando o AuthStorage). Indexar aqui
+    // dava RangeError e tela branca.
+    if (stores.isEmpty) {
+      return Scaffold(
+        body: Center(
+          child: EmptyState(
+            icon: AppIcons.storefront,
+            title: 'Nenhuma loja disponível',
+            description: 'Faça login novamente para acessar suas lojas.',
+            actionLabel: 'Tentar novamente',
+            onAction: _loadData,
+          ),
+        ),
+      );
+    }
+
+    // `clamp` como segunda linha de defesa: o índice também pode ficar fora do
+    // intervalo se a lista encolher (loja excluída) antes do próximo build.
+    final store = stores[_lojaSelecionadaIndex.clamp(0, stores.length - 1)];
     final switcher = StoreSwitcherBar(
-      stores: _stores,
+      stores: stores,
       selectedIndex: _lojaSelecionadaIndex,
       onSelect: (index) => setState(() => _lojaSelecionadaIndex = index),
     );
 
-    final keyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    // Construídas **fora** do ValueListenableBuilder: assim as cinco
+    // instâncias sobrevivem à troca de aba, e o IndexedStack só troca o
+    // índice. Dentro do builder, cada toque na barra recriaria as cinco.
+    final abas = [
+      // RepaintBoundary em cada aba: sem isso, o Stack/Compositor trata a
+      // troca de aba do IndexedStack como parte do mesmo layer de pintura
+      // das outras abas (mesmo as invisíveis) — isolando cada uma, a troca
+      // vira só uma questão de qual layer já pronto mostrar, sem repintar
+      // o mapa/formulários das abas que não mudaram.
+      RepaintBoundary(
+        child: HomeMapExplorer(onSearchTap: () => _onItemTapped(1)),
+      ),
+      const RepaintBoundary(child: SearchPage()),
+      RepaintBoundary(
+        child: MerchantWorkingPage(
+          key: ValueKey('working-${store.id}'),
+          store: store,
+          storeSwitcher: switcher,
+          onStoreUpdated: _onStoreUpdated,
+        ),
+      ),
+      RepaintBoundary(
+        child: MerchantDashboard(
+          key: ValueKey('dashboard-${store.id}'),
+          store: store,
+          storeSwitcher: switcher,
+          onStoreUpdated: _onStoreUpdated,
+        ),
+      ),
+      RepaintBoundary(
+        child: MerchantProfilePage(
+          key: ValueKey('profile-$_profileRefreshToken'),
+          userName: _userName,
+          userEmail: _userEmail,
+          onProfileUpdated: _onProfileUpdated,
+        ),
+      ),
+    ];
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: context.mapColors.mainBackground,
       body: Stack(
         children: [
-          // RepaintBoundary em cada aba: sem isso, o Stack/Compositor trata a
-          // troca de aba do IndexedStack como parte do mesmo layer de pintura
-          // das outras abas (mesmo as invisíveis) — isolando cada uma, a troca
-          // vira só uma questão de qual layer já pronto mostrar, sem repintar
-          // o mapa/formulários das abas que não mudaram.
-          IndexedStack(
-            index: _selectedIndex,
-            children: [
-              RepaintBoundary(
-                child: HomeMapExplorer(onSearchTap: () => _onItemTapped(1)),
-              ),
-              const RepaintBoundary(child: SearchPage()),
-              RepaintBoundary(
-                child: MerchantWorkingPage(
-                  key: ValueKey('working-${store.id}'),
-                  store: store,
-                  storeSwitcher: switcher,
-                  onStoreUpdated: _onStoreUpdated,
-                ),
-              ),
-              RepaintBoundary(
-                child: MerchantDashboard(
-                  key: ValueKey('dashboard-${store.id}'),
-                  store: store,
-                  storeSwitcher: switcher,
-                  onStoreUpdated: _onStoreUpdated,
-                ),
-              ),
-              RepaintBoundary(
-                child: MerchantProfilePage(
-                  key: ValueKey('profile-$_profileRefreshToken'),
-                  userName: _userName,
-                  userEmail: _userEmail,
-                  onProfileUpdated: _onProfileUpdated,
-                ),
-              ),
-            ],
+          ValueListenableBuilder<int>(
+            valueListenable: _abaAtual,
+            builder: (context, index, _) => IndexedStack(index: index, children: abas),
           ),
-          // resizeToAvoidBottomInset:false trava o Stack no lugar (a barra
-          // não "sobe" agarrada ao teclado); esse Slide é o que dá a saída
-          // suave por baixo da tela ao focar um campo, estilo iFood.
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              offset: keyboardVisible ? const Offset(0, 1) : Offset.zero,
-              child: MerchantBottomBar(
-                selectedIndex: _selectedIndex,
+          KeyboardAwareBottomBar(
+            child: ValueListenableBuilder<int>(
+              valueListenable: _abaAtual,
+              builder: (context, index, _) => MerchantBottomBar(
+                selectedIndex: index,
                 onItemTapped: _onItemTapped,
               ),
             ),
