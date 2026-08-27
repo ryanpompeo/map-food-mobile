@@ -3,7 +3,9 @@ import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
 class FavoritoService {
-  final _client = ApiClient.instance;
+  FavoritoService({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  final ApiClient _client;
 
   Future<List<StoreDto>> getFavoritos() async {
     // GET /favoritos/completo (não o /favoritos legado): mesma listagem, mas

@@ -6,7 +6,9 @@ import 'package:map_food/features/merchant/data/models/merchant_model.dart';
 import 'package:map_food/features/merchant/data/models/merchant_register_request.dart';
 
 class MerchantService {
-  final _client = ApiClient.instance;
+  MerchantService({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  final ApiClient _client;
 
   /// Envia a foto de perfil. O corpo da resposta do POST não é confiável,
   /// então busca o comerciante novamente pra devolver o estado atualizado.
@@ -15,7 +17,11 @@ class MerchantService {
     final formData = FormData.fromMap({
       'file': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
     });
-    await _client.post<dynamic>('${ApiConstants.comerciantes}/$id/imagem', data: formData);
+    await _client.post<dynamic>(
+      '${ApiConstants.comerciantes}/$id/imagem',
+      data: formData,
+      options: ApiClient.uploadOptions,
+    );
     return getById(id);
   }
 

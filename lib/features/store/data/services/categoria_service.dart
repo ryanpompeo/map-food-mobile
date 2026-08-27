@@ -3,7 +3,9 @@ import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 
 class CategoriaService {
-  final _client = ApiClient.instance;
+  CategoriaService({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  final ApiClient _client;
 
   /// Busca todas as categorias via GET /categorias. Rota pública.
   Future<List<CategoriaModel>> getAll() async {

@@ -7,7 +7,9 @@ import 'package:map_food/features/store/data/models/store_dto.dart';
 
 
 class StoreService {
-  final _client = ApiClient.instance;
+  StoreService({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  final ApiClient _client;
 
   Future<StoreDto> getById(int id) async {
     final data = await _client.get<Map<String, dynamic>>(
@@ -23,7 +25,11 @@ class StoreService {
     final formData = FormData.fromMap({
       'file': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
     });
-    await _client.post<dynamic>('${ApiConstants.lojas}/$id/imagem', data: formData);
+    await _client.post<dynamic>(
+      '${ApiConstants.lojas}/$id/imagem',
+      data: formData,
+      options: ApiClient.uploadOptions,
+    );
     return getById(id);
   }
 
@@ -32,7 +38,11 @@ class StoreService {
     final formData = FormData.fromMap({
       'files': await Future.wait(files.map((f) async => MultipartFile.fromBytes(await f.readAsBytes(), filename: f.name))),
     });
-    await _client.post<dynamic>('${ApiConstants.lojas}/$id/galeria', data: formData);
+    await _client.post<dynamic>(
+      '${ApiConstants.lojas}/$id/galeria',
+      data: formData,
+      options: ApiClient.uploadOptions,
+    );
     return getById(id);
   }
 
@@ -101,25 +111,27 @@ class StoreService {
   }
 
   /// Troca só o status (ATIVA/INATIVA). A rota geral `PUT /lojas/{id}` exige
-  /// o objeto Loja completo (`@Valid`) — não existe mais um PATCH exclusivo
-  /// de status, então busca o estado atual antes de reenviar com o status
-  /// alterado. O backend continua rejeitando SUSPENSA vinda daqui (exclusiva
-  /// de administrador).
-  Future<StoreDto> atualizarStatus(int id, String status) async {
-    final atual = await getById(id);
-    final request = StoreCreateRequest(
-      nome: atual.nome,
-      descricao: atual.descricao,
-      statusLoja: status,
-      categoriaIds: atual.categoriaIds,
-      endereco: atual.endereco,
-      cidade: atual.cidade,
-      estado: atual.estado,
-      cep: atual.cep,
-      latitude: atual.latitude,
-      longitude: atual.longitude,
+  /// o objeto Loja completo (`@Valid`), então reenvia o estado que o chamador
+  /// já tem em mãos com o status alterado. O backend continua rejeitando
+  /// SUSPENSA vinda daqui (exclusiva de administrador).
+  ///
+  /// Recebe a [StoreDto] em vez do id: a versão anterior fazia `getById`
+  /// seguido de `update` — um read-modify-write não atômico que abria janela
+  /// para corrida com a ronda de GPS, que escreve na mesma entidade a cada
+  /// deslocamento. Fechar a loja durante um PUT de posição em voo podia
+  /// reverter o status recém-gravado.
+  Future<StoreDto> atualizarStatus(StoreDto atual, String status) {
+    return update(atual.id, StoreCreateRequest.fromStore(atual, statusLoja: status));
+  }
+
+  /// Atualiza apenas a posição da loja (ronda do comerciante), preservando
+  /// todo o resto do cadastro — inclusive o endereço, que o payload montado à
+  /// mão na tela deixava de fora.
+  Future<StoreDto> atualizarPosicao(StoreDto atual, double latitude, double longitude) {
+    return update(
+      atual.id,
+      StoreCreateRequest.fromStore(atual, latitude: latitude, longitude: longitude),
     );
-    return update(id, request);
   }
 
   /// Exclusão de loja — hard delete via o endpoint legado (mesmo caminho da

@@ -1,3 +1,5 @@
+import 'package:map_food/core/network/json_reader.dart';
+
 class StoreDto {
   final int id;
   final String nome;
@@ -57,30 +59,34 @@ class StoreDto {
   /// se não houver capa definida.
   String? get capaUrl => imagemUrl ?? (galeria.isNotEmpty ? galeria.first : null);
 
+  /// Leitura via [JsonReader]: `id` é o único campo obrigatório (sem ele não
+  /// existe loja), e a falta dele vira `ParseException` nomeada em vez do
+  /// `TypeError` que o `as num` produzia — erro que escapava de todo o
+  /// tratamento de exceção do app.
+  ///
+  /// Os demais campos são deliberadamente tolerantes: a mesma classe é
+  /// preenchida por endpoints diferentes (`/lojas`, `/lojas/ativas/completa`,
+  /// `/favoritos/completo`), e nem todos devolvem o objeto inteiro.
   factory StoreDto.fromJson(Map<String, dynamic> json) => StoreDto(
-        id: (json['id'] as num).toInt(),
-        nome: json['nome']?.toString() ?? '',
-        descricao: json['descricao'] as String?,
-        statusLoja: json['statusLoja']?.toString() ?? 'INATIVA',
-        dataCadastro: json['dataCadastro'] as String?,
+        id: json.requireInt('id'),
+        nome: json.stringOr('nome', ''),
+        descricao: json.optString('descricao'),
+        statusLoja: json.stringOr('statusLoja', 'INATIVA'),
+        dataCadastro: json.optString('dataCadastro'),
         categoria: _parseCategoriaName(json),
         categoriaIds: _parseCategoriaIds(json),
         categoriaNomes: _parseCategoriaNames(json),
-        imagemUrl: json['imagemUrl'] as String?,
-        galeria: (json['galeria'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            const [],
-        // Suporta campo 'avaliacao' (legado) ou 'mediaAvaliacao' (endpoint /search)
-        avaliacao: (json['mediaAvaliacao'] as num?)?.toDouble() ??
-            (json['avaliacao'] as num?)?.toDouble(),
-        totalAvaliacoes: (json['totalAvaliacoes'] as num?)?.toInt() ?? 0,
-        endereco: json['endereco'] as String?,
-        cidade: json['cidade'] as String?,
-        estado: json['estado'] as String?,
-        cep: json['cep'] as String?,
-        latitude: (json['latitude'] as num?)?.toDouble(),
-        longitude: (json['longitude'] as num?)?.toDouble(),
+        imagemUrl: json.optString('imagemUrl'),
+        galeria: json.optStringList('galeria'),
+        // Suporta campo 'avaliacao' (legado) ou 'mediaAvaliacao' (endpoints /completa)
+        avaliacao: json.optDouble('mediaAvaliacao') ?? json.optDouble('avaliacao'),
+        totalAvaliacoes: json.optInt('totalAvaliacoes') ?? 0,
+        endereco: json.optString('endereco'),
+        cidade: json.optString('cidade'),
+        estado: json.optString('estado'),
+        cep: json.optString('cep'),
+        latitude: json.optDouble('latitude'),
+        longitude: json.optDouble('longitude'),
       );
 
   /// Extrai o nome da primeira categoria para exibição nos cards.

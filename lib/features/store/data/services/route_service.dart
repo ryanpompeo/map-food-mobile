@@ -62,8 +62,12 @@ class RouteService {
       final geometry = route['geometry'] as Map<String, dynamic>;
       final coordinates = geometry['coordinates'] as List<dynamic>;
 
-      // GeoJSON usa [longitude, latitude].
+      // GeoJSON usa [longitude, latitude]. O par é tipado como List antes de
+      // ser indexado — indexar direto no `dynamic` esconderia um payload
+      // malformado do OSRM até virar erro em runtime.
       final pontos = coordinates
+          .whereType<List<dynamic>>()
+          .where((c) => c.length >= 2 && c[0] is num && c[1] is num)
           .map((c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
           .toList();
       if (pontos.length < 2) return null;

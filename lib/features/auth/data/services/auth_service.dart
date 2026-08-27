@@ -1,65 +1,51 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
+import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
-import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/features/auth/data/models/auth_response.dart';
 
 class AuthService {
-  Future<AuthResponse> login(String email, String senha, String tipo) async {
-    final dio = Dio(BaseOptions(
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
-    ));
-    try {
-      final response = await dio.post(
-        '${ApiConstants.baseUrl}${ApiConstants.login}',
-        data: {'email': email, 'senha': senha, 'tipo': tipo},
-        options: Options(
-          headers: {'Content-Type': 'application/json'},
-          validateStatus: (status) => status != null && status < 500,
-        ),
-      );
+  AuthService({ApiClient? client}) : _client = client ?? ApiClient.instance;
 
-      if (response.statusCode == 200) {
-        final raw = response.data;
-        final Map<String, dynamic> json =
-            raw is String ? jsonDecode(raw) as Map<String, dynamic> : raw as Map<String, dynamic>;
-        final authResponse = AuthResponse.fromJson(json);
-        // Garante que o email esteja sempre salvo na sessão,
-        // mesmo que a API não o retorne na resposta do login.
-        final sessionToSave = authResponse.email.isNotEmpty
-            ? authResponse
-            : AuthResponse(
-                token: authResponse.token,
-                tipo: authResponse.tipo,
-                id: authResponse.id,
-                nome: authResponse.nome,
-                email: email,
-              );
-        await AuthStorage.saveSession(sessionToSave);
-        return sessionToSave;
-      } else if (response.statusCode == 401) {
-        throw const UnauthorizedException('Credenciais inválidas.');
-      } else {
-        throw AppException(
-          'Erro ao fazer login.',
-          statusCode: response.statusCode ?? 0,
-        );
-      }
-    } on UnauthorizedException {
-      rethrow;
-    } on AppException {
-      rethrow;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw const UnauthorizedException('Credenciais inválidas.');
-      }
-      throw AppException('Erro de conexão: ${e.type.name} — ${e.message}');
-    } catch (e) {
-      throw AppException('Erro: ${e.runtimeType} — $e');
-    }
+  final ApiClient _client;
+
+  /// Autentica e persiste a sessão.
+  ///
+  /// Passa pelo [ApiClient] como todo o resto do app: o `ErrorInterceptor` já
+  /// traduz 401 em `UnauthorizedException`, 5xx em `ServerException` e timeout
+  /// em `NetworkException`. Antes, este método criava um `Dio` avulso por
+  /// chamada — sem interceptors, com `validateStatus` próprio e um mapeamento
+  /// de erro reimplementado à mão que chegava a expor o tipo interno da
+  /// exceção Dart na tela ("Erro: DioException — ...").
+  ///
+  /// `handle401: false` é essencial: aqui um 401 significa "credenciais
+  /// inválidas", não "sessão expirada". Sem isso, errar a senha ao trocar de
+  /// conta derrubaria a sessão ainda válida no aparelho.
+  Future<AuthResponse> login(String email, String senha, String tipo) async {
+    final json = await _client.post<Map<String, dynamic>>(
+      ApiConstants.login,
+      data: {'email': email, 'senha': senha, 'tipo': tipo},
+      handle401: false,
+    );
+
+    final autenticado = AuthResponse.fromJson(json);
+
+    // A API nem sempre devolve o e-mail no corpo do login; preserva o que foi
+    // digitado para a sessão não nascer sem esse campo.
+    final sessao = autenticado.email.isNotEmpty
+        ? autenticado
+        : AuthResponse(
+            token: autenticado.token,
+            tipo: autenticado.tipo,
+            id: autenticado.id,
+            nome: autenticado.nome,
+            email: email,
+          );
+
+    // signIn persiste E publica: nenhuma tela precisa reler o disco depois do
+    // login para saber quem entrou.
+    await SessionStore.instance.signIn(sessao);
+    return sessao;
   }
 
-  Future<void> logout() => AuthStorage.clear();
+  Future<void> logout() => SessionStore.instance.signOut();
 }

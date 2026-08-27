@@ -6,7 +6,9 @@ import 'package:map_food/features/consumer/data/models/consumer_model.dart';
 import 'package:map_food/features/consumer/data/models/consumer_register_request.dart';
 
 class ConsumerService {
-  final _client = ApiClient.instance;
+  ConsumerService({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  final ApiClient _client;
 
   /// Envia a foto de perfil. O corpo da resposta do POST não é confiável,
   /// então busca o consumidor novamente pra devolver o estado atualizado.
@@ -15,7 +17,11 @@ class ConsumerService {
     final formData = FormData.fromMap({
       'file': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
     });
-    await _client.post<dynamic>('${ApiConstants.consumidores}/$id/imagem', data: formData);
+    await _client.post<dynamic>(
+      '${ApiConstants.consumidores}/$id/imagem',
+      data: formData,
+      options: ApiClient.uploadOptions,
+    );
     return getById(id);
   }
 

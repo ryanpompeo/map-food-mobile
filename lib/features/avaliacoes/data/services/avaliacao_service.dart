@@ -4,7 +4,9 @@ import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 
 /// Serviço responsável por consumir os endpoints de avaliação.
 class AvaliacaoService {
-  final _client = ApiClient.instance;
+  AvaliacaoService({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  final ApiClient _client;
 
   /// Busca as avaliações de uma loja específica via GET /avaliacoes/loja/{id}.
   /// Rota pública — não requer token.
@@ -28,9 +30,14 @@ class AvaliacaoService {
   }
 
   /// Cria uma nova avaliação do consumidor autenticado para a loja, via
-  /// POST /avaliacoes (rota geral). O backend sempre insere uma nova linha —
-  /// múltiplas avaliações do mesmo consumidor para a mesma loja são
-  /// permitidas (histórico), não há mais upsert.
+  /// POST /avaliacoes (rota geral, contrato legado). O backend sempre insere
+  /// uma nova linha — múltiplas avaliações do mesmo consumidor para a mesma
+  /// loja são permitidas (histórico), não há upsert.
+  ///
+  /// O controller espera o corpo no formato bruto da entidade `Avaliacao`
+  /// (`nota`, `comentario`, `loja: {id}`) — não um DTO enxuto — pra manter
+  /// retrocompatibilidade com o painel Web legado, que consome esse mesmo
+  /// contrato.
   /// [lojaId]    ID da loja avaliada.
   /// [nota]      Nota inteira de 1 a 5.
   /// [comentario] Comentário opcional.
@@ -40,10 +47,10 @@ class AvaliacaoService {
     String? comentario,
   }) async {
     final body = <String, dynamic>{
-      'id_loja': lojaId,
       'nota': nota,
       if (comentario != null && comentario.trim().isNotEmpty)
         'comentario': comentario.trim(),
+      'loja': {'id': lojaId},
     };
     final data = await _client.post<Map<String, dynamic>>(
       ApiConstants.avaliacoes,
