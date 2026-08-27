@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-import 'package:map_food/core/storage/auth_storage.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
-import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/search/data/services/search_history_service.dart';
 import 'package:map_food/features/search/presentation/widgets/category_filters.dart';
 import 'package:map_food/features/store/presentation/widgets/em_alta_list_widget.dart';
@@ -38,7 +37,6 @@ class _SearchPageState extends State<SearchPage> {
   int _selectedFilterIndex = 0;
   bool _isLoading = false;
   String? _errorMessage;
-  String _userRole = 'GUEST';
   String _searchQuery = '';
   List<String> _searchHistory = [];
 
@@ -65,7 +63,6 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserRole();
     _allStores = _activeStoresManager.stores;
     _activeStoresManager.addListener(_onActiveStoresChanged);
     _loadInitialData();
@@ -78,12 +75,19 @@ class _SearchPageState extends State<SearchPage> {
   /// contrário do mapa da aba "Início").
   Future<void> _carregarLocalizacaoUsuario() async {
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+          .timeout(const Duration(seconds: 10));
       if (!serviceEnabled) return;
 
-      LocationPermission permission = await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission()
+          .timeout(const Duration(seconds: 10));
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
+        // No Flutter Web o prompt é nativo do navegador, fora do canvas do
+        // Flutter — sem timeout, um prompt ignorado/não respondido trava
+        // este `await` pra sempre (mesmo problema em NearbyStoresSection,
+        // que roda ao mesmo tempo na aba "Início").
+        permission = await Geolocator.requestPermission()
+            .timeout(const Duration(seconds: 10));
       }
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
         return;
@@ -91,7 +95,7 @@ class _SearchPageState extends State<SearchPage> {
 
       final posicao = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-      );
+      ).timeout(const Duration(seconds: 10));
       if (!mounted) return;
       setState(() {
         _userLat = posicao.latitude;
@@ -132,21 +136,12 @@ class _SearchPageState extends State<SearchPage> {
 
   Future<void> _removeHistoryQuery(String query) async {
     await _searchHistoryService.removeQuery(query);
-    _loadSearchHistory();
+    unawaited(_loadSearchHistory());
   }
 
   Future<void> _clearSearchHistory() async {
     await _searchHistoryService.clear();
-    _loadSearchHistory();
-  }
-
-  Future<void> _loadUserRole() async {
-    final session = await AuthStorage.getSession();
-    if (mounted) {
-      setState(() {
-        _userRole = session?.tipo ?? 'GUEST';
-      });
-    }
+    unawaited(_loadSearchHistory());
   }
 
   /// A API não oferece um endpoint de busca combinada (nome + categoria),
@@ -296,35 +291,13 @@ class _SearchPageState extends State<SearchPage> {
             else if (_errorMessage != null)
               SliverFillRemaining(
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        PhosphorIconsRegular.wifiSlash,
-                        size: 48,
-                        color: context.mapColors.iconMuted,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: AppText.corpo(
-                          context,
-                        ).copyWith(color: context.mapColors.secondaryText),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => _loadInitialData(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorsPalette.redComponents,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Tentar novamente'),
-                      ),
-                    ],
+                  child: EmptyState(
+                    icon: AppIcons.wifiSlash,
+                    title: 'Não foi possível carregar',
+                    description: _errorMessage!,
+                    actionLabel: 'Tentar novamente',
+                    onAction: () => _loadInitialData(),
+                    tone: EmptyStateTone.error,
                   ),
                 ),
               )
@@ -332,15 +305,15 @@ class _SearchPageState extends State<SearchPage> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                  child: PertoDeVoceCarrosselWidget(items: _pertoDeVoceStores, userRole: _userRole),
+                  child: PertoDeVoceCarrosselWidget(items: _pertoDeVoceStores),
                 ),
               ),
               const SliverToBoxAdapter(child: EmAltaSectionHeaderWidget()),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-              EmAltaListSliverWidget(lojas: _emAltaStores, userRole: _userRole),
+              EmAltaListSliverWidget(lojas: _emAltaStores),
               const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
             ] else ...[
-              VerticalDestaqueSliverWidget(items: _filteredStores, userRole: _userRole),
+              VerticalDestaqueSliverWidget(items: _filteredStores),
               const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
             ],
           ],

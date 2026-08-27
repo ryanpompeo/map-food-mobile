@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
@@ -34,7 +35,8 @@ class SearchHistoryWidget extends StatelessWidget {
                 "Buscas recentes",
                 style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText),
               ),
-              GestureDetector(
+              SemanticTapArea(
+                label: 'Limpar buscas recentes',
                 onTap: onClear,
                 // Sem override de cor: legenda() já resolve pra secondaryText.
                 child: Text(
@@ -49,13 +51,15 @@ class SearchHistoryWidget extends StatelessWidget {
             spacing: 8.0,
             runSpacing: 8.0,
             children: history.map((query) {
-              return GestureDetector(
+              return SemanticTapArea(
+                label: query,
+                hint: 'Repete esta busca',
                 onTap: () => onQueryTap(query),
                 child: Container(
                   padding: const EdgeInsets.only(left: 16.0, right: 8.0, top: 8.0, bottom: 8.0),
                   decoration: BoxDecoration(
                     color: context.mapColors.cardSurface,
-                    borderRadius: BorderRadius.circular(20.0),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(color: context.mapColors.border),
                   ),
                   child: Row(
@@ -66,9 +70,10 @@ class SearchHistoryWidget extends StatelessWidget {
                         style: AppText.legenda(context).copyWith(fontWeight: FontWeight.w600, color: context.mapColors.primaryText),
                       ),
                       const SizedBox(width: 4.0),
-                      GestureDetector(
+                      SemanticTapArea(
+                        label: 'Remover "$query" do histórico',
                         onTap: () => onRemove(query),
-                        child: Icon(PhosphorIconsRegular.x, size: 14.0, color: context.mapColors.iconMuted),
+                        child: Icon(AppIcons.x, size: 14.0, color: context.mapColors.iconMuted),
                       ),
                     ],
                   ),
