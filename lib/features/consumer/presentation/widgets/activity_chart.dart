@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 /// Um ponto da série de atividade: quantas avaliações o consumidor fez no
 /// intervalo rotulado por [label].
@@ -183,32 +182,8 @@ class _ActivityChartPainter extends CustomPainter {
       oldDelegate.points != points || oldDelegate.linha != linha;
 }
 
-/// Pílula de variação percentual entre o período atual e o anterior — o
-/// "+15%" que fica ao lado do número grande na referência.
-class DeltaBadge extends StatelessWidget {
-  final int percentual;
-
-  const DeltaBadge({super.key, required this.percentual});
-
-  @override
-  Widget build(BuildContext context) {
-    final positivo = percentual >= 0;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: positivo
-            ? ColorsPalette.redComponents.withValues(alpha: 0.12)
-            : context.mapColors.border,
-        borderRadius: BorderRadius.circular(100.0),
-      ),
-      child: Text(
-        '${positivo ? '+' : ''}$percentual%',
-        style: AppText.legenda(context).copyWith(
-          fontSize: 11.0,
-          fontWeight: FontWeight.w800,
-          color: positivo ? ColorsPalette.redComponents : context.mapColors.secondaryText,
-        ),
-      ),
-    );
-  }
-}
+// A `DeltaBadge` que morava aqui foi para `core/ui/widgets/delta_badge.dart`:
+// a tela de Estatísticas do comerciante precisa da mesma pílula, e um widget
+// compartilhado importado de dentro da feature do consumidor seria acoplamento
+// entre dois módulos que não se conhecem. O visual daqui não mudou — é o
+// `DeltaTone.marca`, que continua sendo o padrão.

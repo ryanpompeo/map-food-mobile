@@ -29,7 +29,11 @@ import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 /// injetadas por quem abre a tela.
 class SettingsPage extends StatelessWidget {
   /// Exclui a conta no backend (DELETE /comerciantes|consumidores/{id}).
-  final Future<void> Function() onDeleteAccount;
+  /// `null` esconde o item "Excluir conta" — é o caso do comerciante hoje,
+  /// enquanto o endpoint ainda falha com 409 por dependências não limpas
+  /// (favoritos da loja, posts, pix). Voltar a passar a callback quando o
+  /// backend fizer o cascade completo.
+  final Future<void> Function()? onDeleteAccount;
 
   /// Hook extra no encerramento de sessão (ex: limpar favoritos do
   /// consumidor) — mesmo contrato do logout no Perfil.
@@ -39,7 +43,7 @@ class SettingsPage extends StatelessWidget {
 
   const SettingsPage({
     super.key,
-    required this.onDeleteAccount,
+    this.onDeleteAccount,
     required this.howItWorksPageBuilder,
     this.onLogoutExtra,
   });
@@ -48,11 +52,14 @@ class SettingsPage extends StatelessWidget {
   /// cá: confirma, apaga no backend, limpa a sessão local e o estado com
   /// escopo de usuário, e volta pra home de visitante sem histórico.
   Future<void> _excluirConta(BuildContext context) async {
+    final excluir = onDeleteAccount;
+    if (excluir == null) return;
+
     final confirmou = await confirmarExclusaoConta(context);
     if (!confirmou || !context.mounted) return;
 
     try {
-      await onDeleteAccount();
+      await excluir();
       await SessionStore.instance.signOut();
       SessionManager.clearUserScopedState();
       onLogoutExtra?.call();
@@ -99,14 +106,15 @@ class SettingsPage extends StatelessWidget {
                 subtitle: "Gerenciar acesso ao GPS",
                 onTap: () => Geolocator.openAppSettings(),
               ),
-              MenuListTile(
-                icon: AppIcons.trash,
-                title: "Excluir conta",
-                subtitle: "Apaga sua conta e dados permanentemente",
-                iconColor: ColorsPalette.redComponents,
-                iconBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
-                onTap: () => _excluirConta(context),
-              ),
+              if (onDeleteAccount != null)
+                MenuListTile(
+                  icon: AppIcons.trash,
+                  title: "Excluir conta",
+                  subtitle: "Apaga sua conta e dados permanentemente",
+                  iconColor: ColorsPalette.redComponents,
+                  iconBackgroundColor: ColorsPalette.redComponents.withValues(alpha: 0.1),
+                  onTap: () => _excluirConta(context),
+                ),
               const SizedBox(height: Spacing.xl),
 
               const MenuSectionLabel(label: "Sobre"),

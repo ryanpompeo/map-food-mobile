@@ -17,7 +17,6 @@ class ConsumerBottomBar extends StatelessWidget {
     return AppBottomBar(
       selectedIndex: selectedIndex,
       onItemTapped: onItemTapped,
-      itemSpacing: 4.0,
       items: const [
         BottomBarItem(AppIcons.house, 'Início'),
         BottomBarItem(AppIcons.magnifyingGlass, 'Buscar'),

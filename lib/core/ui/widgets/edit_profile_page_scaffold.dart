@@ -5,7 +5,7 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/session/session_store.dart';
-import 'package:map_food/core/network/image_url_resolver.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
@@ -287,13 +287,11 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                                     ? const Center(
                                         child: CircularProgressIndicator(strokeWidth: 2, color: ColorsPalette.redComponents),
                                       )
-                                    : resolveImagemUrl(_imagemUrl) != null
-                                        ? Image.network(
-                                            resolveImagemUrl(_imagemUrl)!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => _buildAvatarInitial(context),
-                                          )
-                                        : _buildAvatarInitial(context),
+                                    : AppNetworkImage(
+                                        path: _imagemUrl,
+                                        displayWidth: 80.0,
+                                        fallback: _buildAvatarInitial(context),
+                                      ),
                               ),
                               Positioned(
                                 bottom: 0,

@@ -30,12 +30,14 @@ import 'package:map_food/features/avaliacoes/presentation/pages/consumer_review_
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 import 'package:map_food/features/consumer/presentation/controllers/activity_summary.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_edit_profile.dart';
+import 'package:map_food/core/ui/widgets/delta_badge.dart';
 import 'package:map_food/features/consumer/presentation/widgets/activity_chart.dart';
 import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
 import 'package:map_food/features/denuncias/presentation/pages/consumer_complaints_page.dart';
 import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
 import 'package:map_food/features/favorites/presentation/pages/consumer_favorites_page.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/features/settings/presentation/pages/settings_page.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
@@ -321,7 +323,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
 
   Widget _buildAvatar(BuildContext context) {
     const tamanho = 56.0;
-    final resolvida = resolveImagemUrl(_imagemUrl);
     return Container(
       height: tamanho,
       width: tamanho,
@@ -333,16 +334,13 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
         color: context.mapColors.surfaceAlt,
         shape: BoxShape.circle,
       ),
-      child: resolvida != null
-          ? Image.network(
-              resolvida,
-              fit: BoxFit.cover,
-              // Só cacheWidth: com os dois definidos o decoder ignora a
-              // proporção original e estica a imagem.
-              cacheWidth: (tamanho * MediaQuery.devicePixelRatioOf(context)).round(),
-              errorBuilder: (context, error, stackTrace) => _buildAvatarInicial(context),
-            )
-          : _buildAvatarInicial(context),
+      // Sem foto (ou com foto quebrada), o "vazio" deste avatar não é um
+      // ícone: é a inicial do nome.
+      child: AppNetworkImage(
+        path: _imagemUrl,
+        displayWidth: tamanho,
+        fallback: _buildAvatarInicial(context),
+      ),
     );
   }
 
@@ -731,9 +729,11 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
       AppToast.error(context, "Não foi possível abrir esta loja.");
       return;
     }
-    // Recarrega ao voltar: dá pra avaliar a loja lá dentro, e sair daqui e
-    // voltar não passa pelo aviso de visibilidade (a aba nunca deixou de ser
-    // a exibida), então esta é a única chance de perceber a mudança.
+    // `precacheCapaDaLoja` em vez de `abrirDetalheDaLoja`: esta navegação
+    // precisa recarregar a lista ao voltar (dá pra avaliar a loja lá dentro, e
+    // sair daqui e voltar não passa pelo aviso de visibilidade — a aba nunca
+    // deixou de ser a exibida), e quem faz isso é o `_abrirERecarregar`.
+    precacheCapaDaLoja(context, store);
     _abrirERecarregar((_) => MoreInfoStorePage(store: store!));
   }
 
