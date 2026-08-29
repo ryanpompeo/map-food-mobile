@@ -100,6 +100,19 @@ class AppIcons {
   static const IconData hamburger = PhosphorIconsRegular.hamburger;
   static const IconData iceCream = PhosphorIconsRegular.iceCream;
   static const IconData popcorn = PhosphorIconsRegular.popcorn;
+
+  // Categorias que existiam no banco sem ícone próprio. Elas têm arte em
+  // `utils/category_images.dart`, mas a arte só é usada no filtro da busca —
+  // nos badges de card e no chip do detalhe da loja o ícone aparece sozinho, e
+  // lá todas caíam no `forkKnife` padrão. Talher num Pet Shop, numa loja de
+  // roupa ou num prestador de serviço é simplesmente errado.
+  static const IconData pizza = PhosphorIconsRegular.pizza;
+  static const IconData bread = PhosphorIconsRegular.bread;
+  static const IconData bowlSteam = PhosphorIconsRegular.bowlSteam;
+  static const IconData tShirt = PhosphorIconsRegular.tShirt;
+  static const IconData pawPrint = PhosphorIconsRegular.pawPrint;
+  static const IconData toolbox = PhosphorIconsRegular.toolbox;
+
   static const IconData wifiSlash = PhosphorIconsRegular.wifiSlash;
   static const IconData x = PhosphorIconsRegular.x;
 }
