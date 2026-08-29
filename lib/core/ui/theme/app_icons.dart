@@ -26,6 +26,12 @@ class AppIcons {
   static const IconData gpsFix = PhosphorIconsRegular.gpsFix;
   static const IconData hash = PhosphorIconsRegular.hash;
   static const IconData heart = PhosphorIconsRegular.heart;
+
+  /// Coração **preenchido** — o estado "favoritado". Mesmo par de
+  /// [star]/[starFill]: o contorno marca a ação disponível, o sólido marca o
+  /// estado ativo. Só a cor não bastava aqui — o vermelho da marca no
+  /// contorno fino lê como "botão vermelho", não como "já é seu favorito".
+  static const IconData heartFill = PhosphorIconsFill.heart;
   static const IconData gearSix = PhosphorIconsRegular.gearSix;
   static const IconData house = PhosphorIconsRegular.house;
 
@@ -34,6 +40,10 @@ class AppIcons {
   static const IconData imagesSquare = PhosphorIconsRegular.imagesSquare;
   static const IconData info = PhosphorIconsRegular.info;
   static const IconData lock = PhosphorIconsRegular.lock;
+
+  /// Escudo com ✓ — "nada pesa contra você". Marca o estado limpo do card de
+  /// denúncias, onde um "0" grande leria como alerta antes de ser lido.
+  static const IconData shieldCheck = PhosphorIconsRegular.shieldCheck;
   static const IconData magnifyingGlass = PhosphorIconsRegular.magnifyingGlass;
   static const IconData mapPin = PhosphorIconsRegular.mapPin;
 
