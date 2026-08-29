@@ -1,10 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:map_food/core/ui/theme/map_tiles.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -12,6 +11,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/features/store/presentation/controllers/store_map_controller.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 import 'package:map_food/features/store/presentation/widgets/map_controls.dart';
@@ -245,24 +245,19 @@ class _StoreMapViewState extends State<StoreMapView> {
             ),
           ],
         ),
+        // Decorativa (sem `semanticLabel`): o marcador em si — fora do escopo
+        // deste widget — já leva o nome da loja pra tela de detalhe ao ser
+        // tocado.
+        //
+        // `displayWidth` é indispensável aqui: o marcador é um círculo de
+        // 42-52dp, e sem ele cada pin decodificaria a foto inteira da loja,
+        // pesando no pan/zoom com vários marcadores na tela.
         child: ClipOval(
-          child: imagemUrl != null
-              ? Image.network(
-                  imagemUrl,
-                  fit: BoxFit.cover,
-                  // Decorativa: o marcador em si (fora do escopo deste
-                  // widget) já tem o nome da loja acessível na tela de
-                  // detalhe pra onde ele navega ao ser tocado.
-                  excludeFromSemantics: true,
-                  // Marcador é um círculo de 42-52dp — sem isso, cada pin no
-                  // mapa decodificava a foto inteira da loja, pesando muito
-                  // no pan/zoom quando há vários marcadores com foto na tela.
-                  // Só cacheWidth: com os dois definidos o decoder ignora a
-                  // proporção original e estica a imagem.
-                  cacheWidth: (tamanho * MediaQuery.devicePixelRatioOf(context)).round(),
-                  errorBuilder: (context, error, stackTrace) => _buildStoreMarkerFallback(isFocused),
-                )
-              : _buildStoreMarkerFallback(isFocused),
+          child: AppNetworkImage(
+            path: imagemUrl,
+            displayWidth: tamanho,
+            fallback: _buildStoreMarkerFallback(isFocused),
+          ),
         ),
       ),
     );
@@ -284,7 +279,9 @@ class _StoreMapViewState extends State<StoreMapView> {
     return RepaintBoundary(
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF2979FF),
+          // Token da paleta, não um azul cravado: `MfColor.userDot` existe
+          // exatamente para este ponto e estava sendo ignorado aqui.
+          color: MfColor.userDot,
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white, width: 3.0),
           boxShadow: [
@@ -367,16 +364,11 @@ class _StoreMapViewState extends State<StoreMapView> {
             ),
           ),
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.map_food',
-              tileProvider: CancellableNetworkTileProvider(),
-            ),
-            RichAttributionWidget(
-              attributions: [
-                TextSourceAttribution('OpenStreetMap contributors'),
-              ],
-            ),
+            // Cartografia por tema (clara/escura) — ver MapTiles. Este é o
+            // único TileLayer do app, então a home, o mapa da loja e o da
+            // rota acompanham o tema pelo mesmo lugar.
+            MapTiles.layer(context),
+            RichAttributionWidget(attributions: MapTiles.attributions(context)),
             if (widget.routePoints != null && widget.routePoints!.length >= 2)
               PolylineLayer(
                 polylines: [
@@ -414,10 +406,7 @@ class _StoreMapViewState extends State<StoreMapView> {
                         onTap(store);
                         return;
                       }
-                      Navigator.push(
-                        context,
-                        appPageRoute(builder: (_) => MoreInfoStorePage(store: store)),
-                      );
+                      abrirDetalheDaLoja(context, store);
                     },
                     child: _buildStoreMarker(store, isFocused: isFocused),
                   ),

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/utils/text_scale.dart';
-import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
-import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_elevation.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/utils/rating_format.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
@@ -66,7 +65,7 @@ class StoreListItemWidget extends StatelessWidget {
     final endereco = store.enderecoCompleto;
 
     return InkWell(
-      onTap: () => Navigator.push(context, appPageRoute(builder: (context) => MoreInfoStorePage(store: store))),
+      onTap: () => abrirDetalheDaLoja(context, store),
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -83,20 +82,12 @@ class StoreListItemWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   boxShadow: AppElevation.soft,
                 ),
-                child: resolveImagemUrl(store.capaUrl) != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        child: Image.network(
-                          resolveImagemUrl(store.capaUrl)!, fit: BoxFit.cover,
-                          // Decorativa: o nome da loja já aparece como texto no card.
-                          excludeFromSemantics: true,
-                          // Só cacheWidth: com os dois definidos o decoder
-                          // ignora a proporção original e estica a imagem.
-                          cacheWidth: (84.0 * MediaQuery.devicePixelRatioOf(context)).round(),
-                          errorBuilder: (context, error, stackTrace) => Icon(AppIcons.image, size: 24.0, color: context.mapColors.iconMuted),
-                        ),
-                      )
-                    : Icon(AppIcons.image, size: 24.0, color: context.mapColors.iconMuted),
+                // Sem `semanticLabel`: decorativa, o nome da loja já aparece
+                // como texto no card.
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  child: AppNetworkImage(path: store.capaUrl, displayWidth: 84.0),
+                ),
               ),
               Positioned(
                 top: 6.0, left: 6.0,

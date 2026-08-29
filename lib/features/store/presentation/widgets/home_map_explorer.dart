@@ -63,10 +63,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     super.dispose();
   }
 
-  /// Altura reservada no rodapé para a bottom bar flutuante do app — os
-  /// controles de câmera ficam ancorados acima dela.
-  static const double _alturaBottomBar = AppBottomBar.reservedSpace;
-
   Future<void> _carregarCategorias() async {
     try {
       final categorias = await _categoriaService.getAll();
@@ -158,7 +154,7 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
           ),
         ),
 
-        _buildControlesDeCamera(),
+        _buildControlesDeCamera(context),
       ],
     );
   }
@@ -303,10 +299,12 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
 
   /// Controles de câmera ancorados acima da bottom bar flutuante — sem isso
   /// eles nasceriam atrás dela.
-  Widget _buildControlesDeCamera() {
+  Widget _buildControlesDeCamera(BuildContext context) {
     return Positioned(
       right: Spacing.lg,
-      bottom: _alturaBottomBar + Spacing.base,
+      // Acima da bottom bar fixa, incluindo a área segura do aparelho — a
+      // barra agora encosta na borda inferior da tela.
+      bottom: AppBottomBar.spaceFor(context) + Spacing.base,
       child: Column(
         children: [
           // Ampliar/reduzir por toque: nesta tela o mapa ocupa a tela inteira

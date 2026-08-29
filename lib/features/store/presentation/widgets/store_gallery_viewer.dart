@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 
 /// Visualização fullscreen da galeria de fotos de uma loja — swipe lateral
 /// entre todas as fotos (a partir da foto tocada na lista horizontal) e
@@ -75,13 +76,16 @@ class _StoreGalleryViewerState extends State<StoreGalleryViewer> {
               child: InteractiveViewer(
                 minScale: 1.0,
                 maxScale: 4.0,
-                child: Image.network(
-                  widget.imagens[index],
+                // Sem `displayWidth`: esta tela dá zoom de até 4x na foto, e
+                // decodificá-la na largura da tela devolveria um borrão ao
+                // primeiro pinçar.
+                child: AppNetworkImage(
+                  path: widget.imagens[index],
                   fit: BoxFit.contain,
                   // A foto é o próprio conteúdo desta tela — sem texto ao
                   // redor que sirva de rótulo implícito.
                   semanticLabel: 'Foto ${index + 1} de ${widget.imagens.length}',
-                  errorBuilder: (context, error, stackTrace) => const Icon(
+                  fallback: const Icon(
                     AppIcons.image,
                     color: Colors.white38,
                     size: 64.0,

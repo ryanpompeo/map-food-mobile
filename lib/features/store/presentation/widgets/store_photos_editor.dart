@@ -7,6 +7,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/xfile_image.dart';
 
@@ -230,17 +231,12 @@ class _Capa extends StatelessWidget {
                   if (novaCapa != null)
                     XFileImage(novaCapa!)
                   else
-                    Image.network(
-                      urlSalva!,
-                      fit: BoxFit.cover,
-                      // Decorativa: o título "Foto de destaque" já dá o contexto.
-                      excludeFromSemantics: true,
-                      // Só cacheWidth: com os dois definidos o decoder ignora
-                      // a proporção original e estica a imagem.
-                      cacheWidth: (MediaQuery.sizeOf(context).width *
-                              MediaQuery.devicePixelRatioOf(context))
-                          .round(),
-                      errorBuilder: (_, _, _) => Center(
+                    // Decorativa (sem `semanticLabel`): o título "Foto de
+                    // destaque" já dá o contexto.
+                    AppNetworkImage(
+                      path: urlSalva,
+                      displayWidth: MediaQuery.sizeOf(context).width,
+                      fallback: Center(
                         child: Icon(
                           AppIcons.image,
                           color: colors.textTertiary,
@@ -379,17 +375,10 @@ class _ImagemSalva extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (url == null) {
-      return Center(
-        child: Icon(AppIcons.image, color: colors.textTertiary, size: AppIconSize.xl),
-      );
-    }
-    return Image.network(
-      url!,
-      fit: BoxFit.cover,
-      excludeFromSemantics: true,
-      cacheWidth: (lado * MediaQuery.devicePixelRatioOf(context)).round(),
-      errorBuilder: (_, _, _) => Center(
+    return AppNetworkImage(
+      path: url,
+      displayWidth: lado,
+      fallback: Center(
         child: Icon(AppIcons.image, color: colors.textTertiary, size: AppIconSize.xl),
       ),
     );

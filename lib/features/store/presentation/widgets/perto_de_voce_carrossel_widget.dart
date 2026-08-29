@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/utils/text_scale.dart';
-import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -113,8 +112,8 @@ class DestaqueCardWidget extends StatelessWidget {
     return PhotoHeroCard(
       imageUrl: destaque.capaUrl,
       radius: _radius,
-      onTap: () => Navigator.push(context, appPageRoute(builder: (context) => MoreInfoStorePage(store: destaque))),
-      cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
+      onTap: () => abrirDetalheDaLoja(context, destaque),
+      displayWidth: MediaQuery.sizeOf(context).width,
       topRight: FavoriteButtonWidget(store: destaque, frosted: true),
       topLeft: FrostedBadge(
         child: Row(
