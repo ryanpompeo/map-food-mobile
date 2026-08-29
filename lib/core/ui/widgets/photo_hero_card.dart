@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
-import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 
 /// Card "imersivo": foto preenche o espaço inteiro, com um gradiente escuro
 /// em três estágios por baixo e conteúdo (badges, texto) sobreposto —
@@ -18,7 +17,12 @@ class PhotoHeroCard extends StatelessWidget {
   final Widget? topLeft;
   final Widget? topRight;
   final Widget? bottomContent;
-  final int? cacheWidth;
+
+  /// Largura **lógica** com que o card aparece na tela — normalmente a largura
+  /// do viewport, já que este é um card de tela cheia. Era `cacheWidth`, em
+  /// pixels físicos, e cada chamador precisava lembrar de multiplicar pelo
+  /// `devicePixelRatio`; a conta agora mora no [AppNetworkImage].
+  final double? displayWidth;
 
   const PhotoHeroCard({
     super.key,
@@ -28,12 +32,11 @@ class PhotoHeroCard extends StatelessWidget {
     this.topLeft,
     this.topRight,
     this.bottomContent,
-    this.cacheWidth,
+    this.displayWidth,
   });
 
   @override
   Widget build(BuildContext context) {
-    final resolvedUrl = resolveImagemUrl(imageUrl);
     final content = ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Stack(
@@ -47,18 +50,13 @@ class PhotoHeroCard extends StatelessWidget {
               // Um tom abaixo do cardSurface, senão o placeholder fica
               // invisível contra o próprio fundo antes da imagem carregar.
               color: context.mapColors.mainBackground,
-              child: resolvedUrl != null
-                  ? Image.network(
-                      resolvedUrl,
-                      fit: BoxFit.cover,
-                      // Decorativa: o conteúdo textual sobreposto já
-                      // descreve o card pra leitor de tela.
-                      excludeFromSemantics: true,
-                      cacheWidth: cacheWidth,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(AppIcons.image, size: 48.0, color: context.mapColors.iconMuted),
-                    )
-                  : Icon(AppIcons.image, size: 48.0, color: context.mapColors.iconMuted),
+              // Sem `semanticLabel`: decorativa. O conteúdo textual sobreposto
+              // já descreve o card pra leitor de tela.
+              child: AppNetworkImage(
+                path: imageUrl,
+                displayWidth: displayWidth,
+                fallbackIconSize: 48.0,
+              ),
             ),
           ),
           // Gradiente em três estágios — fecha em preto quase opaco no

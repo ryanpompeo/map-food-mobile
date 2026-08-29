@@ -8,7 +8,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-enum _AppToastType { success, error }
+enum _AppToastType { success, error, info }
 
 /// Alerta de sucesso/erro em pop-up no canto superior direito que some
 /// sozinho depois de alguns segundos — infra única de notificação do app,
@@ -24,6 +24,13 @@ class AppToast {
 
   static void error(BuildContext context, String message) {
     _show(context, message, _AppToastType.error);
+  }
+
+  /// Aviso neutro: nada deu errado, só não há o que fazer ainda (recurso em
+  /// desenvolvimento, ação indisponível no momento). Usar [error] para isso
+  /// pintaria de vermelho uma situação que não é falha.
+  static void info(BuildContext context, String message) {
+    _show(context, message, _AppToastType.info);
   }
 
   static void _show(BuildContext context, String message, _AppToastType type) {
@@ -118,9 +125,11 @@ class _AppToastWidgetState extends State<_AppToastWidget>
 
   @override
   Widget build(BuildContext context) {
-    final isSuccess = widget.type == _AppToastType.success;
-    final accentColor = isSuccess ? const Color(0xFF16A34A) : ColorsPalette.redComponents;
-    final icon = isSuccess ? AppIcons.checkCircle : AppIcons.warningCircle;
+    final (accentColor, icon) = switch (widget.type) {
+      _AppToastType.success => (const Color(0xFF16A34A), AppIcons.checkCircle),
+      _AppToastType.error => (ColorsPalette.redComponents, AppIcons.warningCircle),
+      _AppToastType.info => (context.mapColors.brandContent, AppIcons.info),
+    };
 
     return Positioned(
       top: MediaQuery.of(context).padding.top + AppSpacing.sm,

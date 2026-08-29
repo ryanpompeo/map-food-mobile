@@ -66,10 +66,41 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
   return confirmou ?? false;
 }
 
+/// Confirma a exclusão de **uma loja** — não da conta.
+///
+/// O `DELETE /lojas/{id}` apaga junto as avaliações, as denúncias e todo o
+/// histórico de acessos daquela loja. Quem lê "excluir loja" pensa em tirar do
+/// mapa; a frase abaixo existe para que ninguém descubra depois que perdeu as
+/// notas que levou meses para juntar.
+Future<bool> confirmarExclusaoLoja(BuildContext context, String nomeLoja) =>
+    _confirmarComPalavraChave(
+      context,
+      titulo: 'Excluir loja',
+      mensagem: 'Essa ação é irreversível. "$nomeLoja" sai do mapa, e as avaliações, '
+          'denúncias e o histórico de acessos dela são apagados junto.',
+      labelBotao: 'Excluir loja',
+    );
+
 /// Mostra um dialog de confirmação antes de excluir a conta do usuário —
 /// ação irreversível que também apaga loja(s), avaliações e denúncias
 /// associadas (cascade feito pelo backend). Devolve `true` se confirmado.
-Future<bool> confirmarExclusaoConta(BuildContext context) async {
+Future<bool> confirmarExclusaoConta(BuildContext context) => _confirmarComPalavraChave(
+      context,
+      titulo: 'Excluir conta',
+      mensagem: 'Essa ação é irreversível. Sua conta, loja(s), avaliações e denúncias '
+          'associadas serão apagadas permanentemente.',
+      labelBotao: 'Excluir conta',
+    );
+
+/// Confirmação de ação irreversível: só libera o botão depois que a pessoa
+/// digita a palavra-chave. A digitação é o freio — num diálogo de dois botões,
+/// "confirmar" está a um toque de distância de quem só queria fechar o menu.
+Future<bool> _confirmarComPalavraChave(
+  BuildContext context, {
+  required String titulo,
+  required String mensagem,
+  required String labelBotao,
+}) async {
   const palavraChave = 'EXCLUIR';
   final controller = TextEditingController();
 
@@ -101,13 +132,13 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
-                      child: Text("Excluir conta", style: AppText.titulo(ctx).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+                      child: Text(titulo, style: AppText.titulo(ctx).copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  "Essa ação é irreversível. Sua conta, loja(s), avaliações e denúncias associadas serão apagadas permanentemente.",
+                  mensagem,
                   style: AppText.corpo(ctx).copyWith(color: ctx.mapColors.primaryText),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -144,7 +175,7 @@ Future<bool> confirmarExclusaoConta(BuildContext context) async {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
                       ),
-                      child: const Text("Excluir conta", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(labelBotao, style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

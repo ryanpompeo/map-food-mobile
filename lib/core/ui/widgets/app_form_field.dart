@@ -37,6 +37,12 @@ class AppFormField extends StatelessWidget {
   final bool showIcon;
 
   final int maxLines;
+
+  /// Teto de caracteres. O contador "0/1000" que o Flutter injeta junto
+  /// continua suprimido (ver `counterText` abaixo) — o limite existe para
+  /// casar com o que a API aceita, não para ser exibido.
+  final int? maxLength;
+
   final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onChanged;
 
@@ -70,6 +76,7 @@ class AppFormField extends StatelessWidget {
     this.enabled = true,
     this.showIcon = true,
     this.maxLines = 1,
+    this.maxLength,
     this.inputFormatters,
     this.onChanged,
     this.focusNode,
@@ -115,6 +122,7 @@ class AppFormField extends StatelessWidget {
             validator: validator,
             inputFormatters: inputFormatters,
             maxLines: obscureText ? 1 : maxLines,
+            maxLength: maxLength,
             onChanged: onChanged,
             onFieldSubmitted: onSubmitted,
             textAlignVertical: maxLines > 1 ? TextAlignVertical.top : TextAlignVertical.center,

@@ -45,6 +45,15 @@ class AppChoiceChip extends StatelessWidget {
   /// inativo desaparece contra o próprio fundo.
   final Color? unselectedSurface;
 
+  /// Ícone do estado **não selecionado** — o ✓ toma o lugar dele ao selecionar.
+  /// Serve para chips cujo rótulo sozinho não diz do que se trata (o "5" de um
+  /// filtro por nota, que só faz sentido ao lado de uma estrela).
+  final IconData? icon;
+
+  /// Cor de [icon]. Padrão: a mesma do rótulo. Passe outra quando o ícone
+  /// carregar significado próprio (o amarelo da estrela de nota).
+  final Color? iconColor;
+
   const AppChoiceChip({
     super.key,
     required this.label,
@@ -53,6 +62,8 @@ class AppChoiceChip extends StatelessWidget {
     this.selectedSurface,
     this.onSelectedSurface,
     this.unselectedSurface,
+    this.icon,
+    this.iconColor,
   });
 
   @override
@@ -90,6 +101,15 @@ class AppChoiceChip extends StatelessWidget {
                   AppIcons.check,
                   size: escalaIcone(context, 14.0),
                   color: conteudoAtivo,
+                ),
+              ),
+              const SizedBox(width: 6.0),
+            ] else if (icon != null) ...[
+              ExcludeSemantics(
+                child: Icon(
+                  icon,
+                  size: escalaIcone(context, 14.0),
+                  color: iconColor ?? conteudo,
                 ),
               ),
               const SizedBox(width: 6.0),

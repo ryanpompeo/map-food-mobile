@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 
 class StackedCardItem {
   final Object id;
@@ -264,21 +265,13 @@ class _StoreStackCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (item.imageUrl != null)
-                Image.network(
-                  item.imageUrl!,
-                  fit: BoxFit.cover,
-                  // Decorativa: o nome da loja aparece como texto logo abaixo.
-                  excludeFromSemantics: true,
-                  // Só cacheWidth: com os dois definidos o decoder ignora a
-                  // proporção original e estica a imagem.
-                  cacheWidth: (MediaQuery.sizeOf(context).width *
-                          MediaQuery.devicePixelRatioOf(context))
-                      .round(),
-                  errorBuilder: (context, error, stackTrace) => _buildFallback(context),
-                )
-              else
-                _buildFallback(context),
+              // Decorativa (sem `semanticLabel`): o nome da loja aparece como
+              // texto logo abaixo.
+              AppNetworkImage(
+                path: item.imageUrl,
+                displayWidth: MediaQuery.sizeOf(context).width,
+                fallback: _buildFallback(context),
+              ),
 
               // Véu de leitura. Começa transparente na metade de cima pra não
               // "sujar" a foto e fecha em preto quase sólido no rodapé, onde o
