@@ -4,9 +4,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
+import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/search/data/services/search_history_service.dart';
+import 'package:map_food/features/search/data/store_search.dart';
 import 'package:map_food/features/search/presentation/widgets/category_filters.dart';
 import 'package:map_food/features/store/presentation/widgets/em_alta_list_widget.dart';
 import 'package:map_food/features/store/presentation/widgets/perto_de_voce_carrossel_widget.dart';
@@ -18,11 +20,21 @@ import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 
-/// Quantidade máxima de lojas exibidas em cada seção da aba "Todos".
+/// Quantidade máxima de lojas exibidas em cada seção da visão de navegação
+/// (nenhuma categoria marcada, sem busca ativa).
 const int _maxSectionItems = 10;
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+  /// Ação do botão de voltar no topo. `null` (o caso de consumidor e
+  /// visitante) esconde o cabeçalho inteiro: ali esta página é uma **aba**, e
+  /// aba não tem para onde voltar.
+  ///
+  /// Existe por causa do comerciante, cuja barra inferior trocou "Buscar" por
+  /// "Estatísticas" — para ele a busca passou a ser empurrada a partir do
+  /// mapa, e página empurrada precisa de saída visível.
+  final VoidCallback? onVoltar;
+
+  const SearchPage({super.key, this.onVoltar});
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -34,7 +46,14 @@ class _SearchPageState extends State<SearchPage> {
   final SearchHistoryService _searchHistoryService = SearchHistoryService();
   final ActiveStoresManager _activeStoresManager = ActiveStoresManager.instance;
   Timer? _debounce;
-  int _selectedFilterIndex = 0;
+
+  /// Categoria em foco, pelo nome. `null` é a listagem sem recorte — o estado
+  /// que a tira de filtros não oferece como item e para o qual se volta
+  /// desmarcando a categoria ativa (ver `CategoryFiltersWidget`). Guardado
+  /// pelo nome, e não pelo índice, porque `_categorias` é recarregável: um
+  /// índice sobreviveria à recarga apontando para outra categoria.
+  String? _categoriaSelecionada;
+
   bool _isLoading = false;
   String? _errorMessage;
   String _searchQuery = '';
@@ -58,7 +77,7 @@ class _SearchPageState extends State<SearchPage> {
   double? _userLng;
   List<StoreDto> _pertoDeVoceStores = [];
 
-  List<String> get _filtros => ['Todos', ..._categorias.map((c) => c.nome)];
+  List<String> get _filtros => _categorias.map((c) => c.nome).toList();
 
   @override
   void initState() {
@@ -128,7 +147,7 @@ class _SearchPageState extends State<SearchPage> {
     _debounce?.cancel();
     setState(() {
       _searchController.text = query;
-      _selectedFilterIndex = 0;
+      _categoriaSelecionada = null;
       _searchQuery = query;
     });
     _applyFilters();
@@ -157,6 +176,12 @@ class _SearchPageState extends State<SearchPage> {
       if (!mounted) return;
       setState(() {
         _categorias = categorias;
+        // Uma categoria que saiu do ar não pode continuar recortando a
+        // listagem: sem cartão marcado na tira, o filtro ficaria invisível e
+        // não haveria como desfazê-lo.
+        if (!categorias.any((c) => c.nome == _categoriaSelecionada)) {
+          _categoriaSelecionada = null;
+        }
         _isLoading = false;
       });
       _applyFilters();
@@ -175,18 +200,16 @@ class _SearchPageState extends State<SearchPage> {
     // como lista de nomes crus, sem id (ver StoreDto._parseCategoriaIds) —
     // filtrar por `categoriaIds` aqui nunca daria match e zerava a lista
     // pra qualquer categoria selecionada.
-    final categoryName = _selectedFilterIndex == 0
-        ? null
-        : _categorias[_selectedFilterIndex - 1].nome;
+    final categoryName = _categoriaSelecionada;
 
     var lojasFiltradas = _allStores;
     if (categoryName != null) {
       lojasFiltradas = lojasFiltradas.where((s) => s.categoriaNomes.contains(categoryName)).toList();
     }
-    if (_searchQuery.trim().isNotEmpty) {
-      final termoBuscaNormalizado = _searchQuery.trim().toLowerCase();
-      lojasFiltradas = lojasFiltradas.where((s) => s.nome.toLowerCase().contains(termoBuscaNormalizado)).toList();
-    }
+    // `buscarLojas` (não um `contains` no nome): ignora acento, procura também
+    // em categoria/cidade/endereço/descrição, tolera um erro de digitação em
+    // termos longos e devolve já ordenado por relevância.
+    lojasFiltradas = buscarLojas(lojasFiltradas, _searchQuery);
 
     final emAlta = lojasFiltradas.where((s) => (s.avaliacao ?? 0) > 4.5).toList()
       ..sort((a, b) => (b.avaliacao ?? 0).compareTo(a.avaliacao ?? 0));
@@ -217,15 +240,34 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedCategory = _filtros[_selectedFilterIndex];
-    // "Perto de você" é a visão de navegação (categoria "Todos" sem busca
-    // ativa). Com uma query digitada, sempre mostra a lista vertical de
-    // resultados, mesmo com o índice de categoria resetado para 0.
-    final bool isTodos = selectedCategory == 'Todos' && _searchQuery.isEmpty;
+    // "Perto de você" + "Em Alta" é a visão de navegação: nenhuma categoria
+    // marcada e nenhuma busca ativa. É para cá que a tela volta quando a
+    // categoria em foco é desmarcada. Com uma query digitada, sempre mostra a
+    // lista vertical de resultados, mesmo sem categoria marcada.
+    final bool semRecorte = _categoriaSelecionada == null && _searchQuery.isEmpty;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: context.mapColors.mainBackground,
+      appBar: widget.onVoltar == null
+          ? null
+          : AppBar(
+              elevation: 0,
+              backgroundColor: context.mapColors.mainBackground,
+              surfaceTintColor: Colors.transparent,
+              centerTitle: true,
+              leading: IconButton(
+                onPressed: widget.onVoltar,
+                icon: const Icon(AppIcons.caretLeft, color: ColorsPalette.redComponents),
+              ),
+              title: Text(
+                'Buscar',
+                style: AppText.subtitulo(context).copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: context.mapColors.primaryText,
+                ),
+              ),
+            ),
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -241,7 +283,7 @@ class _SearchPageState extends State<SearchPage> {
                       onChanged: (val) {
                         _debounce?.cancel();
                         _debounce = Timer(const Duration(milliseconds: 500), () {
-                          setState(() => _selectedFilterIndex = 0);
+                          setState(() => _categoriaSelecionada = null);
                           _searchQuery = val;
                           _applyFilters();
                           if (val.trim().isNotEmpty) {
@@ -253,13 +295,15 @@ class _SearchPageState extends State<SearchPage> {
                     const SizedBox(height: AppSpacing.lg),
                     CategoryFiltersWidget(
                       filtros: _filtros,
-                      selectedIndex: _selectedFilterIndex,
-                      onFilterChanged: (index) {
+                      selecionada: _categoriaSelecionada,
+                      // `null` chega quando o toque desmarcou a categoria que
+                      // estava ativa — e a tela volta à visão de navegação.
+                      onFilterChanged: (nome) {
                         // Idem: cancela um debounce de digitação pendente pra
                         // ele não sobrescrever essa troca de categoria depois.
                         _debounce?.cancel();
                         setState(() {
-                          _selectedFilterIndex = index;
+                          _categoriaSelecionada = nome;
                           _searchController.clear();
                           _searchQuery = '';
                         });
@@ -301,7 +345,7 @@ class _SearchPageState extends State<SearchPage> {
                   ),
                 ),
               )
-            else if (isTodos) ...[
+            else if (semRecorte) ...[
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.xl),
