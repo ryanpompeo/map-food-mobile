@@ -8,9 +8,13 @@ import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/features/auth/presentation/widgets/account_type_card.dart';
+import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_switcher_bar.dart';
 import 'package:map_food/features/search/presentation/widgets/category_filters.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/presentation/widgets/store_detail/review_card.dart';
+import 'package:map_food/features/store/presentation/widgets/store_detail/section_header.dart';
+import 'package:map_food/features/store/presentation/widgets/store_detail/store_detail_overview.dart';
 
 /// Rede de segurança do Dynamic Type.
 ///
@@ -266,6 +270,131 @@ void main() {
     testaQueCresce('AccountTypeCard', build, find.byType(AccountTypeCard));
   });
 
+  // ─────────────────── tela de detalhe da loja ───────────────────
+  // Estes três nasceram de um defeito real: os cabeçalhos e o card de
+  // avaliação da tela de detalhe estouravam a linha **em escala 1x**, num
+  // celular comum. A causa era sempre a mesma — um `Row` com o texto sem
+  // `Expanded`, ocupando a largura que quisesse e empurrando o resto para
+  // fora. A largura reduzida usada abaixo não é hipotética: é a que sobra
+  // dentro do card de avaliações, depois de dois paddings de cada lado.
+
+  /// Largura útil dentro do card "Suas avaliações", numa tela de 360dp:
+  /// 360 − 2×20 (margem da tela) − 2×16 (padding do card).
+  const larguraDentroDoCard = 288.0;
+
+  group('SectionHeader', () {
+    SectionHeader build() => const SectionHeader(
+          title: 'Suas avaliações',
+          subtitle: '3 enviadas para este comércio',
+          expanded: true,
+          onToggle: _noop,
+        );
+
+    for (final escala in [1.0, 1.5, 2.0, 3.0]) {
+      testWidgets('não estoura dentro de um card em ${escala}x', (tester) async {
+        await tester.pumpWidget(montar(
+          build(),
+          escala: escala,
+          largura: larguraDentroDoCard,
+          rolavel: true,
+        ));
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testaQueCresce('SectionHeader', build, find.byType(SectionHeader));
+
+    testWidgets('título longo encurta em vez de empurrar o caret para fora', (tester) async {
+      await tester.pumpWidget(montar(
+        const SectionHeader(
+          title: 'Um título absurdamente comprido que jamais caberia nesta linha',
+          expanded: false,
+          onToggle: _noop,
+        ),
+        escala: 1.0,
+        largura: larguraDentroDoCard,
+        rolavel: true,
+      ));
+      expect(tester.takeException(), isNull);
+      // O caret é o que sumia primeiro: sem ele, um bloco recolhível deixa de
+      // anunciar que dá para expandi-lo.
+      expect(find.byIcon(AppIcons.caretDown), findsOneWidget);
+    });
+  });
+
+  group('ReviewCard', () {
+    // Nome longo + data é exatamente o par que estourava na versão anterior.
+    const avaliacao = AvaliacaoModel(
+      id: 1,
+      nota: 4,
+      comentario: 'Atendimento ótimo e o espetinho estava muito bem temperado.',
+      consumidor: ConsumidorResumido(id: 9, nome: 'Maria Aparecida de Souza Nascimento'),
+    );
+
+    for (final escala in [1.0, 1.5, 2.0, 3.0]) {
+      testWidgets('não estoura com nome longo em ${escala}x', (tester) async {
+        await tester.pumpWidget(montar(
+          const ReviewCard(review: avaliacao),
+          escala: escala,
+          largura: larguraDentroDoCard,
+          rolavel: true,
+        ));
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('compacto não estoura em ${escala}x', (tester) async {
+        await tester.pumpWidget(montar(
+          const ReviewCard(review: avaliacao, compact: true),
+          escala: escala,
+          largura: larguraDentroDoCard,
+          rolavel: true,
+        ));
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testaQueCresce(
+      'ReviewCard',
+      () => const ReviewCard(review: avaliacao),
+      find.byType(ReviewCard),
+    );
+
+    testWidgets('a versão compacta omite o autor', (tester) async {
+      await tester.pumpWidget(montar(
+        const ReviewCard(review: avaliacao, compact: true),
+        escala: 1.0,
+        largura: larguraDentroDoCard,
+        rolavel: true,
+      ));
+      // No histórico do próprio usuário o nome é sempre o dele, e repeti-lo
+      // consumia justamente a largura que faltava.
+      expect(find.text('Maria Aparecida de Souza Nascimento'), findsNothing);
+    });
+  });
+
+  group('StoreStatsRow', () {
+    StoreStatsRow build() => const StoreStatsRow(
+          store: StoreDto(
+            id: 1,
+            nome: 'Espetinho do Zé',
+            statusLoja: 'ATIVA',
+            categoria: 'Espetinhos',
+            totalAvaliacoes: 128,
+            galeria: ['a.jpg', 'b.jpg'],
+          ),
+          media: 4.8,
+        );
+
+    for (final escala in escalas) {
+      testWidgets('não estoura em ${escala}x', (tester) async {
+        await tester.pumpWidget(montar(build(), escala: escala, rolavel: true));
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testaQueCresce('StoreStatsRow', build, find.byType(StoreStatsRow));
+  });
+
   // ─────────────────────── superfícies com teto ───────────────────────
   // As faixas horizontais não crescem sem limite de propósito (ver
   // `MaxTextScale`). O que precisa ser garantido aqui é o **oposto** dos
@@ -273,9 +402,12 @@ void main() {
   // asserção, alguém "consertando" o teto deixaria a faixa comer a tela.
 
   group('CategoryFiltersWidget (faixa com teto)', () {
+    // Sem "Todos" na lista: o filtro que limpa o recorte deixou de ser um item
+    // da tira — ver `CategoryFiltersWidget`, onde "ver tudo" é o estado sem
+    // nenhuma categoria marcada.
     CategoryFiltersWidget build() => CategoryFiltersWidget(
-          filtros: const ['Todos', 'Lanches', 'Açaí', 'Bebidas'],
-          selectedIndex: 1,
+          filtros: const ['Lanches', 'Açaí', 'Bebidas'],
+          selecionada: 'Lanches',
           onFilterChanged: (_) {},
         );
 
