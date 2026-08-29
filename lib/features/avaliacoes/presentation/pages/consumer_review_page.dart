@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
-import 'package:map_food/core/network/image_url_resolver.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -73,8 +72,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
     try {
       final store = await _storeService.getById(lojaId);
       if (!mounted) return;
-      unawaited(Navigator.push(
-          context, appPageRoute(builder: (_) => MoreInfoStorePage(store: store))));
+      unawaited(abrirDetalheDaLoja(context, store));
     } catch (_) {
       if (!mounted) return;
       AppToast.error(context, "Não foi possível abrir esta loja.");
@@ -153,22 +151,15 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 color: context.mapColors.mainBackground,
               ),
-              child: resolveImagemUrl(avaliacao.lojaImagemUrl) != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      child: Image.network(
-                        resolveImagemUrl(avaliacao.lojaImagemUrl)!,
-                        fit: BoxFit.cover,
-                        // Decorativa: o nome da loja já aparece como texto ao lado.
-                        excludeFromSemantics: true,
-                        // Só cacheWidth: com os dois definidos o decoder
-                        // ignora a proporção original e estica a imagem.
-                        cacheWidth: (56.0 * MediaQuery.devicePixelRatioOf(context)).round(),
-                        errorBuilder: (context, error, stackTrace) =>
-                            Icon(AppIcons.image, color: context.mapColors.iconMuted),
-                      ),
-                    )
-                  : Icon(AppIcons.image, color: context.mapColors.iconMuted),
+              // Decorativa (sem `semanticLabel`): o nome da loja já aparece
+              // como texto ao lado.
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: AppNetworkImage(
+                  path: avaliacao.lojaImagemUrl,
+                  displayWidth: 56.0,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
-import 'package:map_food/core/network/image_url_resolver.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_elevation.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -101,14 +100,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
 
                 return InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      appPageRoute(
-                        builder: (_) => MoreInfoStorePage(store: store),
-                      ),
-                    );
-                  },
+                  onTap: () => abrirDetalheDaLoja(context, store),
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -131,24 +123,15 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                                 borderRadius: BorderRadius.circular(AppRadius.sm),
                                 color: context.mapColors.mainBackground,
                               ),
-                              child: resolveImagemUrl(store.capaUrl) != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                                      child: Image.network(
-                                        resolveImagemUrl(store.capaUrl)!,
-                                        fit: BoxFit.cover,
-                                        // Decorativa: o nome da loja já aparece como texto no card.
-                                        excludeFromSemantics: true,
-                                        // Só cacheWidth: com os dois definidos o
-                                        // decoder ignora a proporção e estica a imagem.
-                                        cacheWidth: (80.0 * MediaQuery.devicePixelRatioOf(context)).round(),
-                                        errorBuilder: (context, error, stackTrace) => Icon(
-                                          AppIcons.image,
-                                          color: context.mapColors.iconMuted,
-                                        ),
-                                      ),
-                                    )
-                                  : Icon(AppIcons.image, color: context.mapColors.iconMuted),
+                              // Decorativa (sem `semanticLabel`): o nome da
+                              // loja já aparece como texto no card.
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                                child: AppNetworkImage(
+                                  path: store.capaUrl,
+                                  displayWidth: 80.0,
+                                ),
+                              ),
                             ),
                             // Selo de canto com a cor de identidade da categoria
                             // principal — mesma paleta usada nos filtros.

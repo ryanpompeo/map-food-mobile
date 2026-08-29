@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
@@ -67,13 +68,38 @@ class FavoriteButtonWidget extends StatelessWidget {
               AppToast.error(context, "Não foi possível atualizar seus favoritos. Tente novamente.");
             }
           },
-          icon: Icon(
-            AppIcons.heart,
+          icon: _heartIcon(
+            context,
+            isFavorite: isFavorite,
             color: isFavorite ? ColorsPalette.redComponents : (frosted ? ColorsPalette.white : context.mapColors.iconMuted),
-            size: iconSize,
           ),
         );
       },
+    );
+  }
+
+  /// Coração do estado favoritado: **preenchido**, não só vermelho.
+  ///
+  /// O contorno vermelho sozinho lê como "botão de favoritar" — a mesma
+  /// silhueta do estado não-favoritado, trocando só a cor. É o par
+  /// [AppIcons.star]/[AppIcons.starFill] que o `RatingStars` já usa: a massa
+  /// sólida é o que marca o estado, a cor só o reforça.
+  ///
+  /// O [AnimatedSwitcher] faz o preenchido entrar crescendo (e o vazado sair
+  /// encolhendo) — a confirmação de que o toque pegou, num botão cujo único
+  /// retorno visual, fora o toast, é ele mesmo.
+  Widget _heartIcon(BuildContext context, {required bool isFavorite, required Color color}) {
+    return AnimatedSwitcher(
+      duration: Motion.fast,
+      transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+      child: Icon(
+        isFavorite ? AppIcons.heartFill : AppIcons.heart,
+        // Sem a key os dois ícones são "o mesmo widget" para o switcher e a
+        // troca acontece sem transição nenhuma.
+        key: ValueKey(isFavorite),
+        color: color,
+        size: iconSize,
+      ),
     );
   }
 

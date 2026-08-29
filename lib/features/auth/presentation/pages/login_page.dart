@@ -11,6 +11,7 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
 import 'package:map_food/features/auth/presentation/widgets/account_type_switch.dart';
@@ -52,6 +53,16 @@ class _LoginPageState extends State<LoginPage> {
     _senhaController.dispose();
     _senhaFocus.dispose();
     super.dispose();
+  }
+
+  // Placeholder da recuperação de senha: a entrada já existe na tela para não
+  // deixar quem esqueceu a senha sem nenhuma pista do que fazer, mas o fluxo
+  // (código por e-mail + redefinição) ainda não tem backend no app.
+  void _avisarRecuperacaoIndisponivel() {
+    AppToast.info(
+      context,
+      'Recuperação de senha em desenvolvimento. Em breve você poderá redefinir por aqui.',
+    );
   }
 
   Future<void> _fazerLogin() async {
@@ -171,6 +182,26 @@ class _LoginPageState extends State<LoginPage> {
                       size: AppIconSize.md,
                     ),
                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+
+                const SizedBox(height: Spacing.xs),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: SemanticTapArea(
+                    label: 'Esqueceu sua senha?',
+                    hint: 'Recuperação de senha, ainda em desenvolvimento',
+                    onTap: _avisarRecuperacaoIndisponivel,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                      child: Text(
+                        'Esqueceu sua senha?',
+                        style: AppText.secondary(context).copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
 
