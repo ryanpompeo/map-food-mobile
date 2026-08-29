@@ -1,6 +1,7 @@
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/denuncias/data/models/denuncia_model.dart';
+import 'package:map_food/features/denuncias/data/models/denuncia_recebida_model.dart';
 
 class DenunciaService {
   DenunciaService({ApiClient? client}) : _client = client ?? ApiClient.instance;
@@ -48,12 +49,23 @@ class DenunciaService {
         .toList();
   }
 
-  /// Total de denúncias recebidas pelas lojas de um comerciante, via
+  /// Denúncias recebidas pelas lojas de um comerciante, via
   /// GET /denuncias/loja/comerciante/{comercianteId}.
-  Future<int> getComplaintsReceivedCount(int comercianteId) async {
+  ///
+  /// Devolve a lista inteira — motivo, status, data e loja de cada uma. A
+  /// versão anterior deste método descartava tudo isso e devolvia só
+  /// `data.length`, porque o único consumo era um card de contagem. O painel
+  /// de Estatísticas usa os campos para dizer **por que** e **quando**, que é
+  /// o que o comerciante pode agir a respeito.
+  ///
+  /// Só o dono das lojas (ou um administrador) recebe 200 aqui; a API não
+  /// expõe a identidade de quem denunciou.
+  Future<List<DenunciaRecebidaModel>> getRecebidas(int comercianteId) async {
     final data = await _client.get<List<dynamic>>(
       '${ApiConstants.denuncias}/loja/comerciante/$comercianteId',
     );
-    return data.length;
+    return data
+        .map((e) => DenunciaRecebidaModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

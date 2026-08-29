@@ -29,7 +29,7 @@ class StoreCreateRequest {
   /// sobrescritos.
   ///
   /// Ponto único que define "o que é o corpo de um PUT de loja". Antes, cada
-  /// tela montava o seu: a ronda de GPS em `MerchantWorkingPage` omitia
+  /// tela montava o seu: a ronda de GPS (hoje `StoreRondaController`) omitia
   /// `endereco`, `cidade`, `estado` e `cep` a cada envio de posição — se o
   /// backend fizer replace (e não merge) nesses campos, cada deslocamento do
   /// comerciante apagava o endereço cadastrado da loja.
