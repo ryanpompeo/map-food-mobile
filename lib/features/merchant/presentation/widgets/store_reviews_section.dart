@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_card.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/rating_stars.dart';
+import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 
 /// O que os clientes disseram sobre a loja, do ponto de vista de quem recebe.
@@ -13,7 +14,13 @@ import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 /// A nota média vem do backend (`GET /lojas/{id}/resumo`), não de uma conta
 /// feita sobre a lista carregada aqui — a lista é paginável no futuro e a
 /// média calculada no cliente passaria a divergir da que o consumidor vê.
-class StoreReviewsSection extends StatelessWidget {
+///
+/// **Chega recolhida.** O painel é a tela de operação da loja, e a lista
+/// inteira de avaliações empurrava "Configurações avançadas" para fora do
+/// alcance de qualquer loja com histórico — quem abre o painel quer saber
+/// *como está* a nota, não reler cada comentário. O resumo (média + total)
+/// fica sempre visível; a lista é um toque.
+class StoreReviewsSection extends StatefulWidget {
   final List<AvaliacaoModel> avaliacoes;
   final bool carregando;
 
@@ -28,7 +35,20 @@ class StoreReviewsSection extends StatelessWidget {
   });
 
   @override
+  State<StoreReviewsSection> createState() => _StoreReviewsSectionState();
+}
+
+class _StoreReviewsSectionState extends State<StoreReviewsSection> {
+  bool _expandida = false;
+
+  @override
   Widget build(BuildContext context) {
+    final avaliacoes = widget.avaliacoes;
+    final carregando = widget.carregando;
+    // Vazio não tem o que expandir: o estado vazio é curto e vale mais visível
+    // do que escondido atrás de um toque que revelaria "nada aqui".
+    final temListaParaExpandir = !carregando && avaliacoes.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -50,7 +70,7 @@ class StoreReviewsSection extends StatelessWidget {
                 ],
               ),
             ),
-            if (!carregando) RatingScorePill(nota: media),
+            if (!carregando) RatingScorePill(nota: widget.media),
           ],
         ),
         const SizedBox(height: Spacing.base),
@@ -64,13 +84,32 @@ class StoreReviewsSection extends StatelessWidget {
             title: 'Nenhuma avaliação ainda',
             description: 'Assim que um cliente avaliar sua loja, o comentário '
                 'aparece aqui.',
-          )
-        else
-          for (final avaliacao in avaliacoes)
-            Padding(
-              padding: const EdgeInsets.only(bottom: Spacing.md),
-              child: _CardAvaliacao(avaliacao: avaliacao),
-            ),
+          ),
+
+        if (temListaParaExpandir) ...[
+          _BotaoExpandir(
+            expandida: _expandida,
+            total: avaliacoes.length,
+            onTap: () => setState(() => _expandida = !_expandida),
+          ),
+          AnimatedSize(
+            duration: Motion.medium,
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: !_expandida
+                ? const SizedBox(width: double.infinity)
+                : Column(
+                    children: [
+                      const SizedBox(height: Spacing.base),
+                      for (final avaliacao in avaliacoes)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: Spacing.md),
+                          child: _CardAvaliacao(avaliacao: avaliacao),
+                        ),
+                    ],
+                  ),
+          ),
+        ],
       ],
     );
   }
@@ -80,6 +119,68 @@ class StoreReviewsSection extends StatelessWidget {
         1 => '1 avaliação recebida',
         _ => '$total avaliações recebidas',
       };
+}
+
+/// Linha de "ver/ocultar" com a contagem no rótulo.
+///
+/// O número no botão é o que faz a seção recolhida não parecer vazia: sem ele,
+/// "Ver avaliações" some no meio da página como um link qualquer.
+class _BotaoExpandir extends StatelessWidget {
+  final bool expandida;
+  final int total;
+  final VoidCallback onTap;
+
+  const _BotaoExpandir({
+    required this.expandida,
+    required this.total,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.mapColors;
+    final rotulo = expandida
+        ? 'Ocultar avaliações'
+        : (total == 1 ? 'Ver a avaliação' : 'Ver as $total avaliações');
+
+    return SemanticTapArea(
+      label: rotulo,
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        // 48 de altura mínima: é um alvo de toque de largura inteira, e o
+        // conteúdo é uma linha de texto só.
+        constraints: const BoxConstraints(minHeight: 48.0),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.base),
+        decoration: BoxDecoration(
+          color: colors.surfaceAlt,
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                rotulo,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.bodyStrong(context).copyWith(color: colors.brandContent),
+              ),
+            ),
+            const SizedBox(width: Spacing.sm),
+            // Roda com a expansão: a mesma seta serve para os dois estados e
+            // marca o sentido do movimento.
+            AnimatedRotation(
+              turns: expandida ? 0.5 : 0.0,
+              duration: Motion.medium,
+              curve: Curves.easeInOut,
+              child: Icon(AppIcons.caretDown, size: AppIconSize.sm, color: colors.brandContent),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _CardAvaliacao extends StatelessWidget {

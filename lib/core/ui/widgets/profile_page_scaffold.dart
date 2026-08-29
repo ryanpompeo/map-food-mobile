@@ -14,7 +14,7 @@ import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/logout_dialog.dart';
 import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
-import 'package:map_food/core/ui/widgets/profile_stat_card.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/stacked_card_carousel.dart';
 import 'package:map_food/core/ui/widgets/theme_mode_sheet.dart';
 import 'package:map_food/features/settings/presentation/pages/settings_page.dart';
@@ -62,17 +62,15 @@ class ProfilePageScaffold extends StatefulWidget {
   final VoidCallback? onLogoutExtra;
 
   /// Exclui a conta no backend (DELETE /comerciantes|consumidores/{id}) —
-  /// hard delete definitivo nos dois papéis, mesmo endpoint usado pela Web.
-  final Future<void> Function() onDeleteAccount;
+  /// hard delete definitivo, mesmo endpoint usado pela Web. `null` esconde a
+  /// opção em Configurações (hoje é o caso do comerciante, cujo endpoint
+  /// ainda responde 409 por dependências não limpas no backend).
+  final Future<void> Function()? onDeleteAccount;
 
   /// Toque em qualquer um dos círculos de avatar — abre "Editar Perfil".
   final VoidCallback onAvatarTap;
 
-  /// Cards de estatística do app (dias de uso, avaliações, denúncias...).
-  final Future<List<ProfileStat>> Function() fetchStats;
-
-  /// Título da seção de destaque abaixo dos cards ("Meus Favoritos" para
-  /// consumidor, "Minhas Lojas" para comerciante).
+  /// Título da seção de destaque ("Minhas Lojas" para o comerciante).
   final String featuredSectionTitle;
   final Future<List<StackedCardItem>> Function() fetchFeaturedItems;
   final ValueChanged<StackedCardItem> onFeaturedItemTap;
@@ -109,9 +107,8 @@ class ProfilePageScaffold extends StatefulWidget {
     required this.minhaContaItems,
     required this.howItWorksPageBuilder,
     this.onLogoutExtra,
-    required this.onDeleteAccount,
+    this.onDeleteAccount,
     required this.onAvatarTap,
-    required this.fetchStats,
     required this.featuredSectionTitle,
     required this.fetchFeaturedItems,
     required this.onFeaturedItemTap,
@@ -130,14 +127,12 @@ class ProfilePageScaffold extends StatefulWidget {
 
 class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
   String? _imagemUrl;
-  List<ProfileStat>? _stats;
   List<StackedCardItem>? _featuredItems;
 
   @override
   void initState() {
     super.initState();
     _carregarFoto();
-    _carregarStats();
     _carregarFeatured();
     widget.featuredRefreshListenable?.addListener(_carregarFeatured);
   }
@@ -154,15 +149,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
       if (mounted) setState(() => _imagemUrl = imagemUrl);
     } catch (_) {
       // Mantém o fallback com as iniciais do nome.
-    }
-  }
-
-  Future<void> _carregarStats() async {
-    try {
-      final stats = await widget.fetchStats();
-      if (mounted) setState(() => _stats = stats);
-    } catch (_) {
-      // Mantém os placeholders "—" se a API falhar.
     }
   }
 
@@ -188,8 +174,9 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
             children: [
               const SizedBox(height: Spacing.base),
               _buildHeader(context),
-              const SizedBox(height: Spacing.lg),
-              ProfileStatsRow(stats: _stats),
+              // A fileira de cards de estatística saiu daqui: o perfil ficou
+              // restrito à conta, e os números do comerciante vivem na aba
+              // Estatísticas.
               const SizedBox(height: Spacing.xl),
               _buildFeaturedSection(context),
 
@@ -257,16 +244,13 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                 color: context.mapColors.surfaceAlt,
                 shape: BoxShape.circle,
               ),
-              child: resolvedImagemUrl != null
-                  ? Image.network(
-                      resolvedImagemUrl,
-                      fit: BoxFit.cover,
-                      // Só cacheWidth: com os dois definidos o decoder
-                      // ignora a proporção original e estica a imagem.
-                      cacheWidth: (avatarSize * MediaQuery.devicePixelRatioOf(context)).round(),
-                      errorBuilder: (context, error, stackTrace) => _buildAvatarInitial(context),
-                    )
-                  : _buildAvatarInitial(context),
+              // Sem foto (ou com foto quebrada), o "vazio" deste avatar não é
+              // um ícone: é a inicial do nome.
+              child: AppNetworkImage(
+                path: resolvedImagemUrl,
+                displayWidth: avatarSize,
+                fallback: _buildAvatarInitial(context),
+              ),
             ),
           ),
           const SizedBox(width: Spacing.base),

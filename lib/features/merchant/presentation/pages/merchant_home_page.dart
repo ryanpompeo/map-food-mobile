@@ -7,12 +7,12 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/keyboard_aware_bottom_bar.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/analytics/presentation/pages/merchant_analytics_page.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
-import 'package:map_food/features/merchant/presentation/pages/merchant_dashboard.dart';
+import 'package:map_food/features/merchant/presentation/pages/merchant_store_page.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_profile_page.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
 import 'package:map_food/features/merchant/presentation/widgets/merchant_bottom_bar.dart';
-import 'package:map_food/features/merchant/presentation/pages/merchant_working_page.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
 import 'package:map_food/features/store/presentation/widgets/home_map_explorer.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_switcher_bar.dart';
@@ -27,12 +27,21 @@ class MerchantHomePage extends StatefulWidget {
 class _MerchantHomePageState extends State<MerchantHomePage>
     with AsyncLoadMixin<List<StoreDto>, MerchantHomePage> {
   /// Aba exibida. `ValueNotifier` e não um campo com `setState`: aqui o
-  /// `IndexedStack` tem **cinco** filhos (mapa, busca, ronda, dashboard,
-  /// perfil), e um `setState` por toque na barra recriava as cinco instâncias
+  /// `IndexedStack` tem quatro filhos (mapa, estatísticas, minha loja,
+  /// perfil), e um `setState` por toque na barra recriava as quatro instâncias
   /// — o Flutter então descia a árvore inteira, reconstruindo o mapa com os
   /// pins e o dashboard, só pra mudar qual delas fica visível. Ver a mesma
   /// nota, mais longa, em `KeyboardAwareBottomBar`.
   final ValueNotifier<int> _abaAtual = ValueNotifier(0);
+
+  /// Índice da aba de Estatísticas na barra e no `IndexedStack`.
+  static const int _indiceEstatisticas = 1;
+
+  /// Avisa a aba de Estatísticas quando ela volta a ser exibida. Ela vive no
+  /// `IndexedStack` e nunca é descartada, então o `initState` dela roda uma
+  /// vez só — sem este aviso, os números ficariam congelados no momento em
+  /// que o app abriu. `ValueNotifier` e não `setState` porque só ela reage.
+  final ValueNotifier<bool> _estatisticasVisivel = ValueNotifier(false);
 
   String _userName = '';
   String _userEmail = '';
@@ -111,11 +120,26 @@ class _MerchantHomePageState extends State<MerchantHomePage>
   void _onItemTapped(int index) {
     if (_abaAtual.value == index) return;
     _abaAtual.value = index;
+    _estatisticasVisivel.value = index == _indiceEstatisticas;
+  }
+
+  /// A busca deixou de ser aba do comerciante (o lugar virou "Estatísticas") e
+  /// passou a ser empurrada pelo botão de busca do mapa. `onVoltar` fecha a
+  /// rota — sem ele a página empurrada não teria saída visível, já que a
+  /// `SearchPage` não desenha cabeçalho quando é usada como aba.
+  void _abrirBusca() {
+    Navigator.push(
+      context,
+      appPageRoute(
+        builder: (context) => SearchPage(onVoltar: () => Navigator.pop(context)),
+      ),
+    );
   }
 
   @override
   void dispose() {
     _abaAtual.dispose();
+    _estatisticasVisivel.dispose();
     super.dispose();
   }
 
@@ -183,9 +207,9 @@ class _MerchantHomePageState extends State<MerchantHomePage>
       onSelect: (index) => setState(() => _lojaSelecionadaIndex = index),
     );
 
-    // Construídas **fora** do ValueListenableBuilder: assim as cinco
+    // Construídas **fora** do ValueListenableBuilder: assim as quatro
     // instâncias sobrevivem à troca de aba, e o IndexedStack só troca o
-    // índice. Dentro do builder, cada toque na barra recriaria as cinco.
+    // índice. Dentro do builder, cada toque na barra recriaria as quatro.
     final abas = [
       // RepaintBoundary em cada aba: sem isso, o Stack/Compositor trata a
       // troca de aba do IndexedStack como parte do mesmo layer de pintura
@@ -193,23 +217,20 @@ class _MerchantHomePageState extends State<MerchantHomePage>
       // vira só uma questão de qual layer já pronto mostrar, sem repintar
       // o mapa/formulários das abas que não mudaram.
       RepaintBoundary(
-        child: HomeMapExplorer(onSearchTap: () => _onItemTapped(1)),
+        child: HomeMapExplorer(onSearchTap: _abrirBusca),
       ),
-      const RepaintBoundary(child: SearchPage()),
       RepaintBoundary(
-        child: MerchantWorkingPage(
-          key: ValueKey('working-${store.id}'),
+        child: MerchantAnalyticsPage(lojas: stores, visivel: _estatisticasVisivel),
+      ),
+      RepaintBoundary(
+        // Sem `key` por loja: a página resincroniza pelo `didUpdateWidget`, e
+        // uma key nova a cada troca de loja remontaria a seção de operação —
+        // derrubando a assinatura de GPS da ronda em curso.
+        child: MerchantStorePage(
           store: store,
           storeSwitcher: switcher,
           onStoreUpdated: _onStoreUpdated,
-        ),
-      ),
-      RepaintBoundary(
-        child: MerchantDashboard(
-          key: ValueKey('dashboard-${store.id}'),
-          store: store,
-          storeSwitcher: switcher,
-          onStoreUpdated: _onStoreUpdated,
+          onStoreDeleted: _loadData,
         ),
       ),
       RepaintBoundary(
