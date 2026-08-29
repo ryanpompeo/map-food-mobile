@@ -3,6 +3,7 @@ import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/session/session_manager.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/storage/onboarding_storage.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_theme.dart';
 import 'package:map_food/core/ui/theme/theme_controller.dart';
 import 'package:map_food/features/auth/presentation/pages/login_page.dart';
@@ -51,6 +52,21 @@ class MyApp extends StatelessWidget {
   final ThemeController themeController;
 
   const MyApp({super.key, required this.initialRoute, required this.themeController});
+
+  /// Mapa único de rotas — usado tanto pelo `routes:` quanto pela montagem da
+  /// pilha inicial, para as duas nunca divergirem.
+  static final Map<String, WidgetBuilder> _rotas = {
+    AppRoutes.root: (context) => const GuestHomePage(),
+    AppRoutes.onboarding: (context) => const OnboardingPage(),
+    AppRoutes.login: (context) => const LoginPage(),
+    AppRoutes.howItWorks: (context) => const HowItWorksPage(),
+    AppRoutes.accountType: (context) => const AccountTypePage(),
+    AppRoutes.consumerRegister: (context) => const ConsumerRegisterPage(),
+    AppRoutes.merchantRegister: (context) => const MerchantRegisterPage(),
+    AppRoutes.storeRegister: (context) => const StoreRegisterPage(),
+    AppRoutes.merchantDashboard: (context) => const MerchantHomePage(),
+    AppRoutes.consumerHome: (context) => const ConsumerHomePage(),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -103,18 +119,22 @@ class MyApp extends StatelessWidget {
 
           initialRoute: initialRoute,
 
-          routes: {
-            AppRoutes.root: (context) => const GuestHomePage(),
-            AppRoutes.onboarding: (context) => const OnboardingPage(),
-            AppRoutes.login: (context) => const LoginPage(),
-            AppRoutes.howItWorks: (context) => const HowItWorksPage(),
-            AppRoutes.accountType: (context) => const AccountTypePage(),
-            AppRoutes.consumerRegister: (context) => const ConsumerRegisterPage(),
-            AppRoutes.merchantRegister: (context) => const MerchantRegisterPage(),
-            AppRoutes.storeRegister: (context) => const StoreRegisterPage(),
-            AppRoutes.merchantDashboard: (context) => const MerchantHomePage(),
-            AppRoutes.consumerHome: (context) => const ConsumerHomePage(),
-          },
+          // A pilha inicial tem **uma** rota, sempre.
+          //
+          // O padrão do Navigator trata `initialRoute` como deep link e monta
+          // a pilha inteira do caminho: abrir em `/merchant` gerava
+          // `['/', '/merchant']`, deixando a `GuestHomePage` viva embaixo da
+          // sessão logada. O efeito era visível — o `AppBar` das abas passava
+          // a achar que havia para onde voltar, e voltar caía na home de
+          // visitante, sem conta, com o app ainda logado.
+          onGenerateInitialRoutes: (rota) => [
+            appPageRoute(
+              builder: (context) => (_rotas[rota] ?? _rotas[AppRoutes.root]!)(context),
+              settings: RouteSettings(name: rota),
+            ),
+          ],
+
+          routes: _rotas,
         );
       },
     );
