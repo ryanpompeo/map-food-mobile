@@ -50,7 +50,11 @@ class CategoryFiltersWidget extends StatelessWidget {
 
   /// Lado do círculo da categoria. Fixo de propósito: é uma superfície
   /// colorida de identidade, não um bloco de texto.
-  static const double _ladoCirculo = 60.0;
+  static const double _ladoCirculo = 72.0;
+
+  /// Largura do item (círculo + rótulo de até duas linhas). Precisa de folga
+  /// além do círculo para o nome não quebrar cedo demais.
+  static const double _larguraItem = 78.0;
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +79,7 @@ class CategoryFiltersWidget extends StatelessWidget {
                 nome: nome,
                 isSelected: isSelected,
                 lado: _ladoCirculo,
+                largura: _larguraItem,
                 // Tocar na categoria já marcada desfaz o recorte.
                 onTap: () => onFilterChanged(isSelected ? null : nome),
               ),
@@ -94,12 +99,14 @@ class _CartaoCategoria extends StatelessWidget {
   final String nome;
   final bool isSelected;
   final double lado;
+  final double largura;
   final VoidCallback onTap;
 
   const _CartaoCategoria({
     required this.nome,
     required this.isSelected,
     required this.lado,
+    required this.largura,
     required this.onTap,
   });
 
@@ -116,7 +123,7 @@ class _CartaoCategoria extends StatelessWidget {
       selected: isSelected,
       onTap: onTap,
       child: SizedBox(
-        width: 68.0,
+        width: largura,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -163,14 +170,14 @@ class _Miolo extends StatelessWidget {
   const _Miolo({required this.nome, required this.arte, required this.cor});
 
   /// Lado do desenho dentro do círculo. Bem maior que o ícone que substitui
-  /// porque a arte já traz margem no próprio canvas — em 26 o objeto sairia
+  /// porque a arte já traz margem no próprio canvas — em 31 o objeto sairia
   /// minúsculo.
-  static const double _ladoArte = 52.0;
+  static const double _ladoArte = 62.0;
 
   /// Fallback compartilhado: categoria sem arte, e também arte que sumiu do
   /// bundle — nos dois casos o filtro continua legível com o ícone, nunca com
   /// o quadrado do "X" de imagem quebrada.
-  Widget _icone() => Icon(iconeParaCategoria(nome), size: 26.0, color: cor);
+  Widget _icone() => Icon(iconeParaCategoria(nome), size: 31.0, color: cor);
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +189,7 @@ class _Miolo extends StatelessWidget {
       width: _ladoArte,
       height: _ladoArte,
       // Dobro do lado desenhado cobre telas de até 2× sem decodificar o PNG
-      // de 1024px inteiro pra caber num círculo de 60.
+      // de 1024px inteiro pra caber num círculo de 72.
       cacheWidth: (_ladoArte * 2).round(),
       fit: BoxFit.contain,
       errorBuilder: (_, _, _) => _icone(),

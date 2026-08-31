@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/search/data/services/search_history_service.dart';
 import 'package:map_food/features/search/data/store_search.dart';
@@ -105,15 +106,19 @@ class _SearchPageState extends State<SearchPage> {
         // Flutter — sem timeout, um prompt ignorado/não respondido trava
         // este `await` pra sempre (mesmo problema em NearbyStoresSection,
         // que roda ao mesmo tempo na aba "Início").
-        permission = await Geolocator.requestPermission()
-            .timeout(const Duration(seconds: 10));
+        permission = await Geolocator.requestPermission().timeout(
+          const Duration(seconds: 10),
+        );
       }
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         return;
       }
 
       final posicao = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
       ).timeout(const Duration(seconds: 10));
       if (!mounted) return;
       setState(() {
@@ -124,6 +129,20 @@ class _SearchPageState extends State<SearchPage> {
     } catch (_) {
       // Sem GPS disponível — "Perto de você" cai no fallback sem ordenar por distância.
     }
+  }
+
+  /// Puxar para atualizar: refaz as duas buscas de rede desta tela — as
+  /// categorias (que alimentam a tira de filtros) e a lista de lojas ativas.
+  ///
+  /// A lista vem do `ActiveStoresManager` e não de uma chamada local: pedir
+  /// direto ao manager mantém uma única fonte para as lojas, e o resultado
+  /// chega aqui pelo listener que já existe. Buscar em paralelo porque as duas
+  /// são independentes — em série, o gesto duraria a soma das duas.
+  Future<void> _recarregar() async {
+    await Future.wait([
+      _loadInitialData(mostrarSpinner: false),
+      _activeStoresManager.load(),
+    ]);
   }
 
   /// Chamado quando o `ActiveStoresManager` (polling a cada 20s, compartilhado
@@ -165,9 +184,14 @@ class _SearchPageState extends State<SearchPage> {
 
   /// A API não oferece um endpoint de busca combinada (nome + categoria),
   /// então carregamos todas as lojas ativas uma vez e filtramos localmente.
-  Future<void> _loadInitialData() async {
+  ///
+  /// [mostrarSpinner] falso no "puxe para atualizar": lá o próprio gesto já é
+  /// o indicador de progresso, e ligar `_isLoading` trocaria a tela inteira
+  /// por um `CircularProgressIndicator` justamente enquanto a pessoa segura a
+  /// lista — o conteúdo sumiria debaixo do dedo.
+  Future<void> _loadInitialData({bool mostrarSpinner = true}) async {
     setState(() {
-      _isLoading = true;
+      if (mostrarSpinner) _isLoading = true;
       _errorMessage = null;
     });
 
@@ -204,19 +228,27 @@ class _SearchPageState extends State<SearchPage> {
 
     var lojasFiltradas = _allStores;
     if (categoryName != null) {
-      lojasFiltradas = lojasFiltradas.where((s) => s.categoriaNomes.contains(categoryName)).toList();
+      lojasFiltradas = lojasFiltradas
+          .where((s) => s.categoriaNomes.contains(categoryName))
+          .toList();
     }
     // `buscarLojas` (não um `contains` no nome): ignora acento, procura também
     // em categoria/cidade/endereço/descrição, tolera um erro de digitação em
     // termos longos e devolve já ordenado por relevância.
     lojasFiltradas = buscarLojas(lojasFiltradas, _searchQuery);
 
-    final emAlta = lojasFiltradas.where((s) => (s.avaliacao ?? 0) > 4.5).toList()
-      ..sort((a, b) => (b.avaliacao ?? 0).compareTo(a.avaliacao ?? 0));
+    final emAlta =
+        lojasFiltradas.where((s) => (s.avaliacao ?? 0) > 4.5).toList()
+          ..sort((a, b) => (b.avaliacao ?? 0).compareTo(a.avaliacao ?? 0));
 
     List<StoreDto> pertoDeVoce;
     if (_userLat != null && _userLng != null) {
-      double distancia(StoreDto s) => Geolocator.distanceBetween(_userLat!, _userLng!, s.latitude!, s.longitude!);
+      double distancia(StoreDto s) => Geolocator.distanceBetween(
+        _userLat!,
+        _userLng!,
+        s.latitude!,
+        s.longitude!,
+      );
       pertoDeVoce = lojasFiltradas.where((s) => s.temLocalizacao).toList()
         ..sort((a, b) => distancia(a).compareTo(distancia(b)));
     } else {
@@ -244,7 +276,8 @@ class _SearchPageState extends State<SearchPage> {
     // marcada e nenhuma busca ativa. É para cá que a tela volta quando a
     // categoria em foco é desmarcada. Com uma query digitada, sempre mostra a
     // lista vertical de resultados, mesmo sem categoria marcada.
-    final bool semRecorte = _categoriaSelecionada == null && _searchQuery.isEmpty;
+    final bool semRecorte =
+        _categoriaSelecionada == null && _searchQuery.isEmpty;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -258,7 +291,10 @@ class _SearchPageState extends State<SearchPage> {
               centerTitle: true,
               leading: IconButton(
                 onPressed: widget.onVoltar,
-                icon: const Icon(AppIcons.caretLeft, color: ColorsPalette.redComponents),
+                icon: const Icon(
+                  AppIcons.caretLeft,
+                  color: ColorsPalette.redComponents,
+                ),
               ),
               title: Text(
                 'Buscar',
@@ -269,98 +305,114 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SearchFieldWidget(
-                      controller: _searchController,
-                      onChanged: (val) {
-                        _debounce?.cancel();
-                        _debounce = Timer(const Duration(milliseconds: 500), () {
-                          setState(() => _categoriaSelecionada = null);
-                          _searchQuery = val;
-                          _applyFilters();
-                          if (val.trim().isNotEmpty) {
-                            _searchHistoryService.addQuery(val).then((_) => _loadSearchHistory());
-                          }
-                        });
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    CategoryFiltersWidget(
-                      filtros: _filtros,
-                      selecionada: _categoriaSelecionada,
-                      // `null` chega quando o toque desmarcou a categoria que
-                      // estava ativa — e a tela volta à visão de navegação.
-                      onFilterChanged: (nome) {
-                        // Idem: cancela um debounce de digitação pendente pra
-                        // ele não sobrescrever essa troca de categoria depois.
-                        _debounce?.cancel();
-                        setState(() {
-                          _categoriaSelecionada = nome;
-                          _searchController.clear();
-                          _searchQuery = '';
-                        });
-                        _applyFilters();
-                      },
-                    ),
-                    if (_searchQuery.isEmpty && _searchHistory.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.xl),
-                      SearchHistoryWidget(
-                        history: _searchHistory,
-                        onQueryTap: _onQueryFromHistory,
-                        onRemove: _removeHistoryQuery,
-                        onClear: _clearSearchHistory,
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.xl),
-                  ],
-                ),
-              ),
-            ),
-            if (_isLoading)
-              const SliverFillRemaining(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: ColorsPalette.redComponents,
-                  ),
-                ),
-              )
-            else if (_errorMessage != null)
-              SliverFillRemaining(
-                child: Center(
-                  child: EmptyState(
-                    icon: AppIcons.wifiSlash,
-                    title: 'Não foi possível carregar',
-                    description: _errorMessage!,
-                    actionLabel: 'Tentar novamente',
-                    onAction: () => _loadInitialData(),
-                    tone: EmptyStateTone.error,
-                  ),
-                ),
-              )
-            else if (semRecorte) ...[
+        child: AppRefresh(
+          // Recarrega categorias e lojas. A lista vem do
+          // `ActiveStoresManager`, que só busca a cada 20s — puxar encurta
+          // essa espera quando a pessoa quer ver agora quem acabou de abrir.
+          onRefresh: _recarregar,
+          child: CustomScrollView(
+            physics: AppRefresh.physics,
+            slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                  child: PertoDeVoceCarrosselWidget(items: _pertoDeVoceStores),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SearchFieldWidget(
+                        controller: _searchController,
+                        onChanged: (val) {
+                          _debounce?.cancel();
+                          _debounce = Timer(
+                            const Duration(milliseconds: 500),
+                            () {
+                              setState(() => _categoriaSelecionada = null);
+                              _searchQuery = val;
+                              _applyFilters();
+                              if (val.trim().isNotEmpty) {
+                                _searchHistoryService
+                                    .addQuery(val)
+                                    .then((_) => _loadSearchHistory());
+                              }
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      CategoryFiltersWidget(
+                        filtros: _filtros,
+                        selecionada: _categoriaSelecionada,
+                        // `null` chega quando o toque desmarcou a categoria que
+                        // estava ativa — e a tela volta à visão de navegação.
+                        onFilterChanged: (nome) {
+                          // Idem: cancela um debounce de digitação pendente pra
+                          // ele não sobrescrever essa troca de categoria depois.
+                          _debounce?.cancel();
+                          setState(() {
+                            _categoriaSelecionada = nome;
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                          _applyFilters();
+                        },
+                      ),
+                      if (_searchQuery.isEmpty &&
+                          _searchHistory.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.xl),
+                        SearchHistoryWidget(
+                          history: _searchHistory,
+                          onQueryTap: _onQueryFromHistory,
+                          onRemove: _removeHistoryQuery,
+                          onClear: _clearSearchHistory,
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
+                  ),
                 ),
               ),
-              const SliverToBoxAdapter(child: EmAltaSectionHeaderWidget()),
-              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
-              EmAltaListSliverWidget(lojas: _emAltaStores),
-              const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
-            ] else ...[
-              VerticalDestaqueSliverWidget(items: _filteredStores),
-              const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
+              if (_isLoading)
+                const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: ColorsPalette.redComponents,
+                    ),
+                  ),
+                )
+              else if (_errorMessage != null)
+                SliverFillRemaining(
+                  child: Center(
+                    child: EmptyState(
+                      icon: AppIcons.wifiSlash,
+                      title: 'Não foi possível carregar',
+                      description: _errorMessage!,
+                      actionLabel: 'Tentar novamente',
+                      onAction: () => _loadInitialData(),
+                      tone: EmptyStateTone.error,
+                    ),
+                  ),
+                )
+              else if (semRecorte) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                    child: PertoDeVoceCarrosselWidget(
+                      items: _pertoDeVoceStores,
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: EmAltaSectionHeaderWidget()),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: AppSpacing.md),
+                ),
+                EmAltaListSliverWidget(lojas: _emAltaStores),
+                const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
+              ] else ...[
+                VerticalDestaqueSliverWidget(items: _filteredStores),
+                const SliverToBoxAdapter(child: SizedBox(height: 120.0)),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
