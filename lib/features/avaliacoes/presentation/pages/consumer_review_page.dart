@@ -5,6 +5,7 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
@@ -35,9 +36,12 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
     _carregarAvaliacoes();
   }
 
-  Future<void> _carregarAvaliacoes() async {
+  /// [mostrarSpinner] falso no "puxe para atualizar": o gesto já é o
+  /// indicador, e ligar `_isLoading` trocaria a lista por um spinner de página
+  /// inteira debaixo do dedo de quem está puxando.
+  Future<void> _carregarAvaliacoes({bool mostrarSpinner = true}) async {
     setState(() {
-      _isLoading = true;
+      if (mostrarSpinner) _isLoading = true;
       _errorMessage = null;
     });
     try {
@@ -52,7 +56,8 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Não foi possível carregar suas avaliações. Tente novamente.';
+          _errorMessage =
+              'Não foi possível carregar suas avaliações. Tente novamente.';
         });
       }
     }
@@ -91,9 +96,10 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
         centerTitle: true,
         title: Text(
           "Minhas Avaliações",
-          style: AppText.subtitulo(
-            context,
-          ).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
+          style: AppText.subtitulo(context).copyWith(
+            fontWeight: FontWeight.w900,
+            color: context.mapColors.primaryText,
+          ),
         ),
         leading: IconButton(
           onPressed: () {
@@ -109,18 +115,26 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       body: SafeArea(
         child: _isLoading
             ? const Center(
-                child: CircularProgressIndicator(color: ColorsPalette.redComponents),
+                child: CircularProgressIndicator(
+                  color: ColorsPalette.redComponents,
+                ),
               )
-            : _errorMessage != null
-                ? _buildErro()
-                : _avaliacoes.isEmpty
-                    ? _buildVazio()
+            : AppRefresh(
+                onRefresh: () => _carregarAvaliacoes(mostrarSpinner: false),
+                child: _errorMessage != null
+                    ? AppRefresh.centralizado(_buildErro())
+                    : _avaliacoes.isEmpty
+                    ? AppRefresh.centralizado(_buildVazio())
                     : ListView.separated(
+                        physics: AppRefresh.physics,
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         itemCount: _avaliacoes.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-                        itemBuilder: (context, index) => _buildItem(_avaliacoes[index]),
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: AppSpacing.md),
+                        itemBuilder: (context, index) =>
+                            _buildItem(_avaliacoes[index]),
                       ),
+              ),
       ),
     );
   }
@@ -128,7 +142,9 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
   Widget _buildItem(AvaliacaoModel avaliacao) {
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
-      onTap: avaliacao.lojaId != null ? () => _abrirLoja(avaliacao.lojaId!) : null,
+      onTap: avaliacao.lojaId != null
+          ? () => _abrirLoja(avaliacao.lojaId!)
+          : null,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -136,7 +152,11 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: context.mapColors.border),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
           ],
         ),
         child: Row(
@@ -170,7 +190,10 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                     avaliacao.lojaNome ?? 'Loja removida',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText),
+                    style: AppText.corpo(context).copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: context.mapColors.primaryText,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -178,11 +201,14 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                       return Icon(
                         AppIcons.star,
                         size: 14,
-                        color: i < avaliacao.nota ? ColorsPalette.ratingStar : context.mapColors.border,
+                        color: i < avaliacao.nota
+                            ? ColorsPalette.ratingStar
+                            : context.mapColors.border,
                       );
                     }),
                   ),
-                  if (avaliacao.comentario != null && avaliacao.comentario!.isNotEmpty) ...[
+                  if (avaliacao.comentario != null &&
+                      avaliacao.comentario!.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
                       avaliacao.comentario!,
@@ -212,7 +238,8 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       child: EmptyState(
         icon: AppIcons.star,
         title: "Nenhuma avaliação ainda",
-        description: "As avaliações que você fizer nos comércios aparecerão aqui.",
+        description:
+            "As avaliações que você fizer nos comércios aparecerão aqui.",
       ),
     );
   }
