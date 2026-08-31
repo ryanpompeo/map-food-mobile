@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/widgets/app_network_image.dart';
+import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
@@ -97,7 +98,8 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
 
   /// O número a exibir: a lista carregada é a fonte mais confiável; até ela
   /// chegar, vale o que já se sabia.
-  int get _totalExibido => _isLoadingRatings ? _totalConhecido : _avaliacoes.length;
+  int get _totalExibido =>
+      _isLoadingRatings ? _totalConhecido : _avaliacoes.length;
 
   // Agregação de avaliação vinda do backend (Fase 4) — não é calculada no
   // cliente. Começa com o que já veio em `widget.store` (pode já estar
@@ -147,7 +149,9 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
       setState(() => _isLoadingRatings = true);
     }
     try {
-      final ratings = await _avaliacaoService.buscarAvaliacoesDaLoja(widget.store.id);
+      final ratings = await _avaliacaoService.buscarAvaliacoesDaLoja(
+        widget.store.id,
+      );
       if (!mounted) return;
       setState(() {
         _avaliacoes = ratings;
@@ -181,6 +185,12 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
     }
   }
 
+  /// Puxar para atualizar: as duas buscas da tela, em paralelo (são
+  /// independentes — em série o gesto duraria a soma das duas).
+  Future<void> _recarregar() async {
+    await Future.wait([_carregarAvaliacoes(), _carregarResumoLoja()]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = widget.store;
@@ -190,71 +200,79 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
       hasUnsavedChanges: _hasUnsavedReview,
       child: Scaffold(
         backgroundColor: colors.background,
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            StoreDetailHero(store: store),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.lg,
-                Spacing.lg,
-                Spacing.lg,
-                // Respiro de rodapé: a tela termina numa área de digitação
-                // (o comentário da avaliação), que precisa de espaço para
-                // subir acima do teclado.
-                Spacing.xxxl,
-              ),
-              sliver: SliverList.list(
-                children: [
-                  StoreStatsRow(store: store, media: _mediaAvaliacao, total: _totalExibido),
-                  const SizedBox(height: Spacing.base),
-                  StoreCategoryChips(store: store),
-                  const SizedBox(height: Spacing.lg),
-                  StoreActionsRow(store: store, userRole: _userRole),
-
-                  const SizedBox(height: Spacing.xxl),
-                  SectionHeader(title: 'Sobre o local'),
-                  const SizedBox(height: Spacing.base),
-                  Text(
-                    store.descricao?.trim().isNotEmpty == true
-                        ? store.descricao!
-                        : 'O vendedor ainda não adicionou uma descrição para este comércio.',
-                    style: AppText.body(context).copyWith(
-                      color: colors.textSecondary,
-                      height: 1.5,
+        body: AppRefresh(
+          // As avaliações e a nota média são o que muda nesta tela enquanto
+          // ela está aberta — outra pessoa pode ter avaliado agora.
+          onRefresh: _recarregar,
+          child: CustomScrollView(
+            physics: AppRefresh.physics,
+            slivers: [
+              StoreDetailHero(store: store),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.lg,
+                  Spacing.lg,
+                  Spacing.lg,
+                  // Respiro de rodapé: a tela termina numa área de digitação
+                  // (o comentário da avaliação), que precisa de espaço para
+                  // subir acima do teclado.
+                  Spacing.xxxl,
+                ),
+                sliver: SliverList.list(
+                  children: [
+                    StoreStatsRow(
+                      store: store,
+                      media: _mediaAvaliacao,
+                      total: _totalExibido,
                     ),
-                  ),
+                    const SizedBox(height: Spacing.base),
+                    StoreCategoryChips(store: store),
+                    const SizedBox(height: Spacing.lg),
+                    StoreActionsRow(store: store, userRole: _userRole),
 
-                  if (store.galeria.isNotEmpty) ...[
                     const SizedBox(height: Spacing.xxl),
-                    StoreGalleryStrip(store: store),
-                  ],
-
-                  const SizedBox(height: Spacing.xxl),
-                  StoreReviewsSection(
-                    avaliacoes: _avaliacoes,
-                    carregando: _isLoadingRatings,
-                    totalConhecido: _totalExibido,
-                    erro: _ratingsError,
-                    onRetry: _carregarAvaliacoes,
-                  ),
-
-                  // Visitante também vê o formulário, mas em modo vitrine:
-                  // qualquer toque abre a parede de login (ver
-                  // ConsumerReviewSection).
-                  if (_podeAvaliar) ...[
-                    const SizedBox(height: Spacing.xxl),
-                    ConsumerReviewSection(
-                      lojaId: store.id,
-                      userRole: _userRole,
-                      onReviewSubmitted: _carregarAvaliacoes,
-                      onUnsavedChanged: _onReviewUnsavedChanged,
+                    SectionHeader(title: 'Sobre o local'),
+                    const SizedBox(height: Spacing.base),
+                    Text(
+                      store.descricao?.trim().isNotEmpty == true
+                          ? store.descricao!
+                          : 'O vendedor ainda não adicionou uma descrição para este comércio.',
+                      style: AppText.body(
+                        context,
+                      ).copyWith(color: colors.textSecondary, height: 1.5),
                     ),
+
+                    if (store.galeria.isNotEmpty) ...[
+                      const SizedBox(height: Spacing.xxl),
+                      StoreGalleryStrip(store: store),
+                    ],
+
+                    const SizedBox(height: Spacing.xxl),
+                    StoreReviewsSection(
+                      avaliacoes: _avaliacoes,
+                      carregando: _isLoadingRatings,
+                      totalConhecido: _totalExibido,
+                      erro: _ratingsError,
+                      onRetry: _carregarAvaliacoes,
+                    ),
+
+                    // Visitante também vê o formulário, mas em modo vitrine:
+                    // qualquer toque abre a parede de login (ver
+                    // ConsumerReviewSection).
+                    if (_podeAvaliar) ...[
+                      const SizedBox(height: Spacing.xxl),
+                      ConsumerReviewSection(
+                        lojaId: store.id,
+                        userRole: _userRole,
+                        onReviewSubmitted: _carregarAvaliacoes,
+                        onUnsavedChanged: _onReviewUnsavedChanged,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

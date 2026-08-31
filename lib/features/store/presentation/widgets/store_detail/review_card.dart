@@ -4,6 +4,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_card.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/rating_stars.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 
@@ -57,7 +58,10 @@ class ReviewCard extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        _Avatar(nome: review.consumidor?.nome),
+                        _Avatar(
+                          nome: review.consumidor?.nome,
+                          imagemUrl: review.consumidor?.imagemUrl,
+                        ),
                         const SizedBox(width: Spacing.sm),
                         Expanded(
                           child: Text(
@@ -94,25 +98,59 @@ class ReviewCard extends StatelessWidget {
   }
 }
 
+/// Foto de quem avaliou, com a inicial do nome como fallback.
+///
+/// A inicial deixou de ser o único estado possível: a foto do consumidor vem
+/// no mesmo JSON da avaliação (ver `ConsumidorResumido.imagemUrl`) e agora é
+/// desenhada quando existe. O fallback continua valendo para quem nunca
+/// enviou foto, para a foto que falhou em carregar e para o histórico próprio,
+/// onde o autor é sempre quem lê.
 class _Avatar extends StatelessWidget {
   final String? nome;
+  final String? imagemUrl;
 
-  const _Avatar({required this.nome});
+  const _Avatar({required this.nome, this.imagemUrl});
+
+  static const double _raio = 16.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _raio * 2,
+      height: _raio * 2,
+      child: ClipOval(
+        child: AppNetworkImage(
+          path: imagemUrl,
+          // O nome do autor é lido pelo Text ao lado; anunciar a foto de novo
+          // repetiria a mesma informação no leitor de tela.
+          displayWidth: _raio * 2,
+          fallback: _Inicial(nome: nome),
+        ),
+      ),
+    );
+  }
+}
+
+class _Inicial extends StatelessWidget {
+  final String? nome;
+
+  const _Inicial({required this.nome});
 
   @override
   Widget build(BuildContext context) {
     final inicial = (nome != null && nome!.isNotEmpty) ? nome![0].toUpperCase() : '?';
 
-    return CircleAvatar(
-      radius: 16.0,
-      backgroundColor: MfColor.brand.withValues(alpha: 0.12),
-      child: Text(
-        inicial,
-        // brandContent e não brand puro: sobre o vermelho a 12% (que é quase
-        // a superfície do card) o vermelho cheio reprova em contraste no
-        // tema escuro.
-        style: AppText.bodyStrong(context).copyWith(
-          color: context.mapColors.brandContent,
+    return ColoredBox(
+      color: MfColor.brand.withValues(alpha: 0.12),
+      child: Center(
+        child: Text(
+          inicial,
+          // brandContent e não brand puro: sobre o vermelho a 12% (que é quase
+          // a superfície do card) o vermelho cheio reprova em contraste no
+          // tema escuro.
+          style: AppText.bodyStrong(context).copyWith(
+            color: context.mapColors.brandContent,
+          ),
         ),
       ),
     );
