@@ -10,6 +10,7 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/theme_mode_sheet.dart';
+import 'package:map_food/features/contato/presentation/pages/contato_page.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
@@ -192,6 +193,20 @@ class GuestProfilePage extends StatelessWidget {
                   Navigator.push(
                     context,
                     appPageRoute(builder: (_) => TermosPage()),
+                  );
+                },
+              ),
+              // Vale para o visitante também: `POST /contato` é público, e
+              // quem ainda não criou conta é justamente quem pode ter dúvida
+              // sobre a plataforma.
+              buildListTile(
+                context: context,
+                icon: AppIcons.envelope,
+                title: "Fale conosco",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    appPageRoute(builder: (_) => const ContatoPage()),
                   );
                 },
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/utils/text_scale.dart';
+import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/core/app_info.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
@@ -54,7 +55,6 @@ class ProfilePageScaffold extends StatefulWidget {
   /// Busca a sessão salva e devolve a imagemUrl do usuário (ou null).
   final Future<String?> Function() fetchImagemUrl;
 
-
   final List<ProfileMenuItem> minhaContaItems;
   final WidgetBuilder howItWorksPageBuilder;
 
@@ -99,6 +99,11 @@ class ProfilePageScaffold extends StatefulWidget {
   /// inclusive mostrando uma loja já desfavoritada.
   final Listenable? featuredRefreshListenable;
 
+  /// Recarga adicional no "puxe para atualizar", para o que só a página que
+  /// hospeda este scaffold conhece — a Atividade do consumidor, por exemplo.
+  /// A foto e a seção de destaque já são recarregadas aqui dentro.
+  final Future<void> Function()? onRefreshExtra;
+
   const ProfilePageScaffold({
     super.key,
     required this.userName,
@@ -119,6 +124,7 @@ class ProfilePageScaffold extends StatefulWidget {
     this.featuredEmptyActionLabel,
     this.onFeaturedEmptyAction,
     this.featuredRefreshListenable,
+    this.onRefreshExtra,
   });
 
   @override
@@ -161,56 +167,76 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
     }
   }
 
+  /// Puxar para atualizar: as duas buscas do perfil (foto e seção de
+  /// destaque). Serve aos dois papéis, porque este scaffold é o perfil do
+  /// consumidor **e** o do comerciante — a foto pode ter sido trocada em
+  /// outro cliente, e a seção de destaque (favoritos / lojas) muda por fora.
+  ///
+  /// Quem hospeda pode ter mais o que recarregar (a Atividade do consumidor,
+  /// por exemplo); esse extra fica com a página, via
+  /// [ProfilePageScaffold.onRefreshExtra].
+  Future<void> _recarregar() async {
+    await Future.wait([
+      _carregarFoto(),
+      _carregarFeatured(),
+      if (widget.onRefreshExtra != null) widget.onRefreshExtra!(),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.mapColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: Spacing.base),
-              _buildHeader(context),
-              // A fileira de cards de estatística saiu daqui: o perfil ficou
-              // restrito à conta, e os números do comerciante vivem na aba
-              // Estatísticas.
-              const SizedBox(height: Spacing.xl),
-              _buildFeaturedSection(context),
+        child: AppRefresh(
+          onRefresh: _recarregar,
+          child: SingleChildScrollView(
+            physics: AppRefresh.physics,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: Spacing.base),
+                _buildHeader(context),
+                // A fileira de cards de estatística saiu daqui: o perfil ficou
+                // restrito à conta, e os números do comerciante vivem na aba
+                // Estatísticas.
+                const SizedBox(height: Spacing.xl),
+                _buildFeaturedSection(context),
 
-              const SizedBox(height: Spacing.xl),
-              _buildMenuList(context),
+                const SizedBox(height: Spacing.xl),
+                _buildMenuList(context),
 
-              const SizedBox(height: Spacing.xl),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-                // Sair não é ação primária (ninguém abre o perfil para sair)
-                // nem destrutiva — é `secondary`. Antes cada papel pintava o
-                // botão de um jeito: preto sólido no consumidor, vermelho
-                // desbotado no comerciante, sem que a diferença significasse
-                // nada.
-                child: AppButton(
-                  label: 'Sair da conta',
-                  icon: AppIcons.signOut,
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () =>
-                      mostrarDialogoLogout(context, onLogoutExtra: widget.onLogoutExtra),
+                const SizedBox(height: Spacing.xl),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+                  // Sair não é ação primária (ninguém abre o perfil para sair)
+                  // nem destrutiva — é `secondary`. Antes cada papel pintava o
+                  // botão de um jeito: preto sólido no consumidor, vermelho
+                  // desbotado no comerciante, sem que a diferença significasse
+                  // nada.
+                  child: AppButton(
+                    label: 'Sair da conta',
+                    icon: AppIcons.signOut,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => mostrarDialogoLogout(
+                      context,
+                      onLogoutExtra: widget.onLogoutExtra,
+                    ),
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: Spacing.lg),
-              Center(
-                child: Text(
-                  'Versão $kAppVersion',
-                  style: AppText.caption(context),
+                const SizedBox(height: Spacing.lg),
+                Center(
+                  child: Text(
+                    'Versão $kAppVersion',
+                    style: AppText.caption(context),
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: Spacing.xxl),
-              const SizedBox(height: 100.0),
-            ],
+                const SizedBox(height: Spacing.xxl),
+                const SizedBox(height: 100.0),
+              ],
+            ),
           ),
         ),
       ),
@@ -273,7 +299,9 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                   widget.userEmail,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.secondary(context).copyWith(fontWeight: FontWeight.w500),
+                  style: AppText.secondary(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -290,9 +318,11 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
               listenable: ThemeController.instance,
               builder: (context, _) {
                 final mode = ThemeController.instance.value;
-                final isDark = mode == ThemeMode.dark ||
+                final isDark =
+                    mode == ThemeMode.dark ||
                     (mode == ThemeMode.system &&
-                        MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+                        MediaQuery.platformBrightnessOf(context) ==
+                            Brightness.dark);
                 return Container(
                   height: 44.0,
                   width: 44.0,
@@ -325,7 +355,9 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
             children: [
               Text(
                 widget.featuredSectionTitle,
-                style: AppText.h2(context).copyWith(fontSize: 18.0, fontWeight: FontWeight.w800),
+                style: AppText.h2(
+                  context,
+                ).copyWith(fontSize: 18.0, fontWeight: FontWeight.w800),
               ),
               if (widget.onVerTudoFeatured != null)
                 SemanticTapArea(
@@ -358,7 +390,9 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
       // com ele — um placeholder parado faria a página pular ao carregar.
       return SizedBox(
         height: escalaComTeto(context, 220.0),
-        child: const Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents)),
+        child: const Center(
+          child: CircularProgressIndicator(color: ColorsPalette.redComponents),
+        ),
       );
     }
     if (items.isEmpty) {
@@ -403,7 +437,12 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
         const MenuSectionLabel(label: "Minha Conta"),
         for (var i = 0; i < widget.minhaContaItems.length; i++) ...[
           if (i > 0)
-            Divider(color: context.mapColors.border, height: 1.0, indent: Spacing.lg, endIndent: Spacing.lg),
+            Divider(
+              color: context.mapColors.border,
+              height: 1.0,
+              indent: Spacing.lg,
+              endIndent: Spacing.lg,
+            ),
           MenuListTile(
             icon: widget.minhaContaItems[i].icon,
             title: widget.minhaContaItems[i].title,
@@ -433,5 +472,4 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
       ],
     );
   }
-
 }

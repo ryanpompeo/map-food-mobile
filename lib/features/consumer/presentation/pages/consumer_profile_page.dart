@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/utils/text_scale.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/app_info.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/session/session_store.dart';
@@ -30,6 +31,7 @@ import 'package:map_food/features/avaliacoes/presentation/pages/consumer_review_
 import 'package:map_food/features/consumer/data/services/consumer_service.dart';
 import 'package:map_food/features/consumer/presentation/controllers/activity_summary.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_edit_profile.dart';
+import 'package:map_food/features/contato/presentation/pages/contato_page.dart';
 import 'package:map_food/core/ui/widgets/delta_badge.dart';
 import 'package:map_food/features/consumer/presentation/widgets/activity_chart.dart';
 import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
@@ -117,8 +119,17 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
   /// Toda vez que a aba volta a ser exibida, os números são buscados de novo —
   /// é o que faz uma avaliação recém-enviada aparecer no gráfico sem exigir
   /// que o app seja reiniciado.
+  ///
+  /// Os favoritos entram na mesma releitura porque esta página os **exibe**
+  /// (a seção de destaque) e não é a única a editá-los: favoritar pela web
+  /// altera o mesmo conjunto no servidor. Como esta aba vive num
+  /// `IndexedStack` e nunca é recriada, sem isto a seção continuaria mostrando
+  /// o que foi carregado no login — inclusive uma loja já desfavoritada em
+  /// outro cliente.
   void _aoMudarVisibilidade() {
-    if (widget.visivel?.value ?? false) _carregarAtividade();
+    if (!(widget.visivel?.value ?? false)) return;
+    _carregarAtividade();
+    unawaited(FavoritesManager.instance.load());
   }
 
   Future<void> _carregarFoto() async {
@@ -196,29 +207,43 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     widget.onProfileUpdated?.call();
   }
 
+  /// Puxar para atualizar: as três origens de dado do perfil — foto, atividade
+  /// e favoritos —, em paralelo. Vale para qualquer aba selecionada: quem
+  /// puxa não está pensando em qual aba está aberta, e as três são baratas.
+  Future<void> _recarregar() async {
+    await Future.wait([
+      _carregarFoto(),
+      _carregarAtividade(),
+      FavoritesManager.instance.load(),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.mapColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: Spacing.base),
-              _buildHeader(context),
-              const SizedBox(height: Spacing.lg),
-              _buildTabs(context),
-              const SizedBox(height: Spacing.lg),
-              switch (_abaSelecionada) {
-                0 => _buildAbaAtividade(context),
-                1 => _buildAbaFavoritos(context),
-                _ => _buildAbaConta(context),
-              },
-              // Respiro pra bottom bar flutuante da ConsumerHomePage.
-              const SizedBox(height: 120.0),
-            ],
+        child: AppRefresh(
+          onRefresh: _recarregar,
+          child: SingleChildScrollView(
+            physics: AppRefresh.physics,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: Spacing.base),
+                _buildHeader(context),
+                const SizedBox(height: Spacing.lg),
+                _buildTabs(context),
+                const SizedBox(height: Spacing.lg),
+                switch (_abaSelecionada) {
+                  0 => _buildAbaAtividade(context),
+                  1 => _buildAbaFavoritos(context),
+                  _ => _buildAbaConta(context),
+                },
+                // Respiro pra bottom bar flutuante da ConsumerHomePage.
+                const SizedBox(height: 120.0),
+              ],
+            ),
           ),
         ),
       ),
@@ -788,6 +813,16 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
                 howItWorksPageBuilder: (_) => const HowItWorksPage(),
               ),
             ),
+          ),
+        ),
+        Divider(color: context.mapColors.border, height: 1.0, indent: Spacing.lg, endIndent: Spacing.lg),
+        MenuListTile(
+          icon: AppIcons.envelope,
+          title: "Fale conosco",
+          subtitle: "Envie dúvidas ou sugestões para a equipe",
+          onTap: () => Navigator.push(
+            context,
+            appPageRoute(builder: (_) => const ContatoPage()),
           ),
         ),
         const SizedBox(height: Spacing.xl),
