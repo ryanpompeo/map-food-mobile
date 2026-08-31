@@ -46,6 +46,12 @@ void _apiRespondendo({int statusCode = 200, String body = '[]'}) {
 
 void main() {
   setUp(() {
+    // O manager se registra como `WidgetsBindingObserver` na construção (para
+    // reler os favoritos quando o app volta do segundo plano), e o singleton é
+    // construído na primeira referência a `.instance` — que acontece aqui
+    // dentro. Sem o binding, essa construção estoura. Mesmo motivo do
+    // `active_stores_manager_test`.
+    TestWidgetsFlutterBinding.ensureInitialized();
     FavoritesManager.instance.clear();
   });
 
