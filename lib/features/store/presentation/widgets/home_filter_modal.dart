@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/category_colors.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 
 // km; null representa "Todos" (sem filtro de distância).
@@ -13,11 +14,22 @@ const List<double?> _raiosKm = [1.0, 5.0, 10.0, 20.0, null];
 
 String _labelRaio(double? km) => km == null ? 'Todos' : '${km.toInt()} km';
 
+/// Quantas categorias podem ficar marcadas ao mesmo tempo.
+///
+/// O teto existe porque o filtro é um recorte: marcar tudo é o mesmo que não
+/// marcar nada, e a faixa de chips sobre o mapa não comporta um resumo de
+/// muitos itens. Três é o que ainda cabe no rótulo do botão e continua sendo
+/// uma escolha.
+const int maxCategoriasFiltro = 3;
+
 class HomeFilterResult {
-  final String categoria;
+  /// Categorias marcadas. Vazio é "todas" — o estado sem recorte, que antes
+  /// era o valor sentinela `'Todos'` numa `String` única.
+  final Set<String> categorias;
+
   final double? raioKm;
 
-  const HomeFilterResult({required this.categoria, required this.raioKm});
+  const HomeFilterResult({required this.categorias, required this.raioKm});
 }
 
 /// Modal de categoria + distância da aba "Início" (guest/consumidor/comerciante).
@@ -26,7 +38,7 @@ class HomeFilterResult {
 Future<HomeFilterResult?> showHomeFilterModal(
   BuildContext context, {
   required List<CategoriaModel> categorias,
-  required String categoriaAtiva,
+  required Set<String> categoriasAtivas,
   required double? raioAtivo,
 }) {
   return showModalBottomSheet<HomeFilterResult>(
@@ -35,7 +47,7 @@ Future<HomeFilterResult?> showHomeFilterModal(
     backgroundColor: Colors.transparent,
     builder: (context) => _HomeFilterModalContent(
       categorias: categorias,
-      categoriaInicial: categoriaAtiva,
+      categoriasIniciais: categoriasAtivas,
       raioInicial: raioAtivo,
     ),
   );
@@ -43,12 +55,12 @@ Future<HomeFilterResult?> showHomeFilterModal(
 
 class _HomeFilterModalContent extends StatefulWidget {
   final List<CategoriaModel> categorias;
-  final String categoriaInicial;
+  final Set<String> categoriasIniciais;
   final double? raioInicial;
 
   const _HomeFilterModalContent({
     required this.categorias,
-    required this.categoriaInicial,
+    required this.categoriasIniciais,
     required this.raioInicial,
   });
 
@@ -57,10 +69,39 @@ class _HomeFilterModalContent extends StatefulWidget {
 }
 
 class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
-  late String _categoria = widget.categoriaInicial;
+  /// Cópia do conjunto recebido: o modal é um rascunho até "Aplicar filtros",
+  /// e mutar o conjunto do chamador aplicaria cada toque na hora — inclusive
+  /// se o usuário fechasse o sheet arrastando, que é justamente o gesto de
+  /// desistir.
+  late final Set<String> _categorias = {...widget.categoriasIniciais};
+
   late double? _raio = widget.raioInicial;
 
   List<String> get _categoriasOpcoes => ['Todos', ...widget.categorias.map((c) => c.nome)];
+
+  /// Marca/desmarca uma categoria. "Todos" não alterna: ele **limpa**, porque
+  /// não é uma opção ao lado das outras e sim a ausência de recorte.
+  void _alternar(String categoria) {
+    if (categoria == 'Todos') {
+      setState(_categorias.clear);
+      return;
+    }
+    if (_categorias.contains(categoria)) {
+      setState(() => _categorias.remove(categoria));
+      return;
+    }
+    if (_categorias.length >= maxCategoriasFiltro) {
+      // Aviso, não erro: a escolha anterior continua válida e nada falhou —
+      // só existe um teto. Pintar isso de vermelho trataria um limite de
+      // produto como defeito.
+      AppToast.warning(
+        context,
+        'Você pode combinar até $maxCategoriasFiltro categorias.',
+      );
+      return;
+    }
+    setState(() => _categorias.add(categoria));
+  }
 
   Widget _buildChip({
     required String label,
@@ -114,7 +155,25 @@ class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
             ),
             Text('Filtrar', style: AppText.titulo(context).copyWith(fontSize: 20.0)),
             const SizedBox(height: AppSpacing.lg),
-            Text('Categoria', style: AppText.corpo(context).copyWith(fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Categoria', style: AppText.corpo(context).copyWith(fontWeight: FontWeight.bold)),
+                ),
+                // O teto precisa ser visível **antes** de ser atingido: só
+                // avisar no toque da quarta categoria faz o limite parecer um
+                // erro do app em vez de uma regra conhecida.
+                Text(
+                  '${_categorias.length}/$maxCategoriasFiltro',
+                  style: AppText.legenda(context).copyWith(
+                    color: _categorias.length >= maxCategoriasFiltro
+                        ? ColorsPalette.redComponents
+                        : context.mapColors.secondaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: AppSpacing.sm),
             Wrap(
               spacing: 10.0,
@@ -128,10 +187,12 @@ class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
                 final isTodos = cat == 'Todos';
                 return _buildChip(
                   label: cat,
-                  selecionado: _categoria == cat,
+                  // "Todos" acende quando nenhuma categoria está marcada — é a
+                  // representação do conjunto vazio, não um item do conjunto.
+                  selecionado: isTodos ? _categorias.isEmpty : _categorias.contains(cat),
                   corAtiva: isTodos ? (isDark ? Colors.white : ColorsPalette.black) : corParaCategoria(cat),
                   corTextoSelecionado: isTodos && isDark ? Colors.black : Colors.white,
-                  onTap: () => setState(() => _categoria = cat),
+                  onTap: () => _alternar(cat),
                 );
               }).toList(),
             ),
@@ -155,7 +216,7 @@ class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
               label: 'Aplicar filtros',
               onPressed: () => Navigator.pop(
                 context,
-                HomeFilterResult(categoria: _categoria, raioKm: _raio),
+                HomeFilterResult(categorias: _categorias, raioKm: _raio),
               ),
             ),
           ],

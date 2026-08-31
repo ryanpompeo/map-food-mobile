@@ -11,6 +11,7 @@ import 'package:map_food/core/ui/widgets/photo_hero_card.dart';
 import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
+import 'package:map_food/features/store/presentation/widgets/home_section_title.dart';
 
 /// Carrossel "Perto de você" — lojas ordenadas por distância até o usuário.
 class PertoDeVoceCarrosselWidget extends StatefulWidget {
@@ -39,9 +40,11 @@ class _PertoDeVoceCarrosselWidgetState extends State<PertoDeVoceCarrosselWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Text("Perto de você", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText)),
+        // Mesma seta da rota usada no mapa e no detalhe da loja: aqui ela diz
+        // "isto é medido a partir de onde você está".
+        const HomeSectionTitle(
+          icon: AppIcons.navigationArrow,
+          title: 'Perto de você',
         ),
         const SizedBox(height: AppSpacing.md),
         SizedBox(

@@ -9,6 +9,7 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/utils/text_scale.dart';
 import 'package:map_food/core/ui/widgets/app_bottom_bar.dart';
 import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -46,7 +47,17 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
   final _mapController = StoreMapController();
 
   List<CategoriaModel> _categorias = [];
-  String _categoriaAtiva = 'Todos';
+
+  /// Categorias em foco, no máximo [maxCategoriasFiltro]. Conjunto **vazio** é
+  /// "todas" — o estado sem recorte, que antes era o valor sentinela `'Todos'`
+  /// numa `String` única.
+  ///
+  /// Com mais de uma marcada o critério é OR: aparece a loja que tenha
+  /// **qualquer** das categorias. AND devolveria lista vazia quase sempre —
+  /// a maioria das lojas tem uma ou duas categorias, então exigir as três
+  /// marcadas ao mesmo tempo esvaziaria o mapa.
+  final Set<String> _categoriasAtivas = {};
+
   double? _raioKm = 5.0;
 
   LatLng? _posicaoUsuario;
@@ -77,15 +88,40 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     final resultado = await showHomeFilterModal(
       context,
       categorias: _categorias,
-      categoriaAtiva: _categoriaAtiva,
+      categoriasAtivas: _categoriasAtivas,
       raioAtivo: _raioKm,
     );
     if (resultado != null && mounted) {
       setState(() {
-        _categoriaAtiva = resultado.categoria;
+        _categoriasAtivas
+          ..clear()
+          ..addAll(resultado.categorias);
         _raioKm = resultado.raioKm;
       });
     }
+  }
+
+  /// Marca/desmarca uma categoria pela faixa de chips sobre o mapa — mesma
+  /// regra do modal, incluindo o teto: os dois controles editam o **mesmo**
+  /// conjunto, e um que aceitasse a quarta categoria tornaria o limite do
+  /// outro uma formalidade.
+  void _alternarCategoria(String nome) {
+    if (nome == 'Todos') {
+      setState(_categoriasAtivas.clear);
+      return;
+    }
+    if (_categoriasAtivas.contains(nome)) {
+      setState(() => _categoriasAtivas.remove(nome));
+      return;
+    }
+    if (_categoriasAtivas.length >= maxCategoriasFiltro) {
+      AppToast.warning(
+        context,
+        'Você pode combinar até $maxCategoriasFiltro categorias.',
+      );
+      return;
+    }
+    setState(() => _categoriasAtivas.add(nome));
   }
 
   /// Só a posição do usuário interessa aqui — é o que o botão de recentralizar
@@ -174,10 +210,12 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
         // manager. Calculado lá fora, o valor ficava preso na closure da
         // primeira montagem (quase sempre vazia) e o mapa só saía do vazio de
         // carona num setState de outra origem — com GPS negado, nunca.
-        final lojas = _categoriaAtiva == 'Todos'
+        // OR entre as categorias marcadas: basta a loja ter uma delas. Sem
+        // nenhuma marcada não há recorte — o mapa mostra tudo.
+        final lojas = _categoriasAtivas.isEmpty
             ? manager.stores
             : manager.stores
-                .where((l) => l.categoriaNomes.contains(_categoriaAtiva))
+                .where((l) => l.categoriaNomes.any(_categoriasAtivas.contains))
                 .toList();
 
         return NearbyStoresSection(
@@ -236,13 +274,50 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
           ),
           SemanticTapArea(
             label: 'Filtros',
-            hint: 'Escolhe categoria e distância',
+            hint: _categoriasAtivas.isEmpty
+                ? 'Escolhe categoria e distância'
+                // O leitor de tela não vê o selo de contagem: sem isto, o
+                // botão seria anunciado igual com e sem filtro aplicado.
+                : '${_categoriasAtivas.length} de $maxCategoriasFiltro categorias selecionadas',
             onTap: _abrirFiltros,
-            child: Container(
-              height: 44.0,
-              width: 44.0,
-              decoration: const BoxDecoration(color: MfColor.brand, shape: BoxShape.circle),
-              child: const Icon(AppIcons.slidersHorizontal, color: ColorsPalette.white, size: AppIconSize.md),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 44.0,
+                  width: 44.0,
+                  decoration: const BoxDecoration(color: MfColor.brand, shape: BoxShape.circle),
+                  child: const Icon(AppIcons.slidersHorizontal, color: ColorsPalette.white, size: AppIconSize.md),
+                ),
+                // Quantas categorias estão recortando o mapa. Com a tira
+                // horizontal rolável, as marcadas podem estar todas fora da
+                // vista — sem este selo, um mapa filtrado é indistinguível de
+                // um mapa vazio.
+                if (_categoriasAtivas.isNotEmpty)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      height: 18.0,
+                      width: 18.0,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: context.mapColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: MfColor.brand, width: 1.5),
+                      ),
+                      child: Text(
+                        '${_categoriasAtivas.length}',
+                        style: AppText.legenda(context).copyWith(
+                          fontSize: 10.0,
+                          height: 1.0,
+                          fontWeight: FontWeight.w800,
+                          color: context.mapColors.brandContent,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -288,8 +363,12 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
             // como sujeira entre um chip e outro, não como profundidade.
             return AppChoiceChip(
               label: nome,
-              selected: nome == _categoriaAtiva,
-              onTap: () => setState(() => _categoriaAtiva = nome),
+              // "Todos" acende quando nada está marcado — ele representa o
+              // conjunto vazio, não é um item dele.
+              selected: nome == 'Todos'
+                  ? _categoriasAtivas.isEmpty
+                  : _categoriasAtivas.contains(nome),
+              onTap: () => _alternarCategoria(nome),
             );
           },
         ),

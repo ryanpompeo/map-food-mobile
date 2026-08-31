@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/features/store/presentation/widgets/home_section_title.dart';
 import 'package:map_food/features/store/presentation/widgets/store_list_widgets.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
@@ -12,10 +14,9 @@ class EmAltaSectionHeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-      child: Text("Em Alta", style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: context.mapColors.primaryText)),
-    );
+    // Chama para o que a seção é (as lojas mais bem avaliadas), não para o que
+    // ela faz — daí a fogueira, e não um gráfico de linha.
+    return const HomeSectionTitle(icon: AppIcons.fire, title: 'Em Alta');
   }
 }
 
