@@ -6,14 +6,20 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-enum _AppToastType { success, error, info }
+enum _AppToastType { success, error, warning, info }
 
 /// Alerta de sucesso/erro em pop-up no canto superior direito que some
 /// sozinho depois de alguns segundos — infra única de notificação do app,
 /// substituindo os SnackBars/AlertDialogs que antes ficavam espalhados
 /// (e cada um decidia sua própria posição/duração/estilo).
+///
+/// O corpo do toast é **preenchido** com a cor semântica: verde, vermelho,
+/// amarelo ou azul de ponta a ponta. A versão anterior usava a superfície de
+/// card com a cor só na borda a 25% de opacidade e no ícone — o que fazia os
+/// quatro estados parecerem o mesmo aviso de longe, que é justamente quando o
+/// toast é lido (ele some em 3s, no canto da tela, enquanto a pessoa olha para
+/// outra coisa).
 class AppToast {
   static OverlayEntry? _current;
   static VoidCallback? _removeCurrent;
@@ -24,6 +30,13 @@ class AppToast {
 
   static void error(BuildContext context, String message) {
     _show(context, message, _AppToastType.error);
+  }
+
+  /// Atenção: a ação foi adiante, mas com ressalva — ou está prestes a ir e
+  /// convém saber de algo antes (limite atingido, dado faltando, permissão
+  /// negada que degrada a tela sem quebrá-la). Fica entre [info] e [error].
+  static void warning(BuildContext context, String message) {
+    _show(context, message, _AppToastType.warning);
   }
 
   /// Aviso neutro: nada deu errado, só não há o que fazer ainda (recurso em
@@ -125,10 +138,16 @@ class _AppToastWidgetState extends State<_AppToastWidget>
 
   @override
   Widget build(BuildContext context) {
-    final (accentColor, icon) = switch (widget.type) {
-      _AppToastType.success => (const Color(0xFF16A34A), AppIcons.checkCircle),
-      _AppToastType.error => (ColorsPalette.redComponents, AppIcons.warningCircle),
-      _AppToastType.info => (context.mapColors.brandContent, AppIcons.info),
+    // Fundo na cor semântica + o conteúdo que passa em contraste sobre ele.
+    // O par vem junto de propósito: separar "cor do fundo" de "cor do texto"
+    // em dois switches é como se perde a garantia de contraste na primeira
+    // vez que alguém acrescenta um tipo novo.
+    final (fundo, conteudo, icon) = switch (widget.type) {
+      _AppToastType.success => (MfColor.successFill, ColorsPalette.white, AppIcons.checkCircle),
+      _AppToastType.error => (MfColor.dangerFill, ColorsPalette.white, AppIcons.warningCircle),
+      // O único com texto escuro — ver `MfColor.warningFill`.
+      _AppToastType.warning => (MfColor.warningFill, MfColor.ink, AppIcons.warning),
+      _AppToastType.info => (MfColor.infoFill, ColorsPalette.white, AppIcons.info),
     };
 
     return Positioned(
@@ -158,12 +177,13 @@ class _AppToastWidgetState extends State<_AppToastWidget>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 14.0),
                       decoration: BoxDecoration(
-                        color: context.mapColors.cardSurface,
+                        color: fundo,
                         borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(color: accentColor.withValues(alpha: 0.25)),
+                        // Sem borda: com o corpo inteiro preenchido, ela só
+                        // acrescentaria um contorno de outra cor sobre a cor.
                         boxShadow: [
                           BoxShadow(
-                            color: ColorsPalette.black.withValues(alpha: 0.14),
+                            color: ColorsPalette.black.withValues(alpha: 0.20),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -172,14 +192,14 @@ class _AppToastWidgetState extends State<_AppToastWidget>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(icon, color: accentColor, size: AppIconSize.md),
+                          Icon(icon, color: conteudo, size: AppIconSize.md),
                           const SizedBox(width: AppSpacing.sm),
                           Flexible(
                             child: Text(
                               widget.message,
                               style: AppText.corpo(context).copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: context.mapColors.primaryText,
+                                color: conteudo,
                               ),
                             ),
                           ),
