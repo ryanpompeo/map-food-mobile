@@ -4,6 +4,7 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_card.dart';
+import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/rating_stars.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
@@ -203,14 +204,28 @@ class _CardAvaliacao extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 16,
-                // Um degrau acima do `surfaceAlt` do card que envolve este
-                // avatar — superfície aninhada precisa se destacar do pai.
-                backgroundColor: colors.surface,
-                child: Text(
-                  nome.isNotEmpty ? nome[0].toUpperCase() : '?',
-                  style: AppText.bodyStrong(context),
+              // Foto de quem avaliou, com a inicial do nome como fallback —
+              // mesmo tratamento do card de avaliação do lado do consumidor.
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: ClipOval(
+                  child: AppNetworkImage(
+                    path: avaliacao.consumidor?.imagemUrl,
+                    displayWidth: 32,
+                    fallback: ColoredBox(
+                      // Um degrau acima do `surfaceAlt` do card que envolve
+                      // este avatar — superfície aninhada precisa se destacar
+                      // do pai.
+                      color: colors.surface,
+                      child: Center(
+                        child: Text(
+                          nome.isNotEmpty ? nome[0].toUpperCase() : '?',
+                          style: AppText.bodyStrong(context),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: Spacing.md),

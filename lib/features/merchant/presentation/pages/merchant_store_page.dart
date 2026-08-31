@@ -6,6 +6,8 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_bottom_bar.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/core/ui/widgets/app_card.dart';
+import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
@@ -90,6 +92,9 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
     }
   }
 
+  /// Troca de loja pelo switcher: zera o que está na tela antes de buscar,
+  /// porque o conteúdo atual é de **outra** loja e continuaria visível,
+  /// atribuído à loja errada, durante a busca.
   void _recarregarDaLoja() {
     setState(() {
       _avaliacoes = [];
@@ -100,9 +105,18 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
     _carregarMedia();
   }
 
+  /// Puxar para atualizar: refaz as buscas da **mesma** loja, e por isso não
+  /// zera nada — o que está na tela continua correto até o dado novo chegar.
+  /// Em paralelo, já que uma não depende da outra.
+  Future<void> _recarregar() async {
+    await Future.wait([_carregarAvaliacoes(), _carregarMedia()]);
+  }
+
   Future<void> _carregarAvaliacoes() async {
     try {
-      final avaliacoes = await _avaliacaoService.buscarAvaliacoesDaLoja(_store.id);
+      final avaliacoes = await _avaliacaoService.buscarAvaliacoesDaLoja(
+        _store.id,
+      );
       if (mounted) setState(() => _avaliacoes = avaliacoes);
     } catch (_) {
       // Lista vazia com o aviso da própria seção — não derruba o painel.
@@ -173,47 +187,58 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
           ],
         ),
       ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.zero,
-        children: [
-          if (widget.storeSwitcher != null) ...[
-            widget.storeSwitcher!,
-            const SizedBox(height: Spacing.base),
-          ],
+      // As camadas são separadas por **respiro**, não por linha: quatro
+      // `Divider` de ponta a ponta numa tela de sete blocos fatiavam o painel
+      // em faixas de mesmo peso, e o que se lia era a grade, não a hierarquia.
+      // A única linha que sobra é a que antecede a camada rara — ali ela marca
+      // uma quebra de natureza (consulta → ação destrutiva), não um respiro.
+      body: AppRefresh(
+        // As avaliações e a nota média chegam de fora: é o cliente que avalia,
+        // não o lojista. Puxar é o gesto de "chegou alguma nota nova?".
+        onRefresh: _recarregar,
+        child: ListView(
+          physics: AppRefresh.physics,
+          padding: EdgeInsets.zero,
+          children: [
+            if (widget.storeSwitcher != null) ...[
+              widget.storeSwitcher!,
+              const SizedBox(height: Spacing.base),
+            ],
 
-          // ── imediata ──
-          StoreOperationSection(store: _store, onStoreUpdated: _onOperacaoAtualizou),
-
-          const SizedBox(height: Spacing.xxl),
-          Divider(color: colors.divider, height: 1),
-          const SizedBox(height: Spacing.xl),
-
-          // ── diária ──
-          _PerfilPublico(store: _store, onEditar: _abrirEdicao),
-
-          const SizedBox(height: Spacing.xl),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-            child: StoreReviewsSection(
-              avaliacoes: _avaliacoes,
-              carregando: _carregandoAvaliacoes,
-              media: _mediaAvaliacao,
+            // ── imediata ──
+            StoreOperationSection(
+              store: _store,
+              onStoreUpdated: _onOperacaoAtualizou,
             ),
-          ),
 
-          // ── rara ──
-          const SizedBox(height: Spacing.xl),
-          Divider(color: colors.divider, height: 1),
-          MenuListTile(
-            icon: AppIcons.gearSix,
-            title: 'Configurações avançadas',
-            subtitle: 'Inativar ou excluir a loja e situação do cadastro',
-            onTap: _abrirAvancado,
-          ),
+            const SizedBox(height: Spacing.xxl),
 
-          SizedBox(height: AppBottomBar.spaceFor(context) + Spacing.base),
-        ],
+            // ── diária ──
+            _PerfilPublico(store: _store, onEditar: _abrirEdicao),
+
+            const SizedBox(height: Spacing.xxl),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+              child: StoreReviewsSection(
+                avaliacoes: _avaliacoes,
+                carregando: _carregandoAvaliacoes,
+                media: _mediaAvaliacao,
+              ),
+            ),
+
+            // ── rara ──
+            const SizedBox(height: Spacing.xxl),
+            Divider(color: colors.divider, height: 1),
+            MenuListTile(
+              icon: AppIcons.gearSix,
+              title: 'Configurações avançadas',
+              subtitle: 'Inativar ou excluir a loja e situação do cadastro',
+              onTap: _abrirAvancado,
+            ),
+
+            SizedBox(height: AppBottomBar.spaceFor(context) + Spacing.base),
+          ],
+        ),
       ),
     );
   }
@@ -240,7 +265,10 @@ class _PerfilPublico extends StatelessWidget {
   String? get _enderecoFormatado {
     final partes = [
       store.endereco,
-      [store.cidade, store.estado].where((p) => p?.isNotEmpty == true).join(' - '),
+      [
+        store.cidade,
+        store.estado,
+      ].where((p) => p?.isNotEmpty == true).join(' - '),
       store.cep,
     ].where((p) => p != null && p.trim().isNotEmpty).toList();
     return partes.isEmpty ? null : partes.join('\n');
@@ -280,25 +308,66 @@ class _PerfilPublico extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: Spacing.lg),
-          _LinhaInfo(icone: AppIcons.storefront, rotulo: 'Nome', valor: store.nome),
-          _LinhaInfo(
-            icone: AppIcons.textAlignLeft,
-            rotulo: 'Descrição',
-            valor: store.descricao,
-          ),
-          _LinhaInfo(
-            icone: AppIcons.mapPinLine,
-            rotulo: 'Endereço',
-            valor: _enderecoFormatado,
-          ),
-          _LinhaInfo(
-            icone: AppIcons.forkKnife,
-            rotulo: 'Categorias',
-            valor: store.categoriaNomes.isEmpty ? null : store.categoriaNomes.join(', '),
+          const SizedBox(height: Spacing.base),
+
+          // Um bloco só, com as linhas separadas por divisores internos.
+          // Soltas sobre o fundo da página, com 16 de respiro entre uma e
+          // outra, as quatro liam como campos de um formulário desabilitado —
+          // que é exatamente o que esta tela deixou de ser. Superfície `flat`:
+          // o painel inteiro já rola, e um card com sombra aqui viraria um
+          // objeto solto no meio da página.
+          AppCard(
+            elevation: AppCardElevation.flat,
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _LinhaInfo(
+                  icone: AppIcons.storefront,
+                  rotulo: 'Nome',
+                  valor: store.nome,
+                ),
+                const _SeparadorInterno(),
+                _LinhaInfo(
+                  icone: AppIcons.textAlignLeft,
+                  rotulo: 'Descrição',
+                  valor: store.descricao,
+                ),
+                const _SeparadorInterno(),
+                _LinhaInfo(
+                  icone: AppIcons.mapPinLine,
+                  rotulo: 'Endereço',
+                  valor: _enderecoFormatado,
+                ),
+                const _SeparadorInterno(),
+                _LinhaInfo(
+                  icone: AppIcons.forkKnife,
+                  rotulo: 'Categorias',
+                  valor: store.categoriaNomes.isEmpty
+                      ? null
+                      : store.categoriaNomes.join(', '),
+                ),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Divisor entre duas linhas do bloco de consulta. Recuado à esquerda até onde
+/// o texto começa — encostado na borda ele cortaria a coluna de ícones ao
+/// meio, e é a coluna que amarra as linhas como um bloco só.
+class _SeparadorInterno extends StatelessWidget {
+  const _SeparadorInterno();
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      indent: Spacing.base + AppIconSize.md + Spacing.md,
+      color: context.mapColors.divider,
     );
   }
 }
@@ -307,12 +376,20 @@ class _PerfilPublico extends StatelessWidget {
 ///
 /// Valor ausente vira "Não informado" em tom terciário em vez de espaço em
 /// branco — vazio silencioso lê como falha de carregamento.
+///
+/// O respiro é padding **interno** (o card que a hospeda tem padding zero):
+/// assim os divisores entre as linhas caem no meio do espaço, e não colados na
+/// linha de cima.
 class _LinhaInfo extends StatelessWidget {
   final IconData icone;
   final String rotulo;
   final String? valor;
 
-  const _LinhaInfo({required this.icone, required this.rotulo, required this.valor});
+  const _LinhaInfo({
+    required this.icone,
+    required this.rotulo,
+    required this.valor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -320,13 +397,17 @@ class _LinhaInfo extends StatelessWidget {
     final vazio = valor == null || valor!.trim().isEmpty;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: Spacing.base),
+      padding: const EdgeInsets.all(Spacing.base),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Icon(icone, size: AppIconSize.md, color: colors.textTertiary),
+            child: Icon(
+              icone,
+              size: AppIconSize.md,
+              color: colors.textTertiary,
+            ),
           ),
           const SizedBox(width: Spacing.md),
           Expanded(
