@@ -52,11 +52,25 @@ class ConsumidorResumido {
   final int id;
   final String nome;
 
-  const ConsumidorResumido({required this.id, required this.nome});
+  /// Foto de perfil de quem avaliou, como path cru da API
+  /// (`/uploads/consumidores/x.jpg`). `null` em quem nunca enviou uma.
+  ///
+  /// O campo **sempre** veio no JSON de `/avaliacoes/loja/{id}` (o endpoint
+  /// devolve a entidade `Avaliacao` inteira, e `Consumidor` tem `imagemUrl`) —
+  /// era este parser que o descartava, e por isso a lista de avaliações do app
+  /// só sabia desenhar a inicial do nome. A web já lia o mesmo campo.
+  final String? imagemUrl;
+
+  const ConsumidorResumido({
+    required this.id,
+    required this.nome,
+    this.imagemUrl,
+  });
 
   factory ConsumidorResumido.fromJson(Map<String, dynamic> json) =>
       ConsumidorResumido(
         id: (json['id'] as num).toInt(),
         nome: json['nome']?.toString() ?? '',
+        imagemUrl: json['imagemUrl']?.toString(),
       );
 }

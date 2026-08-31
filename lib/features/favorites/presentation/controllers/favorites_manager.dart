@@ -1,12 +1,46 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/features/favorites/data/services/favorito_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
-class FavoritesManager extends ChangeNotifier {
+/// Favoritos do consumidor logado, em memória.
+///
+/// **O app não é o único cliente que edita este conjunto.** O favorito é
+/// gravado no servidor com o id do consumidor extraído do token, então
+/// favoritar pela web altera o mesmo dado — e o app não fica sabendo, porque a
+/// API não tem push e este singleton só lê o servidor quando alguém chama
+/// [load]. Enquanto isso não acontece, os corações da tela mostram o estado de
+/// quando a lista foi carregada.
+///
+/// Daí a releitura ao voltar do segundo plano (ver
+/// [didChangeAppLifecycleState]): é o momento em que a chance de o dado estar
+/// velho é maior, e é barato. Não resolve o caso de duas sessões editando ao
+/// mesmo tempo com o app em primeiro plano — para isso seria preciso push do
+/// servidor, o que é desproporcional aqui.
+class FavoritesManager extends ChangeNotifier with WidgetsBindingObserver {
   static final FavoritesManager instance = FavoritesManager._();
 
-  FavoritesManager._();
+  FavoritesManager._() {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Ao voltar do segundo plano, relê os favoritos do servidor.
+  ///
+  /// Só para consumidor: visitante e comerciante não têm favoritos, e
+  /// `GET /favoritos/completo` responderia 401/403 — um 401 faria o
+  /// `SessionManager` derrubar a sessão e mandar o usuário para o login, ou
+  /// seja, sair do app e voltar deslogaria um visitante.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (!SessionStore.instance.isConsumidor) return;
+    // Fire-and-forget: `load()` já converte falha em `errorMessage`
+    // observável, então não há nada a aguardar num callback de ciclo de vida.
+    unawaited(load());
+  }
 
   FavoritoService _service = FavoritoService();
 
