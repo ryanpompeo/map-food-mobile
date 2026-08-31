@@ -29,6 +29,33 @@ class MfColor {
   static const warning = Color(0xFFF5A623);
   static const danger = Color(0xFFD6011B);
 
+  /// Azul de informação neutra. Existe porque "info" era pintado com o
+  /// vermelho da marca (`brandContent`), o que dava a um aviso sem gravidade a
+  /// mesma cor de um erro.
+  static const info = Color(0xFF1D4ED8);
+
+  // ── superfícies semânticas preenchidas ──
+  //
+  // Para quando a cor semântica é o **fundo** de um bloco com texto por cima
+  // (hoje: o toast), e não um traço ou um ícone. Os tons puros acima não
+  // servem aí: `success` puro rende 3,4:1 com branco e `warning` puro, 2,0:1
+  // — os dois reprovam no AA para texto de corpo.
+
+  /// Verde escurecido: 5,5:1 com branco.
+  static const successFill = Color(0xFF0F7A3D);
+
+  /// O vermelho da marca já rende 5,4:1 com branco — o token existe para o
+  /// call site declarar a intenção ("fundo de erro"), não uma cor nova.
+  static const dangerFill = danger;
+
+  /// Azul de info: 6,7:1 com branco.
+  static const infoFill = info;
+
+  /// O amarelo puro, **com texto escuro por cima** ([ink], 8,7:1). É o único
+  /// preenchimento semântico que não aceita texto branco: escurecer o amarelo
+  /// até ele passar com branco produz um marrom que ninguém lê como "alerta".
+  static const warningFill = warning;
+
   /// Fundo de ação destrutiva (botão "Excluir conta").
   static const dangerSurface = Color(0xFFFEF2F2);
   static const dangerSurfaceDark = Color(0x24D6011B);
