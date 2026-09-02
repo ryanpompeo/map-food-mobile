@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Espelha `MapFoodColors.dark.background` (#0E0F12). Só a cor da splash é
+         sobrescrita aqui; `ic_launcher_background` continua vindo de values/,
+         porque o fundo do adaptive icon não deve mudar com o tema do sistema. -->
+    <color name="splash_background">#0E0F12</color>
+</resources>

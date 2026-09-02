@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
+<!-- Splash nativa (API 21..30): fundo do tema + logo do app centralizado.
+     Em Android 12+ quem manda é values-v31/styles.xml — os dois precisam
+     mostrar a mesma coisa.
 
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+     O fundo vem de @color/splash_background, e não de ?android:colorBackground,
+     para casar exatamente com o fundo do MaterialApp — o cinza do tema do
+     sistema não é o mesmo branco/preto do app, e a troca apareceria como um
+     flash no instante em que o Flutter desenha o primeiro frame.
+
+     O bitmap fica no tamanho natural do mipmap (48dp) de propósito: o maior
+     arquivo disponível é o de 192px (xxxhdpi), então qualquer ampliação sai
+     borrada. Para um logo maior na abertura, é preciso o arquivo original em
+     alta resolução, não escalar este. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background" />
+
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:src="@mipmap/ic_launcher" />
+    </item>
 </layer-list>

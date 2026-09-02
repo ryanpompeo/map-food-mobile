@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+
+    <!-- Fundo da splash nativa. É uma cor separada de `ic_launcher_background`
+         de propósito: aquela é o fundo do adaptive icon (que precisa continuar
+         branco no launcher mesmo em modo escuro), esta acompanha o fundo do
+         app (`MapFoodColors.background`, ver core/ui/theme/map_food_colors.dart)
+         para a abertura não piscar branco antes do primeiro frame do Flutter. -->
+    <color name="splash_background">#FFFFFF</color>
 </resources>

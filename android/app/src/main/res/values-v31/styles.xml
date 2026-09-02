@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ (API 31) não usa mais o `windowBackground` como splash: a
+         tela de abertura passou a ser desenhada pelo sistema. Sem este arquivo,
+         o logo do launch_background nunca apareceria nesses aparelhos.
+
+         O ícone é declarado explicitamente (e não deixado no default, que é o
+         ícone do manifesto) para a abertura não depender de qual mipmap o
+         `android:icon` estiver apontando no futuro.
+
+         O sistema recorta o ícone numa máscara circular. Como o
+         @mipmap/ic_launcher já traz o próprio fundo, o recorte cai fora do
+         quadro do gradiente e o resultado é o pin sobre o vermelho — por isso
+         ele vai direto, sem `inset`.
+
+         `windowBackground` continua declarado porque ainda é o que fica na
+         janela entre o fim da splash do sistema e o primeiro frame do Flutter. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+</resources>
