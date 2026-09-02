@@ -18,21 +18,16 @@ import 'package:map_food/features/search/presentation/widgets/search_history.dar
 import 'package:map_food/features/store/presentation/widgets/store_list_widgets.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/data/nearby_filter.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 
-/// Quantidade máxima de lojas exibidas em cada seção da visão de navegação
-/// (nenhuma categoria marcada, sem busca ativa).
 const int _maxSectionItems = 10;
 
+const double _pertoDeVoceRaioKm = 3.0;
+const int _pertoDeVoceMaxItems = 5;
+
 class SearchPage extends StatefulWidget {
-  /// Ação do botão de voltar no topo. `null` (o caso de consumidor e
-  /// visitante) esconde o cabeçalho inteiro: ali esta página é uma **aba**, e
-  /// aba não tem para onde voltar.
-  ///
-  /// Existe por causa do comerciante, cuja barra inferior trocou "Buscar" por
-  /// "Estatísticas" — para ele a busca passou a ser empurrada a partir do
-  /// mapa, e página empurrada precisa de saída visível.
   final VoidCallback? onVoltar;
 
   const SearchPage({super.key, this.onVoltar});
@@ -48,11 +43,6 @@ class _SearchPageState extends State<SearchPage> {
   final ActiveStoresManager _activeStoresManager = ActiveStoresManager.instance;
   Timer? _debounce;
 
-  /// Categoria em foco, pelo nome. `null` é a listagem sem recorte — o estado
-  /// que a tira de filtros não oferece como item e para o qual se volta
-  /// desmarcando a categoria ativa (ver `CategoryFiltersWidget`). Guardado
-  /// pelo nome, e não pelo índice, porque `_categorias` é recarregável: um
-  /// índice sobreviveria à recarga apontando para outra categoria.
   String? _categoriaSelecionada;
 
   bool _isLoading = false;
@@ -63,17 +53,10 @@ class _SearchPageState extends State<SearchPage> {
   List<CategoriaModel> _categorias = [];
   List<StoreDto> _allStores = [];
 
-  /// Lista completa filtrada por categoria/busca — usada na visão vertical
-  /// quando uma categoria específica está selecionada.
   List<StoreDto> _filteredStores = [];
 
-  /// "Em Alta": lojas com avaliação acima de 4.5 dentro do filtro atual.
   List<StoreDto> _emAltaStores = [];
 
-  /// "Perto de você": lojas com localização cadastrada, ordenadas pela
-  /// distância até o usuário. Sem `_userLat`/`_userLng` (sem permissão/GPS
-  /// indisponível), cai no fallback de mostrar a lista sem ordenar por
-  /// distância — melhor que esconder a seção inteira.
   double? _userLat;
   double? _userLng;
   List<StoreDto> _pertoDeVoceStores = [];
@@ -90,9 +73,6 @@ class _SearchPageState extends State<SearchPage> {
     _carregarLocalizacaoUsuario();
   }
 
-  /// Busca a posição atual uma única vez (sem stream contínuo — o carrossel
-  /// "Perto de você" não precisa reordenar a cada passo do usuário, ao
-  /// contrário do mapa da aba "Início").
   Future<void> _carregarLocalizacaoUsuario() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled()
@@ -102,10 +82,6 @@ class _SearchPageState extends State<SearchPage> {
       LocationPermission permission = await Geolocator.checkPermission()
           .timeout(const Duration(seconds: 10));
       if (permission == LocationPermission.denied) {
-        // No Flutter Web o prompt é nativo do navegador, fora do canvas do
-        // Flutter — sem timeout, um prompt ignorado/não respondido trava
-        // este `await` pra sempre (mesmo problema em NearbyStoresSection,
-        // que roda ao mesmo tempo na aba "Início").
         permission = await Geolocator.requestPermission().timeout(
           const Duration(seconds: 10),
         );
@@ -127,17 +103,9 @@ class _SearchPageState extends State<SearchPage> {
       });
       _applyFilters();
     } catch (_) {
-      // Sem GPS disponível — "Perto de você" cai no fallback sem ordenar por distância.
     }
   }
 
-  /// Puxar para atualizar: refaz as duas buscas de rede desta tela — as
-  /// categorias (que alimentam a tira de filtros) e a lista de lojas ativas.
-  ///
-  /// A lista vem do `ActiveStoresManager` e não de uma chamada local: pedir
-  /// direto ao manager mantém uma única fonte para as lojas, e o resultado
-  /// chega aqui pelo listener que já existe. Buscar em paralelo porque as duas
-  /// são independentes — em série, o gesto duraria a soma das duas.
   Future<void> _recarregar() async {
     await Future.wait([
       _loadInitialData(mostrarSpinner: false),
@@ -145,10 +113,6 @@ class _SearchPageState extends State<SearchPage> {
     ]);
   }
 
-  /// Chamado quando o `ActiveStoresManager` (polling a cada 20s, compartilhado
-  /// com as home pages) atualiza a lista de lojas ativas — sem isso, a Search
-  /// Page buscava as lojas uma única vez no initState e nunca via uma loja
-  /// que acabou de ser ativada enquanto a aba já estava montada.
   void _onActiveStoresChanged() {
     if (!mounted) return;
     setState(() => _allStores = _activeStoresManager.stores);
@@ -161,8 +125,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _onQueryFromHistory(String query) {
-    // Cancela um debounce de digitação pendente — senão ele dispara ~500ms
-    // depois com o texto antigo e desfaz essa seleção do histórico.
     _debounce?.cancel();
     setState(() {
       _searchController.text = query;
@@ -182,13 +144,6 @@ class _SearchPageState extends State<SearchPage> {
     unawaited(_loadSearchHistory());
   }
 
-  /// A API não oferece um endpoint de busca combinada (nome + categoria),
-  /// então carregamos todas as lojas ativas uma vez e filtramos localmente.
-  ///
-  /// [mostrarSpinner] falso no "puxe para atualizar": lá o próprio gesto já é
-  /// o indicador de progresso, e ligar `_isLoading` trocaria a tela inteira
-  /// por um `CircularProgressIndicator` justamente enquanto a pessoa segura a
-  /// lista — o conteúdo sumiria debaixo do dedo.
   Future<void> _loadInitialData({bool mostrarSpinner = true}) async {
     setState(() {
       if (mostrarSpinner) _isLoading = true;
@@ -200,9 +155,6 @@ class _SearchPageState extends State<SearchPage> {
       if (!mounted) return;
       setState(() {
         _categorias = categorias;
-        // Uma categoria que saiu do ar não pode continuar recortando a
-        // listagem: sem cartão marcado na tira, o filtro ficaria invisível e
-        // não haveria como desfazê-lo.
         if (!categorias.any((c) => c.nome == _categoriaSelecionada)) {
           _categoriaSelecionada = null;
         }
@@ -219,11 +171,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _applyFilters() {
-    // Filtra por nome, não por id: o endpoint que alimenta `_allStores`
-    // (/mobile/api/v1/lojas, via ActiveStoresManager) devolve `categorias`
-    // como lista de nomes crus, sem id (ver StoreDto._parseCategoriaIds) —
-    // filtrar por `categoriaIds` aqui nunca daria match e zerava a lista
-    // pra qualquer categoria selecionada.
     final categoryName = _categoriaSelecionada;
 
     var lojasFiltradas = _allStores;
@@ -232,16 +179,19 @@ class _SearchPageState extends State<SearchPage> {
           .where((s) => s.categoriaNomes.contains(categoryName))
           .toList();
     }
-    // `buscarLojas` (não um `contains` no nome): ignora acento, procura também
-    // em categoria/cidade/endereço/descrição, tolera um erro de digitação em
-    // termos longos e devolve já ordenado por relevância.
     lojasFiltradas = buscarLojas(lojasFiltradas, _searchQuery);
 
     final emAlta =
         lojasFiltradas.where((s) => (s.avaliacao ?? 0) > 4.5).toList()
           ..sort((a, b) => (b.avaliacao ?? 0).compareTo(a.avaliacao ?? 0));
 
-    List<StoreDto> pertoDeVoce;
+    List<StoreDto> pertoDeVoce = lojasDentroDoRaio(
+      lojasFiltradas,
+      lat: _userLat,
+      lng: _userLng,
+      raioKm: _pertoDeVoceRaioKm,
+    );
+
     if (_userLat != null && _userLng != null) {
       double distancia(StoreDto s) => Geolocator.distanceBetween(
         _userLat!,
@@ -249,16 +199,14 @@ class _SearchPageState extends State<SearchPage> {
         s.latitude!,
         s.longitude!,
       );
-      pertoDeVoce = lojasFiltradas.where((s) => s.temLocalizacao).toList()
+      pertoDeVoce = pertoDeVoce.toList()
         ..sort((a, b) => distancia(a).compareTo(distancia(b)));
-    } else {
-      pertoDeVoce = lojasFiltradas;
     }
 
     setState(() {
       _filteredStores = lojasFiltradas;
       _emAltaStores = emAlta.take(_maxSectionItems).toList();
-      _pertoDeVoceStores = pertoDeVoce.take(_maxSectionItems).toList();
+      _pertoDeVoceStores = pertoDeVoce.take(_pertoDeVoceMaxItems).toList();
     });
   }
 
@@ -272,10 +220,6 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    // "Perto de você" + "Em Alta" é a visão de navegação: nenhuma categoria
-    // marcada e nenhuma busca ativa. É para cá que a tela volta quando a
-    // categoria em foco é desmarcada. Com uma query digitada, sempre mostra a
-    // lista vertical de resultados, mesmo sem categoria marcada.
     final bool semRecorte =
         _categoriaSelecionada == null && _searchQuery.isEmpty;
 
@@ -306,9 +250,6 @@ class _SearchPageState extends State<SearchPage> {
             ),
       body: SafeArea(
         child: AppRefresh(
-          // Recarrega categorias e lojas. A lista vem do
-          // `ActiveStoresManager`, que só busca a cada 20s — puxar encurta
-          // essa espera quando a pessoa quer ver agora quem acabou de abrir.
           onRefresh: _recarregar,
           child: CustomScrollView(
             physics: AppRefresh.physics,
@@ -342,11 +283,7 @@ class _SearchPageState extends State<SearchPage> {
                       CategoryFiltersWidget(
                         filtros: _filtros,
                         selecionada: _categoriaSelecionada,
-                        // `null` chega quando o toque desmarcou a categoria que
-                        // estava ativa — e a tela volta à visão de navegação.
                         onFilterChanged: (nome) {
-                          // Idem: cancela um debounce de digitação pendente pra
-                          // ele não sobrescrever essa troca de categoria depois.
                           _debounce?.cancel();
                           setState(() {
                             _categoriaSelecionada = nome;
