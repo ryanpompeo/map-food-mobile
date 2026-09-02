@@ -9,12 +9,6 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
 class LoginWallHelper {
-  /// Sheet de "precisa de conta pra isso". Os textos são parametrizados
-  /// porque a mesma parede agora barra três ações diferentes (favoritar,
-  /// avaliar, denunciar) — anunciar "Salve seus comércios favoritos!" para
-  /// quem tocou em "Denunciar" não explica nada. Os defaults são os textos
-  /// originais de favoritos, então quem já chamava sem argumentos continua
-  /// vendo exatamente o mesmo sheet.
   static void showLoginWallBottomSheet(
     BuildContext context, {
     IconData icon = AppIcons.heart,

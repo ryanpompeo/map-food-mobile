@@ -8,17 +8,6 @@ class DenunciaService {
 
   final ApiClient _client;
 
-  /// Cria a denúncia do consumidor autenticado para a loja, via
-  /// POST /denuncias (rota geral, contrato legado). O controller não extrai
-  /// o consumidor do JWT — espera a entidade `Denuncia` crua no corpo, com
-  /// `consumidor`/`loja` já resolvidos — por isso [consumidorId] precisa ser
-  /// informado pelo chamador (normalmente vindo de `AuthStorage.getSession()`).
-  /// Não há checagem de duplicidade no backend: reenviar cria uma nova
-  /// denúncia, não há mais 409 nem upsert.
-  /// [lojaId] ID da loja.
-  /// [consumidorId] ID do consumidor autenticado (da sessão local).
-  /// [motivo] Label da UI (ex: 'Fraude ou golpe') — será convertido para enum da API.
-  /// [descricao] Texto descritivo opcional.
   Future<DenunciaModel> create({
     required int lojaId,
     required int consumidorId,
@@ -39,7 +28,6 @@ class DenunciaService {
     return DenunciaModel.fromJson(data);
   }
 
-  /// Busca as denúncias feitas por um consumidor específico.
   Future<List<DenunciaModel>> getMyComplaints(int consumidorId) async {
     final data = await _client.get<List<dynamic>>(
       '${ApiConstants.denuncias}/consumidor/$consumidorId',
@@ -49,17 +37,6 @@ class DenunciaService {
         .toList();
   }
 
-  /// Denúncias recebidas pelas lojas de um comerciante, via
-  /// GET /denuncias/loja/comerciante/{comercianteId}.
-  ///
-  /// Devolve a lista inteira — motivo, status, data e loja de cada uma. A
-  /// versão anterior deste método descartava tudo isso e devolvia só
-  /// `data.length`, porque o único consumo era um card de contagem. O painel
-  /// de Estatísticas usa os campos para dizer **por que** e **quando**, que é
-  /// o que o comerciante pode agir a respeito.
-  ///
-  /// Só o dono das lojas (ou um administrador) recebe 200 aqui; a API não
-  /// expõe a identidade de quem denunciou.
   Future<List<DenunciaRecebidaModel>> getRecebidas(int comercianteId) async {
     final data = await _client.get<List<dynamic>>(
       '${ApiConstants.denuncias}/loja/comerciante/$comercianteId',

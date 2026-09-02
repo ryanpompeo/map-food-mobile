@@ -19,12 +19,7 @@ class MerchantBottomBar extends StatelessWidget {
       onItemTapped: onItemTapped,
       items: const [
         BottomBarItem(AppIcons.house, 'Início'),
-        // "Buscar" saiu daqui e virou um push a partir do mapa: explorar
-        // lojas alheias é secundário para quem administra a própria.
         BottomBarItem(AppIcons.chartLineUp, 'Estatísticas'),
-        // "Ronda" e "Minha loja" eram duas abas para o mesmo objeto — o
-        // toggle de aberta/fechada agora é o topo do painel de gestão, que é
-        // onde ele sempre foi procurado.
         BottomBarItem(AppIcons.storefront, 'Minha loja'),
         BottomBarItem(AppIcons.user, 'Perfil'),
       ],

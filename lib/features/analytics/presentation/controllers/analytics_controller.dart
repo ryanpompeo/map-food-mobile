@@ -7,8 +7,6 @@ import 'package:map_food/features/denuncias/data/models/denuncia_recebida_model.
 import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
-/// Janela de tempo do painel: recorta as denúncias e a divisão de visitantes
-/// entre as lojas.
 enum AnalyticsRange {
   seteDias('7 dias', 7),
   trintaDias('30 dias', 30),
@@ -20,7 +18,6 @@ enum AnalyticsRange {
   const AnalyticsRange(this.label, this.dias);
 }
 
-/// Quantas avaliações a loja recebeu com determinada nota.
 @immutable
 class RatingBucket {
   final int nota;
@@ -29,7 +26,6 @@ class RatingBucket {
   const RatingBucket({required this.nota, required this.quantidade});
 }
 
-/// Quantas denúncias chegaram por um mesmo motivo.
 @immutable
 class MotivoDenuncia {
   final String label;
@@ -38,26 +34,16 @@ class MotivoDenuncia {
   const MotivoDenuncia({required this.label, required this.quantidade});
 }
 
-/// Denúncias do período, prontas para leitura.
-///
-/// Separa **em aberto** de **encerradas** porque as duas dizem coisas opostas
-/// ao comerciante: uma denúncia arquivada pela moderação não é um problema
-/// dele, e somar tudo num número só transformaria um caso resolvido em dívida
-/// permanente na tela.
 @immutable
 class DenunciaResumo {
   final int total;
   final int emAberto;
   final int encerradas;
 
-  /// Contra o período anterior de mesma duração. `null` sem base de comparação.
   final int? deltaPercentual;
 
   final List<MotivoDenuncia> porMotivo;
 
-  /// `true` quando a busca falhou. Diferente de [limpo]: uma coisa é não ter
-  /// denúncia, outra é não ter conseguido perguntar — anunciar "nada por aqui"
-  /// sem saber seria dar ao comerciante uma tranquilidade que não se apurou.
   final bool indisponivel;
 
   const DenunciaResumo({
@@ -89,8 +75,6 @@ class DenunciaResumo {
   bool get limpo => total == 0;
 }
 
-/// Tudo que a tela desenha, já calculado. Sem `Color` e sem widget: as cores
-/// entram na montagem das fatias, onde existe tema (ver [DonutSlice]).
 @immutable
 class AnalyticsSnapshot {
   final List<RatingBucket> distribuicaoNotas;
@@ -110,12 +94,6 @@ class AnalyticsSnapshot {
   bool get semAvaliacoes => totalAvaliacoes == 0;
 }
 
-/// Estado da tela de Estatísticas: escopo, período e a busca que os alimenta.
-///
-/// Existe como `ChangeNotifier` (e não como `setState` na página) porque a
-/// mesma busca é disparada por três gatilhos diferentes — troca de loja, troca
-/// de período e recarga manual — e todos precisam passar pelo mesmo controle
-/// de corrida.
 class AnalyticsController extends ChangeNotifier {
   AnalyticsController({
     required List<StoreDto> lojas,
@@ -126,8 +104,6 @@ class AnalyticsController extends ChangeNotifier {
         _avaliacaoService = avaliacaoService ?? AvaliacaoService(),
         _denunciaService = denunciaService ?? DenunciaService();
 
-  /// Dono das lojas. `null` (sessão perdida) desliga o bloco de denúncias — a
-  /// rota é por comerciante, não por loja.
   final int? comercianteId;
 
   final AvaliacaoService _avaliacaoService;
@@ -136,7 +112,6 @@ class AnalyticsController extends ChangeNotifier {
   List<StoreDto> _lojas;
   List<StoreDto> get lojas => _lojas;
 
-  /// `null` = "Dados gerais" (todas as lojas do comerciante).
   int? _lojaSelecionadaId;
   int? get lojaSelecionadaId => _lojaSelecionadaId;
 
@@ -146,25 +121,14 @@ class AnalyticsController extends ChangeNotifier {
   AsyncState<AnalyticsSnapshot> _state = const AsyncState.loading();
   AsyncState<AnalyticsSnapshot> get state => _state;
 
-  /// Descarta respostas de buscas superadas. Trocar de período duas vezes
-  /// seguidas deixa duas requisições em voo, e a primeira pode chegar por
-  /// último — sem este token, a tela terminaria mostrando o período errado.
   int _requisicaoAtual = 0;
 
   bool _descartado = false;
 
-  /// Lojas do escopo atual: uma só, ou todas quando nenhuma está selecionada.
   List<StoreDto> get _lojasDoEscopo => _lojaSelecionadaId == null
       ? _lojas
       : _lojas.where((l) => l.id == _lojaSelecionadaId).toList();
 
-  /// Chamado pelo pai quando a lista de lojas muda (loja criada, excluída ou
-  /// renomeada). Se a loja em foco sumiu, o escopo volta para "gerais" — um
-  /// filtro apontando para loja inexistente deixaria a tela vazia sem explicar.
-  ///
-  /// Só rebusca quando o **conjunto de lojas** mudou: renomear uma loja altera
-  /// o rótulo do seletor, mas não os números, e uma rodada de requisições para
-  /// redesenhar o mesmo gráfico é rede gasta à toa.
   void atualizarLojas(List<StoreDto> lojas) {
     final idsAntes = _lojas.map((l) => l.id).toSet();
     _lojas = lojas;
@@ -211,14 +175,8 @@ class AnalyticsController extends ChangeNotifier {
     }
 
     final hoje = _hoje();
-    // Início do período exibido. O período anterior de mesma duração (a base
-    // do delta) é calculado a partir daqui, dentro do resumo de denúncias.
     final inicioSerie = hoje.subtract(Duration(days: _range.dias - 1));
 
-    // Falha de uma loja não pode zerar a rosca das outras: cada busca devolve
-    // lista vazia no lugar de propagar a exceção. Só quando **todas** falham é
-    // que a tela vira erro — senão o painel mostraria "nenhuma avaliação" com
-    // ar de dado real enquanto a rede está fora.
     var falhasAvaliacoes = 0;
     final avaliacoes = await Future.wait(
       lojas.map((loja) async {
@@ -231,17 +189,12 @@ class AnalyticsController extends ChangeNotifier {
       }),
     );
 
-    // Uma chamada só, independente do escopo: a rota de denúncias é por
-    // comerciante, e o recorte por loja é feito aqui embaixo.
     final id = comercianteId;
     List<DenunciaRecebidaModel>? denuncias;
     if (id != null) {
       try {
         denuncias = await _denunciaService.getRecebidas(id);
       } catch (_) {
-        // `null` (e não lista vazia) para o card poder dizer "não deu para
-        // carregar" em vez de "nada por aqui" — anunciar ausência de denúncia
-        // sem ter conseguido perguntar seria mentir para o comerciante.
       }
     }
 
@@ -288,10 +241,6 @@ class AnalyticsController extends ChangeNotifier {
         if ((notas[nota] ?? 0) > 0) RatingBucket(nota: nota, quantidade: notas[nota]!),
     ];
 
-    // Média calculada da mesma lista que alimenta a rosca. A agregação do
-    // backend (`GET /lojas/{id}/completa`) seria outra fonte, e duas fontes
-    // discordando na mesma tela — a média dizendo 4,8 e as fatias mostrando
-    // outra coisa — é pior que recalcular aqui.
     final mediaAvaliacao = avaliacoes.isEmpty
         ? null
         : avaliacoes.fold(0, (soma, a) => soma + a.nota) / avaliacoes.length;
@@ -309,10 +258,6 @@ class AnalyticsController extends ChangeNotifier {
     );
   }
 
-  /// Recorta as denúncias pelo escopo e pelo período, e conta motivos.
-  ///
-  /// [denuncias] nulo significa que a busca falhou — vira [DenunciaResumo
-  /// .naoCarregou], não um resumo vazio.
   DenunciaResumo _resumirDenuncias({
     required List<DenunciaRecebidaModel>? denuncias,
     required List<StoreDto> lojas,
@@ -324,8 +269,6 @@ class AnalyticsController extends ChangeNotifier {
 
     final idsDoEscopo = lojas.map((l) => l.id).toSet();
     final inicioAnterior = inicioSerie.subtract(Duration(days: _range.dias));
-    // Fim do dia de hoje: `dataDenuncia` é LocalDateTime, e comparar contra a
-    // meia-noite descartaria tudo que foi denunciado hoje.
     final fim = hoje.add(const Duration(days: 1));
 
     final noPeriodo = <DenunciaRecebidaModel>[];
@@ -334,8 +277,6 @@ class AnalyticsController extends ChangeNotifier {
     for (final denuncia in denuncias) {
       if (!idsDoEscopo.contains(denuncia.lojaId)) continue;
       final data = denuncia.dataDenuncia;
-      // Sem data não dá para situar no tempo: entra no período atual, que é o
-      // que a tela está mostrando — esconder seria pior que aproximar.
       if (data == null || (!data.isBefore(inicioSerie) && data.isBefore(fim))) {
         noPeriodo.add(denuncia);
       } else if (!data.isBefore(inicioAnterior) && data.isBefore(inicioSerie)) {
@@ -368,8 +309,6 @@ class AnalyticsController extends ChangeNotifier {
     );
   }
 
-  /// Meia-noite de hoje: as datas da API são dias, sem hora, e comparar com
-  /// `DateTime.now()` deixaria o dia corrente sempre "no futuro".
   static DateTime _hoje() {
     final agora = DateTime.now();
     return DateTime(agora.year, agora.month, agora.day);

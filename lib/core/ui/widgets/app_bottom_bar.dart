@@ -8,61 +8,26 @@ import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 class BottomBarItem {
   final IconData icon;
 
-  /// Nome da aba para o leitor de tela. Obrigatório: os itens são icon-only,
-  /// então sem ele a navegação principal do app é anunciada como um punhado de
-  /// botões sem nome — e era exatamente esse o estado antes.
   final String label;
 
   const BottomBarItem(this.icon, this.label);
 }
 
-/// Bottom bar flutuante em glass, compartilhada entre guest/consumer/merchant
-/// — só a lista de ícones muda entre os três papéis.
-///
-/// A cápsula descolada da borda é o que deixa o mapa (a tela principal do app)
-/// respirar por baixo dela: uma faixa opaca de ponta a ponta comeria uma tira
-/// inteira da cartografia. No claro ela é vidro fosco sobre o que passa
-/// embaixo; no escuro, superfície sólida — branco translúcido sobre fundo
-/// escuro não lê.
-///
-/// **Icon-only.** O rótulo existe só para o leitor de tela: desenhá-lo sob
-/// cada ícone (como já se tentou) engorda a cápsula e o texto nasce pequeno
-/// demais para compensar o que rouba do mapa. Por isso o indicador que desliza
-/// por trás do item selecionado é um círculo, e não uma pílula.
 class AppBottomBar extends StatelessWidget {
   final List<BottomBarItem> items;
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
   final double itemSpacing;
 
-  // Área de toque de cada item (56x56, padrão ergonômico Material/Apple) e
-  // diâmetro do indicador de seleção que desliza por trás dos ícones.
   static const double _itemSize = 56.0;
   static const double _indicatorSize = 48.0;
 
-  /// Padding vertical interno da cápsula (vale nos dois temas: `GlassContainer`
-  /// no claro, container sólido no escuro) e margem entre a barra e a borda
-  /// inferior da tela.
   static const double _paddingVertical = 8.0;
   static const double _margemInferior = 32.0;
 
-  /// Espaço que a barra ocupa no rodapé, da borda da tela ao topo da cápsula.
-  ///
-  /// 56 do item + 16 de padding + 32 de margem + 4 de folga para a borda de
-  /// 1px e a sombra.
   static const double reservedSpace =
       _itemSize + (_paddingVertical * 2) + _margemInferior + 4.0;
 
-  /// [reservedSpace] mais a área segura do aparelho.
-  ///
-  /// Quem desenha conteúdo por baixo da barra (o mapa da home, as listas do
-  /// comerciante) reserva **isto** no rodapé, em vez de repetir um número
-  /// mágico por arquivo — era assim que a barra acabava cobrindo conteúdo:
-  /// cada tela chutava a própria folga.
-  ///
-  /// A cápsula em si não desce com a área segura (os 32 de margem já a mantêm
-  /// acima da barra de gestos); a folga extra entra só aqui, do lado de quem
-  /// reserva espaço, onde sobrar é inofensivo e faltar não é.
   static double spaceFor(BuildContext context) =>
       reservedSpace + MediaQuery.paddingOf(context).bottom;
 
@@ -84,15 +49,11 @@ class AppBottomBar extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: _margemInferior, left: 24.0, right: 24.0),
         child: isDark
             ? _buildSolidDark(context)
-            // Indicador claro (cardSurface) + ícone vermelho de marca.
             : GlassContainer(child: _buildContent(indicatorColor: context.mapColors.cardSurface)),
       ),
     );
   }
 
-  // Tema escuro: sem o vidro fosco (branco translúcido não lê bem sobre fundo
-  // escuro) — superfície sólida, distinta do fundo do app (`cardSurface` já é
-  // o tom "elevado" do tema escuro).
   Widget _buildSolidDark(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: _paddingVertical),
@@ -107,8 +68,6 @@ class AppBottomBar extends StatelessWidget {
           ),
         ],
       ),
-      // Indicador claro sobre a barra escura — mesmo alto contraste do lado
-      // claro, espelhado.
       child: _buildContent(indicatorColor: ColorsPalette.white),
     );
   }
@@ -119,9 +78,6 @@ class AppBottomBar extends StatelessWidget {
       child: Stack(
         alignment: Alignment.centerLeft,
         children: [
-          // Indicador único que desliza de um ícone pro outro — em vez de cada
-          // item ligar/desligar seu próprio fundo, só um deles se move, o que
-          // lê como transição contínua ao trocar de aba.
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
@@ -184,15 +140,11 @@ class _NavItem extends StatelessWidget {
         label: label,
         selected: isSelected,
         onTap: onTap,
-        // O indicador que desliza por trás do ícone já responde ao toque;
-        // encolher o item junto brigaria com essa animação.
         pressFeedback: false,
         child: SizedBox(
           width: AppBottomBar._itemSize,
           height: AppBottomBar._itemSize,
           child: Center(
-            // Claro: vermelho de marca sobre o indicador claro. Escuro: cinza
-            // escuro sobre o indicador branco.
             child: Icon(
               icon,
               size: 24.0,

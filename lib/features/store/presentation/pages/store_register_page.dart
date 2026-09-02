@@ -18,18 +18,6 @@ import 'package:map_food/features/store/presentation/widgets/category_picker.dar
 import 'package:map_food/features/store/presentation/widgets/store_form_fields.dart';
 import 'package:map_food/features/store/presentation/widgets/store_photos_editor.dart';
 
-/// Cadastro da loja — a primeira tela obrigatória de quem entra como
-/// comerciante (o app redireciona para cá enquanto não houver loja).
-///
-/// É um fluxo em três etapas, e não um formulário só, porque este é o momento
-/// de **conversão**: quem chega aqui ainda não sabe se o app vale o esforço, e
-/// uma tela com seis campos, editor de fotos e seletor de categorias empilhados
-/// responde "muito" antes de responder "o quê". Cada etapa faz uma pergunta —
-/// quem é você, onde você fica, como o cliente te encontra — e o botão que
-/// conclui está sempre visível no rodapé, nunca a uma rolagem de distância.
-///
-/// O estado vive todo em [StoreRegisterController]; esta página é desenho e
-/// navegação entre as etapas.
 class StoreRegisterPage extends StatefulWidget {
   const StoreRegisterPage({super.key});
 
@@ -41,25 +29,13 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   late final StoreRegisterController _controller;
   final _pageController = PageController();
 
-  /// Um `Form` por etapa. É o que faz a divulgação progressiva funcionar:
-  /// "Continuar" valida só os campos que a pessoa acabou de ver, em vez de
-  /// acusar erro num campo de outra etapa que ela nem abriu ainda.
   final _formKeys = List.generate(
     StoreRegisterStep.values.length,
     (_) => GlobalKey<FormState>(),
   );
 
-  /// Impedimento da etapa atual (foto faltando, nenhuma categoria). Fica na
-  /// tela até ser resolvido, junto do rodapé que o disparou — um toast some
-  /// antes de a pessoa entender o que fazer.
   String? _aviso;
 
-  /// O controller e o `temRascunho` notificam por canais diferentes: o
-  /// primeiro em toda mudança de estado, o segundo só quando o formulário
-  /// passa de vazio para preenchido (ele existe justamente para não reconstruir
-  /// a tela a cada tecla). O `PopScope` depende dos **dois** — sem escutar o
-  /// rascunho aqui, digitar o nome da loja não atualizaria o `canPop`, e o
-  /// primeiro gesto de voltar sairia da tela levando o que foi escrito.
   late final Listenable _mudancas;
 
   @override
@@ -78,9 +54,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     super.dispose();
   }
 
-  /// O `PageView` é escravo do controller: quem manda na etapa é o estado, e a
-  /// animação apenas segue. Sem isso, os dois viram donos da mesma verdade e
-  /// divergem no primeiro gesto interrompido.
   void _sincronizarPagina() {
     if (!_pageController.hasClients) return;
     final destino = _controller.indiceEtapa;
@@ -93,8 +66,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   }
 
   Future<void> _avancar() async {
-    // Fecha o teclado antes de trocar de etapa: com ele aberto, a etapa nova
-    // entra espremida e a pessoa vê meia tela de conteúdo.
     FocusScope.of(context).unfocus();
     setState(() => _aviso = null);
     _controller.limparErro();
@@ -137,12 +108,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     ));
   }
 
-  /// Voltar recua **uma etapa** antes de tentar sair do cadastro. Só na
-  /// primeira etapa a saída é de verdade — e aí sim o rascunho é defendido.
-  ///
-  /// Um `PopScope` só, em vez do [UnsavedChangesGuard]: aninhar o guard aqui
-  /// registraria dois interceptadores na mesma rota, e um gesto de voltar na
-  /// etapa 2 recuaria a etapa **e** abriria o diálogo de descarte junto.
   Future<void> _aoTentarSair(bool didPop) async {
     if (didPop) return;
 
@@ -178,9 +143,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
               centerTitle: false,
               titleSpacing: Navigator.canPop(context) ? null : Spacing.lg,
               title: Text('Cadastrar loja', style: AppText.h2(context)),
-              // O progresso mora no AppBar: fica fixo enquanto o conteúdo da
-              // etapa rola por baixo, que é o único jeito de "quanto falta"
-              // continuar respondido no meio do preenchimento.
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(52.0),
                 child: Padding(
@@ -202,8 +164,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
               top: false,
               child: PageView(
                 controller: _pageController,
-                // Navega só pelo rodapé: arrastar lateralmente pularia a
-                // validação da etapa e deixaria campos obrigatórios para trás.
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _EtapaIdentidade(controller: _controller, formKey: _formKeys[0], aviso: _aviso),
@@ -227,8 +187,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
 
   String get _rotuloPrimario {
     if (_controller.naUltimaEtapa) return 'Concluir cadastro';
-    // Endereço é opcional: com a etapa em branco, "Continuar" sugeriria que
-    // falta algo ali. "Pular" diz a verdade — dá para seguir sem preencher.
     if (_controller.etapa == StoreRegisterStep.localizacao && _controller.localizacaoVazia) {
       return 'Pular por enquanto';
     }
@@ -236,11 +194,6 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
   }
 }
 
-/// Moldura comum das etapas: título, apoio e conteúdo rolável.
-///
-/// A hierarquia é só tipografia e espaço — sem card, sem borda, sem divisória.
-/// Numa etapa que faz uma pergunta de cada vez, moldura é ruído: não há nada
-/// de que separar o conteúdo.
 class _MolduraEtapa extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final String titulo;
@@ -303,8 +256,6 @@ class _EtapaIdentidade extends StatelessWidget {
             final file = await pickImageFromSheet(context);
             if (file != null) controller.definirCapa(file);
           },
-          // Nesta tela não há foto salva no servidor: os dois caminhos de
-          // remoção caem no mesmo descarte local.
           onRemoverCapaSalva: () {},
           onDescartarNovaCapa: () => controller.definirCapa(null),
           onAdicionarFoto: () async {
@@ -386,14 +337,9 @@ class _EtapaExposicao extends StatelessWidget {
             context,
             'Escolha no máximo ${StoreRegisterController.maxCategorias} categorias.',
           ),
-          // O limite já é barrado pelo próprio picker (via `onLimiteExcedido`),
-          // então aqui o toque nunca chega recusado.
           onToggle: controller.alternarCategoria,
         ),
         const SizedBox(height: Spacing.xxl),
-        // Última coisa antes de concluir: como a loja entra no ar. É a
-        // mecânica que mais confunde quem chega — sem ela, o comerciante
-        // termina o cadastro achando que já está no mapa.
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

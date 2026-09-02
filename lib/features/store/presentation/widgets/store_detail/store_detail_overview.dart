@@ -15,19 +15,9 @@ import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/store_map_page.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/report_store_dialog.dart';
 
-/// Ações da loja: ver no mapa e denunciar.
-///
-/// As duas eram tratadas como coisas de naturezas diferentes — "Visualizar no
-/// mapa" era um `FloatingActionButton` fixo no rodapé, cobrindo o conteúdo
-/// durante toda a rolagem, e "Denunciar" era um pill vermelho colado ao lado do
-/// nome da loja, disputando atenção com o título. Aqui elas viram o que são:
-/// duas ações, numa linha, com pesos diferentes.
 class StoreActionsRow extends StatelessWidget {
   final StoreDto store;
 
-  /// 'CONSUMIDOR', 'GUEST', 'COMERCIANTE' ou 'ADMINISTRADOR' — só os dois
-  /// primeiros veem "Denunciar" (o visitante cai na parede de login ao tocar,
-  /// mas **vê** que a ação existe).
   final String userRole;
 
   const StoreActionsRow({super.key, required this.store, required this.userRole});
@@ -60,9 +50,6 @@ class StoreActionsRow extends StatelessWidget {
                 label: 'Ver no mapa',
                 icon: AppIcons.mapTrifold,
                 size: AppButtonSize.sm,
-                // Sem coordenadas não há o que mostrar: o mapa abria vazio e
-                // a rota nem chegava a ser calculada. Desabilitado, o botão
-                // ainda comunica que a função existe.
                 onPressed: store.temLocalizacao
                     ? () => Navigator.push(
                           context,
@@ -96,24 +83,11 @@ class StoreActionsRow extends StatelessWidget {
   }
 }
 
-/// Resumo numérico da loja: nota, avaliações, fotos.
-///
-/// Eram quatro colunas, e a quarta era "No mapa: Sim/Não" — um dado que não é
-/// métrica e que agora vive onde importa, no estado do botão "Ver no mapa".
-/// Quatro colunas dividindo 360dp era também o aperto que fazia os rótulos
-/// competirem por espaço assim que a fonte do sistema crescia.
 class StoreStatsRow extends StatelessWidget {
   final StoreDto store;
 
-  /// Nota média mais fresca (vem do resumo do backend), com fallback para a
-  /// que veio junto da loja.
   final double? media;
 
-  /// Total de avaliações mais fresco, pelo mesmo motivo de [media].
-  ///
-  /// Ler `store.totalAvaliacoes` direto daqui era o bug: quem chega ao detalhe
-  /// por `GET /lojas/{id}` (entidade pura, sem agregação) via "0 Avaliações"
-  /// neste resumo enquanto a seção logo abaixo listava várias.
   final int? total;
 
   const StoreStatsRow({super.key, required this.store, this.media, this.total});
@@ -136,8 +110,6 @@ class StoreStatsRow extends StatelessWidget {
         children: [
           for (var i = 0; i < stats.length; i++) ...[
             if (i > 0)
-              // O divisor acompanha a altura do conteúdo ao lado; parado em 32
-              // ele viraria um risco curto no meio de uma coluna alta.
               Container(
                 width: 1,
                 height: escalaComTeto(context, 34.0),
@@ -176,9 +148,6 @@ class StoreStatsRow extends StatelessWidget {
   }
 }
 
-/// Categorias da loja, cada uma com a cor e o ícone que o app já usa para ela
-/// nos filtros e nos cards de lista — antes eram chips só de texto, sem
-/// relação visual nenhuma com a mesma categoria vista na busca.
 class StoreCategoryChips extends StatelessWidget {
   final StoreDto store;
 

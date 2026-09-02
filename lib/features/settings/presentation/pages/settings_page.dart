@@ -19,24 +19,9 @@ import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
-/// Tela dedicada de Configurações — antes estas opções (aparência,
-/// permissões de GPS, excluir conta, como funciona, termos) viviam
-/// achatadas no meio da lista do Perfil, junto de "Editar Perfil" e
-/// "Minhas avaliações", misturando ajustes do app com atalhos de conteúdo.
-///
-/// Compartilhada entre consumidor e comerciante: o que muda entre os dois é
-/// só a página de "Como funciona" e a chamada de exclusão de conta, ambas
-/// injetadas por quem abre a tela.
 class SettingsPage extends StatelessWidget {
-  /// Exclui a conta no backend (DELETE /comerciantes|consumidores/{id}).
-  /// `null` esconde o item "Excluir conta" — é o caso do comerciante hoje,
-  /// enquanto o endpoint ainda falha com 409 por dependências não limpas
-  /// (favoritos da loja, posts, pix). Voltar a passar a callback quando o
-  /// backend fizer o cascade completo.
   final Future<void> Function()? onDeleteAccount;
 
-  /// Hook extra no encerramento de sessão (ex: limpar favoritos do
-  /// consumidor) — mesmo contrato do logout no Perfil.
   final VoidCallback? onLogoutExtra;
 
   final WidgetBuilder howItWorksPageBuilder;
@@ -48,9 +33,6 @@ class SettingsPage extends StatelessWidget {
     this.onLogoutExtra,
   });
 
-  /// Mesmo fluxo que rodava no Perfil antes de "Excluir conta" migrar pra
-  /// cá: confirma, apaga no backend, limpa a sessão local e o estado com
-  /// escopo de usuário, e volta pra home de visitante sem histórico.
   Future<void> _excluirConta(BuildContext context) async {
     final excluir = onDeleteAccount;
     if (excluir == null) return;
@@ -153,9 +135,6 @@ class SettingsPage extends StatelessWidget {
             label: 'Voltar',
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              // 44, não 40: era o único alvo de toque do app ainda abaixo do
-              // mínimo. Icon-only, então não escala com a fonte — o que ele
-              // precisava era do tamanho certo.
               height: 44.0,
               width: 44.0,
               decoration: BoxDecoration(
@@ -181,9 +160,6 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-/// Seletor de tema em pílula segmentada. Três opções, não duas: o modo
-/// "Automático" é o padrão de quem nunca escolheu tema — um par
-/// Claro/Escuro forçaria essas pessoas a sair dele sem querer.
 class ThemeModeSelector extends StatelessWidget {
   const ThemeModeSelector({super.key});
 
@@ -201,8 +177,6 @@ class ThemeModeSelector extends StatelessWidget {
         color: context.mapColors.surface,
         borderRadius: BorderRadius.circular(Radii.pill),
       ),
-      // Isolamento de rebuild: só o segmentado escuta o ThemeController —
-      // o resto da tela de configurações não reconstrói a cada troca.
       child: ListenableBuilder(
         listenable: ThemeController.instance,
         builder: (context, _) {
@@ -211,24 +185,14 @@ class ThemeModeSelector extends StatelessWidget {
             children: [
               for (final option in _options)
                 Expanded(
-                  // Segmentado: aqui o estado ativo não é só cor — o segmento
-                  // escolhido ganha uma superfície que os outros não têm, e a
-                  // presença desse bloco é perceptível sem distinguir matiz.
-                  // Faltava só o nó de semântica com o "selecionado".
                   child: SemanticTapArea(
                     label: option.label,
                     selected: current == option.mode,
                     onTap: () => ThemeController.instance.setThemeMode(option.mode),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      // Segmento com rótulo dentro: altura mínima, não fixa —
-                      // o seletor vive numa Column e tem para onde crescer.
                       constraints: const BoxConstraints(minHeight: 42.0),
                       decoration: BoxDecoration(
-                        // `selectedSurface`: o mesmo "segmento ativo" do
-                        // seletor de tipo de conta e dos chips de período —
-                        // e que inverte no tema escuro, onde o preto da
-                        // marca ficaria indistinguível do fundo.
                         color: current == option.mode
                             ? context.mapColors.selectedSurface
                             : Colors.transparent,

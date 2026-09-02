@@ -40,8 +40,6 @@ void main() {
 
   group('atualização de posição (ronda de GPS)', () {
     test('troca só as coordenadas e PRESERVA o endereço', () {
-      // Regressão do bug real: o payload montado à mão na tela omitia
-      // endereco/cidade/estado/cep, e cada tick de GPS os reenviava vazios.
       final json = StoreCreateRequest.fromStore(
         _loja,
         latitude: -23.0,
@@ -54,7 +52,6 @@ void main() {
       expect(json['cidade'], 'Campinas');
       expect(json['estado'], 'SP');
       expect(json['cep'], '13000-000');
-      // E o status não muda de carona.
       expect(json['statusLoja'], 'INATIVA');
     });
   });

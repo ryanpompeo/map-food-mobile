@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
-
 enum LocationStatus { granted, denied, serviceDisabled }
 
 class LocationResult {
@@ -20,10 +19,6 @@ class LocationService {
   static StreamController<Position>? _positionController;
   static StreamSubscription<Position>? _geolocatorSub;
 
-  /// Stream de posição compartilhado por todo o app (mapa de lojas próximas,
-  /// ronda do comerciante...): o hardware de GPS é assinado uma única vez,
-  /// e desliga quando o último ouvinte cancela. Quem chama já deve ter
-  /// verificado serviço/permissão (como os widgets fazem hoje).
   static Stream<Position> get positionStream {
     _positionController ??= StreamController<Position>.broadcast(
       onListen: () {
@@ -45,8 +40,6 @@ class LocationService {
     return _positionController!.stream;
   }
 
-  /// Retorna "Bairro, Cidade" (ou só "Cidade" se não houver bairro) a partir
-  /// da posição atual do dispositivo, ou o motivo pelo qual não foi possível.
   Future<LocationResult> getCurrentAddressLabel() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {

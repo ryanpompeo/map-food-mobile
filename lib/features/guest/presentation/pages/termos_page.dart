@@ -137,9 +137,6 @@ Para dúvidas ou para exercer seus direitos como titular, escreva para **contato
               color: ColorsPalette.redComponents,
               fontWeight: FontWeight.bold,
             ),
-            // Sem override de cor: corpo() já herda o texto primário do
-            // tema — parágrafo de texto legal não deve ficar esmaecido
-            // como um texto secundário.
             p: AppText.corpo(context).copyWith(height: 1.5),
             strong: TextStyle(
               fontWeight: FontWeight.bold,

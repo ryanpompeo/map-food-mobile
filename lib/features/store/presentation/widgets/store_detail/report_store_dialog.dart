@@ -11,7 +11,6 @@ import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
 
-/// Abre o formulário de denúncia de uma loja.
 Future<void> showReportStoreDialog(BuildContext context, {required int lojaId}) {
   return showDialog<void>(
     context: context,
@@ -43,11 +42,6 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
   final _descricaoController = TextEditingController();
   final _denunciaService = DenunciaService();
 
-  // Guard de "sair sem salvar": só considera alterado se o usuário fugiu do
-  // motivo padrão ou escreveu alguma descrição — evita perguntar confirmação
-  // pra quem só abriu o dialog e fechou sem preencher nada. ValueNotifier
-  // (não bool simples) pra não reconstruir o dialog inteiro a cada tecla —
-  // o rebuild fica isolado no ValueListenableBuilder do UnsavedChangesGuard.
   final ValueNotifier<bool> _hasUnsavedChanges = ValueNotifier(false);
 
   bool _computeHasUnsavedChanges() =>
@@ -56,9 +50,6 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
   @override
   void initState() {
     super.initState();
-    // O formulário sempre abre em branco: o backend (contrato legado) não
-    // tem checagem de duplicidade nem endpoint pra pré-carregar denúncia
-    // existente.
     _descricaoController.addListener(_onFormChanged);
   }
 
@@ -78,8 +69,6 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
   Future<void> _enviar() async {
     setState(() => _isSubmitting = true);
     try {
-      // POST /denuncias (contrato legado) não extrai o consumidor do JWT —
-      // precisa do id da sessão local no corpo da requisição.
       final consumidorId = SessionStore.instance.userId;
       if (consumidorId == null) {
         if (!mounted) return;
@@ -94,16 +83,11 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
         descricao: _descricaoController.text.trim(),
       );
       if (!mounted) return;
-      // pop() direto (não maybePop): já foi salvo, então fecha sem passar
-      // pela confirmação de "sair sem salvar" do PopScope abaixo.
       Navigator.pop(context);
       AppToast.success(context, 'Denúncia enviada.');
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      // Não fecha o dialog aqui — um erro de validação (ex: descrição muito
-      // longa) fechava o dialog e descartava o texto digitado sem explicar
-      // o motivo. Mantém o formulário aberto pro usuário corrigir e reenviar.
       UIUtils.showErrorDialog(context, 'Erro ao enviar denúncia. Tente novamente.');
     }
   }
@@ -157,10 +141,6 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: Spacing.base),
                   decoration: BoxDecoration(
-                    // Mesma superfície rebaixada do AppFormField logo abaixo:
-                    // os dois são campos, e antes o seletor usava `surface`
-                    // (a cor do próprio dialog) com uma borda vermelha que o
-                    // fazia parecer um campo em estado de erro.
                     color: colors.surfaceAlt,
                     borderRadius: BorderRadius.circular(Radii.md),
                     border: Border.all(color: colors.borderStrong),

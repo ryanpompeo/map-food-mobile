@@ -6,13 +6,8 @@ import 'package:map_food/core/ui/widgets/logout_dialog.dart';
 import 'package:map_food/features/settings/presentation/pages/settings_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Reprodução do relato "toco em Excluir conta / Sair da conta e nada
-/// aparece". Monta as telas de verdade e toca nos itens — sem API, porque o
-/// que está sendo testado é a abertura do diálogo, não a chamada de rede.
 void main() {
   setUp(() async {
-    // O seletor de tema da tela de Configurações lê o ThemeController, que o
-    // `main()` do app inicializa antes do runApp.
     SharedPreferences.setMockInitialValues({});
     await ThemeController.load();
   });
@@ -33,7 +28,6 @@ void main() {
     await tester.tap(find.text('Excluir conta'));
     await tester.pumpAndSettle();
 
-    // O diálogo pede a palavra-chave digitada — se ele abriu, este texto existe.
     expect(find.textContaining('EXCLUIR para confirmar'), findsOneWidget);
   });
 

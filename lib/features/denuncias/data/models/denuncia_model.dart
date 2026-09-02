@@ -1,4 +1,3 @@
-/// Modelo de denúncia retornado pela API `/denuncias`.
 class DenunciaModel {
   final int id;
   final String motivo;
@@ -26,7 +25,6 @@ class DenunciaModel {
       );
 }
 
-/// Mapeia os motivos de denúncia do enum Java para strings da UI e vice-versa.
 class MotivosDenuncia {
   static const Map<String, String> uiParaApi = {
     'Conteúdo inapropriado': 'CONTEUDO_INAPROPRIADO',
@@ -39,8 +37,6 @@ class MotivosDenuncia {
   static String toApi(String uiLabel) =>
       uiParaApi[uiLabel] ?? 'OUTRO';
 
-  /// Converte o enum da API de volta pro label da UI — usado pra
-  /// pré-preencher o dropdown quando o consumidor já denunciou a loja.
   static String fromApi(String apiValue) {
     for (final entry in uiParaApi.entries) {
       if (entry.value == apiValue) return entry.key;

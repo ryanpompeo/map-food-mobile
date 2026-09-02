@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/widgets/how_it_works_scaffold.dart';
 
-/// Três passos para quem procura comida entender a mecânica do app.
-///
-/// O desenho da tela vive em [HowItWorksScaffold], compartilhado com a versão
-/// do comerciante — aqui fica só o conteúdo.
 class HowItWorksPage extends StatelessWidget {
   const HowItWorksPage({super.key});
 

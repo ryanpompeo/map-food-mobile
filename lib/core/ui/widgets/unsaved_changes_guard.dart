@@ -6,9 +6,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-/// Diálogo genérico de confirmação de saída, usado tanto para formulários
-/// com alterações pendentes quanto para operações em andamento (ex: cálculo
-/// de rota). Devolve `true` se o usuário confirmou que quer sair mesmo assim.
 Future<bool> _confirmarSaida(
   BuildContext context, {
   required String titulo,
@@ -78,8 +75,6 @@ Future<bool> _confirmarSaida(
   return confirmou ?? false;
 }
 
-/// Pergunta "Deseja sair sem salvar?" antes de descartar uma edição em
-/// andamento. Devolve `true` se o usuário confirmou que quer sair.
 Future<bool> confirmarSaidaSemSalvar(BuildContext context) => _confirmarSaida(
       context,
       titulo: "Sair sem salvar?",
@@ -87,8 +82,6 @@ Future<bool> confirmarSaidaSemSalvar(BuildContext context) => _confirmarSaida(
       labelConfirmar: "Sair sem salvar",
     );
 
-/// Pergunta antes de sair de uma tela enquanto uma rota está sendo calculada
-/// — o cálculo (chamada ao OSRM) é cancelado se o usuário confirmar a saída.
 Future<bool> confirmarSairDuranteCalculoDeRota(BuildContext context) => _confirmarSaida(
       context,
       titulo: "Cálculo de rota em andamento",
@@ -96,15 +89,6 @@ Future<bool> confirmarSairDuranteCalculoDeRota(BuildContext context) => _confirm
       labelConfirmar: "Sair mesmo assim",
     );
 
-/// Envolve uma tela e intercepta a saída (gesto/botão de voltar do Android)
-/// enquanto [hasUnsavedChanges] for `true`, pedindo confirmação — via
-/// [confirmDialog] — em vez de descartar/cancelar silenciosamente.
-///
-/// [hasUnsavedChanges] é um [ValueListenable] (não um `bool` simples) de
-/// propósito: o rebuild fica isolado no [ValueListenableBuilder] interno,
-/// que envolve só o [PopScope] — quem chama atualiza o valor a cada tecla
-/// digitada sem precisar de `setState` na tela inteira (formulário, galeria,
-/// lista de avaliações etc.) só para manter esse booleano em dia.
 class UnsavedChangesGuard extends StatelessWidget {
   final ValueListenable<bool> hasUnsavedChanges;
   final Widget child;
@@ -121,9 +105,6 @@ class UnsavedChangesGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: hasUnsavedChanges,
-      // `child` é passado aqui (não recriado no builder) — o Flutter reusa a
-      // mesma instância entre notificações, então `cachedChild` nunca muda
-      // de identidade e a árvore abaixo do guard não reconstrói junto.
       child: child,
       builder: (context, dirty, cachedChild) => PopScope(
         canPop: !dirty,

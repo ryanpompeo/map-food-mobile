@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 
-/// Um ponto da série de atividade: quantas avaliações o consumidor fez no
-/// intervalo rotulado por [label].
 class ActivityPoint {
   final String label;
   final int value;
@@ -11,12 +9,6 @@ class ActivityPoint {
   const ActivityPoint({required this.label, required this.value});
 }
 
-/// Gráfico de linha da atividade do consumidor. `CustomPainter` em vez de
-/// um pacote de charts de propósito: é uma série só, sem eixos, zoom ou
-/// tooltip — não justifica uma dependência nova no `pubspec.yaml`.
-///
-/// O ponto de maior valor ganha um marcador e um balão com o número, que é
-/// o que dá leitura imediata ao gráfico sem eixo Y desenhado.
 class ActivityChart extends StatelessWidget {
   final List<ActivityPoint> points;
 
@@ -88,8 +80,6 @@ class _ActivityChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (points.length < 2) return;
 
-    // Topo reservado pro balão do valor máximo — sem essa margem ele sairia
-    // cortado quando o pico está na primeira linha do gráfico.
     const topoReservado = 26.0;
     final alturaUtil = size.height - topoReservado;
     final maxValor = points.map((p) => p.value).reduce((a, b) => a > b ? a : b);
@@ -106,8 +96,6 @@ class _ActivityChartPainter extends CustomPainter {
 
     final caminho = _linhaSuave(coords);
 
-    // Área sob a curva, esvaindo pra transparente — mesma leitura de
-    // "volume" da referência sem precisar de grade de fundo.
     final area = Path.from(caminho)
       ..lineTo(coords.last.dx, size.height)
       ..lineTo(coords.first.dx, size.height)
@@ -132,7 +120,6 @@ class _ActivityChartPainter extends CustomPainter {
         ..strokeJoin = StrokeJoin.round,
     );
 
-    // Marcador + balão no pico da série.
     final indicePico = points.indexWhere((p) => p.value == maxValor);
     final pico = coords[indicePico];
     canvas.drawCircle(pico, 6.0, Paint()..color = linha);
@@ -140,9 +127,6 @@ class _ActivityChartPainter extends CustomPainter {
     _desenharBalao(canvas, size, pico, '$maxValor');
   }
 
-  /// Curva por Bézier cúbica com pontos de controle no meio horizontal de
-  /// cada par — dá a linha arredondada da referência sem "estourar" acima do
-  /// pico, que é o que acontece com interpolação Catmull-Rom ingênua.
   Path _linhaSuave(List<Offset> coords) {
     final path = Path()..moveTo(coords.first.dx, coords.first.dy);
     for (var i = 0; i < coords.length - 1; i++) {
@@ -165,8 +149,6 @@ class _ActivityChartPainter extends CustomPainter {
 
     final largura = tp.width + 16.0;
     const altura = 20.0;
-    // Trava nas bordas pra o balão nunca vazar do card quando o pico é o
-    // primeiro ou o último ponto da série.
     final left = (pico.dx - largura / 2).clamp(0.0, size.width - largura);
     final rect = Rect.fromLTWH(left, pico.dy - altura - 10.0, largura, altura);
 
@@ -181,9 +163,3 @@ class _ActivityChartPainter extends CustomPainter {
   bool shouldRepaint(_ActivityChartPainter oldDelegate) =>
       oldDelegate.points != points || oldDelegate.linha != linha;
 }
-
-// A `DeltaBadge` que morava aqui foi para `core/ui/widgets/delta_badge.dart`:
-// a tela de Estatísticas do comerciante precisa da mesma pílula, e um widget
-// compartilhado importado de dentro da feature do consumidor seria acoplamento
-// entre dois módulos que não se conhecem. O visual daqui não mudou — é o
-// `DeltaTone.marca`, que continua sendo o padrão.

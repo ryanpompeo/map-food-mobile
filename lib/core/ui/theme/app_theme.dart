@@ -5,23 +5,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-/// ThemeData de claro/escuro do app. [ThemeController] só escolhe QUAL destes
-/// dois usar; a definição visual de cada um vive só aqui.
-///
-/// ## O que mudou na v2
-///
-/// - **Inter** no lugar de Poppins, empacotada em `assets/fonts/` em vez de
-///   baixada em runtime pelo `google_fonts` (sem download no primeiro launch,
-///   sem flash de fonte trocando, funciona offline). É a mesma fonte da web
-///   (`mapfood-web/tailwind.config.ts`), então as duas pontas do produto
-///   passam a falar a mesma língua.
-/// - **`ColorScheme` escrito à mão** em vez de `fromSeed`. O algoritmo do
-///   Material You deriva a paleta inteira a partir do vermelho da marca e
-///   tinge tudo — superfície, borda, container — de rosa. Um sistema com cor
-///   de marca forte precisa de neutros verdadeiros; a cor entra por decisão,
-///   não por derivação.
-/// - **Geometria**: campo com raio 12 (era pílula), superfícies com os raios
-///   de [Radii], nenhuma elevação em botão.
 class AppTheme {
   AppTheme._();
 
@@ -45,11 +28,8 @@ class AppTheme {
       brightness: brightness,
       primary: MfColor.brand,
       onPrimary: ColorsPalette.white,
-      // Container de marca: fundo suave de chip selecionado e badge.
       primaryContainer: isDark ? MfColor.brandSurfaceDark : MfColor.brandSurface,
       onPrimaryContainer: MfColor.brand,
-      // "Secundário" aqui é o neutro forte da marca (o preto azulado), que é
-      // o que o app usa em CTA neutro e pin de mapa.
       secondary: isDark ? colors.textPrimary : MfColor.ink,
       onSecondary: isDark ? MfColor.ink : ColorsPalette.white,
       secondaryContainer: colors.surfaceAlt,
@@ -66,8 +46,6 @@ class AppTheme {
       surfaceContainerHigh: colors.surfaceAlt,
       surfaceContainerHighest: colors.surfaceAlt,
       onSurfaceVariant: colors.textSecondary,
-      // No Material 3 `outline` é o traço que identifica um componente e
-      // `outlineVariant` o decorativo — mesmo par de `borderStrong`/`border`.
       outline: colors.borderStrong,
       outlineVariant: colors.border,
       shadow: ColorsPalette.black,
@@ -83,14 +61,8 @@ class AppTheme {
       fontFamily: AppText.family,
       scaffoldBackgroundColor: colors.background,
       canvasColor: colors.surface,
-      // Registra o MapFoodColors correspondente pra esta brightness — é o
-      // que faz `context.mapColors` devolver os tokens certos em cada tema.
       extensions: <ThemeExtension<dynamic>>[colors],
 
-      // Material 3 tinge superfícies com a cor primária conforme a elevação
-      // ("surface tint"). Com um vermelho forte de marca isso deixa card e
-      // app bar rosados — desligado aqui e via surfaceTintColor nos temas
-      // de componente abaixo.
       applyElevationOverlayColor: false,
 
       textTheme: _textTheme(colors),
@@ -127,9 +99,6 @@ class AppTheme {
         ),
       ),
 
-      // Campo de formulário: superfície rebaixada, raio 12, rótulo por fora
-      // (ver AppFormField). A borda só ganha cor e espessura no foco — em
-      // repouso ela existe apenas para separar o campo do fundo.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.surfaceAlt,
@@ -155,22 +124,14 @@ class AppTheme {
           fontSize: 11,
           color: colors.textTertiary,
         ),
-        // `borderStrong`, não `border`: o campo tem fundo `surfaceAlt`, que
-        // rende só 1,07:1 contra o fundo da tela — a borda é literalmente a
-        // única coisa que diz onde o campo começa e termina, então ela carrega
-        // informação e precisa dos 3:1 do WCAG 1.4.11.
         border: _fieldBorder(colors.borderStrong),
         enabledBorder: _fieldBorder(colors.borderStrong),
-        // Desabilitado segue fraco de propósito: componente inativo é isento
-        // (WCAG 1.4.3) e o apagamento é justamente o que comunica o estado.
         disabledBorder: _fieldBorder(colors.divider),
         focusedBorder: _fieldBorder(MfColor.brand, width: 1.5),
         errorBorder: _fieldBorder(MfColor.danger),
         focusedErrorBorder: _fieldBorder(MfColor.danger, width: 1.5),
       ),
 
-      // Botões: altura 52, raio 16, sem elevação. Profundidade no sistema vem
-      // de superfície e sombra de container, nunca de botão levantado.
       filledButtonTheme: FilledButtonThemeData(style: _buttonStyle(colors)),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: _buttonStyle(colors).copyWith(
@@ -184,7 +145,6 @@ class AppTheme {
         style: _buttonStyle(colors).copyWith(
           backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
           foregroundColor: WidgetStatePropertyAll(colors.textPrimary),
-          // Botão outline é só contorno: sem fundo próprio, a borda é o botão.
           side: WidgetStatePropertyAll(BorderSide(color: colors.borderStrong)),
         ),
       ),
@@ -269,8 +229,6 @@ class AppTheme {
 
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: MfColor.brand,
-        // Traço fino: o padrão do Material (4px) fica pesado ao lado de
-        // tipografia e ícones de traço leve.
         strokeWidth: 2.5,
       ),
 
@@ -283,8 +241,6 @@ class AppTheme {
             states.contains(WidgetState.selected) ? Colors.transparent : colors.border),
       ),
 
-      // Swipe-to-go-back nativo nas duas plataformas (mesma decisão do
-      // appPageRoute, aplicada também às rotas nomeadas).
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -294,12 +250,6 @@ class AppTheme {
     );
   }
 
-  /// Campo com raio 12. Houve uma tentativa de levar tudo para cápsula, por
-  /// "coerência de família" com a busca; na tela, o formulário ficou pior —
-  /// campo em cápsula lê como chip, e uma coluna de cápsulas empilhadas perde
-  /// a leitura de bloco que o raio 12 dá. A cápsula ficou só onde ela é a
-  /// forma certa: a **busca** (ver `SearchFieldWidget`), que é um controle
-  /// solto, não um item de formulário.
   static OutlineInputBorder _fieldBorder(Color color, {double width = 1}) {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(Radii.md),
@@ -310,12 +260,6 @@ class AppTheme {
   static ButtonStyle _buttonStyle(MapFoodColors colors) {
     return ButtonStyle(
       elevation: const WidgetStatePropertyAll(0),
-      // Size(0, 52) e **não** Size.fromHeight(52): `fromHeight` produz
-      // `Size(double.infinity, 52)`, ou seja, largura mínima infinita. Num
-      // botão dentro de `Row` (o par Cancelar/Confirmar dos diálogos, por
-      // exemplo) isso vira `BoxConstraints forces an infinite width` e
-      // derruba o layout inteiro — o diálogo simplesmente não aparece.
-      // Quem quiser largura total pede explicitamente (ver `AppButton.expand`).
       minimumSize: const WidgetStatePropertyAll(Size(0, 52)),
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: Spacing.xl),
@@ -331,9 +275,6 @@ class AppTheme {
           fontWeight: FontWeight.w600,
         ),
       ),
-      // Desabilitado como superfície apagada, não como opacidade no widget
-      // inteiro: baixar a opacidade apaga a borda junto e deixa o botão
-      // "fantasma" em vez de claramente inativo.
       backgroundColor: WidgetStateProperty.resolveWith((states) =>
           states.contains(WidgetState.disabled) ? colors.surfaceAlt : null),
       foregroundColor: WidgetStateProperty.resolveWith((states) =>
@@ -341,8 +282,6 @@ class AppTheme {
     );
   }
 
-  /// TextTheme derivado da mesma escala de [AppText] — é o que garante que um
-  /// `Text` sem estilo explícito já nasça com a tipografia certa.
   static TextTheme _textTheme(MapFoodColors colors) {
     TextStyle base(double size, double lineHeight, FontWeight weight,
             {double spacing = 0, Color? color}) =>

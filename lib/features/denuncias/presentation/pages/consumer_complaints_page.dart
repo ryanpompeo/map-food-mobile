@@ -78,9 +78,6 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: ColorsPalette.redComponents))
             : _errorMessage != null
-                // Estas duas telas tinham cópias privadas de "vazio" e
-                // "erro", cada uma com seu próprio tamanho de ícone e botão.
-                // Agora usam o EmptyState compartilhado.
                 ? Center(
                     child: EmptyState(
                       icon: AppIcons.wifiSlash,
@@ -177,7 +174,6 @@ class _DenunciaCard extends StatelessWidget {
                       style: AppText.corpo(context).copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 2),
-                    // Sem override de cor: legenda() já resolve pra secondaryText.
                     Text(
                       _motivoLabels[denuncia.motivo] ?? denuncia.motivo,
                       style: AppText.legenda(context),
@@ -206,7 +202,6 @@ class _DenunciaCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
-          // Sem override de cor: legenda() já resolve pra secondaryText.
           Text(
             _formatDate(denuncia.dataDenuncia),
             style: AppText.legenda(context),
@@ -216,4 +211,3 @@ class _DenunciaCard extends StatelessWidget {
     );
   }
 }
-

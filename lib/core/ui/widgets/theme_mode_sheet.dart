@@ -19,9 +19,6 @@ const _options = [
   _ThemeModeOption(ThemeMode.system, "Automático (sistema)", AppIcons.deviceMobile),
 ];
 
-/// Abre um bottom sheet com as três opções de tema e aplica a escolha via
-/// [ThemeController.instance] — chame a partir de qualquer tela de
-/// configurações/perfil.
 Future<void> showThemeModeSheet(BuildContext context) {
   return showModalBottomSheet(
     context: context,
@@ -47,9 +44,6 @@ class _ThemeModeSheetContent extends StatelessWidget {
           children: [
             Text("Aparência", style: AppText.titulo(context).copyWith(fontSize: 18)),
             const SizedBox(height: AppSpacing.md),
-            // Isolamento de rebuild: só esta lista escuta o
-            // ThemeController. O título acima e os paddings do sheet não
-            // precisam reconstruir a cada troca de tema.
             ListenableBuilder(
               listenable: ThemeController.instance,
               builder: (context, _) {

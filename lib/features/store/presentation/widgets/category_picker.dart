@@ -9,35 +9,19 @@ import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 
-/// Seleção de categorias da loja — os quatro estados de uma vez.
-///
-/// Nasceu de uma duplicação real: cadastro de loja e edição de loja tinham
-/// cada um a sua cópia dos chips, com raio, peso de fonte e tratamento de
-/// erro diferentes; a correção de "categorias não aparecem" precisou ser
-/// escrita duas vezes, em dois arquivos, com dois textos distintos.
-///
-/// A falha aqui nunca pode ser silenciosa: escolher categoria é obrigatório
-/// para concluir o cadastro, então uma seção vazia deixa a pessoa presa
-/// olhando um botão que não funciona, sem nada para tocar.
 class CategoryPicker extends StatelessWidget {
   final List<CategoriaModel> categorias;
 
-  /// IDs escolhidos. Em modo leitura, é o que se mostra — e só isso.
   final List<int> selecionadas;
 
   final bool carregando;
 
-  /// Mensagem de falha da busca. `null` quando a chamada deu certo (inclusive
-  /// quando devolveu lista vazia, que é outro estado).
   final String? erro;
 
   final VoidCallback onRetry;
 
-  /// `null` deixa o seletor em somente-leitura: mostra as categorias já
-  /// escolhidas como selos, sem oferecer toque.
   final ValueChanged<CategoriaModel>? onToggle;
 
-  /// Disparado ao tocar numa categoria não escolhida com o limite já cheio.
   final VoidCallback? onLimiteExcedido;
 
   final int maxSelecao;
@@ -69,8 +53,6 @@ class CategoryPicker extends StatelessWidget {
     }
 
     if (categorias.isEmpty) {
-      // 200 com lista vazia é diferente de falha: não adianta oferecer
-      // "tentar novamente" para algo que respondeu.
       return const _AvisoCategorias(
         icone: AppIcons.info,
         mensagem: 'Nenhuma categoria cadastrada no momento. '
@@ -138,8 +120,6 @@ class _CategoriaChip extends StatelessWidget {
         duration: Motion.fast,
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.base,
-          // 10 de padding vertical dá ~40px de alvo com a fonte de caption —
-          // abaixo disso o chip fica difícil de acertar com o polegar.
           vertical: 10.0,
         ),
         decoration: BoxDecoration(
@@ -150,8 +130,6 @@ class _CategoriaChip extends StatelessWidget {
           categoria.nome,
           style: AppText.caption(context).copyWith(
             fontSize: 13,
-            // Branco sobre a cor de identidade da categoria vale nos dois
-            // temas: a cor do chip selecionado não muda com o brightness.
             color: selecionada ? Colors.white : colors.textSecondary,
             fontWeight: selecionada ? FontWeight.w700 : FontWeight.w600,
           ),
@@ -161,9 +139,6 @@ class _CategoriaChip extends StatelessWidget {
   }
 }
 
-/// Placeholders com a forma dos chips durante o carregamento — um spinner
-/// solto no meio da seção não diz o que está vindo, e a seção "pula" de
-/// altura quando os chips chegam.
 class _ChipsSkeleton extends StatelessWidget {
   const _ChipsSkeleton();
 
@@ -178,8 +153,6 @@ class _ChipsSkeleton extends StatelessWidget {
         for (final largura in _larguras)
           Container(
             width: largura,
-            // Esqueleto dos chips que vão ocupar este espaço: acompanha a
-            // mesma escala deles, senão a lista salta ao terminar de carregar.
             height: escalaComTeto(context, 38),
             decoration: BoxDecoration(
               color: context.mapColors.surfaceAlt,

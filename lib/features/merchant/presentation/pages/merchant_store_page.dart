@@ -18,33 +18,13 @@ import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/pages/store_advanced_page.dart';
 import 'package:map_food/features/store/presentation/pages/store_edit_page.dart';
 
-/// O painel de quem administra a loja.
-///
-/// Une o que eram duas abas — a operação (abrir/fechar + mapa da ronda) e o
-/// perfil público — porque elas nunca foram assuntos diferentes: são o mesmo
-/// objeto, visto de dois lados. Separadas, a informação mais consultada do dia
-/// (estou aberto? apareço onde?) ficava numa aba **ao lado** do lugar onde a
-/// loja é administrada.
-///
-/// A organização é por frequência de uso, não por tipo de dado:
-///
-/// | camada | o quê | onde |
-/// |---|---|---|
-/// | imediata | abrir/fechar, posição no mapa | topo, sem rolagem |
-/// | diária | dados, fotos, categorias | um toque → [StoreEditPage] |
-/// | rara | inativar/excluir loja | dois toques → [StoreAdvancedPage] |
 class MerchantStorePage extends StatefulWidget {
   final StoreDto store;
 
-  /// Barra de troca de loja (comerciante com mais de uma) — renderizada no
-  /// topo do body pra não colidir com o AppBar.
   final Widget? storeSwitcher;
 
-  /// Loja alterada no backend (status, posição da ronda, edição salva).
   final ValueChanged<StoreDto>? onStoreUpdated;
 
-  /// Loja excluída — quem hospeda precisa recarregar a lista, porque a loja
-  /// desta tela deixou de existir.
   final VoidCallback? onStoreDeleted;
 
   const MerchantStorePage({
@@ -80,21 +60,14 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
   @override
   void didUpdateWidget(covariant MerchantStorePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Resincroniza com a versão mais recente vinda do pai. Aqui não há
-    // formulário aberto para atropelar — este painel é leitura, e a edição
-    // acontece numa rota empurrada por cima.
     if (widget.store.id == _store.id) {
       setState(() => _store = widget.store);
     } else {
-      // Troca de loja pelo switcher: as avaliações são de outra loja agora.
       _store = widget.store;
       _recarregarDaLoja();
     }
   }
 
-  /// Troca de loja pelo switcher: zera o que está na tela antes de buscar,
-  /// porque o conteúdo atual é de **outra** loja e continuaria visível,
-  /// atribuído à loja errada, durante a busca.
   void _recarregarDaLoja() {
     setState(() {
       _avaliacoes = [];
@@ -105,9 +78,6 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
     _carregarMedia();
   }
 
-  /// Puxar para atualizar: refaz as buscas da **mesma** loja, e por isso não
-  /// zera nada — o que está na tela continua correto até o dado novo chegar.
-  /// Em paralelo, já que uma não depende da outra.
   Future<void> _recarregar() async {
     await Future.wait([_carregarAvaliacoes(), _carregarMedia()]);
   }
@@ -119,7 +89,6 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
       );
       if (mounted) setState(() => _avaliacoes = avaliacoes);
     } catch (_) {
-      // Lista vazia com o aviso da própria seção — não derruba o painel.
     } finally {
       if (mounted) setState(() => _carregandoAvaliacoes = false);
     }
@@ -130,7 +99,6 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
       final resumo = await _storeService.getResumo(_store.id);
       if (mounted) setState(() => _mediaAvaliacao = resumo.avaliacao);
     } catch (_) {
-      // Mantém null ("Novo") se a busca falhar.
     }
   }
 
@@ -150,9 +118,6 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
       appPageRoute(
         builder: (_) => StoreAdvancedPage(
           store: _store,
-          // Inativar por lá muda o status da mesma loja que o card de operação
-          // está exibindo aqui — sem isso o painel voltaria mostrando "Loja
-          // aberta" com a ronda ligada.
           onStoreUpdated: _onOperacaoAtualizou,
         ),
       ),
@@ -187,14 +152,7 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
           ],
         ),
       ),
-      // As camadas são separadas por **respiro**, não por linha: quatro
-      // `Divider` de ponta a ponta numa tela de sete blocos fatiavam o painel
-      // em faixas de mesmo peso, e o que se lia era a grade, não a hierarquia.
-      // A única linha que sobra é a que antecede a camada rara — ali ela marca
-      // uma quebra de natureza (consulta → ação destrutiva), não um respiro.
       body: AppRefresh(
-        // As avaliações e a nota média chegam de fora: é o cliente que avalia,
-        // não o lojista. Puxar é o gesto de "chegou alguma nota nova?".
         onRefresh: _recarregar,
         child: ListView(
           physics: AppRefresh.physics,
@@ -205,7 +163,6 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
               const SizedBox(height: Spacing.base),
             ],
 
-            // ── imediata ──
             StoreOperationSection(
               store: _store,
               onStoreUpdated: _onOperacaoAtualizou,
@@ -213,7 +170,6 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
 
             const SizedBox(height: Spacing.xxl),
 
-            // ── diária ──
             _PerfilPublico(store: _store, onEditar: _abrirEdicao),
 
             const SizedBox(height: Spacing.xxl),
@@ -226,7 +182,6 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
               ),
             ),
 
-            // ── rara ──
             const SizedBox(height: Spacing.xxl),
             Divider(color: colors.divider, height: 1),
             MenuListTile(
@@ -243,19 +198,12 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
     );
   }
 
-  /// A ronda escreve na loja a cada deslocamento. O painel acompanha para o
-  /// preview não ficar com o endereço de antes, e repassa para o pai.
   void _onOperacaoAtualizou(StoreDto atualizada) {
     if (mounted) setState(() => _store = atualizada);
     widget.onStoreUpdated?.call(atualizada);
   }
 }
 
-/// Como o cliente vê a loja — leitura pura, com um atalho para editar.
-///
-/// Nada de campo de formulário aqui: para **conferir** o nome da loja não faz
-/// sentido montar um `TextField` desabilitado, que era o que a tela antiga
-/// fazia e o que dava a uma página de consulta a cara de formulário quebrado.
 class _PerfilPublico extends StatelessWidget {
   final StoreDto store;
   final VoidCallback onEditar;
@@ -310,12 +258,6 @@ class _PerfilPublico extends StatelessWidget {
           ),
           const SizedBox(height: Spacing.base),
 
-          // Um bloco só, com as linhas separadas por divisores internos.
-          // Soltas sobre o fundo da página, com 16 de respiro entre uma e
-          // outra, as quatro liam como campos de um formulário desabilitado —
-          // que é exatamente o que esta tela deixou de ser. Superfície `flat`:
-          // o painel inteiro já rola, e um card com sombra aqui viraria um
-          // objeto solto no meio da página.
           AppCard(
             elevation: AppCardElevation.flat,
             padding: EdgeInsets.zero,
@@ -355,9 +297,6 @@ class _PerfilPublico extends StatelessWidget {
   }
 }
 
-/// Divisor entre duas linhas do bloco de consulta. Recuado à esquerda até onde
-/// o texto começa — encostado na borda ele cortaria a coluna de ícones ao
-/// meio, e é a coluna que amarra as linhas como um bloco só.
 class _SeparadorInterno extends StatelessWidget {
   const _SeparadorInterno();
 
@@ -372,14 +311,6 @@ class _SeparadorInterno extends StatelessWidget {
   }
 }
 
-/// Linha de consulta: rótulo pequeno em cima, valor com contraste embaixo.
-///
-/// Valor ausente vira "Não informado" em tom terciário em vez de espaço em
-/// branco — vazio silencioso lê como falha de carregamento.
-///
-/// O respiro é padding **interno** (o card que a hospeda tem padding zero):
-/// assim os divisores entre as linhas caem no meio do espaço, e não colados na
-/// linha de cima.
 class _LinhaInfo extends StatelessWidget {
   final IconData icone;
   final String rotulo;

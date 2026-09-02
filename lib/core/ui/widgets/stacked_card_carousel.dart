@@ -13,11 +13,8 @@ class StackedCardItem {
   final String title;
   final String? imageUrl;
 
-  /// Categoria principal da loja. Opcional: o carrossel do comerciante ("Minhas
-  /// Lojas") não tem o que dizer aqui, e o chip simplesmente não aparece.
   final String? subtitle;
 
-  /// Nota média, já como número — a formatação (`4.0`, `Novo`) é do card.
   final double? rating;
 
   const StackedCardItem({
@@ -29,25 +26,12 @@ class StackedCardItem {
   });
 }
 
-/// Carrossel de cards empilhados (efeito "baralho"): o card da frente é
-/// substituído automaticamente pelo de trás a cada [autoAdvanceInterval],
-/// e o usuário pode deslizar com o dedo pra trocar na hora — o que
-/// acontecer primeiro reinicia o temporizador, pra não "atropelar" o gesto
-/// manual com um avanço automático logo em seguida.
-///
-/// O empilhamento é feito por deslocamento vertical + largura decrescente
-/// (não por escala a partir do centro) — assim os cards de trás realmente
-/// aparecem espiando por baixo do card da frente, em vez de só encolher
-/// escondidos atrás dele.
 class StackedCardCarousel extends StatefulWidget {
   final List<StackedCardItem> items;
   final ValueChanged<StackedCardItem> onTap;
   final double cardHeight;
   final Duration autoAdvanceInterval;
 
-  /// Recuo horizontal do card da frente em relação às bordas do carrossel —
-  /// aumentar isso estreita o card (os de trás recuam ainda mais a partir
-  /// deste valor, ver [_passoRecuoHorizontal]).
   final double horizontalPadding;
 
   const StackedCardCarousel({
@@ -68,20 +52,12 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
   static const Duration _animDuration = Duration(milliseconds: 420);
   static const double _velocidadeMinimaSwipe = 250.0;
 
-  // Cada profundidade soma este deslocamento vertical e este acréscimo de
-  // recuo horizontal em relação ao card da frente (profundidade 0).
   static const double _passoVertical = 16.0;
   static const double _passoRecuoHorizontal = 12.0;
 
   int _currentIndex = 0;
   Timer? _timer;
 
-  // ValueNotifier (não campo + setState) de propósito: um drag horizontal
-  // dispara onHorizontalDragUpdate a cada amostra do ponteiro (60+ vezes por
-  // segundo) — setState nesse ritmo reconstruía os 3 cards empilhados (foto,
-  // texto, sombra...) inteiros a cada evento, quando só a translação do card
-  // da frente muda. O ValueListenableBuilder em _buildSlot isola esse
-  // rebuild só na translação.
   final ValueNotifier<double> _dragDx = ValueNotifier(0.0);
 
   @override
@@ -135,14 +111,7 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
     final extraProfundidade = (visibleCount - 1) * _passoVertical;
 
     return SizedBox(
-      // `width: double.infinity` é necessário: todos os filhos do Stack são
-      // `Positioned`, então o Stack não tem nada para se dimensionar e
-      // colapsa quando o pai passa largura frouxa (uma `Column` com
-      // `crossAxisAlignment.start`, por exemplo). O resultado era o card
-      // quase colado nas bordas, ignorando o `horizontalPadding`.
       width: double.infinity,
-      // Altura do card da frente + o quanto os cards de trás "espiam" por
-      // baixo dele.
       height: widget.cardHeight + extraProfundidade,
       child: Stack(
         clipBehavior: Clip.none,
@@ -171,14 +140,6 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
           : _StackedCardBackdrop(height: widget.cardHeight),
     );
 
-    // `AnimatedPositioned` PRECISA ser filho direto do `Stack`. Antes, o card
-    // da frente vinha embrulhado em `GestureDetector` > `Transform` e o de
-    // trás em `IgnorePointer`, então nenhum dos dois era filho direto: o
-    // `left`/`right` era descartado, o `Stack` media os filhos com restrição
-    // frouxa e o `SizedBox(width: double.infinity)` de dentro do card esticava
-    // até a borda da tela. Era essa a causa do carrossel colado nas laterais —
-    // o `horizontalPadding` estava correto, só nunca chegava a ser aplicado.
-    // O gesto e a translação agora ficam DENTRO do Positioned.
     return AnimatedPositioned(
       key: ValueKey(item.id),
       duration: _animDuration,
@@ -190,9 +151,6 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
           ? GestureDetector(
               onHorizontalDragUpdate: (details) => _dragDx.value += details.delta.dx,
               onHorizontalDragEnd: _onDragEnd,
-              // `conteudo` (foto + texto do card da frente) é passado como
-              // `child` do builder — construído uma vez só, não a cada delta
-              // de drag; só o Transform.translate em volta dele é reconstruído.
               child: ValueListenableBuilder<double>(
                 valueListenable: _dragDx,
                 builder: (context, dx, child) =>
@@ -205,8 +163,6 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
   }
 }
 
-/// Silhueta lisa (sem foto) dos cards atrás do card da frente — mostrar a
-/// imagem deles também ficaria poluído, já que só uma fatia fina aparece.
 class _StackedCardBackdrop extends StatelessWidget {
   final double height;
 
@@ -228,21 +184,6 @@ class _StackedCardBackdrop extends StatelessWidget {
   }
 }
 
-/// Card da frente: foto em sangria total com as informações da loja apoiadas
-/// sobre um véu escuro no rodapé.
-///
-/// Antes era um banner branco em cápsula com só o nome dentro. O banner
-/// resolvia o contraste (texto escuro sobre superfície opaca), mas custava
-/// caro: tapava um terço da foto e, principalmente, o card inteiro dizia
-/// apenas *qual* loja é — nada sobre *o que* ela é nem *quanto* vale. Numa
-/// pilha de favoritos, que é uma lista de escolhas, é justamente isso que
-/// diferencia um item do outro.
-///
-/// O véu em gradiente faz o mesmo trabalho de contraste sem tapar nada: ele
-/// escurece só a faixa onde o texto se apoia, e é o que garante branco legível
-/// tanto sobre uma foto clara (céu, parede branca) quanto sobre uma escura.
-/// Sem ele, o texto seria branco-sobre-foto-qualquer — que é sorte, não
-/// contraste.
 class _StoreStackCard extends StatelessWidget {
   final StackedCardItem item;
   final double height;
@@ -265,17 +206,12 @@ class _StoreStackCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Decorativa (sem `semanticLabel`): o nome da loja aparece como
-              // texto logo abaixo.
               AppNetworkImage(
                 path: item.imageUrl,
                 displayWidth: MediaQuery.sizeOf(context).width,
                 fallback: _buildFallback(context),
               ),
 
-              // Véu de leitura. Começa transparente na metade de cima pra não
-              // "sujar" a foto e fecha em preto quase sólido no rodapé, onde o
-              // texto branco se apoia.
               const IgnorePointer(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -321,10 +257,6 @@ class _StoreStackCard extends StatelessWidget {
                             item.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            // Branco literal, não `primaryText`: o fundo aqui
-                            // é o véu escuro, que é o mesmo nos dois temas —
-                            // um token que inverte deixaria texto escuro sobre
-                            // preto no tema claro.
                             style: AppText.corpo(context).copyWith(
                               fontSize: 18.0,
                               height: 1.2,
@@ -334,9 +266,6 @@ class _StoreStackCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        // Afordância de "abre alguma coisa": o card inteiro é
-                        // tocável, mas sem nenhuma marca disso ele lê como
-                        // ilustração.
                         Container(
                           height: 36.0,
                           width: 36.0,
@@ -372,12 +301,6 @@ class _StoreStackCard extends StatelessWidget {
   }
 }
 
-/// Selo translúcido sobre o véu do card: categoria e nota.
-///
-/// Branco a 22% em vez de uma cápsula opaca — o objetivo é marcar a
-/// informação sem abrir mais dois blocos sólidos por cima da foto. Sobre o
-/// véu (preto a 85%) o resultado é escuro o suficiente pra sustentar o texto
-/// branco em negrito.
 class _SeloDeVidro extends StatelessWidget {
   final String texto;
   final IconData? icone;

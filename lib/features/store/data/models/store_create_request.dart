@@ -25,18 +25,6 @@ class StoreCreateRequest {
     this.longitude,
   });
 
-  /// Payload completo de uma loja existente, com os campos indicados
-  /// sobrescritos.
-  ///
-  /// Ponto único que define "o que é o corpo de um PUT de loja". Antes, cada
-  /// tela montava o seu: a ronda de GPS (hoje `StoreRondaController`) omitia
-  /// `endereco`, `cidade`, `estado` e `cep` a cada envio de posição — se o
-  /// backend fizer replace (e não merge) nesses campos, cada deslocamento do
-  /// comerciante apagava o endereço cadastrado da loja.
-  ///
-  /// Regra de negócio preservada: `statusLoja` só muda quando explicitamente
-  /// informado. `SUSPENSA` é decisão exclusiva de administrador e nunca deve
-  /// partir do app do comerciante.
   factory StoreCreateRequest.fromStore(
     StoreDto loja, {
     String? statusLoja,

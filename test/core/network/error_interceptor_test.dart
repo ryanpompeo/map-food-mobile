@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/interceptors/error_interceptor.dart';
 
-/// Roda o interceptor isoladamente e devolve a AppException resultante.
 Future<AppException> _traduzir({
   int? status,
   dynamic body,
@@ -63,8 +62,6 @@ void main() {
     test(
       'corpo de erro padrão do Spring NÃO vaza o timestamp como mensagem',
       () async {
-        // Era exatamente isto que o usuário via na tela:
-        // "2026-08-24T14:32:11.482+00:00"
         final e = await _traduzir(status: 400, body: {
           'timestamp': '2026-08-24T14:32:11.482+00:00',
           'status': 400,

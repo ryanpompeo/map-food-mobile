@@ -5,15 +5,6 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/utils/text_scale.dart';
 
-/// Cabeçalho das seções de navegação da busca ("Perto de você", "Em Alta").
-///
-/// Existe porque os dois títulos eram um `Text` solto em arquivos diferentes,
-/// com o mesmo `copyWith(fontWeight: w800, color: primaryText)` copiado nos
-/// dois — e o ícone teria virado uma terceira cópia da mesma linha.
-///
-/// O ícone é **decorativo**: `ExcludeSemantics` o tira da árvore de
-/// acessibilidade, porque o título ao lado já diz o que a seção é. Sem isso o
-/// leitor de tela anunciaria um nó de imagem sem rótulo antes de cada seção.
 class HomeSectionTitle extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -29,8 +20,6 @@ class HomeSectionTitle extends StatelessWidget {
           ExcludeSemantics(
             child: Icon(
               icon,
-              // Acompanha a fonte: um ícone de tamanho fixo ao lado de um
-              // título que cresce descola do texto e passa a ler como sujeira.
               size: escalaIcone(context, AppIconSize.md),
               color: ColorsPalette.redComponents,
             ),

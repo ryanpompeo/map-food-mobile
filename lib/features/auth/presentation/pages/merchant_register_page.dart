@@ -38,8 +38,6 @@ class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
   final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
 
-  // Encadeamento do teclado — o formulário tem sete campos, é onde a falta
-  // do "próximo" mais custava: era um toque a mais na tela por campo.
   final _cpfFocus = FocusNode();
   final _emailFocus = FocusNode();
   final _cnpjFocus = FocusNode();
@@ -96,8 +94,6 @@ class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
   Future<void> _cadastrar() async {
     if (_isLoading) return;
 
-    // O aceite entra na validação do Form (ver TermsCheckbox), então o erro
-    // aparece embaixo do checkbox em vez de um toast no topo da tela.
     if (!(_formKey.currentState?.validate() ?? false)) {
       FocusScope.of(context).unfocus();
       return;
@@ -141,7 +137,6 @@ class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
 
       if (!mounted) return;
 
-      // MerchantHomePage detecta que não há loja e redireciona para StoreRegisterPage
       unawaited(Navigator.pushAndRemoveUntil(
         context,
         appPageRoute(builder: (_) => const MerchantHomePage()),
@@ -160,8 +155,6 @@ class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
     }
   }
 
-  /// Só o banner inline: o par banner + toast repetia a mesma frase duas
-  /// vezes, e a do toast sumia sozinha antes de ser lida.
   void _mostrarErro(String msg) {
     if (!mounted) return;
     setState(() => _errorMessage = msg);
@@ -339,9 +332,6 @@ class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
     );
   }
 
-  /// Rótulo de grupo do formulário. Em caixa alta e pequeno: separa as duas
-  /// metades do cadastro sem competir com o título da tela, que é o único
-  /// texto grande daqui.
   Widget _secao(BuildContext context, String titulo) {
     return Text(titulo.toUpperCase(), style: AppText.overline(context));
   }

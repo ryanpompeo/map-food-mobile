@@ -4,10 +4,6 @@ import 'package:map_food/core/ui/theme/app_theme.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/presentation/widgets/category_picker.dart';
 
-/// Escolher categoria é obrigatório para concluir o cadastro da loja, então
-/// cada estado de falha aqui tem uma consequência concreta: se a seção some
-/// silenciosamente, o comerciante fica preso num botão que nunca funciona.
-/// Foi um bug real — estes testes existem para ele não voltar.
 void main() {
   const categorias = [
     CategoriaModel(id: 1, nome: 'Lanches'),
@@ -71,7 +67,6 @@ void main() {
   });
 
   testWidgets('lista vazia explica sem oferecer retry', (tester) async {
-    // 200 com lista vazia não é falha: repetir a chamada devolveria o mesmo.
     await tester.pumpWidget(montar(picker(lista: const [])));
 
     expect(find.textContaining('Fale com o suporte'), findsOneWidget);
@@ -142,7 +137,6 @@ void main() {
     });
 
     testWidgets('com o limite cheio ainda dá para desmarcar', (tester) async {
-      // Sem isto a pessoa fica travada: não pode marcar nem desmarcar.
       CategoriaModel? tocada;
       var avisos = 0;
       await tester.pumpWidget(montar(picker(

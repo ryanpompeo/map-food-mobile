@@ -4,14 +4,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 
-/// Erro de formulário exibido junto do botão de envio.
-///
-/// Substitui o par "texto vermelho solto + `AppToast.error`" que as telas de
-/// auth faziam: a mesma frase aparecia duas vezes, uma delas sumindo sozinha
-/// depois de alguns segundos. Erro de submit é estado da tela, não
-/// notificação — fica visível até o usuário corrigir.
-///
-/// Passe `null` em [message] para não ocupar espaço nenhum.
 class FormErrorBanner extends StatelessWidget {
   final String? message;
 

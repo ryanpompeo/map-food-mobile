@@ -20,16 +20,12 @@ import 'package:map_food/core/ui/widgets/stacked_card_carousel.dart';
 import 'package:map_food/core/ui/widgets/theme_mode_sheet.dart';
 import 'package:map_food/features/settings/presentation/pages/settings_page.dart';
 
-/// Item de menu da seção "Minha Conta" — a única parte da tela de perfil
-/// que difere de verdade entre consumidor e comerciante.
 class ProfileMenuItem {
   final IconData icon;
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
 
-  /// Cor de destaque opcional (ex: vermelho pra "Excluir conta") — null usa
-  /// o tratamento neutro padrão da lista.
   final Color? iconColor;
   final Color? iconBackgroundColor;
 
@@ -43,65 +39,36 @@ class ProfileMenuItem {
   });
 }
 
-/// Scaffold genérico de perfil, compartilhado entre consumidor e comerciante
-/// — as duas telas eram ~85% código idêntico, variando só cor de destaque,
-/// itens de "Minha Conta", a página de "Como funciona" e as métricas/
-/// carrossel de destaque no topo (favoritos para consumidor, lojas próprias
-/// para comerciante).
 class ProfilePageScaffold extends StatefulWidget {
   final String userName;
   final String userEmail;
 
-  /// Busca a sessão salva e devolve a imagemUrl do usuário (ou null).
   final Future<String?> Function() fetchImagemUrl;
 
   final List<ProfileMenuItem> minhaContaItems;
   final WidgetBuilder howItWorksPageBuilder;
 
-  /// Hook extra no logout (ex: limpar favoritos do consumidor).
   final VoidCallback? onLogoutExtra;
 
-  /// Exclui a conta no backend (DELETE /comerciantes|consumidores/{id}) —
-  /// hard delete definitivo, mesmo endpoint usado pela Web. `null` esconde a
-  /// opção em Configurações (hoje é o caso do comerciante, cujo endpoint
-  /// ainda responde 409 por dependências não limpas no backend).
   final Future<void> Function()? onDeleteAccount;
 
-  /// Toque em qualquer um dos círculos de avatar — abre "Editar Perfil".
   final VoidCallback onAvatarTap;
 
-  /// Título da seção de destaque ("Minhas Lojas" para o comerciante).
   final String featuredSectionTitle;
   final Future<List<StackedCardItem>> Function() fetchFeaturedItems;
   final ValueChanged<StackedCardItem> onFeaturedItemTap;
 
-  /// Toque em "ver tudo" ao lado do título da seção de destaque — null
-  /// esconde o link (ex: comerciante não tem uma tela de listagem própria).
   final VoidCallback? onVerTudoFeatured;
 
-  /// Estado vazio da seção de destaque. Um vazio que só constata ("nada
-  /// aqui") faz o app parecer abandonado; com ícone, título e uma ação, ele
-  /// vira o primeiro passo — por isso os quatro campos, não só a frase.
   final String featuredEmptyMessage;
   final String featuredEmptyTitle;
   final IconData featuredEmptyIcon;
 
-  /// Rótulo e ação do botão do estado vazio — `null` nos dois deixa o bloco
-  /// só informativo.
   final String? featuredEmptyActionLabel;
   final VoidCallback? onFeaturedEmptyAction;
 
-  /// Notifica quando a seção de destaque deve ser buscada de novo (ex:
-  /// `FavoritesManager.instance` no consumidor) — sem isso, a busca roda só
-  /// uma vez no `initState`, e como esta página vive dentro de um
-  /// `IndexedStack` (nunca é recriada ao trocar de aba), favoritar/
-  /// desfavoritar em outra aba deixava esta seção com uma foto antiga —
-  /// inclusive mostrando uma loja já desfavoritada.
   final Listenable? featuredRefreshListenable;
 
-  /// Recarga adicional no "puxe para atualizar", para o que só a página que
-  /// hospeda este scaffold conhece — a Atividade do consumidor, por exemplo.
-  /// A foto e a seção de destaque já são recarregadas aqui dentro.
   final Future<void> Function()? onRefreshExtra;
 
   const ProfilePageScaffold({
@@ -154,7 +121,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
       final imagemUrl = await widget.fetchImagemUrl();
       if (mounted) setState(() => _imagemUrl = imagemUrl);
     } catch (_) {
-      // Mantém o fallback com as iniciais do nome.
     }
   }
 
@@ -167,14 +133,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
     }
   }
 
-  /// Puxar para atualizar: as duas buscas do perfil (foto e seção de
-  /// destaque). Serve aos dois papéis, porque este scaffold é o perfil do
-  /// consumidor **e** o do comerciante — a foto pode ter sido trocada em
-  /// outro cliente, e a seção de destaque (favoritos / lojas) muda por fora.
-  ///
-  /// Quem hospeda pode ter mais o que recarregar (a Atividade do consumidor,
-  /// por exemplo); esse extra fica com a página, via
-  /// [ProfilePageScaffold.onRefreshExtra].
   Future<void> _recarregar() async {
     await Future.wait([
       _carregarFoto(),
@@ -197,9 +155,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
               children: [
                 const SizedBox(height: Spacing.base),
                 _buildHeader(context),
-                // A fileira de cards de estatística saiu daqui: o perfil ficou
-                // restrito à conta, e os números do comerciante vivem na aba
-                // Estatísticas.
                 const SizedBox(height: Spacing.xl),
                 _buildFeaturedSection(context),
 
@@ -209,11 +164,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                 const SizedBox(height: Spacing.xl),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-                  // Sair não é ação primária (ninguém abre o perfil para sair)
-                  // nem destrutiva — é `secondary`. Antes cada papel pintava o
-                  // botão de um jeito: preto sólido no consumidor, vermelho
-                  // desbotado no comerciante, sem que a diferença significasse
-                  // nada.
                   child: AppButton(
                     label: 'Sair da conta',
                     icon: AppIcons.signOut,
@@ -243,9 +193,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
     );
   }
 
-  /// Cabeçalho inspirado no padrão avatar-à-esquerda + nome em destaque de
-  /// apps de referência (ex: iFood) — substitui a saudação genérica
-  /// "Bem-vindo!" pelo e-mail, que é informação de verdade sobre a conta.
   Widget _buildHeader(BuildContext context) {
     final resolvedImagemUrl = resolveImagemUrl(_imagemUrl);
     const avatarSize = 72.0;
@@ -264,14 +211,9 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
               width: avatarSize,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                // Superfície do tema, não a cor de papel a 10%: no escuro,
-                // um fundo `ink`/vermelho tão diluído somia contra a tela e
-                // levava a inicial junto.
                 color: context.mapColors.surfaceAlt,
                 shape: BoxShape.circle,
               ),
-              // Sem foto (ou com foto quebrada), o "vazio" deste avatar não é
-              // um ícone: é a inicial do nome.
               child: AppNetworkImage(
                 path: resolvedImagemUrl,
                 displayWidth: avatarSize,
@@ -311,9 +253,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
             label: 'Tema do aplicativo',
             hint: 'Escolhe entre claro, escuro e o do sistema',
             onTap: () => showThemeModeSheet(context),
-            // Isolamento de rebuild: só este ícone escuta o
-            // ThemeController — o resto do header (nome, avatar) não
-            // reconstrói quando o usuário troca de tema.
             child: ListenableBuilder(
               listenable: ThemeController.instance,
               builder: (context, _) {
@@ -367,8 +306,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
                   child: Text(
                     "ver tudo",
                     style: AppText.caption(context).copyWith(
-                      // `brandContent`: vermelho como texto sobre a superfície
-                      // da tela — no escuro o tom puro rende 3,28:1.
                       color: context.mapColors.brandContent,
                       fontWeight: FontWeight.w700,
                     ),
@@ -386,8 +323,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
   Widget _buildFeaturedContent(BuildContext context) {
     final items = _featuredItems;
     if (items == null) {
-      // Mesma altura do carrossel que vai ocupar este espaço, escalada junto
-      // com ele — um placeholder parado faria a página pular ao carregar.
       return SizedBox(
         height: escalaComTeto(context, 220.0),
         child: const Center(
@@ -424,13 +359,6 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
     );
   }
 
-  /// Duas seções rotuladas — "Minha Conta" (os atalhos que variam por papel)
-  /// e "Configurações" (uma única porta de entrada pra [SettingsPage]).
-  ///
-  /// Antes era uma lista única achatada de seis itens, que misturava atalhos
-  /// de conteúdo do usuário ("Minhas avaliações") com ajustes do app
-  /// ("Permissões de Localização", "Termos") sem nenhuma separação — os
-  /// quatro itens de ajuste migraram pra tela dedicada.
   Widget _buildMenuList(BuildContext context) {
     return Column(
       children: [

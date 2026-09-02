@@ -12,22 +12,9 @@ import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
-/// O que fica **fora** do caminho diário: ações raras e as que não têm volta.
-///
-/// A separação é o ponto da tela. No painel, tudo está a um toque porque é
-/// usado todo dia; excluir a loja não pode dividir esse espaço com "trocar a
-/// foto" — dois toques de distância é o que impede o engano.
-///
-/// "Inativar loja" mora aqui pelo mesmo motivo, mas do outro lado da linha: é
-/// a saída de quem quer sumir do mapa por um tempo, e precisa aparecer **antes**
-/// da exclusão para ser encontrada por quem chegou pensando em apagar tudo.
-/// Ela grava o mesmo `INATIVA` do botão "Fechar loja" do painel — a diferença é
-/// de intenção (parar por tempo indeterminado × encerrar o dia), não de estado.
 class StoreAdvancedPage extends StatefulWidget {
   final StoreDto store;
 
-  /// Loja alterada no backend (aqui, só o status) — o painel que abriu esta
-  /// tela precisa refletir a mudança sem esperar um recarregamento.
   final ValueChanged<StoreDto>? onStoreUpdated;
 
   const StoreAdvancedPage({super.key, required this.store, this.onStoreUpdated});
@@ -89,12 +76,8 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
       await _storeService.excluirLoja(_store.id);
       if (!mounted) return;
       AppToast.success(context, 'Loja excluída.');
-      // `true` avisa quem abriu esta tela que a lista de lojas mudou.
       Navigator.pop(context, true);
     } on AppException catch (e) {
-      // A API recusa excluir loja SUSPENSA (403 com mensagem própria) — o
-      // botão já não aparece nesse caso, mas o status pode ter mudado
-      // enquanto a tela estava aberta.
       if (mounted) AppToast.error(context, e.message);
     } catch (_) {
       if (mounted) {
@@ -146,9 +129,6 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
           if (_suspensa)
             _Aviso(
               icone: AppIcons.warningCircle,
-              // Sem esta explicação, o comerciante encontra uma loja
-              // fora do mapa, sem botão de reabrir e sem opção de
-              // excluir — e não tem como saber por quê.
               texto: 'Esta loja está suspensa pela moderação. Ela não aparece no mapa, '
                   'não pode ser aberta nem excluída por aqui — só a equipe do MapFood '
                   'pode reverter esse status.',
@@ -163,10 +143,6 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
               onTap: _inativar,
             )
           else
-            // Reativar não cabe aqui: a loja só deve voltar para ATIVA junto de
-            // uma posição fresca, senão ela fica "ativa" no banco e invisível no
-            // mapa (o filtro de proximidade ignora loja sem lat/long). Quem faz
-            // isso direito é o "Abrir loja" do painel, que exige o GPS antes.
             _Aviso(
               icone: AppIcons.eyeSlash,
               texto: 'Esta loja está inativa: ela não aparece no mapa nem nas buscas. '
@@ -193,8 +169,6 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
   }
 }
 
-/// Bloco informativo das situações em que não há ação a oferecer (loja suspensa
-/// pela moderação, ou inativa e reativável só pelo painel).
 class _Aviso extends StatelessWidget {
   final IconData icone;
   final String texto;

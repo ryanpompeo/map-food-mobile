@@ -1,8 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Marca de "já viu a tela de boas-vindas" — separada de [AuthStorage] de
-/// propósito: não faz parte da sessão e **não** pode ser apagada no logout,
-/// senão sair da conta jogaria o usuário de volta no onboarding.
 class OnboardingStorage {
   const OnboardingStorage._();
 

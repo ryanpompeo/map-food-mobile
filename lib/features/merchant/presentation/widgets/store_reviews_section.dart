@@ -10,22 +10,10 @@ import 'package:map_food/core/ui/widgets/rating_stars.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 
-/// O que os clientes disseram sobre a loja, do ponto de vista de quem recebe.
-///
-/// A nota média vem do backend (`GET /lojas/{id}/resumo`), não de uma conta
-/// feita sobre a lista carregada aqui — a lista é paginável no futuro e a
-/// média calculada no cliente passaria a divergir da que o consumidor vê.
-///
-/// **Chega recolhida.** O painel é a tela de operação da loja, e a lista
-/// inteira de avaliações empurrava "Configurações avançadas" para fora do
-/// alcance de qualquer loja com histórico — quem abre o painel quer saber
-/// *como está* a nota, não reler cada comentário. O resumo (média + total)
-/// fica sempre visível; a lista é um toque.
 class StoreReviewsSection extends StatefulWidget {
   final List<AvaliacaoModel> avaliacoes;
   final bool carregando;
 
-  /// Média agregada. `null` quando a loja ainda não tem nota.
   final double? media;
 
   const StoreReviewsSection({
@@ -46,8 +34,6 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
   Widget build(BuildContext context) {
     final avaliacoes = widget.avaliacoes;
     final carregando = widget.carregando;
-    // Vazio não tem o que expandir: o estado vazio é curto e vale mais visível
-    // do que escondido atrás de um toque que revelaria "nada aqui".
     final temListaParaExpandir = !carregando && avaliacoes.isNotEmpty;
 
     return Column(
@@ -122,10 +108,6 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
       };
 }
 
-/// Linha de "ver/ocultar" com a contagem no rótulo.
-///
-/// O número no botão é o que faz a seção recolhida não parecer vazia: sem ele,
-/// "Ver avaliações" some no meio da página como um link qualquer.
 class _BotaoExpandir extends StatelessWidget {
   final bool expandida;
   final int total;
@@ -149,8 +131,6 @@ class _BotaoExpandir extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        // 48 de altura mínima: é um alvo de toque de largura inteira, e o
-        // conteúdo é uma linha de texto só.
         constraints: const BoxConstraints(minHeight: 48.0),
         padding: const EdgeInsets.symmetric(horizontal: Spacing.base),
         decoration: BoxDecoration(
@@ -169,8 +149,6 @@ class _BotaoExpandir extends StatelessWidget {
               ),
             ),
             const SizedBox(width: Spacing.sm),
-            // Roda com a expansão: a mesma seta serve para os dois estados e
-            // marca o sentido do movimento.
             AnimatedRotation(
               turns: expandida ? 0.5 : 0.0,
               duration: Motion.medium,
@@ -204,8 +182,6 @@ class _CardAvaliacao extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Foto de quem avaliou, com a inicial do nome como fallback —
-              // mesmo tratamento do card de avaliação do lado do consumidor.
               SizedBox(
                 width: 32,
                 height: 32,
@@ -214,9 +190,6 @@ class _CardAvaliacao extends StatelessWidget {
                     path: avaliacao.consumidor?.imagemUrl,
                     displayWidth: 32,
                     fallback: ColoredBox(
-                      // Um degrau acima do `surfaceAlt` do card que envolve
-                      // este avatar — superfície aninhada precisa se destacar
-                      // do pai.
                       color: colors.surface,
                       child: Center(
                         child: Text(
@@ -285,9 +258,6 @@ class _CardAvaliacao extends StatelessWidget {
   }
 }
 
-/// Dois cards fantasma com a forma real do conteúdo. Um spinner centralizado
-/// não diz o que está vindo e faz a página saltar de altura quando os cards
-/// finalmente chegam.
 class _SkeletonAvaliacoes extends StatelessWidget {
   const _SkeletonAvaliacoes();
 

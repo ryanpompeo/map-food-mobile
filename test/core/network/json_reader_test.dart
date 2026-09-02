@@ -2,9 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/json_reader.dart';
 
-/// Toda desserialização do app passa por aqui. O que estes casos garantem é
-/// que uma quebra de contrato da API vira `ParseException` legível — e não o
-/// `TypeError` cru que atravessava todo o tratamento de erro das telas.
 void main() {
   group('requireInt', () {
     test('lê número', () {

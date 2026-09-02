@@ -1,4 +1,3 @@
-/// Modelo de categoria retornado por GET /categorias.
 class CategoriaModel {
   final int id;
   final String nome;

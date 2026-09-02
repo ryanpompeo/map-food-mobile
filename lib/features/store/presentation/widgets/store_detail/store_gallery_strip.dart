@@ -11,17 +11,9 @@ import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/section_header.dart';
 import 'package:map_food/features/store/presentation/widgets/store_gallery_viewer.dart';
 
-/// Tira horizontal com as fotos da loja.
-///
-/// A página desenhava isto inline mesmo quando não havia foto nenhuma: o
-/// cabeçalho anunciava "0 fotos" e, abaixo, 140px de nada. Aqui, galeria vazia
-/// simplesmente não é uma seção.
 class StoreGalleryStrip extends StatelessWidget {
   final StoreDto store;
 
-  /// Lado do tile. Quadrado de 140 é o tamanho em que três fotos se anunciam
-  /// na largura de um celular, com a terceira cortada — o corte é o que
-  /// convida a arrastar.
   static const double _lado = 140.0;
 
   const StoreGalleryStrip({super.key, required this.store});
@@ -30,9 +22,6 @@ class StoreGalleryStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (store.galeria.isEmpty) return const SizedBox.shrink();
 
-    // Resolvida uma vez: é a lista que o visualizador em tela cheia recebe, e
-    // o índice do tile tocado precisa apontar para a posição certa dentro dela
-    // (URLs inválidas mudam a numeração).
     final resolvidas = store.galeria.map(resolveImagemUrl).whereType<String>().toList();
     final total = store.galeria.length;
 
@@ -104,8 +93,6 @@ class _Tile extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(Radii.lg),
-        // O tile tem 140dp — sem `displayWidth`, cada foto seria decodificada
-        // no tamanho original.
         child: AppNetworkImage(
           path: url,
           width: lado,

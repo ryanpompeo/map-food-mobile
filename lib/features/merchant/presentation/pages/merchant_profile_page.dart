@@ -20,9 +20,6 @@ class MerchantProfilePage extends StatelessWidget {
   final String userName;
   final String userEmail;
 
-  /// Chamado ao voltar da tela de Editar Perfil, pra quem construiu esta
-  /// página poder recarregar nome/e-mail/foto — o card de perfil não
-  /// atualiza sozinho porque os dados vêm de fora via [userName]/[userEmail].
   final VoidCallback? onProfileUpdated;
 
   const MerchantProfilePage({
@@ -51,20 +48,8 @@ class MerchantProfilePage extends StatelessWidget {
         final data = await MerchantService().getById(userId);
         return data.imagemUrl;
       },
-      // "Excluir conta" está temporariamente escondido para o comerciante
-      // (sem `onDeleteAccount`, o item some de Configurações): o
-      // DELETE /comerciantes/{id} falha com 409 quando a conta tem
-      // favoritos na loja, posts, pix ou localização — o backend só limpa
-      // denúncias, avaliações e acessos antes de apagar. Reativar assim que
-      // o cascade estiver completo em ComercianteController.deletar;
-      // MerchantService.delete continua pronto para isso.
       onAvatarTap: () => _abrirEditarPerfil(context),
       howItWorksPageBuilder: (_) => const MerchantHowItWorksPage(),
-      // Os cards de estatística ("Dias no App", "Avaliações Recebidas",
-      // "Denúncias Recebidas") saíram daqui: o perfil ficou restrito à conta,
-      // e desempenho tem tela própria. Com eles foi embora também a cascata de
-      // chamadas que os alimentava — uma busca de avaliações **por loja**, em
-      // série, mais a de denúncias, todas antes de a tela poder aparecer.
       featuredSectionTitle: "Minhas Lojas",
       featuredEmptyIcon: AppIcons.storefront,
       featuredEmptyTitle: "Nenhuma loja cadastrada",

@@ -15,9 +15,6 @@ class AccountTypePage extends StatelessWidget {
     final colors = context.mapColors;
 
     return Scaffold(
-      // Título fora da AppBar: na jornada de entrada, o título é o conteúdo
-      // principal da tela, não um rótulo de barra. Mesma abertura das telas
-      // de login e cadastro — a sequência inteira lê como um bloco só.
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
@@ -73,10 +70,6 @@ class AccountTypePage extends StatelessWidget {
 
               const SizedBox(height: Spacing.xl),
 
-              // Saída para quem já tem conta: antes esta tela era um beco —
-              // quem chegava aqui vindo do onboarding só voltava pelo botão
-              // do topo, e a única porta para o login era o rodapé da
-              // própria tela de login, que ficava um passo atrás.
               Center(
                 child: SemanticTapArea(
                   label: 'Entrar',

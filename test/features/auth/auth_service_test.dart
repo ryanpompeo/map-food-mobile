@@ -85,9 +85,6 @@ void main() {
     });
 
     test('401 no login NÃO derruba a sessão existente no aparelho', () async {
-      // Cenário: já logado como consumidor, tenta entrar noutra conta e erra a
-      // senha. Se o 401 fosse tratado como "sessão expirada", o SessionManager
-      // limparia o AuthStorage e mandaria a pessoa para a tela de login.
       SharedPreferences.setMockInitialValues({
         'auth_token': 'jwt-da-sessao-atual',
         'user_id': 1,
@@ -103,8 +100,6 @@ void main() {
         throwsA(isA<UnauthorizedException>()),
       );
 
-      // Espera um tick para o caso de alguma limpeza assíncrona ter sido
-      // disparada por engano.
       await Future<void>.delayed(Duration.zero);
       expect(await AuthStorage.getToken(), 'jwt-da-sessao-atual');
     });
@@ -119,8 +114,6 @@ void main() {
     });
 
     test('token ausente na resposta vira ParseException, não sessão quebrada', () async {
-      // Antes, `json['token'].toString()` gravava a string "null" como token e
-      // o problema só aparecia na primeira requisição autenticada.
       final service = _serviceQueResponde(
         body: '{"tipo": "CONSUMIDOR", "id": 5, "nome": "Ana"}',
       );

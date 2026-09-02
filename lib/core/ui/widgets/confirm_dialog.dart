@@ -4,13 +4,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-/// Confirmação de uma ação **reversível** — devolve `true` se confirmada.
-///
-/// Existe ao lado de `confirm_delete_dialog.dart`, não dentro dele: lá o freio
-/// é digitar "EXCLUIR", porque nada volta depois do toque. Pedir o mesmo ritual
-/// para inativar uma loja (que se reativa em dois toques) ensinaria a digitar a
-/// palavra no automático — e é justamente esse automatismo que protege o
-/// diálogo de exclusão.
 Future<bool> confirmarAcao(
   BuildContext context, {
   required IconData icone,
@@ -39,9 +32,6 @@ Future<bool> confirmarAcao(
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      // Neutro, não vermelho: o vermelho é o vocabulário das
-                      // ações sem volta (excluir, sair) e perde o sentido de
-                      // alerta se aparecer também nas que se desfazem.
                       color: colors.surfaceAlt,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
@@ -75,8 +65,6 @@ Future<bool> confirmarAcao(
                   const SizedBox(width: AppSpacing.sm),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(ctx, true),
-                    // Mesmo CTA sólido do diálogo de logout: preto/branco fixos
-                    // para ler igual nos dois temas.
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorsPalette.black,
                       foregroundColor: ColorsPalette.white,

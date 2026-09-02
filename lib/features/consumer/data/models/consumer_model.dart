@@ -1,9 +1,3 @@
-/// Modelo completo de consumidor retornado por GET /consumidores/{id}.
-///
-/// PUT /consumidores/{id} faz replace completo no backend (não faz merge de
-/// campos), então toda edição precisa reenviar cpf/imagemUrl mesmo quando a
-/// tela não permite editá-los, senão são sobrescritos com null — inclusive
-/// apagando a foto de perfil enviada por POST /consumidores/{id}/imagem.
 class ConsumerModel {
   final int id;
   final String nome;

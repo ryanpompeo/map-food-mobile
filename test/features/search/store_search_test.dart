@@ -38,7 +38,6 @@ void main() {
     });
 
     test('acha loja acentuada com termo sem acento', () {
-      // O caso que motivou tudo: teclado de celular, ninguém digita "Açaí".
       final lojas = [_loja(1, 'Açaí da Praça'), _loja(2, 'Padaria')];
 
       final resultado = buscarLojas(lojas, 'acai');
@@ -72,8 +71,6 @@ void main() {
     });
 
     test('não faz aproximação em termo curto', () {
-      // Com distância 1 sobre 3 letras, "bar" acharia "mar", "lar" e "par":
-      // devolver qualquer coisa é pior do que não devolver nada.
       final lojas = [_loja(1, 'Mar Azul'), _loja(2, 'Lar Doce Lar')];
 
       expect(buscarLojas(lojas, 'bar'), isEmpty);
@@ -86,8 +83,6 @@ void main() {
         _loja(3, 'Forno de Pizza'),
       ];
 
-      // 2 começa com o termo; 3 tem uma palavra que começa com ele;
-      // 1 só menciona na descrição.
       expect(buscarLojas(lojas, 'pizza').map((l) => l.id), [2, 3, 1]);
     });
 
@@ -98,8 +93,6 @@ void main() {
     });
 
     test('mantém a ordem original entre lojas de mesma relevância', () {
-      // `List.sort` do Dart não é estável: sem o desempate por posição, a lista
-      // trocaria de ordem a cada tecla digitada.
       final lojas = [
         _loja(10, 'Pastel A'),
         _loja(20, 'Pastel B'),

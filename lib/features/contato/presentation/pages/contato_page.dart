@@ -17,20 +17,6 @@ import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/features/contato/data/services/contato_service.dart';
 
-/// "Fale com os administradores" — espelho da tela de Contato do site.
-///
-/// Mesmo fluxo do site (formulário → `POST /contato` → e-mail para a equipe) e
-/// os mesmos cinco campos, com duas diferenças que vêm de ser um aplicativo, e
-/// não uma página:
-///
-/// 1. **Nome e e-mail vêm preenchidos** para quem está logado. No site o
-///    visitante quase sempre chega deslogado; aqui, quem abre esta tela veio
-///    do próprio perfil, e redigitar o que o app já sabe é atrito puro. Os
-///    campos continuam editáveis — a pessoa pode querer resposta em outro
-///    endereço.
-/// 2. **Guarda de saída:** o texto de uma reclamação escrita à mão se perde
-///    com um deslize lateral. Um formulário começado pede confirmação antes de
-///    fechar.
 class ContatoPage extends StatefulWidget {
   const ContatoPage({super.key});
 
@@ -62,9 +48,6 @@ class _ContatoPageState extends State<ContatoPage> {
   bool _enviando = false;
   String? _errorMessage;
 
-  /// Só o que a pessoa **escreveu** conta como rascunho — nome e e-mail já
-  /// chegam preenchidos da sessão, e considerá-los faria a guarda de saída
-  /// disparar num formulário em que ninguém digitou nada.
   final ValueNotifier<bool> _temRascunho = ValueNotifier(false);
 
   @override
@@ -104,8 +87,6 @@ class _ContatoPageState extends State<ContatoPage> {
     if (_enviando) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // Fecha o teclado antes de enviar: o toast de sucesso nasce no topo da
-    // tela e o foco de volta num campo reabriria o teclado sobre a mensagem.
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -122,8 +103,6 @@ class _ContatoPageState extends State<ContatoPage> {
         mensagem: _mensagemController.text,
       );
       if (!mounted) return;
-      // Limpa antes de sair para a guarda de rascunho não barrar o próprio
-      // fechamento pós-envio.
       _assuntoController.clear();
       _mensagemController.clear();
       _telefoneController.clear();
@@ -244,8 +223,6 @@ class _ContatoPageState extends State<ContatoPage> {
                   label: 'Assunto',
                   hint: 'Sobre o que você quer falar?',
                   icon: AppIcons.note,
-                  // O backend corta em 200; o contador avisa antes de o texto
-                  // ser recusado no envio.
                   maxLength: 200,
                   textCapitalization: TextCapitalization.sentences,
                   validator: (v) => FormValidator.required(v, 'Assunto'),
@@ -287,10 +264,6 @@ class _ContatoPageState extends State<ContatoPage> {
   }
 }
 
-/// O e-mail da equipe, para quem prefere escrever do próprio cliente de
-/// e-mail. É o mesmo endereço que aparece no rodapé do site e na política de
-/// privacidade — deixá-lo de fora daria a impressão de que o formulário é o
-/// único caminho.
 class _CanalDireto extends StatelessWidget {
   const _CanalDireto();
 

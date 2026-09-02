@@ -7,28 +7,16 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
-/// Aceite dos termos, com links para a política.
-///
-/// Era ~50 linhas repetidas nas duas telas de cadastro, e o "esqueci de
-/// aceitar" só aparecia como toast global no topo da tela — longe do
-/// checkbox e some sozinho. Aqui é um [FormField] de verdade: entra na
-/// validação do `Form`, e o erro aparece embaixo da linha que ele descreve.
 class TermsCheckbox extends StatefulWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  /// Cor de preenchimento do checkbox marcado. `null` usa o neutro do tema
-  /// (`selectedSurface`), que inverte no escuro; o cadastro de comerciante
-  /// passa o vermelho de marca, que vale igual nos dois temas.
   final Color? activeColor;
 
-  /// Texto antes do primeiro link.
   final String leadingText;
 
   final String primaryLinkLabel;
 
-  /// Segundo link, ligado por " e a ". `null` deixa só o primeiro (é o caso
-  /// do comerciante, que aceita apenas os Termos de Parceiro).
   final String? secondaryLinkLabel;
 
   const TermsCheckbox({
@@ -102,9 +90,6 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                   child: Checkbox(
                     value: widget.value,
                     activeColor: widget.activeColor ?? colors.selectedSurface,
-                    // O "check" acompanha o fundo escolhido: sobre a
-                    // superfície clara do tema escuro, um check branco (o
-                    // padrão do Material) seria invisível.
                     checkColor: widget.activeColor == null
                         ? colors.onSelectedSurface
                         : ColorsPalette.white,
@@ -112,8 +97,6 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                       borderRadius: BorderRadius.circular(Radii.sm - 2),
                     ),
                     side: BorderSide(
-                      // Borda vermelha quando o aceite falta: o campo em erro
-                      // precisa ser localizável sem ler o texto.
                       color: state.hasError ? MfColor.danger : colors.border,
                       width: 1.5,
                     ),
@@ -122,14 +105,6 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                 ),
                 const SizedBox(width: Spacing.md),
                 Expanded(
-                  // GestureDetector cru de propósito — este é a exceção à
-                  // migração para SemanticTapArea. O texto contém dois links
-                  // com `recognizer` próprio ("Termos de Uso", "Política de
-                  // Privacidade"); embrulhar tudo num nó `Semantics(button:)`
-                  // colapsaria o bloco num único botão e esconderia os dois
-                  // links do leitor de tela. Quem usa leitor alcança o
-                  // controle pelo Checkbox ao lado, que já tem semântica
-                  // própria — este toque é só uma área de conveniência.
                   child: GestureDetector(
                     onTap: alternar,
                     child: Text.rich(

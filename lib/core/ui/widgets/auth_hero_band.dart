@@ -3,12 +3,6 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/category_colors.dart';
 
-/// Faixa decorativa desenhada em código (gradiente + blobs de cor + ícone),
-/// sem depender de foto/ilustração externa — usada no topo das telas de
-/// autenticação (login, cadastro), que antes eram 100% tipografia + campos
-/// empilhados, sem nenhum elemento gráfico. Blobs usam tons da paleta de
-/// categoria (`category_colors.dart`) pra ecoar a mesma identidade cromática
-/// do resto do app, em vez de introduzir cores novas isoladas.
 class AuthHeroBand extends StatelessWidget {
   final double height;
 

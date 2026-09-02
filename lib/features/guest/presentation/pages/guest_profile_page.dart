@@ -82,10 +82,6 @@ class GuestProfilePage extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
-                      // O caret que ficava à direita do rótulo saiu junto: era
-                      // decoração ("acrescenta informação" é o critério do
-                      // AppButton para ícone), e num botão de largura total já
-                      // não indicava direção nenhuma.
                       AppButton(
                         label: 'Criar Conta',
                         onPressed: () => Navigator.pushNamed(
@@ -196,9 +192,6 @@ class GuestProfilePage extends StatelessWidget {
                   );
                 },
               ),
-              // Vale para o visitante também: `POST /contato` é público, e
-              // quem ainda não criou conta é justamente quem pode ter dúvida
-              // sobre a plataforma.
               buildListTile(
                 context: context,
                 icon: AppIcons.envelope,

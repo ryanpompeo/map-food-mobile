@@ -16,49 +16,7 @@ import 'package:map_food/features/store/presentation/widgets/store_detail/review
 import 'package:map_food/features/store/presentation/widgets/store_detail/section_header.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/store_detail_overview.dart';
 
-/// Rede de segurança do Dynamic Type.
-///
-/// Um `RenderFlex overflowed` não derruba o app: em produção ele vira uma
-/// faixa listrada (ou nada, em release) e o texto simplesmente some. Ou seja,
-/// é o tipo de defeito que passa despercebido em revisão e só aparece no
-/// aparelho de alguém que aumentou a fonte — normalmente a pessoa que mais
-/// precisava do app funcionando.
-///
-/// ## Duas ferramentas, porque uma não basta
-///
-/// Foi medido, e o resultado decidiu o desenho deste arquivo:
-///
-/// | Situação                                    | `takeException()` |
-/// |---------------------------------------------|-------------------|
-/// | `Row` estourando na horizontal              | detecta           |
-/// | `Column` estourando na vertical             | detecta           |
-/// | texto cortado por `SizedBox(height:` fixo   | **não detecta**   |
-///
-/// A terceira linha é justamente a amarra que este lote está removendo: ela
-/// não lança nada, o texto só é **clipado em silêncio**. Confiar apenas na
-/// exceção daria um teste verde enquanto o rótulo do botão continuasse cortado
-/// pela metade.
-///
-/// Por isso cada componente tem os dois tipos de asserção:
-///
-/// 1. **`takeException()`** — pega o overflow de `Row`/`Column`;
-/// 2. **altura em 1× < altura em 2×** — pega a amarra silenciosa. Se alguém
-///    reintroduzir `height:` fixo, esta é a asserção que quebra.
-///
-/// **Como estender:** ao migrar uma tela, acrescente um caso aqui — e inclua
-/// a comparação de altura, não só a checagem de exceção.
 void main() {
-  /// Monta [child] com o tema real do app e a escala de texto pedida.
-  ///
-  /// Largura estreita de propósito (360dp, um celular pequeno): o overflow
-  /// horizontal aparece primeiro em tela estreita, e é justamente a
-  /// combinação "tela pequena + fonte grande" que quebra na vida real.
-  /// [rolavel] reproduz o ambiente real destes componentes: todos vivem dentro
-  /// de uma lista ou de um `SingleChildScrollView`. Isso importa por dois
-  /// motivos — dá ao filho altura irrestrita, que é o que permite **medir** o
-  /// tamanho natural dele (numa tela fixa ele é esticado e toda medida vira a
-  /// altura da tela), e evita acusar de "overflow" um bloco que na tela real
-  /// simplesmente rolaria.
   Widget montar(
     Widget child, {
     required double escala,
@@ -79,11 +37,8 @@ void main() {
     );
   }
 
-  // 2.0 é o teto do Android; o iOS vai além com as "Larger Accessibility
-  // Sizes", por isso o 3.0 entra na checagem de crescimento.
   const escalas = [1.0, 1.5, 2.0];
 
-  /// Mede a altura de [finder] com [child] montado na escala [escala].
   Future<double> alturaEm(
     WidgetTester tester,
     Widget child,
@@ -94,10 +49,6 @@ void main() {
     return tester.getSize(finder).height;
   }
 
-  /// O portão contra a amarra silenciosa: um componente que contém texto
-  /// **precisa** ficar mais alto quando a fonte do sistema cresce. Se não
-  /// ficar, alguma altura fixa voltou a travar a caixa e o texto está sendo
-  /// cortado sem lançar exceção nenhuma.
   void testaQueCresce(String nome, Widget Function() build, Finder finder) {
     testWidgets('$nome cresce com a fonte do sistema', (tester) async {
       final base = await alturaEm(tester, build(), finder, 1.0);
@@ -120,8 +71,6 @@ void main() {
       });
     }
 
-    // O ponto do lote inteiro: com `height` fixo, as alturas seriam idênticas
-    // em toda escala e o rótulo estaria sendo cortado em silêncio.
     testaQueCresce(
       'AppButton',
       () => const AppButton(label: 'Salvar alterações', onPressed: _noop),
@@ -243,8 +192,6 @@ void main() {
         const AppChoiceChip(label: 'Semana', selected: true, onTap: _noop),
         escala: 2.0,
       ));
-      // Se o chip apertasse o conteúdo, o ícone seria a primeira coisa a sair
-      // — e com ele o único sinal não-cromático de seleção.
       expect(find.byIcon(AppIcons.check), findsOneWidget);
     });
   });
@@ -270,16 +217,6 @@ void main() {
     testaQueCresce('AccountTypeCard', build, find.byType(AccountTypeCard));
   });
 
-  // ─────────────────── tela de detalhe da loja ───────────────────
-  // Estes três nasceram de um defeito real: os cabeçalhos e o card de
-  // avaliação da tela de detalhe estouravam a linha **em escala 1x**, num
-  // celular comum. A causa era sempre a mesma — um `Row` com o texto sem
-  // `Expanded`, ocupando a largura que quisesse e empurrando o resto para
-  // fora. A largura reduzida usada abaixo não é hipotética: é a que sobra
-  // dentro do card de avaliações, depois de dois paddings de cada lado.
-
-  /// Largura útil dentro do card "Suas avaliações", numa tela de 360dp:
-  /// 360 − 2×20 (margem da tela) − 2×16 (padding do card).
   const larguraDentroDoCard = 288.0;
 
   group('SectionHeader', () {
@@ -316,14 +253,11 @@ void main() {
         rolavel: true,
       ));
       expect(tester.takeException(), isNull);
-      // O caret é o que sumia primeiro: sem ele, um bloco recolhível deixa de
-      // anunciar que dá para expandi-lo.
       expect(find.byIcon(AppIcons.caretDown), findsOneWidget);
     });
   });
 
   group('ReviewCard', () {
-    // Nome longo + data é exatamente o par que estourava na versão anterior.
     const avaliacao = AvaliacaoModel(
       id: 1,
       nota: 4,
@@ -366,8 +300,6 @@ void main() {
         largura: larguraDentroDoCard,
         rolavel: true,
       ));
-      // No histórico do próprio usuário o nome é sempre o dele, e repeti-lo
-      // consumia justamente a largura que faltava.
       expect(find.text('Maria Aparecida de Souza Nascimento'), findsNothing);
     });
   });
@@ -395,16 +327,7 @@ void main() {
     testaQueCresce('StoreStatsRow', build, find.byType(StoreStatsRow));
   });
 
-  // ─────────────────────── superfícies com teto ───────────────────────
-  // As faixas horizontais não crescem sem limite de propósito (ver
-  // `MaxTextScale`). O que precisa ser garantido aqui é o **oposto** dos
-  // grupos acima: que elas cresçam um pouco e depois PAREM. Sem esta
-  // asserção, alguém "consertando" o teto deixaria a faixa comer a tela.
-
   group('CategoryFiltersWidget (faixa com teto)', () {
-    // Sem "Todos" na lista: o filtro que limpa o recorte deixou de ser um item
-    // da tira — ver `CategoryFiltersWidget`, onde "ver tudo" é o estado sem
-    // nenhuma categoria marcada.
     CategoryFiltersWidget build() => CategoryFiltersWidget(
           filtros: const ['Lanches', 'Açaí', 'Bebidas'],
           selecionada: 'Lanches',

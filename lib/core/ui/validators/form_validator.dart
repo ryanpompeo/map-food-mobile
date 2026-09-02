@@ -150,7 +150,7 @@ class FormValidator {
     if (RegExp(r'[0-9]').hasMatch(senha)) score++;
     if (RegExp(r'[!@#\$&*~]').hasMatch(senha)) score++;
 
-    return score; // 0 até 4
+    return score;
   }
 
   static String? confirmarSenha(String? value, String senhaOriginal) {

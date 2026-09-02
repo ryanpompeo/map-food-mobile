@@ -23,16 +23,6 @@ import 'package:map_food/features/store/presentation/widgets/category_picker.dar
 import 'package:map_food/features/store/presentation/widgets/store_form_fields.dart';
 import 'package:map_food/features/store/presentation/widgets/store_photos_editor.dart';
 
-/// Edição do perfil público da loja — foto, dados, endereço e categorias.
-///
-/// É uma página empurrada, e não um modo da tela de gestão. Antes, consultar e
-/// editar dividiam a mesma tela: para **ver** o nome da loja, o painel montava
-/// um formulário inteiro e uma barra flutuante de salvar. Isso é o oposto do
-/// que um painel precisa ser — ele responde perguntas rápidas, e formulário é
-/// uma tarefa com começo, meio e fim.
-///
-/// Devolve a [StoreDto] atualizada pelo `Navigator.pop` quando algo é salvo, ou
-/// `null` quando a pessoa sai sem salvar.
 class StoreEditPage extends StatefulWidget {
   final StoreDto store;
 
@@ -65,8 +55,6 @@ class _StoreEditPageState extends State<StoreEditPage> {
 
   late List<int> _categoriasSelecionadas;
 
-  /// Fotos escolhidas nesta sessão, ainda não enviadas. As já salvas vivem em
-  /// `_store.imagemUrl`/`_store.galeria` e são removidas direto no servidor.
   XFile? _novaCapa;
   final List<XFile> _novasFotos = [];
 
@@ -85,12 +73,8 @@ class _StoreEditPageState extends State<StoreEditPage> {
   bool _carregandoCategorias = true;
   String? _erroCategorias;
 
-  /// Alimenta o `UnsavedChangesGuard` sem reconstruir a tela a cada tecla.
   final ValueNotifier<bool> _temAlteracoes = ValueNotifier(false);
 
-  /// `true` assim que algo é persistido — o painel precisa saber que a loja
-  /// mudou mesmo se a pessoa sair pelo gesto de voltar depois de uma remoção
-  /// de foto (que grava na hora, sem passar pelo "Salvar").
   bool _houveMudanca = false;
 
   @override
@@ -127,8 +111,6 @@ class _StoreEditPageState extends State<StoreEditPage> {
     if (_temAlteracoes.value != dirty) _temAlteracoes.value = dirty;
   }
 
-  /// Falha aqui não pode ser silenciosa: sem categorias na tela, quem abre a
-  /// edição vê a seção vazia e conclui que perdeu as que já estavam salvas.
   Future<void> _carregarCategorias() async {
     setState(() {
       _carregandoCategorias = true;
@@ -149,10 +131,6 @@ class _StoreEditPageState extends State<StoreEditPage> {
   }
 
   Future<void> _removerCapaSalva() async {
-    // `imagemUrl`, não o getter `capaUrl`: este último cai para a primeira foto
-    // da galeria quando não há capa definida, e ali "remover capa" chamaria o
-    // endpoint de capa para uma foto que na verdade é da galeria — a chamada
-    // volta sem efeito e a foto continua na tela.
     if (_store.imagemUrl == null) return;
     final confirmou = await confirmarRemocaoFoto(context);
     if (!confirmou || !mounted) return;
@@ -189,10 +167,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
     }
   }
 
-  /// Converte o endereço digitado em lat/lng quando ele muda — ponto de
-  /// referência inicial. A posição de verdade vem do GPS da ronda.
   Future<(double?, double?)> _geocodificar() async {
-    // O pacote geocoding não tem implementação web.
     if (kIsWeb) return (null, null);
     if (_endereco.text.trim().isEmpty && _cidade.text.trim().isEmpty) {
       return (null, null);
@@ -208,11 +183,6 @@ class _StoreEditPageState extends State<StoreEditPage> {
     }
   }
 
-  /// Salva direto, sem diálogo de "deseja confirmar?".
-  ///
-  /// Confirmar aqui pediria duas confirmações para uma ação explícita e
-  /// reversível, enquanto o **descarte** — esse sim destrutivo — sairia sem
-  /// perguntar nada. A fricção fica do lado certo: ver `_cancelar`.
   Future<void> _salvar() async {
     if (_salvando) return;
     FocusScope.of(context).unfocus();
@@ -270,7 +240,6 @@ class _StoreEditPageState extends State<StoreEditPage> {
     }
   }
 
-  /// Descartar é o que não tem volta — é aqui que a confirmação faz sentido.
   Future<void> _cancelar() async {
     if (_temAlteracoes.value) {
       final confirmou = await confirmarSaidaSemSalvar(context);
@@ -322,10 +291,6 @@ class _StoreEditPageState extends State<StoreEditPage> {
             children: [
               StorePhotosEditor(
                 editando: true,
-                // A capa de verdade, não o getter `capaUrl` (que cai para a
-                // primeira foto da galeria): no editor, a mesma imagem
-                // apareceria ao mesmo tempo como capa e como item da galeria,
-                // sugerindo uma capa que não existe.
                 capaUrl: _store.imagemUrl,
                 novaCapa: _novaCapa,
                 removendoCapa: _removendoCapa,

@@ -3,12 +3,6 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/how_it_works_scaffold.dart';
 
-/// Três passos para o comerciante entender a mecânica do app.
-///
-/// Os passos são uma sequência de operação (ativar → rodar → colher retorno),
-/// e é por isso que aparecem numa linha do tempo, e não como três cards soltos
-/// de mesmo peso. O desenho vive em [HowItWorksScaffold], compartilhado com a
-/// versão do visitante — aqui fica só o conteúdo.
 class MerchantHowItWorksPage extends StatelessWidget {
   const MerchantHowItWorksPage({super.key});
 

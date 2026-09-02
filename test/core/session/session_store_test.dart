@@ -16,7 +16,6 @@ void main() {
   setUp(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
-    // Cada caso começa do zero — o store é um singleton de processo.
     await SessionStore.instance.signOut();
   });
 
@@ -37,7 +36,6 @@ void main() {
 
   test('hydrate recupera a sessão gravada em disco', () async {
     await AuthStorage.saveSession(_sessaoConsumidor);
-    // Simula um boot novo: memória vazia, disco populado.
     SessionStore.instance.value = null;
 
     await SessionStore.instance.hydrate();
@@ -66,8 +64,6 @@ void main() {
     expect(sessao.token, 'jwt-abc');
     expect(sessao.id, 7);
     expect(sessao.tipo, 'CONSUMIDOR');
-    // E o disco acompanhou — era exatamente isso que faltava quando o card de
-    // Perfil seguia mostrando o nome antigo depois de editar.
     expect((await AuthStorage.getSession())?.nome, 'Ana Paula');
   });
 

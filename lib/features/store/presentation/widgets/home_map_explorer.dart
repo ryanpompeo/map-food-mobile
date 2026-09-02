@@ -20,12 +20,6 @@ import 'package:map_food/features/store/presentation/widgets/home_filter_modal.d
 import 'package:map_food/features/store/presentation/widgets/map_controls.dart';
 import 'package:map_food/features/store/presentation/widgets/nearby_stores_section.dart';
 
-/// Aba "Início" de guest, consumidor e comerciante: o mapa em tela cheia.
-///
-/// Sobre o mapa flutuam apenas a busca/filtro, a faixa de categorias e os
-/// controles de câmera. O painel arrastável de "comércios próximos" que
-/// existia aqui foi removido: o mapa com os pins já é a lista, e a busca
-/// continua sendo o caminho para ver os comércios em formato de lista.
 class HomeMapExplorer extends StatefulWidget {
   final double? initialLatitude;
   final double? initialLongitude;
@@ -48,14 +42,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
 
   List<CategoriaModel> _categorias = [];
 
-  /// Categorias em foco, no máximo [maxCategoriasFiltro]. Conjunto **vazio** é
-  /// "todas" — o estado sem recorte, que antes era o valor sentinela `'Todos'`
-  /// numa `String` única.
-  ///
-  /// Com mais de uma marcada o critério é OR: aparece a loja que tenha
-  /// **qualquer** das categorias. AND devolveria lista vazia quase sempre —
-  /// a maioria das lojas tem uma ou duas categorias, então exigir as três
-  /// marcadas ao mesmo tempo esvaziaria o mapa.
   final Set<String> _categoriasAtivas = {};
 
   double? _raioKm = 5.0;
@@ -79,8 +65,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
       final categorias = await _categoriaService.getAll();
       if (mounted) setState(() => _categorias = categorias);
     } catch (_) {
-      // Sem categorias carregadas, a home continua funcionando só com
-      // "Todos" — o filtro é um atalho, não um requisito para ver o mapa.
     }
   }
 
@@ -101,10 +85,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     }
   }
 
-  /// Marca/desmarca uma categoria pela faixa de chips sobre o mapa — mesma
-  /// regra do modal, incluindo o teto: os dois controles editam o **mesmo**
-  /// conjunto, e um que aceitasse a quarta categoria tornaria o limite do
-  /// outro uma formalidade.
   void _alternarCategoria(String nome) {
     if (nome == 'Todos') {
       setState(_categoriasAtivas.clear);
@@ -124,8 +104,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     setState(() => _categoriasAtivas.add(nome));
   }
 
-  /// Só a posição do usuário interessa aqui — é o que o botão de recentralizar
-  /// precisa. A lista de lojas no raio fica com o mapa.
   void _onNearbyChanged(List<StoreDto> lojas, LatLng? posicao) {
     if (posicao == _posicaoUsuario) return;
     setState(() => _posicaoUsuario = posicao);
@@ -147,13 +125,10 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
       children: [
         Positioned.fill(child: _buildMapa()),
 
-        // Véu no topo: garante contraste da busca sobre qualquer tile —
-        // telhado branco, praça clara, área de mata escura.
         Positioned(
           top: 0,
           left: 0,
           right: 0,
-          // Cobre busca + faixa de categorias.
           height: 210,
           child: IgnorePointer(
             child: DecoratedBox(
@@ -205,13 +180,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
             child: CircularProgressIndicator(color: MfColor.brand),
           );
         }
-        // O filtro é aplicado DENTRO do builder, e não no build do State: aqui
-        // ele lê a lista no mesmo instante em que reage à notificação do
-        // manager. Calculado lá fora, o valor ficava preso na closure da
-        // primeira montagem (quase sempre vazia) e o mapa só saía do vazio de
-        // carona num setState de outra origem — com GPS negado, nunca.
-        // OR entre as categorias marcadas: basta a loja ter uma delas. Sem
-        // nenhuma marcada não há recorte — o mapa mostra tudo.
         final lojas = _categoriasAtivas.isEmpty
             ? manager.stores
             : manager.stores
@@ -225,23 +193,15 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
           raioKm: _raioKm,
           mapController: _mapController,
           onNearbyChanged: _onNearbyChanged,
-          // Os controles vivem fora do mapa nesta tela, ancorados acima da
-          // bottom bar flutuante do app.
           showFloatingControls: false,
-          // O banner de "sem lojas" colidia com a barra de busca flutuante.
           showEmptyBanner: false,
         );
       },
     );
   }
 
-  /// Busca + filtro num único pill flutuante, com sombra de nível 2 (a de
-  /// "flutua sobre outro conteúdo") e superfície do tema — nunca branco
-  /// literal, que sumiria no tema escuro.
   Widget _buildBarraBusca() {
     return Container(
-      // Altura mínima: a barra vive numa Column dentro de SafeArea, então tem
-      // para onde crescer quando a fonte do sistema aumenta.
       constraints: const BoxConstraints(minHeight: 52.0),
       padding: const EdgeInsets.only(left: Spacing.base, right: 4.0),
       decoration: BoxDecoration(
@@ -259,7 +219,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
               onTap: widget.onSearchTap,
               child: Row(
                 children: [
-                  // Decorativo: o rótulo da área de toque já diz "Buscar".
                   ExcludeSemantics(
                     child: Icon(AppIcons.magnifyingGlass, color: context.mapColors.textTertiary, size: AppIconSize.md),
                   ),
@@ -276,8 +235,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
             label: 'Filtros',
             hint: _categoriasAtivas.isEmpty
                 ? 'Escolhe categoria e distância'
-                // O leitor de tela não vê o selo de contagem: sem isto, o
-                // botão seria anunciado igual com e sem filtro aplicado.
                 : '${_categoriasAtivas.length} de $maxCategoriasFiltro categorias selecionadas',
             onTap: _abrirFiltros,
             child: Stack(
@@ -289,10 +246,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
                   decoration: const BoxDecoration(color: MfColor.brand, shape: BoxShape.circle),
                   child: const Icon(AppIcons.slidersHorizontal, color: ColorsPalette.white, size: AppIconSize.md),
                 ),
-                // Quantas categorias estão recortando o mapa. Com a tira
-                // horizontal rolável, as marcadas podem estar todas fora da
-                // vista — sem este selo, um mapa filtrado é indistinguível de
-                // um mapa vazio.
                 if (_categoriasAtivas.isNotEmpty)
                   Positioned(
                     top: -2,
@@ -325,25 +278,12 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     );
   }
 
-  /// Faixa de categorias sobre o mapa. Cada pílula se recorta da cartografia
-  /// pelo fundo opaco + borda do próprio [AppChoiceChip], reforçados pelo véu
-  /// em gradiente que cobre esta faixa — sem sombra.
-  ///
-  /// Teto de escala da faixa de categorias. Ela é uma tira horizontal
-  /// flutuando **sobre o mapa**: diferente da barra de busca, não tem para
-  /// onde crescer — cada ponto a mais de altura é um ponto a menos de mapa
-  /// visível, que é o conteúdo principal desta tela. Acima de 1,5× a faixa
-  /// passaria a competir com o próprio mapa.
   static const double _tetoEscalaChips = 1.5;
 
   Widget _buildChipsCategoria() {
     if (_categorias.isEmpty) return const SizedBox.shrink();
     final nomes = ['Todos', ..._categorias.map((c) => c.nome)];
 
-    // O teto entra nos dois lugares de propósito: na altura da faixa e na
-    // escala do texto dentro dela. Limitar só um dos dois é o que produz ou
-    // texto cortado (faixa parada, texto crescendo) ou faixa com sobra
-    // (faixa crescendo, texto parado).
     return MaxTextScale(
       max: _tetoEscalaChips,
       child: SizedBox(
@@ -356,15 +296,8 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
           separatorBuilder: (_, _) => const SizedBox(width: Spacing.sm),
           itemBuilder: (context, index) {
             final nome = nomes[index];
-            // Sem sombra. A pílula já se recorta da cartografia pelo fundo
-            // opaco + borda do próprio AppChoiceChip, e o véu em gradiente
-            // logo acima cobre justamente esta faixa. A sombra que existia
-            // aqui só empilhava um halo escuro atrás de cada chip — visível
-            // como sujeira entre um chip e outro, não como profundidade.
             return AppChoiceChip(
               label: nome,
-              // "Todos" acende quando nada está marcado — ele representa o
-              // conjunto vazio, não é um item dele.
               selected: nome == 'Todos'
                   ? _categoriasAtivas.isEmpty
                   : _categoriasAtivas.contains(nome),
@@ -376,22 +309,14 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     );
   }
 
-  /// Controles de câmera ancorados acima da bottom bar flutuante — sem isso
-  /// eles nasceriam atrás dela.
   Widget _buildControlesDeCamera(BuildContext context) {
     return Positioned(
       right: Spacing.lg,
-      // Acima da bottom bar fixa, incluindo a área segura do aparelho — a
-      // barra agora encosta na borda inferior da tela.
       bottom: AppBottomBar.spaceFor(context) + Spacing.base,
       child: Column(
         children: [
-          // Ampliar/reduzir por toque: nesta tela o mapa ocupa a tela inteira
-          // e a pinça era a única forma de mudar o zoom.
           MapZoomControls(controller: _mapController),
           const SizedBox(height: Spacing.sm),
-          // Trava de rotação: vive aqui (e não dentro do mapa) porque os
-          // controles internos do StoreMapView estão desligados nesta tela.
           ValueListenableBuilder<bool>(
             valueListenable: _mapController.rotacaoTravada,
             builder: (context, travada, _) => MapControlButton(
@@ -405,8 +330,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
           MapControlButton(
             icon: AppIcons.gpsFix,
             tooltip: 'Centralizar na minha posição',
-            // Sem posição ainda, o botão é anunciado como desabilitado em vez
-            // de aceitar o toque e não fazer nada.
             onTap: _posicaoUsuario == null ? null : _centralizarNoUsuario,
           ),
         ],

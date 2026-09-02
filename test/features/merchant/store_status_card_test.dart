@@ -3,13 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/ui/theme/app_theme.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_status_card.dart';
 
-/// O card é o controle mais crítico do app para o comerciante: se ele mostrar
-/// o estado errado, a pessoa acha que está aberta quando não está — e fica
-/// esperando cliente que não vai aparecer.
-///
-/// Nota sobre `pump` x `pumpAndSettle`: o selo "AO VIVO" pulsa em laço
-/// infinito, então `pumpAndSettle` nunca retornaria. Todos os testes daqui
-/// usam `pump()` de propósito.
 void main() {
   Widget montar(Widget child) => MaterialApp(
         theme: AppTheme.light,
@@ -90,7 +83,6 @@ void main() {
     });
 
     testWidgets('sem precisão conhecida mostra travessão, não zero', (tester) async {
-      // "±0 m" leria como GPS perfeito, que é o oposto de "não sei ainda".
       await tester.pumpWidget(montar(card(aberta: true, rastreioAtivo: true)));
       await tester.pump();
 
@@ -137,8 +129,6 @@ void main() {
     )));
     await tester.pump();
 
-    // O rótulo some enquanto carrega (o AppButton troca por spinner), então o
-    // toque vai no próprio botão.
     await tester.tap(find.byType(StoreStatusCard), warnIfMissed: false);
     await tester.pump();
 

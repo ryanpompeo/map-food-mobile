@@ -35,9 +35,6 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
   final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
 
-  // Encadeamento do teclado: cada campo manda o foco pro próximo, e o último
-  // envia o formulário. Antes todos abriam "concluído", o que fechava o
-  // teclado a cada campo e obrigava a tocar de novo na tela.
   final _emailFocus = FocusNode();
   final _cpfFocus = FocusNode();
   final _telefoneFocus = FocusNode();
@@ -78,11 +75,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
   Future<void> _cadastrar() async {
     if (_isLoading) return;
 
-    // O aceite dos termos virou um FormField (ver TermsCheckbox), então entra
-    // nesta mesma validação e o erro aparece embaixo do checkbox — antes era
-    // um toast no topo da tela, longe do que precisava ser corrigido.
     if (!(_formKey.currentState?.validate() ?? false)) {
-      // Tira o foco pra o teclado não cobrir os campos em erro.
       FocusScope.of(context).unfocus();
       return;
     }
@@ -135,8 +128,6 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
     }
   }
 
-  /// Só o banner inline: antes a mesma frase aparecia duas vezes (banner +
-  /// toast), e a versão do toast sumia sozinha antes de ser lida.
   void _mostrarErro(String msg) {
     if (!mounted) return;
     setState(() => _errorMessage = msg);
@@ -165,8 +156,6 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // O papel da conta vira um rótulo discreto acima do título,
-                // em vez de tingir o próprio título de preto ou vermelho.
                 Text('CONTA DE CLIENTE', style: AppText.overline(context)),
                 const SizedBox(height: Spacing.sm),
                 Text('Crie sua conta', style: AppText.display(context)),

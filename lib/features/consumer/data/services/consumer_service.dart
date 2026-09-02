@@ -10,9 +10,6 @@ class ConsumerService {
 
   final ApiClient _client;
 
-  /// Envia a foto de perfil. O corpo da resposta do POST não é confiável,
-  /// então busca o consumidor novamente pra devolver o estado atualizado.
-  /// Usa bytes (não o path) porque o Flutter Web não expõe caminho de arquivo.
   Future<ConsumerModel> uploadImagem(int id, XFile file) async {
     final formData = FormData.fromMap({
       'file': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
@@ -30,8 +27,6 @@ class ConsumerService {
     return getById(id);
   }
 
-  /// Exclusão definitiva da conta — o backend já faz cascade (avaliações,
-  /// denúncias).
   Future<void> delete(int id) async {
     await _client.delete('${ApiConstants.consumidores}/$id');
   }
@@ -47,11 +42,6 @@ class ConsumerService {
     return ConsumerModel.fromJson(data);
   }
 
-  /// PUT /consumidores/{id} faz replace completo no backend, então [consumer]
-  /// deve carregar todos os campos existentes (inclusive os não editáveis
-  /// nesta tela, como cpf) para não serem apagados.
-  /// [novaSenha] só é enviada se o usuário quiser trocar a senha — omitida,
-  /// o backend preserva a senha atual automaticamente.
   Future<ConsumerModel> update(ConsumerModel consumer, {String? novaSenha}) async {
     final body = consumer.toJson();
     if (novaSenha != null && novaSenha.isNotEmpty) {

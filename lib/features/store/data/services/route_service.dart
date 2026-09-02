@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:latlong2/latlong.dart';
 
-/// Rota calculada entre dois pontos: o traçado pelas ruas e a distância total.
 class RouteResult {
   final List<LatLng> pontos;
   final double distanciaMetros;
@@ -9,9 +8,6 @@ class RouteResult {
   const RouteResult({required this.pontos, required this.distanciaMetros});
 }
 
-/// Calcula rotas pela API pública do OSRM (OpenStreetMap) — grátis e sem
-/// chave. Usa um Dio avulso porque a URL é externa (não passa pelo ApiClient,
-/// que tem baseUrl/autenticação da API interna do MapFood).
 class RouteService {
   final Dio _dio = Dio(
     BaseOptions(
@@ -20,11 +16,6 @@ class RouteService {
     ),
   );
 
-  // Cache em memória das últimas rotas calculadas — evita recalcular (e
-  // esperar o round-trip do OSRM) quando o usuário volta a pedir a mesma
-  // rota, ex: sair e voltar pra tela "Visualizar no mapa" da mesma loja.
-  // Compartilhado entre instâncias (static) porque cada tela cria seu
-  // próprio `RouteService()`.
   static final List<MapEntry<String, RouteResult>> _cache = [];
   static const int _cacheMaxSize = 3;
 
@@ -33,13 +24,10 @@ class RouteService {
       '->'
       '${destino.latitude.toStringAsFixed(5)},${destino.longitude.toStringAsFixed(5)}';
 
-  /// Rota a pé entre [origem] e [destino]. Devolve null em qualquer falha —
-  /// o chamador decide o fallback (ex: linha reta).
   Future<RouteResult?> getRoute(LatLng origem, LatLng destino) async {
     final chave = _chaveCache(origem, destino);
     final indiceEmCache = _cache.indexWhere((entry) => entry.key == chave);
     if (indiceEmCache != -1) {
-      // Move pro topo (mais recente) e devolve sem bater na rede.
       final entry = _cache.removeAt(indiceEmCache);
       _cache.insert(0, entry);
       return entry.value;
@@ -62,9 +50,6 @@ class RouteService {
       final geometry = route['geometry'] as Map<String, dynamic>;
       final coordinates = geometry['coordinates'] as List<dynamic>;
 
-      // GeoJSON usa [longitude, latitude]. O par é tipado como List antes de
-      // ser indexado — indexar direto no `dynamic` esconderia um payload
-      // malformado do OSRM até virar erro em runtime.
       final pontos = coordinates
           .whereType<List<dynamic>>()
           .where((c) => c.length >= 2 && c[0] is num && c[1] is num)

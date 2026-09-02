@@ -55,9 +55,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // Placeholder da recuperação de senha: a entrada já existe na tela para não
-  // deixar quem esqueceu a senha sem nenhuma pista do que fazer, mas o fluxo
-  // (código por e-mail + redefinição) ainda não tem backend no app.
   void _avisarRecuperacaoIndisponivel() {
     AppToast.info(
       context,
@@ -68,9 +65,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _fazerLogin() async {
     if (_isLoading) return;
 
-    // Validação pelo mesmo FormValidator das telas de cadastro — antes esta
-    // tela tinha regra própria (`email.contains('@')`), então "a@b" passava
-    // aqui e era recusado no cadastro.
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() {
@@ -90,9 +84,6 @@ class _LoginPageState extends State<LoginPage> {
       final destino = response.tipo == 'COMERCIANTE'
           ? AppRoutes.merchantDashboard
           : AppRoutes.consumerHome;
-      // pushNamedAndRemoveUntil (não pushReplacementNamed) para limpar todo o
-      // histórico de navegação do Guest — sem isso o botão "voltar" do
-      // celular retornava ao perfil Guest depois de logado.
       unawaited(
           Navigator.pushNamedAndRemoveUntil(context, destino, (route) => false));
     } on UnauthorizedException {
@@ -112,9 +103,6 @@ class _LoginPageState extends State<LoginPage> {
     final isComerciante = _tipoLogin == 'COMERCIANTE';
 
     return Scaffold(
-      // Sem AuthHeroBand: o gradiente vermelho com bolhas coloridas competia
-      // com o formulário e era o elemento mais datado da tela. O que abre a
-      // tela agora é a tipografia.
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
@@ -129,9 +117,6 @@ class _LoginPageState extends State<LoginPage> {
           padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.sm, Spacing.lg, Spacing.xxl),
           child: Form(
             key: _formKey,
-            // Revalida a cada tecla só depois da primeira tentativa: avisar
-            // "e-mail inválido" enquanto a pessoa ainda está digitando a
-            // primeira letra é ruído.
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,9 +154,6 @@ class _LoginPageState extends State<LoginPage> {
                   hint: 'Digite sua senha',
                   icon: AppIcons.lock,
                   obscureText: _obscurePassword,
-                  // Só "campo obrigatório" aqui: as regras de força valem no
-                  // cadastro. Aplicá-las no login barraria quem tem senha
-                  // antiga, mais curta que a regra atual.
                   validator: (v) => FormValidator.required(v, 'Senha'),
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _fazerLogin(),
@@ -216,8 +198,6 @@ class _LoginPageState extends State<LoginPage> {
                   label: 'Entrar',
                   loading: _isLoading,
                   onPressed: _fazerLogin,
-                  // Consumidor entra pelo CTA neutro; comerciante pelo
-                  // vermelho — mesma distinção de papel do seletor acima.
                   variant: isComerciante ? AppButtonVariant.primary : AppButtonVariant.inverse,
                 ),
                 const SizedBox(height: Spacing.xl),

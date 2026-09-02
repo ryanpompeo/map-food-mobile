@@ -9,11 +9,6 @@ import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
-/// As três etapas do cadastro de loja.
-///
-/// A divisão não é por tamanho de formulário, é por pergunta: quem é você, onde
-/// você fica, e como o cliente te encontra. Cada etapa responde uma, e é isso
-/// que permite parar no meio sem ficar com um pensamento pela metade.
 enum StoreRegisterStep {
   identidade('Sua loja'),
   localizacao('Onde você fica'),
@@ -24,12 +19,6 @@ enum StoreRegisterStep {
   const StoreRegisterStep(this.rotulo);
 }
 
-/// Estado do cadastro de loja — campos, fotos, categorias e em que etapa a
-/// pessoa está.
-///
-/// Existe para que a página seja só desenho. Com o fluxo em etapas, o mesmo
-/// dado é lido e escrito de três telas diferentes, e manter tudo em `setState`
-/// espalharia a regra de "esta etapa está completa?" pelos widgets.
 class StoreRegisterController extends ChangeNotifier {
   StoreRegisterController({
     StoreService? storeService,
@@ -63,8 +52,6 @@ class StoreRegisterController extends ChangeNotifier {
     cep,
   ];
 
-  // ───────────────────────────── etapas ─────────────────────────────
-
   StoreRegisterStep _etapa = StoreRegisterStep.identidade;
   StoreRegisterStep get etapa => _etapa;
 
@@ -90,16 +77,11 @@ class StoreRegisterController extends ChangeNotifier {
     irPara(StoreRegisterStep.values[indiceEtapa - 1]);
   }
 
-  /// Endereço é opcional no MapFood — muitos comércios são ambulantes. Com a
-  /// etapa em branco, o botão de avançar diz "Pular por enquanto" em vez de
-  /// fingir que há algo pendente ali.
   bool get localizacaoVazia =>
       cep.text.trim().isEmpty &&
       endereco.text.trim().isEmpty &&
       cidade.text.trim().isEmpty &&
       estado.text.trim().isEmpty;
-
-  // ───────────────────────────── fotos ──────────────────────────────
 
   XFile? _capa;
   XFile? get capa => _capa;
@@ -126,25 +108,18 @@ class StoreRegisterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─────────────────────────── categorias ───────────────────────────
-
   List<CategoriaModel> _categorias = [];
   List<CategoriaModel> get categorias => _categorias;
 
   bool _carregandoCategorias = true;
   bool get carregandoCategorias => _carregandoCategorias;
 
-  /// Mensagem de falha da busca — `null` quando deu certo (inclusive com lista
-  /// vazia, que é outro estado).
   String? _erroCategorias;
   String? get erroCategorias => _erroCategorias;
 
   final List<int> _selecionadas = [];
   List<int> get selecionadas => List.unmodifiable(_selecionadas);
 
-  /// Falha aqui não pode ser silenciosa: escolher categoria é obrigatório para
-  /// concluir, e uma seção vazia deixa a pessoa presa olhando um botão que não
-  /// funciona, sem nada para tocar.
   Future<void> carregarCategorias() async {
     _carregandoCategorias = true;
     _erroCategorias = null;
@@ -162,8 +137,6 @@ class StoreRegisterController extends ChangeNotifier {
     }
   }
 
-  /// Devolve `false` quando o toque foi recusado por já estar no limite — quem
-  /// chama avisa a pessoa.
   bool alternarCategoria(CategoriaModel categoria) {
     if (_selecionadas.contains(categoria.id)) {
       _selecionadas.remove(categoria.id);
@@ -176,13 +149,9 @@ class StoreRegisterController extends ChangeNotifier {
     return true;
   }
 
-  // ──────────────────────── envio e rascunho ────────────────────────
-
   bool _enviando = false;
   bool get enviando => _enviando;
 
-  /// Erro do envio. É estado da tela, não notificação: fica visível junto do
-  /// botão até ser corrigido, em vez de sumir sozinho como um toast.
   String? _erro;
   String? get erro => _erro;
 
@@ -192,9 +161,6 @@ class StoreRegisterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Alimenta o `UnsavedChangesGuard`. `ValueNotifier` separado para o guard
-  /// reconstruir sozinho, sem passar pelo `notifyListeners` da página inteira
-  /// a cada tecla digitada.
   final ValueNotifier<bool> temRascunho = ValueNotifier(false);
 
   void _recalcularRascunho() {
@@ -205,11 +171,6 @@ class StoreRegisterController extends ChangeNotifier {
     if (temRascunho.value != preenchido) temRascunho.value = preenchido;
   }
 
-  /// Impedimento da etapa atual, ou `null` se ela está pronta para avançar.
-  ///
-  /// Só cobre o que um `Form` não valida sozinho (foto e categorias); os
-  /// campos de texto ficam com o `validator` de cada um, onde o erro aparece
-  /// embaixo do campo certo.
   String? impedimentoDaEtapa() {
     switch (_etapa) {
       case StoreRegisterStep.identidade:
@@ -224,15 +185,8 @@ class StoreRegisterController extends ChangeNotifier {
     return null;
   }
 
-  /// Cria a loja e envia as fotos.
-  ///
-  /// Devolve a loja criada, ou `null` se falhou — nesse caso [erro] tem a
-  /// mensagem. O aviso de fotos que falharam vem em [avisoFotos], porque a
-  /// loja **existe** mesmo assim e mandar tudo de volta como erro faria a
-  /// pessoa tentar cadastrar de novo.
   String? avisoFotos;
 
-  /// `true` quando a loja nasceu sem coordenadas e, portanto, `INATIVA`.
   bool nasceuSemLocalizacao = false;
 
   Future<StoreDto?> enviar() async {
@@ -246,10 +200,6 @@ class StoreRegisterController extends ChangeNotifier {
     try {
       final (latitude, longitude) = await _geocodificarEndereco();
 
-      // Sem localização a loja fica invisível no mapa mesmo com status ATIVA —
-      // melhor já nascer INATIVA e deixar claro que falta ativar pela ronda
-      // (que captura a posição por GPS) do que criar uma loja "ativa" fantasma
-      // que ninguém encontra.
       final temLocalizacao = latitude != null && longitude != null;
       nasceuSemLocalizacao = !temLocalizacao;
 
@@ -280,8 +230,6 @@ class StoreRegisterController extends ChangeNotifier {
             'Tente novamente na edição da loja.';
       }
 
-      // A loja foi criada: não há mais rascunho a proteger, e sem zerar isto o
-      // guard interceptaria a própria navegação de sucesso.
       temRascunho.value = false;
       return loja;
     } on AppException catch (e) {
@@ -296,12 +244,7 @@ class StoreRegisterController extends ChangeNotifier {
     }
   }
 
-  /// Converte o endereço digitado em lat/lng, como ponto de referência
-  /// inicial. A posição de verdade vem do GPS ao vivo quando a loja fica
-  /// "Aberta" (ver a ronda do comerciante); isso aqui é só um fallback para
-  /// quem quis indicar uma área.
   Future<(double?, double?)> _geocodificarEndereco() async {
-    // O pacote geocoding não tem implementação web.
     if (kIsWeb) return (null, null);
     if (endereco.text.trim().isEmpty && cidade.text.trim().isEmpty) {
       return (null, null);

@@ -8,22 +8,9 @@ import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/rating_stars.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 
-/// Uma avaliação, na lista pública da loja ou no histórico do próprio usuário.
-///
-/// O mesmo card serve aos dois lugares, em larguras diferentes — e era daí que
-/// vinha o estouro de linha: dentro do card "Suas avaliações anteriores" ele
-/// perde dois paddings de cada lado, e o par nome + data, que cabia na lista
-/// pública, não cabia mais. Duas correções, uma de layout e uma de conteúdo:
-///
-/// - o nome é `Expanded` com reticências, então nome longo encurta em vez de
-///   empurrar a data para fora;
-/// - no histórico próprio ([compact]), autor e avatar **saem**. O nome ali é
-///   sempre o de quem está lendo, e a seção já diz isso no título — repetir
-///   consumia justamente a largura que faltava.
 class ReviewCard extends StatelessWidget {
   final AvaliacaoModel review;
 
-  /// Versão sem autor, para o histórico do próprio usuário.
   final bool compact;
 
   const ReviewCard({super.key, required this.review, this.compact = false});
@@ -38,8 +25,6 @@ class ReviewCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: Spacing.md),
       child: AppCard(
         radius: Radii.lg,
-        // Dentro de uma seção que já rola, o card não precisa levantar do
-        // papel — a superfície rebaixada agrupa sem virar um objeto solto.
         elevation: compact ? AppCardElevation.flat : AppCardElevation.raised,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,13 +83,6 @@ class ReviewCard extends StatelessWidget {
   }
 }
 
-/// Foto de quem avaliou, com a inicial do nome como fallback.
-///
-/// A inicial deixou de ser o único estado possível: a foto do consumidor vem
-/// no mesmo JSON da avaliação (ver `ConsumidorResumido.imagemUrl`) e agora é
-/// desenhada quando existe. O fallback continua valendo para quem nunca
-/// enviou foto, para a foto que falhou em carregar e para o histórico próprio,
-/// onde o autor é sempre quem lê.
 class _Avatar extends StatelessWidget {
   final String? nome;
   final String? imagemUrl;
@@ -121,8 +99,6 @@ class _Avatar extends StatelessWidget {
       child: ClipOval(
         child: AppNetworkImage(
           path: imagemUrl,
-          // O nome do autor é lido pelo Text ao lado; anunciar a foto de novo
-          // repetiria a mesma informação no leitor de tela.
           displayWidth: _raio * 2,
           fallback: _Inicial(nome: nome),
         ),
@@ -145,9 +121,6 @@ class _Inicial extends StatelessWidget {
       child: Center(
         child: Text(
           inicial,
-          // brandContent e não brand puro: sobre o vermelho a 12% (que é quase
-          // a superfície do card) o vermelho cheio reprova em contraste no
-          // tema escuro.
           style: AppText.bodyStrong(context).copyWith(
             color: context.mapColors.brandContent,
           ),
@@ -157,8 +130,6 @@ class _Inicial extends StatelessWidget {
   }
 }
 
-/// Data relativa ("Ontem", "Há 3 semanas"). Data absoluta numa avaliação diz
-/// pouco: o que interessa é se a experiência é recente.
 String _formatarData(String? bruta) {
   if (bruta == null) return '';
   try {

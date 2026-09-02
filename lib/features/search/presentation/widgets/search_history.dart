@@ -38,7 +38,6 @@ class SearchHistoryWidget extends StatelessWidget {
               SemanticTapArea(
                 label: 'Limpar buscas recentes',
                 onTap: onClear,
-                // Sem override de cor: legenda() já resolve pra secondaryText.
                 child: Text(
                   "limpar",
                   style: AppText.legenda(context).copyWith(fontWeight: FontWeight.w600),

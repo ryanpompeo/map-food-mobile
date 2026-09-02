@@ -74,10 +74,6 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
           ),
         ),
       ),
-      // Primeira carga sem nada na tela é a única situação sem "puxe para
-      // atualizar": não há o que puxar, e o spinner já é a resposta. Nos
-      // demais estados — inclusive erro e lista vazia — o gesto existe, porque
-      // é exatamente ali que se quer tentar de novo.
       body: isLoading && favorites.isEmpty
           ? const Center(
               child: CircularProgressIndicator(
@@ -96,9 +92,6 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
     List<StoreDto> favorites,
     String? errorMessage,
   ) {
-    // Erro tem precedência sobre o vazio: sem isso, uma falha de rede
-    // aparecia como "nenhum favorito ainda" e o usuário concluía que
-    // tinha perdido o que salvou.
     if (errorMessage != null && favorites.isEmpty) {
       return AppRefresh.centralizado(
         EmptyState(
@@ -149,14 +142,10 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                     Container(
                       width: 80,
                       height: 80,
-                      // Um tom abaixo do cardSurface do card que envolve esta
-                      // miniatura (mesmo padrão de superfície aninhada dos lotes anteriores).
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         color: context.mapColors.mainBackground,
                       ),
-                      // Decorativa (sem `semanticLabel`): o nome da
-                      // loja já aparece como texto no card.
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         child: AppNetworkImage(
@@ -165,8 +154,6 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                         ),
                       ),
                     ),
-                    // Selo de canto com a cor de identidade da categoria
-                    // principal — mesma paleta usada nos filtros.
                     if (categoriaPrincipal != null)
                       Positioned(
                         bottom: -4.0,

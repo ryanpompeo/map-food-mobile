@@ -6,10 +6,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-/// Abre um bottom sheet com as opções "Tirar foto" / "Escolher da galeria"
-/// e devolve o arquivo escolhido, ou `null` se o usuário cancelar.
-/// Devolve `XFile` (não `dart:io.File`) porque este app também builda para
-/// Flutter Web, onde não há acesso a caminhos de arquivo do sistema.
 Future<XFile?> pickImageFromSheet(BuildContext context) async {
   final source = await showModalBottomSheet<ImageSource>(
     context: context,
@@ -70,10 +66,6 @@ class _SheetOption extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
         decoration: BoxDecoration(
-          // Um tom abaixo do cardSurface do sheet (mainBackground é sempre
-          // mais "recuado"/escuro que cardSurface nos dois temas — ver
-          // map_food_colors.dart), pra continuar destacando a linha da
-          // opção sem precisar de um terceiro token de superfície.
           color: context.mapColors.mainBackground,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: context.mapColors.border),

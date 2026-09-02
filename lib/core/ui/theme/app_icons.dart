@@ -27,10 +27,6 @@ class AppIcons {
   static const IconData hash = PhosphorIconsRegular.hash;
   static const IconData heart = PhosphorIconsRegular.heart;
 
-  /// Coração **preenchido** — o estado "favoritado". Mesmo par de
-  /// [star]/[starFill]: o contorno marca a ação disponível, o sólido marca o
-  /// estado ativo. Só a cor não bastava aqui — o vermelho da marca no
-  /// contorno fino lê como "botão vermelho", não como "já é seu favorito".
   static const IconData heartFill = PhosphorIconsFill.heart;
   static const IconData gearSix = PhosphorIconsRegular.gearSix;
   static const IconData house = PhosphorIconsRegular.house;
@@ -41,8 +37,6 @@ class AppIcons {
   static const IconData info = PhosphorIconsRegular.info;
   static const IconData lock = PhosphorIconsRegular.lock;
 
-  /// Escudo com ✓ — "nada pesa contra você". Marca o estado limpo do card de
-  /// denúncias, onde um "0" grande leria como alerta antes de ser lido.
   static const IconData shieldCheck = PhosphorIconsRegular.shieldCheck;
   static const IconData magnifyingGlass = PhosphorIconsRegular.magnifyingGlass;
   static const IconData mapPin = PhosphorIconsRegular.mapPin;
@@ -59,7 +53,6 @@ class AppIcons {
   static const IconData slidersHorizontal = PhosphorIconsRegular.slidersHorizontal;
   static const IconData star = PhosphorIconsRegular.star;
 
-
   static const IconData starFill = PhosphorIconsFill.star;
   static const IconData starHalfFill = PhosphorIconsFill.starHalf;
   static const IconData storefront = PhosphorIconsRegular.storefront;
@@ -73,11 +66,8 @@ class AppIcons {
   static const IconData warning = PhosphorIconsRegular.warning;
   static const IconData warningCircle = PhosphorIconsRegular.warningCircle;
 
-  // --- Conceitos sem equivalente semântico exato entre os anteriores —
-  // mantidos com nome próprio, todos já Phosphor Regular.
   static const IconData bowlFood = PhosphorIconsRegular.bowlFood;
   static const IconData arrowRight = PhosphorIconsRegular.arrowRight;
-  /// Transmissão ao vivo — a loja em ronda enviando posição.
   static const IconData broadcast = PhosphorIconsRegular.broadcast;
   static const IconData chartLineUp = PhosphorIconsRegular.chartLineUp;
   static const IconData clock = PhosphorIconsRegular.clock;
@@ -86,7 +76,6 @@ class AppIcons {
   static const IconData mapPinLine = PhosphorIconsRegular.mapPinLine;
   static const IconData note = PhosphorIconsRegular.note;
   static const IconData users = PhosphorIconsRegular.users;
-  /// Recarregar/tentar de novo.
   static const IconData arrowClockwise = PhosphorIconsRegular.arrowClockwise;
   static const IconData caretDown = PhosphorIconsRegular.caretDown;
   static const IconData caretUp = PhosphorIconsRegular.caretUp;
@@ -101,11 +90,6 @@ class AppIcons {
   static const IconData iceCream = PhosphorIconsRegular.iceCream;
   static const IconData popcorn = PhosphorIconsRegular.popcorn;
 
-  // Categorias que existiam no banco sem ícone próprio. Elas têm arte em
-  // `utils/category_images.dart`, mas a arte só é usada no filtro da busca —
-  // nos badges de card e no chip do detalhe da loja o ícone aparece sozinho, e
-  // lá todas caíam no `forkKnife` padrão. Talher num Pet Shop, numa loja de
-  // roupa ou num prestador de serviço é simplesmente errado.
   static const IconData pizza = PhosphorIconsRegular.pizza;
   static const IconData bread = PhosphorIconsRegular.bread;
   static const IconData bowlSteam = PhosphorIconsRegular.bowlSteam;

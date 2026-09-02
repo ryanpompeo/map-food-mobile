@@ -5,7 +5,6 @@ import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
-
 class StoreService {
   StoreService({ApiClient? client}) : _client = client ?? ApiClient.instance;
 
@@ -18,9 +17,6 @@ class StoreService {
     return StoreDto.fromJson(data);
   }
 
-  /// Envia a foto de capa da loja. O corpo da resposta do POST não é
-  /// confiável, então busca a loja novamente pra devolver o estado atualizado.
-  /// Usa bytes (não o path) porque o Flutter Web não expõe caminho de arquivo.
   Future<StoreDto> uploadImagemCapa(int id, XFile file) async {
     final formData = FormData.fromMap({
       'file': MultipartFile.fromBytes(await file.readAsBytes(), filename: file.name),
@@ -33,7 +29,6 @@ class StoreService {
     return getById(id);
   }
 
-  /// Envia fotos para a galeria interna da loja (máx. 10 no backend).
   Future<StoreDto> uploadGaleria(int id, List<XFile> files) async {
     final formData = FormData.fromMap({
       'files': await Future.wait(files.map((f) async => MultipartFile.fromBytes(await f.readAsBytes(), filename: f.name))),
@@ -79,10 +74,6 @@ class StoreService {
         .toList();
   }
 
-  /// Lojas ativas com mediaAvaliacao/totalAvaliacoes já agregados
-  /// (`GET /lojas/ativas/completa`, endpoint aditivo da API geral — o antigo
-  /// `/lojas/ativas` devolvia a entidade pura, sem esses campos, daí o
-  /// "Novo" indevido nos cards).
   Future<List<StoreDto>> getActive() async {
     final data = await _client.get<List<dynamic>>('${ApiConstants.lojas}/ativas/completa');
     return data
@@ -90,8 +81,6 @@ class StoreService {
         .toList();
   }
 
-  /// Ranking de popularidade (mais acessadas, via pi_acesso_loja) — já vem
-  /// com a mesma agregação de avaliação do endpoint acima.
   Future<List<StoreDto>> getPopulares({int limit = 10}) async {
     final data = await _client.get<List<dynamic>>(
       '${ApiConstants.lojas}/populares',
@@ -102,31 +91,15 @@ class StoreService {
         .toList();
   }
 
-  /// Detalhe de uma loja com a agregação de avaliação pronta — usado onde
-  /// hoje só temos o `id` (ex: comerciante vendo a nota da própria loja) e
-  /// não queremos mais calcular a média na mão no cliente.
   Future<StoreDto> getResumo(int id) async {
     final data = await _client.get<Map<String, dynamic>>('${ApiConstants.lojas}/$id/completa');
     return StoreDto.fromJson(data);
   }
 
-  /// Troca só o status (ATIVA/INATIVA). A rota geral `PUT /lojas/{id}` exige
-  /// o objeto Loja completo (`@Valid`), então reenvia o estado que o chamador
-  /// já tem em mãos com o status alterado. O backend continua rejeitando
-  /// SUSPENSA vinda daqui (exclusiva de administrador).
-  ///
-  /// Recebe a [StoreDto] em vez do id: a versão anterior fazia `getById`
-  /// seguido de `update` — um read-modify-write não atômico que abria janela
-  /// para corrida com a ronda de GPS, que escreve na mesma entidade a cada
-  /// deslocamento. Fechar a loja durante um PUT de posição em voo podia
-  /// reverter o status recém-gravado.
   Future<StoreDto> atualizarStatus(StoreDto atual, String status) {
     return update(atual.id, StoreCreateRequest.fromStore(atual, statusLoja: status));
   }
 
-  /// Atualiza apenas a posição da loja (ronda do comerciante), preservando
-  /// todo o resto do cadastro — inclusive o endereço, que o payload montado à
-  /// mão na tela deixava de fora.
   Future<StoreDto> atualizarPosicao(StoreDto atual, double latitude, double longitude) {
     return update(
       atual.id,
@@ -134,9 +107,6 @@ class StoreService {
     );
   }
 
-  /// Exclusão de loja — hard delete via o endpoint legado (mesmo caminho da
-  /// Web): apaga a loja e cascade de avaliações/denúncias/acessos de vez,
-  /// sem ficar "meio excluída" só num dos dois clientes.
   Future<void> excluirLoja(int id) async {
     await _client.delete('${ApiConstants.lojas}/$id');
   }

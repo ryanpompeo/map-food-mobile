@@ -5,8 +5,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-/// Mostra um dialog de confirmação antes de remover uma foto já salva no
-/// servidor. Devolve `true` se o usuário confirmou.
 Future<bool> confirmarRemocaoFoto(BuildContext context) async {
   final confirmou = await showDialog<bool>(
     context: context,
@@ -66,12 +64,6 @@ Future<bool> confirmarRemocaoFoto(BuildContext context) async {
   return confirmou ?? false;
 }
 
-/// Confirma a exclusão de **uma loja** — não da conta.
-///
-/// O `DELETE /lojas/{id}` apaga junto as avaliações, as denúncias e todo o
-/// histórico de acessos daquela loja. Quem lê "excluir loja" pensa em tirar do
-/// mapa; a frase abaixo existe para que ninguém descubra depois que perdeu as
-/// notas que levou meses para juntar.
 Future<bool> confirmarExclusaoLoja(BuildContext context, String nomeLoja) =>
     _confirmarComPalavraChave(
       context,
@@ -81,9 +73,6 @@ Future<bool> confirmarExclusaoLoja(BuildContext context, String nomeLoja) =>
       labelBotao: 'Excluir loja',
     );
 
-/// Mostra um dialog de confirmação antes de excluir a conta do usuário —
-/// ação irreversível que também apaga loja(s), avaliações e denúncias
-/// associadas (cascade feito pelo backend). Devolve `true` se confirmado.
 Future<bool> confirmarExclusaoConta(BuildContext context) => _confirmarComPalavraChave(
       context,
       titulo: 'Excluir conta',
@@ -92,9 +81,6 @@ Future<bool> confirmarExclusaoConta(BuildContext context) => _confirmarComPalavr
       labelBotao: 'Excluir conta',
     );
 
-/// Confirmação de ação irreversível: só libera o botão depois que a pessoa
-/// digita a palavra-chave. A digitação é o freio — num diálogo de dois botões,
-/// "confirmar" está a um toque de distância de quem só queria fechar o menu.
 Future<bool> _confirmarComPalavraChave(
   BuildContext context, {
   required String titulo,

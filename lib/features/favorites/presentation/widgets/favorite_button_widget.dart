@@ -10,26 +10,18 @@ import 'package:map_food/features/favorites/presentation/controllers/favorites_m
 import 'package:map_food/core/ui/widgets/login_wall_bottom_sheet.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
-/// Alvo de toque mínimo recomendado (Material 48dp / Apple HIG 44pt) — o
-/// círculo visual (ícone + padding) pode ser menor, mas a área que responde
-/// ao toque não deve.
 const double _minTouchTarget = 48.0;
 
 class FavoriteButtonWidget extends StatelessWidget {
   final StoreDto store;
   final double iconSize;
 
-  /// Vidro fosco translúcido sobre a foto (efeito do card "Em Alta", igual
-  /// ao anexo de referência) em vez do círculo branco opaco padrão.
   final bool frosted;
 
   const FavoriteButtonWidget({super.key, required this.store, this.iconSize = 18.0, this.frosted = false});
 
   @override
   Widget build(BuildContext context) {
-    // O papel vem do SessionStore, leitura síncrona e sem I/O. Antes era um
-    // parâmetro empurrado por até 4 níveis de widget acima daqui, cada nível
-    // existindo só para repassá-lo adiante.
     final userRole = SessionStore.instance.role;
 
     if (userRole == 'GUEST') {
@@ -78,24 +70,12 @@ class FavoriteButtonWidget extends StatelessWidget {
     );
   }
 
-  /// Coração do estado favoritado: **preenchido**, não só vermelho.
-  ///
-  /// O contorno vermelho sozinho lê como "botão de favoritar" — a mesma
-  /// silhueta do estado não-favoritado, trocando só a cor. É o par
-  /// [AppIcons.star]/[AppIcons.starFill] que o `RatingStars` já usa: a massa
-  /// sólida é o que marca o estado, a cor só o reforça.
-  ///
-  /// O [AnimatedSwitcher] faz o preenchido entrar crescendo (e o vazado sair
-  /// encolhendo) — a confirmação de que o toque pegou, num botão cujo único
-  /// retorno visual, fora o toast, é ele mesmo.
   Widget _heartIcon(BuildContext context, {required bool isFavorite, required Color color}) {
     return AnimatedSwitcher(
       duration: Motion.fast,
       transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
       child: Icon(
         isFavorite ? AppIcons.heartFill : AppIcons.heart,
-        // Sem a key os dois ícones são "o mesmo widget" para o switcher e a
-        // troca acontece sem transição nenhuma.
         key: ValueKey(isFavorite),
         color: color,
         size: iconSize,
@@ -103,9 +83,6 @@ class FavoriteButtonWidget extends StatelessWidget {
     );
   }
 
-  /// [SemanticTapArea] (rótulo + papel de botão pro leitor de tela) como
-  /// widget mais externo, com no mínimo 48dp de área de toque — o círculo
-  /// visual (`_circle`) fica centralizado dentro dela, sem crescer.
   Widget _tapArea(
     BuildContext context, {
     required String label,
@@ -137,12 +114,6 @@ class FavoriteButtonWidget extends StatelessWidget {
       );
     }
 
-    // Círculo translúcido sem BackdropFilter de propósito: este botão
-    // aparece em listas roláveis (busca, "Em Alta") com vários cards
-    // visíveis ao mesmo tempo — cada BackdropFilter força seu próprio
-    // saveLayer + blur na GPU, e vários simultâneos durante o scroll eram
-    // a maior causa de engasgo do app. Alpha mais alto (0.32 vs 0.28) +
-    // sombra compensam visualmente a falta do desfoque de fundo.
     return Container(
       padding: const EdgeInsets.all(9.0),
       decoration: BoxDecoration(

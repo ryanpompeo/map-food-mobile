@@ -7,43 +7,17 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
 
-/// O controle mais importante do app para o comerciante: abrir e fechar a
-/// loja, e entender **num relance** se ela está sendo vista.
-///
-/// Três decisões de operação (não de estética) que este card resolve:
-///
-/// 1. **A ação virou botão, não interruptor.** O `Switch` do Material tem
-///    ~40×24px de alvo real e nenhum rótulo do que vai acontecer; quem opera
-///    isso está na rua, muitas vezes de uma mão só. Um botão de 52px dizendo
-///    "Fechar loja" acerta na primeira e não deixa dúvida sobre o sentido do
-///    toque — interruptor obriga a ler o estado atual para deduzir o efeito.
-/// 2. **Aberta é uma superfície de alto contraste**, via
-///    `selectedSurface`/`onSelectedSurface` (o mesmo par de chip e segmento
-///    ativos). Antes era `Colors.black` fixo com texto `grey.shade400`: no
-///    tema escuro o card sumia no fundo e o subtítulo caía abaixo do mínimo
-///    de contraste.
-/// 3. **A ronda de GPS é visível.** "Aberta" e "sendo localizada" são estados
-///    diferentes — dá para estar aberta com o GPS negado, e a loja não
-///    aparece no mapa de ninguém. O rodapé mostra quando a última posição
-///    subiu e com que precisão, e [avisoPosicao] transforma a falha silenciosa
-///    de envio em algo que a pessoa consegue ver e reagir.
 class StoreStatusCard extends StatelessWidget {
   final bool aberta;
 
-  /// Assinatura de GPS ativa, enviando posição ao servidor.
   final bool rastreioAtivo;
 
-  /// Chamada em andamento (abrir/fechar) — bloqueia o botão e mostra spinner.
   final bool ocupado;
 
-  /// Quando a última posição foi aceita pelo servidor.
   final DateTime? ultimaPosicaoEm;
 
-  /// Raio de erro do GPS em metros, como reportado pelo aparelho.
   final double? precisaoMetros;
 
-  /// Falha corrente do envio de posição (rede/servidor). `null` quando tudo
-  /// está subindo normalmente.
   final String? avisoPosicao;
 
   final VoidCallback? onToggle;
@@ -65,8 +39,6 @@ class StoreStatusCard extends StatelessWidget {
 
     final fundo = aberta ? colors.selectedSurface : colors.surface;
     final conteudo = aberta ? colors.onSelectedSurface : colors.textPrimary;
-    // Sobre a superfície invertida não dá para usar `textSecondary` (ele é
-    // calibrado para o fundo da tela): o apoio vira o próprio conteúdo a 65%.
     final apoio = aberta ? conteudo.withValues(alpha: 0.65) : colors.textSecondary;
 
     return Container(
@@ -129,9 +101,6 @@ class StoreStatusCard extends StatelessWidget {
             icon: aberta ? AppIcons.eyeSlash : AppIcons.storefront,
             onPressed: onToggle,
             loading: ocupado,
-            // Sobre o card invertido, o vermelho de marca brigaria com a
-            // superfície: `onBrand` dá o branco sólido que sempre lê ali.
-            // Fechada, abrir é a ação principal da tela — vermelho.
             variant: aberta ? AppButtonVariant.onBrand : AppButtonVariant.primary,
           ),
         ],
@@ -140,9 +109,6 @@ class StoreStatusCard extends StatelessWidget {
   }
 }
 
-/// Selo "AO VIVO" com ponto pulsante — o vocabulário que todo app de entrega
-/// usa para "isto está acontecendo agora". Sem o pulso, o selo parece um
-/// rótulo estático e não comunica atividade.
 class _LiveBadge extends StatefulWidget {
   const _LiveBadge();
 
@@ -173,8 +139,6 @@ class _LiveBadgeState extends State<_LiveBadge> with SingleTickerProviderStateMi
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // RepaintBoundary: o pulso repinta 60x/s e não deve arrastar o
-          // resto do card (que inclui texto e botão) junto.
           RepaintBoundary(
             child: FadeTransition(
               opacity: Tween<double>(begin: 1.0, end: 0.25).animate(
@@ -204,7 +168,6 @@ class _LiveBadgeState extends State<_LiveBadge> with SingleTickerProviderStateMi
   }
 }
 
-/// Rodapé de dados da ronda: quando a posição subiu e com que precisão.
 class _RondaInfo extends StatelessWidget {
   final bool rastreioAtivo;
   final DateTime? ultimaPosicaoEm;
@@ -262,9 +225,6 @@ class _RondaInfo extends StatelessWidget {
     );
   }
 
-  /// "agora" cobre o intervalo mais comum (a posição sobe a cada poucos
-  /// metros percorridos) — mostrar "há 4 s" ali só faria o número piscar sem
-  /// dizer nada de novo.
   static String _tempoRelativo(DateTime? quando) {
     if (quando == null) return 'aguardando';
     final segundos = DateTime.now().difference(quando).inSeconds;
@@ -315,8 +275,6 @@ class _Metrica extends StatelessWidget {
           valor,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          // `numeric` (tabular): "±12 m" e "há 3 min" trocam de valor no
-          // lugar em vez de empurrar o texto lateralmente a cada atualização.
           style: AppText.numeric(context, size: 15).copyWith(color: corConteudo),
         ),
       ],
@@ -324,15 +282,9 @@ class _Metrica extends StatelessWidget {
   }
 }
 
-/// Faixa de aviso quando o envio de posição está falhando.
-///
-/// Antes essa falha era um `catch (_)` mudo: a loja aparecia como aberta e
-/// "ao vivo" enquanto o servidor seguia com a posição de meia hora atrás.
 class _AvisoPosicao extends StatelessWidget {
   final String mensagem;
 
-  /// Sobre o card aberto (superfície invertida) a paleta de alerta precisa de
-  /// outro fundo — o `dangerSurface` claro sumiria ali.
   final bool sobreSuperficieAtiva;
 
   const _AvisoPosicao({required this.mensagem, required this.sobreSuperficieAtiva});

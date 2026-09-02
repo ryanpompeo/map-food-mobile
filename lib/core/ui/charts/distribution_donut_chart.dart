@@ -5,21 +5,9 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-/// Rosca de distribuição + legenda ao lado.
-///
-/// Recebe só [DonutSlice] — quem chama já resolveu rótulo, valor e cor.
-///
-/// Duas escolhas de leitura, para a rosca não virar enfeite:
-/// - **A legenda fica fora, com o percentual escrito.** Título dentro da fatia
-///   só cabe em fatia grande; nas pequenas ele some ou vaza, e é justamente a
-///   fatia pequena que a pessoa quer identificar.
-/// - **Nada depende só de cor.** Cada item da legenda repete o nome e o
-///   número, então a rosca continua legível para quem não distingue o par de
-///   cores (WCAG 1.4.1 — o mesmo motivo do ✓ no `AppChoiceChip`).
 class DistributionDonutChart extends StatefulWidget {
   final List<DonutSlice> slices;
 
-  /// Conteúdo do buraco do meio (o total, a média). `null` deixa vazado.
   final Widget? centro;
 
   const DistributionDonutChart({super.key, required this.slices, this.centro});
@@ -29,7 +17,6 @@ class DistributionDonutChart extends StatefulWidget {
 }
 
 class _DistributionDonutChartState extends State<DistributionDonutChart> {
-  /// Fatia sob o dedo — cresce enquanto tocada. `-1` = nenhuma.
   int _tocada = -1;
 
   static const double _lado = 132.0;
@@ -140,8 +127,6 @@ class _ItemLegenda extends StatelessWidget {
         const SizedBox(width: Spacing.sm),
         Text(
           '${percentual.round()}%',
-          // Tabular: os percentuais ficam alinhados na coluna mesmo com
-          // números de larguras diferentes.
           style: AppText.numeric(context, size: 12).copyWith(
             fontWeight: FontWeight.w700,
             color: destacado ? colors.textPrimary : colors.textSecondary,

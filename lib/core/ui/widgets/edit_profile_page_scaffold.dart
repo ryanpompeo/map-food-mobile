@@ -18,7 +18,6 @@ import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/core/ui/widgets/image_picker_sheet.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 
-/// Dados iniciais comuns a qualquer perfil editável (consumidor/comerciante).
 typedef ProfileBasicData = ({
   int id,
   String nome,
@@ -27,10 +26,6 @@ typedef ProfileBasicData = ({
   String? imagemUrl,
 });
 
-/// Scaffold genérico de edição de perfil — consumidor e comerciante tinham
-/// ~90% do mesmo código aqui, diferindo só no modelo salvo (cada página
-/// constrói o próprio modelo tipado e chama o próprio serviço via [salvar])
-/// e num campo extra (CNPJ, via [extraFieldBuilder]).
 class EditProfilePageScaffold extends StatefulWidget {
   final String sectionTitle;
   final String avatarFallbackLetter;
@@ -86,9 +81,6 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
   bool _showConfirmarSenha = false;
   String? _errorMsg;
 
-  // ValueNotifier (não bool simples) de propósito: o UnsavedChangesGuard
-  // isola o rebuild no próprio ValueListenableBuilder interno dele, então
-  // atualizar isso não reconstrói mais a página inteira a cada tecla.
   final ValueNotifier<bool> _hasUnsavedChanges = ValueNotifier(false);
 
   @override
@@ -205,11 +197,6 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
         celular: _celularController.text.replaceAll(RegExp(r'\D'), ''),
         novaSenha: novaSenha.isNotEmpty ? novaSenha : null,
       );
-      // Sem isso, a sessão continuava com o nome/e-mail antigos (do login), e
-      // é dali que o card de Perfil lê — por isso ele não refletia a edição
-      // mesmo com o backend já salvo. `SessionStore.updateNomeEmail` atualiza
-      // disco **e** memória de uma vez; só o disco deixaria o valor antigo
-      // vivo em quem já leu o store nesta sessão.
       await SessionStore.instance.updateNomeEmail(novoNome, novoEmail);
 
       if (!mounted) return;
@@ -248,8 +235,6 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
           style: AppText.h2(context).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.textPrimary),
         ),
         leading: IconButton(
-          // maybePop consulta o PopScope do UnsavedChangesGuard antes de
-          // sair — mesmo ajuste feito no StoreMapPage (ver comentário lá).
           onPressed: () => Navigator.maybePop(context),
           icon: const Icon(AppIcons.caretLeft, color: ColorsPalette.redComponents),
         ),
@@ -269,9 +254,6 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         child: SemanticTapArea(
                           label: 'Foto do perfil',
                           hint: 'Escolhe uma nova foto',
-                          // Durante o upload o toque já está bloqueado; com
-                          // `onTap` nulo o nó também deixa de ser anunciado
-                          // como botão, em vez de prometer uma ação inerte.
                           onTap: _isUploadingFoto ? null : _trocarFoto,
                           child: Stack(
                             children: [
@@ -411,8 +393,6 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
                         ),
                       ),
 
-                      // Mesmo banner das telas de auth — era mais um bloco de
-                      // erro montado à mão, com padding e raio próprios.
                       if (_errorMsg != null) ...[
                         const SizedBox(height: Spacing.base),
                         FormErrorBanner(message: _errorMsg),

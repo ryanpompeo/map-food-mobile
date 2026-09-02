@@ -6,20 +6,9 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
-/// Alterna o painel entre **dados gerais** (todas as lojas somadas) e **uma
-/// loja específica**.
-///
-/// Fica no AppBar, e não no corpo, porque não é um filtro entre outros: ele
-/// governa o que *todos* os números abaixo significam. Um controle solto no
-/// meio da lista de cards se perderia na rolagem, e daí o total de acessos
-/// passaria a ser lido como "de tudo" quando é de uma loja só.
-///
-/// Com uma loja só cadastrada, o seletor não aparece — não há o que alternar,
-/// e um menu de uma opção só é ruído.
 class AnalyticsScopeSelector extends StatelessWidget {
   final List<StoreDto> lojas;
 
-  /// `null` = dados gerais.
   final int? lojaSelecionadaId;
 
   final ValueChanged<int?> onSelecionar;
@@ -33,16 +22,6 @@ class AnalyticsScopeSelector extends StatelessWidget {
 
   static const _rotuloGeral = 'Dados gerais';
 
-  /// "Dados gerais" viaja pelo menu como este id falso, e não como `null`.
-  ///
-  /// `PopupMenuButton` trata `null` como **cancelamento**: o `showMenu` resolve
-  /// com o valor escolhido, e ali um `null` é indistinguível de "fechou o menu
-  /// sem escolher" — o framework chama `onCanceled` e nunca `onSelected`
-  /// (`material/popup_menu.dart`, no `.then` do `showMenu`). Com `int?` como
-  /// tipo do menu, voltar para os dados gerais simplesmente não acontecia:
-  /// o painel continuava preso na última loja.
-  ///
-  /// Id de loja é sempre positivo (chave do banco), então `-1` nunca colide.
   static const _idGeral = -1;
 
   String get _rotuloAtual {
@@ -60,9 +39,6 @@ class AnalyticsScopeSelector extends StatelessWidget {
     final colors = context.mapColors;
 
     return PopupMenuButton<int>(
-      // `initialValue` deixa o item ativo marcado ao abrir o menu — sem isso
-      // a única pista do escopo atual seria o rótulo do botão, que fica
-      // escondido atrás do próprio menu enquanto ele está aberto.
       initialValue: lojaSelecionadaId ?? _idGeral,
       onSelected: (valor) => onSelecionar(valor == _idGeral ? null : valor),
       tooltip: 'Escolher o que os dados cobrem',
@@ -78,8 +54,6 @@ class AnalyticsScopeSelector extends StatelessWidget {
       child: SemanticTapArea(
         label: 'Escopo dos dados: $_rotuloAtual',
         hint: 'Alterna entre dados gerais e uma loja',
-        // Sem `onTap`: quem abre o menu é o PopupMenuButton em volta. Este nó
-        // existe para o leitor de tela anunciar o estado atual junto do botão.
         onTap: null,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 190.0),
@@ -142,8 +116,6 @@ class AnalyticsScopeSelector extends StatelessWidget {
               ),
             ),
           ),
-          // Marcação por forma, não só por peso da fonte: a diferença entre
-          // w500 e w700 não se percebe sem os dois itens lado a lado.
           if (selecionado) ...[
             const SizedBox(width: Spacing.sm),
             Icon(AppIcons.check, size: AppIconSize.sm, color: colors.brandContent),

@@ -8,8 +8,6 @@ import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/app_info.dart';
 import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/session/session_store.dart';
-// AuthStorage continua aqui só por `diasNoApp()`: é uma marca local do
-// aparelho (não faz parte da sessão) e por isso não migra para o SessionStore.
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
@@ -44,33 +42,14 @@ import 'package:map_food/features/settings/presentation/pages/settings_page.dart
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
-/// Perfil do consumidor. Não usa mais o `ProfilePageScaffold` (que segue
-/// servindo o comerciante): a tela foi redesenhada em torno de **atividade**
-/// — um card com a métrica em destaque, o gráfico da série e os números
-/// resumidos —, com o resto do conteúdo distribuído em três abas de texto no
-/// lugar da rolagem única de antes.
-///
-/// Nada saiu: favoritos (com "ver tudo"), Editar Perfil, Minhas avaliações,
-/// Minhas denúncias, Configurações, trocar tema e Sair continuam todos aqui,
-/// só que agrupados por assunto.
 class ConsumerProfilePage extends StatefulWidget {
   final String userName;
   final String userEmail;
 
-  /// Chamado ao voltar da tela de Editar Perfil, pra quem construiu esta
-  /// página poder recarregar nome/e-mail/foto — o card de perfil não
-  /// atualiza sozinho porque os dados vêm de fora via [userName]/[userEmail].
   final VoidCallback? onProfileUpdated;
 
-  /// Leva para a aba de busca — usado pelo estado vazio de favoritos, que
-  /// precisa oferecer o próximo passo em vez de só constatar o vazio.
   final VoidCallback? onExplorarTap;
 
-  /// `true` enquanto esta é a aba exibida. Esta página vive num `IndexedStack`
-  /// — construída uma vez no login e nunca descartada —, então o `initState`
-  /// não serve como gatilho de atualização: sem este aviso, o gráfico de
-  /// atividade e os contadores ficariam parados no retrato do login, sem
-  /// refletir avaliações e denúncias feitas depois.
   final ValueListenable<bool>? visivel;
 
   const ConsumerProfilePage({
@@ -94,12 +73,8 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
   int? _diasNoApp;
   int? _totalDenuncias;
 
-  /// Datas das avaliações do consumidor — fonte única do gráfico e do
-  /// contador "Lojas avaliadas". Null enquanto carrega.
   List<DateTime>? _datasAvaliacoes;
 
-  /// Evita cargas concorrentes: voltar de "Minhas avaliações" já dispara uma
-  /// recarga, e mudar de aba logo em seguida dispararia outra por cima.
   bool _carregandoAtividade = false;
 
   @override
@@ -116,16 +91,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     super.dispose();
   }
 
-  /// Toda vez que a aba volta a ser exibida, os números são buscados de novo —
-  /// é o que faz uma avaliação recém-enviada aparecer no gráfico sem exigir
-  /// que o app seja reiniciado.
-  ///
-  /// Os favoritos entram na mesma releitura porque esta página os **exibe**
-  /// (a seção de destaque) e não é a única a editá-los: favoritar pela web
-  /// altera o mesmo conjunto no servidor. Como esta aba vive num
-  /// `IndexedStack` e nunca é recriada, sem isto a seção continuaria mostrando
-  /// o que foi carregado no login — inclusive uma loja já desfavoritada em
-  /// outro cliente.
   void _aoMudarVisibilidade() {
     if (!(widget.visivel?.value ?? false)) return;
     _carregarAtividade();
@@ -139,13 +104,9 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
       final data = await ConsumerService().getById(userId);
       if (mounted) setState(() => _imagemUrl = data.imagemUrl);
     } catch (_) {
-      // Mantém o fallback com as iniciais do nome.
     }
   }
 
-  /// Rebusca os números da aba Atividade. Os campos só são sobrescritos
-  /// quando a nova resposta chega — nada é zerado no início —, então uma
-  /// recarga não faz o gráfico piscar de volta pro estado de carregamento.
   Future<void> _carregarAtividade() async {
     if (_carregandoAtividade) return;
     _carregandoAtividade = true;
@@ -155,7 +116,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
         final dias = await AuthStorage.diasNoApp();
         if (mounted) setState(() => _diasNoApp = dias);
       } catch (_) {
-        // Linha do resumo fica em "—"; não pode impedir a busca do gráfico.
       }
 
       try {
@@ -170,32 +130,24 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
         }
       } catch (_) {
         if (mounted && _datasAvaliacoes == null) {
-          // Só na primeira carga: numa recarga que falhou, manter a série que
-          // já estava na tela é melhor do que trocá-la por "sem avaliações".
           setState(() => _datasAvaliacoes = const []);
         }
       }
 
-      // Denúncias entram só como número no resumo — falha aqui não pode
-      // derrubar o gráfico, que é o conteúdo principal da aba.
       try {
         final userId = SessionStore.instance.userId;
         if (userId == null) return;
         final denuncias = await DenunciaService().getMyComplaints(userId);
         if (mounted) setState(() => _totalDenuncias = denuncias.length);
       } catch (_) {
-        // Deixa o resumo mostrando "—" pra essa linha.
       }
     } finally {
       _carregandoAtividade = false;
     }
   }
 
-  /// Abre uma tela e rebusca os números da Atividade ao voltar dela.
   Future<void> _abrirERecarregar(WidgetBuilder builder) async {
     await Navigator.push(context, appPageRoute(builder: builder));
-    // Recarga em segundo plano: `_carregarAtividade` já é reentrante (guard
-    // `_carregandoAtividade`) e trata os próprios erros por bloco.
     if (mounted) unawaited(_carregarAtividade());
   }
 
@@ -207,9 +159,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     widget.onProfileUpdated?.call();
   }
 
-  /// Puxar para atualizar: as três origens de dado do perfil — foto, atividade
-  /// e favoritos —, em paralelo. Vale para qualquer aba selecionada: quem
-  /// puxa não está pensando em qual aba está aberta, e as três são baratas.
   Future<void> _recarregar() async {
     await Future.wait([
       _carregarFoto(),
@@ -240,7 +189,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
                   1 => _buildAbaFavoritos(context),
                   _ => _buildAbaConta(context),
                 },
-                // Respiro pra bottom bar flutuante da ConsumerHomePage.
                 const SizedBox(height: 120.0),
               ],
             ),
@@ -249,8 +197,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
       ),
     );
   }
-
-  // ───────────────────────── cabeçalho e abas ─────────────────────────
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
@@ -275,9 +221,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
                 label: 'Tema do aplicativo',
                 hint: 'Escolhe entre claro, escuro e o do sistema',
                 onTap: () => showThemeModeSheet(context),
-                // Isolamento de rebuild: só este ícone escuta o
-                // ThemeController — nome, avatar e abas não reconstroem
-                // quando o usuário troca de tema.
                 child: ListenableBuilder(
                   listenable: ThemeController.instance,
                   builder: (context, _) {
@@ -353,14 +296,9 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
       width: tamanho,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        // Superfície do tema, não o preto da marca a 10%: no escuro aquele
-        // fundo ficava indistinguível da tela, e a inicial (também `ink`)
-        // sumia junto.
         color: context.mapColors.surfaceAlt,
         shape: BoxShape.circle,
       ),
-      // Sem foto (ou com foto quebrada), o "vazio" deste avatar não é um
-      // ícone: é a inicial do nome.
       child: AppNetworkImage(
         path: _imagemUrl,
         displayWidth: tamanho,
@@ -381,9 +319,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     );
   }
 
-  /// Abas de texto com indicador embaixo do rótulo ativo, sobre uma linha
-  /// contínua fina — em vez de `TabBar`/`TabController`, que traria um
-  /// `TickerProvider` e uma view paginada só pra alternar três colunas.
   Widget _buildTabs(BuildContext context) {
     const abas = ['Atividade', 'Favoritos', 'Conta'];
 
@@ -403,9 +338,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
               for (var i = 0; i < abas.length; i++)
                 SemanticTapArea(
                   label: abas[i],
-                  // A aba ativa se distingue pelo traço vermelho embaixo do
-                  // rótulo — marcação de posição, não de cor —, mais o peso da
-                  // fonte. Faltava anunciar o "selecionado".
                   selected: _abaSelecionada == i,
                   onTap: () => setState(() => _abaSelecionada = i),
                   child: Padding(
@@ -446,8 +378,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     );
   }
 
-  // ───────────────────────── aba: atividade ─────────────────────────
-
   Widget _buildAbaAtividade(BuildContext context) {
     final datas = _datasAvaliacoes;
 
@@ -480,10 +410,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
           label: "Dias no app",
           valor: _diasNoApp,
         ),
-        // As duas linhas abaixo levam à tela que produz o número. Como essas
-        // telas editam/excluem avaliações e denúncias, a volta passa por
-        // `_abrirERecarregar` — senão o contador aqui continuaria mostrando o
-        // total de antes da exclusão.
         _buildLinhaResumo(
           context,
           icon: AppIcons.star,
@@ -505,8 +431,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
   }
 
   Widget _buildChipPeriodo(BuildContext context, ActivityPeriod periodo) {
-    // O visual (incluindo o `selectedSurface`, que inverte no tema escuro pra
-    // o chip ativo não sumir) vive no AppChoiceChip.
     return AppChoiceChip(
       label: periodo.label,
       selected: _periodo == periodo,
@@ -516,9 +440,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
 
   Widget _buildCardCarregando(BuildContext context) {
     return Container(
-      // Placeholder do card de atividade: acompanha a escala pelo mesmo motivo
-      // que o card real — senão a tela encolhe no instante em que os dados
-      // chegam e o conteúdo "pula".
       height: escalaComTeto(context, 240.0),
       decoration: _decoracaoCard(context),
       child: const Center(
@@ -574,15 +495,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     );
   }
 
-  /// Linha de "Seus números". Com [onTap], ela vira o atalho para a tela que
-  /// origina aquele número — "Lojas avaliadas" abre as avaliações, "Denúncias
-  /// feitas" abre as denúncias.
-  ///
-  /// Um número numa lista é uma pergunta implícita ("quais?"), e a resposta
-  /// estava a três toques daqui, escondida na aba Conta. O chevron é o que
-  /// avisa que a linha responde — sem ele, a diferença entre a linha clicável
-  /// e a de "Dias no app" (que não leva a lugar nenhum, porque não existe
-  /// tela de "dias") só apareceria depois do toque.
   Widget _buildLinhaResumo(
     BuildContext context, {
     required IconData icon,
@@ -615,8 +527,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
             ),
           ),
           Text(
-            // "—" enquanto carrega ou quando a chamada falhou — mesmo
-            // placeholder que os cards de estatística já usavam.
             valor?.toString() ?? '—',
             style: AppText.h2(context).copyWith(
               fontWeight: FontWeight.w900,
@@ -625,8 +535,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
           ),
           if (onTap != null) ...[
             const SizedBox(width: Spacing.sm),
-            // Decorativo: quem usa leitor de tela já ouve que a linha é um
-            // botão pelo SemanticTapArea que a envolve.
             ExcludeSemantics(
               child: Icon(
                 AppIcons.caretRight,
@@ -644,21 +552,13 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     return SemanticTapArea(label: label, hint: hint, onTap: onTap, child: linha);
   }
 
-  // ───────────────────────── aba: favoritos ─────────────────────────
-
   Widget _buildAbaFavoritos(BuildContext context) {
-    // Escuta o FavoritesManager direto: favoritar/desfavoritar em outra aba
-    // precisa refletir aqui na hora — era exatamente esse o bug que o
-    // `featuredRefreshListenable` do scaffold antigo resolvia.
     return ListenableBuilder(
       listenable: FavoritesManager.instance,
       builder: (context, _) {
         final favoritos = FavoritesManager.instance.favorites;
         final erro = FavoritesManager.instance.errorMessage;
 
-        // Falha de carga não pode se disfarçar de "nenhum favorito ainda": o
-        // estado vazio convida a explorar, e é a orientação errada para quem
-        // tem favoritos salvos e está só sem rede.
         if (erro != null && favoritos.isEmpty) {
           return EmptyState(
             icon: AppIcons.wifiSlash,
@@ -672,9 +572,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
         }
 
         if (favoritos.isEmpty) {
-          // Estado vazio com saída: sem o botão, a aba dizia "não há nada" e
-          // deixava a pessoa sem o que fazer a respeito — é o que faz um app
-          // novo parecer abandonado.
           return EmptyState(
             icon: AppIcons.heart,
             title: 'Nenhum favorito ainda',
@@ -707,8 +604,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
                     child: Text(
                       "ver tudo",
                       style: AppText.caption(context).copyWith(
-                        // `brandContent`: vermelho como texto sobre a
-                        // superfície da tela.
                         color: context.mapColors.brandContent,
                         fontWeight: FontWeight.w700,
                       ),
@@ -724,9 +619,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
                         id: store.id,
                         title: store.nome,
                         imageUrl: resolveImagemUrl(store.capaUrl),
-                        // Categoria e nota são o que diferencia um favorito do
-                        // outro numa pilha — o nome sozinho obriga a abrir a
-                        // loja pra lembrar do que se trata.
                         subtitle: store.categoriaNomes.isNotEmpty
                             ? store.categoriaNomes.first
                             : (store.categoria.isNotEmpty ? store.categoria : null),
@@ -754,15 +646,9 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
       AppToast.error(context, "Não foi possível abrir esta loja.");
       return;
     }
-    // `precacheCapaDaLoja` em vez de `abrirDetalheDaLoja`: esta navegação
-    // precisa recarregar a lista ao voltar (dá pra avaliar a loja lá dentro, e
-    // sair daqui e voltar não passa pelo aviso de visibilidade — a aba nunca
-    // deixou de ser a exibida), e quem faz isso é o `_abrirERecarregar`.
     precacheCapaDaLoja(context, store);
     _abrirERecarregar((_) => MoreInfoStorePage(store: store!));
   }
-
-  // ─────────────────────────── aba: conta ───────────────────────────
 
   Widget _buildAbaConta(BuildContext context) {
     return Column(
@@ -776,9 +662,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
           onTap: _abrirEditarPerfil,
         ),
         Divider(color: context.mapColors.border, height: 1.0, indent: Spacing.lg, endIndent: Spacing.lg),
-        // Estas duas telas editam/excluem avaliações e denúncias, ou seja,
-        // mexem justamente nos números da aba Atividade — por isso a recarga
-        // ao voltar, sem esperar o usuário sair e entrar na aba de novo.
         MenuListTile(
           icon: AppIcons.star,
           title: "Minhas avaliações",
@@ -807,9 +690,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
                   if (userId == null) return;
                   await ConsumerService().delete(userId);
                 },
-                // Sem onLogoutExtra: `SessionManager.clearUserScopedState()`
-                // (chamado dentro do fluxo de exclusão) já limpa os
-                // favoritos — passar de novo aqui seria limpeza em dobro.
                 howItWorksPageBuilder: (_) => const HowItWorksPage(),
               ),
             ),
@@ -828,9 +708,6 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
         const SizedBox(height: Spacing.xl),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-          // `inverse`: sair não é ação primária (ninguém abre o perfil para
-          // sair) nem destrutiva — é o CTA neutro forte, e o token inverte
-          // sozinho no tema escuro, onde o preto sólido sumia no fundo.
           child: AppButton(
             label: 'Sair da conta',
             icon: AppIcons.signOut,

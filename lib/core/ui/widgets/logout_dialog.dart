@@ -11,13 +11,6 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
 
-/// Confirmação de "Sair da conta" — extraída do `ProfilePageScaffold` quando
-/// o perfil do consumidor deixou de usar aquele scaffold: os dois perfis
-/// precisam encerrar sessão exatamente do mesmo jeito, e duplicar este fluxo
-/// é como o `FavoritesManager` já vazou dados de uma conta pra outra antes.
-///
-/// [onLogoutExtra] é o hook opcional de quem chama (ex: limpar favoritos);
-/// a limpeza de sessão e do estado com escopo de usuário roda sempre.
 void mostrarDialogoLogout(BuildContext context, {VoidCallback? onLogoutExtra}) {
   showDialog(
     context: context,
@@ -78,20 +71,8 @@ void mostrarDialogoLogout(BuildContext context, {VoidCallback? onLogoutExtra}) {
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   ElevatedButton(
-                    // backgroundColor/foregroundColor ficam de propósito
-                    // como literais: é um CTA sólido preto/branco que deve
-                    // parecer o mesmo nos dois temas, não uma superfície
-                    // que se adapta ao brightness.
                     onPressed: () async {
-                      // signOut (não AuthStorage.clear direto): limpa disco e
-                      // memória de uma vez. Só limpar o disco deixava o
-                      // SessionStore publicando um usuário já deslogado.
                       await SessionStore.instance.signOut();
-                      // Sempre roda, pros dois papéis — não depende de a
-                      // tela chamadora lembrar de passar onLogoutExtra
-                      // (foi exatamente esse esquecimento, no perfil do
-                      // comerciante, que deixava FavoritesManager vazando
-                      // dados de uma conta pra outra no mesmo aparelho).
                       SessionManager.clearUserScopedState();
                       onLogoutExtra?.call();
                       if (!context.mounted) return;

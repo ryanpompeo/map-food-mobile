@@ -9,17 +9,6 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
 
-/// Chips horizontais para alternar entre as lojas do comerciante, com um chip
-/// final para cadastrar outra. Aparece sobre "Minha operação" e "Perfil da
-/// Loja".
-///
-/// Continua visível mesmo com uma loja só: o chip "Nova loja" é o caminho
-/// mais curto para cadastrar a segunda, e escondê-lo por "limpeza visual"
-/// tiraria a única entrada desse fluxo fora do perfil.
-///
-/// A faixa perdeu o fundo e a sombra próprios — ela vive dentro do fundo da
-/// página, e uma barra sombreada logo abaixo do AppBar criava uma segunda
-/// linha de cabeçalho que competia com o título da tela.
 class StoreSwitcherBar extends StatelessWidget {
   final List<StoreDto> stores;
   final int selectedIndex;
@@ -32,9 +21,6 @@ class StoreSwitcherBar extends StatelessWidget {
     required this.onSelect,
   });
 
-  /// Teto de escala da barra. Tira horizontal fixa no topo da área do
-  /// comerciante: ela some da tela se crescer demais, e o conteúdo que ela
-  /// seleciona é que precisa do espaço.
   static const double _tetoEscala = 1.5;
 
   @override
@@ -79,9 +65,6 @@ class _LojaChip extends StatelessWidget {
     final colors = context.mapColors;
     final aberta = store.statusLoja == 'ATIVA';
 
-    // Selecionado usa o par que inverte com o tema (o mesmo dos segmentos e
-    // do card de status). O `Colors.black` fixo de antes desaparecia no
-    // fundo escuro, e o chip ativo virava o menos visível da fileira.
     final fundo = selecionada ? colors.selectedSurface : colors.surfaceAlt;
     final conteudo = selecionada ? colors.onSelectedSurface : colors.textSecondary;
 
@@ -111,9 +94,6 @@ class _LojaChip extends StatelessWidget {
                   height: 8.0,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    // Verde é estado operacional (aberta), não cor de marca —
-                    // vale igual nos dois temas, por isso vem de MfColor e
-                    // não da escala de superfícies.
                     color: aberta ? MfColor.success : colors.textTertiary,
                   ),
                 ),

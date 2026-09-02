@@ -39,18 +39,11 @@ void _apiRespondendo({int statusCode = 200, String body = '[]'}) {
     ..interceptors.add(ErrorInterceptor());
   final client = ApiClient(dio: dio);
   ApiClient.overrideInstance(client);
-  // O manager é singleton e resolveu o ApiClient na sua própria construção —
-  // sem trocar o service aqui, ele seguiria falando com o cliente real.
   FavoritesManager.instance.service = FavoritoService(client: client);
 }
 
 void main() {
   setUp(() {
-    // O manager se registra como `WidgetsBindingObserver` na construção (para
-    // reler os favoritos quando o app volta do segundo plano), e o singleton é
-    // construído na primeira referência a `.instance` — que acontece aqui
-    // dentro. Sem o binding, essa construção estoura. Mesmo motivo do
-    // `active_stores_manager_test`.
     TestWidgetsFlutterBinding.ensureInitialized();
     FavoritesManager.instance.clear();
   });
@@ -71,7 +64,6 @@ void main() {
       _apiRespondendo(statusCode: 200, body: '{}');
 
       final futuro = FavoritesManager.instance.toggle(_loja);
-      // Já marcado antes de a chamada resolver.
       expect(FavoritesManager.instance.isFavorite(1), isTrue);
       await futuro;
       expect(FavoritesManager.instance.favorites, hasLength(1));
@@ -103,7 +95,6 @@ void main() {
     test('load com API fora do ar preenche errorMessage em vez de lançar', () async {
       _apiRespondendo(statusCode: 500, body: '{"message": "indisponível"}');
 
-      // Não lança: quem chama normalmente não dá await (login, abertura de aba).
       await FavoritesManager.instance.load();
 
       expect(FavoritesManager.instance.errorMessage, isNotNull);

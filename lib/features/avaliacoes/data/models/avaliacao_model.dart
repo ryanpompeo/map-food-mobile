@@ -1,4 +1,3 @@
-/// Modelo de avaliação retornado pela API `/avaliacoes`.
 class AvaliacaoModel {
   final int id;
   final int nota;
@@ -52,13 +51,6 @@ class ConsumidorResumido {
   final int id;
   final String nome;
 
-  /// Foto de perfil de quem avaliou, como path cru da API
-  /// (`/uploads/consumidores/x.jpg`). `null` em quem nunca enviou uma.
-  ///
-  /// O campo **sempre** veio no JSON de `/avaliacoes/loja/{id}` (o endpoint
-  /// devolve a entidade `Avaliacao` inteira, e `Consumidor` tem `imagemUrl`) —
-  /// era este parser que o descartava, e por isso a lista de avaliações do app
-  /// só sabia desenhar a inicial do nome. A web já lia o mesmo campo.
   final String? imagemUrl;
 
   const ConsumidorResumido({

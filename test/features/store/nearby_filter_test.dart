@@ -2,8 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/nearby_filter.dart';
 
-/// Coordenadas reais de Limeira-SP (a cidade do app) pra distâncias que dá
-/// pra conferir num mapa, em vez de números inventados.
 const _usuario = (lat: -22.5645, lng: -47.4017);
 
 StoreDto _loja(int id, {double? lat, double? lng}) => StoreDto(
@@ -15,16 +13,12 @@ StoreDto _loja(int id, {double? lat, double? lng}) => StoreDto(
       longitude: lng,
     );
 
-/// ~300 m ao norte do usuário (1 grau de latitude ≈ 111 km).
 final _muitoPerto = _loja(1, lat: _usuario.lat + 0.0027, lng: _usuario.lng);
 
-/// ~3,3 km ao norte.
 final _perto = _loja(2, lat: _usuario.lat + 0.03, lng: _usuario.lng);
 
-/// ~11 km ao norte.
 final _longe = _loja(3, lat: _usuario.lat + 0.10, lng: _usuario.lng);
 
-/// Loja cadastrada sem CEP/endereço geocodificado.
 final _semCoordenadas = _loja(4);
 
 void main() {
@@ -63,8 +57,6 @@ void main() {
     });
 
     test('loja sem coordenada some quando há raio ativo', () {
-      // Não dá pra afirmar que ela está dentro de 5 km sem saber onde fica —
-      // e ela também não teria pin no mapa.
       final resultado = lojasDentroDoRaio(
         [_muitoPerto, _semCoordenadas],
         lat: _usuario.lat,
@@ -83,8 +75,6 @@ void main() {
         raioKm: 20.0,
       );
 
-      // O corte não ordena por distância — quem ordena por proximidade é a
-      // seção "Perto de você" da busca, não o mapa.
       expect(resultado.map((l) => l.id), [2, 1]);
     });
   });
@@ -102,8 +92,6 @@ void main() {
     });
 
     test('sem posição do usuário, o raio de 1 km não filtra nada', () {
-      // Este é o comportamento que mais confunde: GPS negado ou ainda sem fix,
-      // o chip "1 km" fica marcado no modal e a loja a 11 km continua no mapa.
       final resultado = lojasDentroDoRaio(
         [_muitoPerto, _longe],
         lat: null,

@@ -5,9 +5,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 
-/// Pill branca flutuante com estrela + nota, para sobrepor no canto da foto
-/// do card (mesmo padrão do badge de rating dos cards de listagem do anexo
-/// de referência visual).
 class RatingBadgePill extends StatelessWidget {
   final String rating;
 
@@ -36,9 +33,6 @@ class RatingBadgePill extends StatelessWidget {
   }
 }
 
-/// Chip cápsula cinza-claro para atributos secundários (categoria, etc.),
-/// mesmo tratamento visual dos chips de atributo ("3 quartos", "2 vagas")
-/// do anexo de referência.
 class InfoChip extends StatelessWidget {
   final String label;
 
@@ -49,14 +43,11 @@ class InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
       decoration: BoxDecoration(
-        // Um tom abaixo do cardSurface do card que envolve este chip (ver
-        // mesmo raciocínio em image_picker_sheet.dart, Lote 2).
         color: context.mapColors.mainBackground,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         label,
-        // Sem override de cor: legenda() já resolve pra secondaryText.
         style: AppText.legenda(context).copyWith(fontSize: 11, fontWeight: FontWeight.w700),
         maxLines: 1, overflow: TextOverflow.ellipsis,
       ),
@@ -64,9 +55,6 @@ class InfoChip extends StatelessWidget {
   }
 }
 
-/// Chip cápsula com contorno fino e texto preto em negrito — mesmo
-/// tratamento dos chips de atributo ("3 quartos", "2 vagas", "145 m²") do
-/// card de listagem do anexo de referência.
 class AttributeChip extends StatelessWidget {
   final String label;
 

@@ -9,17 +9,9 @@ import 'package:map_food/features/merchant/presentation/widgets/store_status_car
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
 
-/// A camada **imediata** do painel do comerciante: abrir/fechar a loja e ver
-/// onde ela está aparecendo agora.
-///
-/// É o bloco mais consultado do dia e por isso fica no topo, sem rolagem.
-/// Virou seção justamente para morar dentro do painel de gestão: antes era uma
-/// aba inteira ("Ronda"), separada de "Minha loja" — o status era a informação
-/// que o lojista mais procura e a única que não estava onde ele administra.
 class StoreOperationSection extends StatefulWidget {
   final StoreDto store;
 
-  /// Notifica o pai quando a loja muda no backend (status ou posição).
   final ValueChanged<StoreDto>? onStoreUpdated;
 
   const StoreOperationSection({
@@ -65,9 +57,6 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
   Widget build(BuildContext context) {
     final colors = context.mapColors;
 
-    // Altura proporcional com piso e teto: o mapa é conferência ("estou
-    // aparecendo onde acho que estou?"), não a tela principal — num aparelho
-    // pequeno ele cede espaço para o card de status, que é o que se opera.
     final alturaMapa = (MediaQuery.sizeOf(context).height * 0.34).clamp(220.0, 360.0);
 
     return ListenableBuilder(
@@ -123,9 +112,6 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
                     Positioned.fill(
                       child: StoreMapView(stores: [_ronda.store], focusedStore: _ronda.store),
                     ),
-                    // Loja fechada: véu sobre a cartografia. O mapa continua
-                    // legível (é a referência do último ponto), mas para de
-                    // parecer o estado ao vivo que ele não é.
                     if (!aberta)
                       Positioned.fill(
                         child: IgnorePointer(
@@ -152,9 +138,6 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
   }
 }
 
-/// Nota de rodapé explicando a ronda. Curta e presente nos dois estados: é a
-/// única explicação de por que a loja "anda" no mapa, e some do caminho de
-/// quem já sabe (uma linha, sem caixa colorida chamando atenção).
 class _DicaRonda extends StatelessWidget {
   final bool aberta;
 

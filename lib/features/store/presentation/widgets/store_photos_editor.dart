@@ -11,40 +11,20 @@ import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/xfile_image.dart';
 
-/// Capa + galeria da loja, em um único bloco, usado tanto no cadastro quanto
-/// na edição.
-///
-/// As duas telas mantinham cópias do mesmo editor com valores diferentes
-/// (capa de 160 contra 180 de altura, tile de 100 contra 110, raio `md`
-/// contra `lg`, um com sombra e outro não) — vistas em sequência, davam a
-/// impressão de duas telas de produtos diferentes.
-///
-/// Distinção que a API preserva de propósito: **foto salva** no servidor
-/// (`String` de URL) e **foto escolhida agora** (`XFile`) apagam de formas
-/// diferentes — a primeira faz DELETE e precisa de confirmação, a segunda é
-/// só descartar da lista local. Uma lista só de "fotos" esconderia isso e
-/// levaria a chamar DELETE em arquivo que nunca subiu.
 class StorePhotosEditor extends StatelessWidget {
-  /// Fora de edição, os controles de escolher/remover não aparecem.
   final bool editando;
 
-  /// Caminho da capa já salva (relativo, resolvido por `resolveImagemUrl`).
   final String? capaUrl;
 
-  /// Capa escolhida nesta sessão e ainda não enviada. Tem precedência sobre
-  /// [capaUrl] na exibição — é o que a pessoa acabou de escolher.
   final XFile? novaCapa;
 
   final bool removendoCapa;
 
-  /// Mostra o selo "Obrigatório" ao lado do título (fluxo de cadastro).
   final bool capaObrigatoria;
 
   final List<String> galeriaSalva;
   final List<XFile> novasFotos;
 
-  /// URL da foto de galeria com DELETE em andamento — mostra spinner no lugar
-  /// do X daquele tile.
   final String? removendoGaleriaUrl;
 
   final int maxFotos;
@@ -171,8 +151,6 @@ class _Cabecalho extends StatelessWidget {
               const Spacer(),
               Text(
                 contador!,
-                // Tabular: o contador não empurra o layout ao passar de 9
-                // para 10 fotos.
                 style: AppText.numeric(context).copyWith(
                   color: context.mapColors.textSecondary,
                 ),
@@ -231,8 +209,6 @@ class _Capa extends StatelessWidget {
                   if (novaCapa != null)
                     XFileImage(novaCapa!)
                   else
-                    // Decorativa (sem `semanticLabel`): o título "Foto de
-                    // destaque" já dá o contexto.
                     AppNetworkImage(
                       path: urlSalva,
                       displayWidth: MediaQuery.sizeOf(context).width,
@@ -352,8 +328,6 @@ class _TiraGaleria extends StatelessWidget {
             _TileFoto(
               lado: _lado,
               editando: editando,
-              // Ainda não subiu: descartar é local e instantâneo, não há
-              // estado de "removendo".
               removendo: false,
               onRemover: () => onDescartarNova(foto),
               child: XFileImage(foto),
@@ -478,9 +452,6 @@ class _TileFoto extends StatelessWidget {
   }
 }
 
-/// Botão circular sobre uma foto. Fundo de superfície (não branco literal)
-/// para continuar legível no tema escuro, e sombra própria porque a foto
-/// atrás pode ser de qualquer cor.
 class _BotaoSobreFoto extends StatelessWidget {
   final IconData icone;
   final String rotulo;

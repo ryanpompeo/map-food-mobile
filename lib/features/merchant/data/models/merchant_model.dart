@@ -1,9 +1,3 @@
-/// Modelo completo de comerciante retornado por GET /comerciantes/{id}.
-///
-/// PUT /comerciantes/{id} faz replace completo no backend (não faz merge de
-/// campos), então toda edição precisa reenviar cpf/telefone/imagemUrl mesmo
-/// quando a tela não permite editá-los, senão são sobrescritos com null —
-/// inclusive apagando a foto de perfil enviada por POST /comerciantes/{id}/imagem.
 class MerchantModel {
   final int id;
   final String nome;

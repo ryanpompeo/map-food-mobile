@@ -20,23 +20,9 @@ import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dar
 import 'package:map_food/features/store/presentation/widgets/store_detail/review_card.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/section_header.dart';
 
-/// O que o consumidor faz nesta loja: o que ele já avaliou e o formulário para
-/// avaliar de novo.
-///
-/// Antes os dois viviam **dentro do mesmo card**, com o histórico empilhado
-/// acima do formulário e um divisor entre eles. Dois blocos de propósitos
-/// diferentes dividindo uma caixa só, com dois cabeçalhos de mesmo peso
-/// disputando espaço — e foi no cabeçalho do histórico, comprimido por dois
-/// paddings de cada lado, que a linha estourou.
-///
-/// Agora são dois cards: o histórico (recolhível, e ausente para quem nunca
-/// avaliou) e o formulário. O estado continua num lugar só porque enviar uma
-/// avaliação recarrega o histórico logo em seguida.
 class ConsumerReviewSection extends StatefulWidget {
   final int lojaId;
 
-  /// 'CONSUMIDOR' usa o formulário normalmente; 'GUEST' vê o mesmo bloco,
-  /// mas inerte — o toque em qualquer parte dele abre a parede de login.
   final String userRole;
 
   final VoidCallback onReviewSubmitted;
@@ -61,10 +47,6 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
 
-  // Histórico de avaliações que o próprio consumidor já fez para esta loja.
-  // Múltiplas avaliações são permitidas (API geral não bloqueia duplicidade
-  // nem faz upsert) — cada envio soma uma nova linha ao histórico, em vez de
-  // sobrescrever a anterior.
   List<AvaliacaoModel> _minhasAvaliacoes = [];
   bool _isLoadingHistorico = true;
   bool _historicoExpandido = true;
@@ -80,9 +62,6 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
     super.initState();
     _commentController.addListener(_notifyUnsavedChanged);
     if (_isGuest) {
-      // Visitante não tem token: GET /avaliacoes/minhas responderia 401, que
-      // além de inútil aqui passa pelo ErrorInterceptor. Nada de histórico
-      // pra buscar — sai direto do estado de carregamento.
       _isLoadingHistorico = false;
     } else {
       _carregarHistorico();
@@ -107,9 +86,6 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
     );
   }
 
-  /// Busca todas as avaliações do consumidor autenticado (GET /avaliacoes/minhas)
-  /// e filtra pelo lojaId no client-side — não existe endpoint que devolva só
-  /// as avaliações de uma loja específica.
   Future<void> _carregarHistorico() async {
     try {
       final todasMinhas = await _avaliacaoService.getMinhasAvaliacoes();
@@ -142,8 +118,6 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
-        // Limpa o formulário: cada envio é uma nova avaliação no histórico,
-        // não uma edição da anterior.
         _rating = 0;
         _commentController.clear();
       });
@@ -170,9 +144,6 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Enquanto o histórico não responde, um bloco de aviso do tamanho de
-        // uma linha. Sem ele, quem já avaliou vê o formulário e, meio segundo
-        // depois, um card inteiro nascendo acima e empurrando a tela.
         if (_isLoadingHistorico && !_isGuest) ...[
           const _HistoricoCarregando(),
           const SizedBox(height: Spacing.base),
@@ -209,8 +180,6 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: Spacing.base),
-                      // `compact`: sem avatar nem nome. Todas são desta mesma
-                      // pessoa, e o cabeçalho logo acima já diz isso.
                       for (final review in _minhasAvaliacoes)
                         ReviewCard(review: review, compact: true),
                     ],
@@ -221,12 +190,6 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
     );
   }
 
-  /// Formulário de avaliação. Para o visitante ele é exibido igual, mas
-  /// dentro de um `AbsorbPointer`: as estrelas não marcam, o campo não recebe
-  /// foco (nem abre teclado) e o botão não envia — o toque é capturado pelo
-  /// `GestureDetector` de fora, que abre a parede de login. Mostrar o
-  /// formulário desabilitado, e não escondê-lo, é o que faz o visitante
-  /// descobrir que avaliar existe.
   Widget _buildFormulario(BuildContext context) {
     final formulario = AppCard(
       padding: const EdgeInsets.all(Spacing.base),
@@ -315,9 +278,6 @@ class _HistoricoCarregando extends StatelessWidget {
   }
 }
 
-/// Seletor de nota. Cinco alvos de toque de 44dp com a estrela Phosphor —
-/// antes eram `IconButton`s com a estrela do Material, o único lugar da tela
-/// onde as duas famílias de ícone apareciam lado a lado.
 class _StarPicker extends StatelessWidget {
   final int rating;
   final ValueChanged<int> onChanged;
@@ -345,16 +305,12 @@ class _StarPicker extends StatelessWidget {
                     size: escalaIcone(context, 36.0),
                     color: i <= rating
                         ? MfColor.rating
-                        // Trilho da nota, não uma estrela "meio marcada": o
-                        // amarelo cheio no estado vazio confundia os dois.
                         : context.mapColors.textTertiary,
                   ),
                 ),
               ),
           ],
         ),
-        // Reserva a linha mesmo sem nota escolhida: sem isso o card inteiro
-        // pula de altura no primeiro toque em uma estrela.
         SizedBox(
           height: escalaComTeto(context, 18.0),
           child: rating == 0

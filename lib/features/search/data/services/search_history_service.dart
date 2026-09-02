@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Histórico de buscas recentes, persistido localmente por dispositivo.
 class SearchHistoryService {
   static const _key = 'search_history';
   static const _maxItems = 10;

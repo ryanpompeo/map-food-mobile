@@ -36,9 +36,6 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
     _carregarAvaliacoes();
   }
 
-  /// [mostrarSpinner] falso no "puxe para atualizar": o gesto já é o
-  /// indicador, e ligar `_isLoading` trocaria a lista por um spinner de página
-  /// inteira debaixo do dedo de quem está puxando.
   Future<void> _carregarAvaliacoes({bool mostrarSpinner = true}) async {
     setState(() {
       if (mostrarSpinner) _isLoading = true;
@@ -165,14 +162,10 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
             Container(
               width: 56,
               height: 56,
-              // Um tom abaixo do cardSurface do card que envolve esta
-              // miniatura (mesmo padrão de superfície aninhada dos lotes anteriores).
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 color: context.mapColors.mainBackground,
               ),
-              // Decorativa (sem `semanticLabel`): o nome da loja já aparece
-              // como texto ao lado.
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: AppNetworkImage(

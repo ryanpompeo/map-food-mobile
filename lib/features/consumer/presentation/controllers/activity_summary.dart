@@ -10,16 +10,11 @@ enum ActivityPeriod {
   const ActivityPeriod(this.label);
 }
 
-/// Série pronta pro gráfico + os números do cabeçalho do card.
 class ActivitySummary {
   final List<ActivityPoint> points;
 
-  /// Total de eventos dentro do período selecionado.
   final int total;
 
-  /// Variação percentual contra o período anterior de mesma duração. `null`
-  /// quando o período anterior não teve nenhum evento — nesse caso não
-  /// existe base de comparação e mostrar "+100%" seria inventar leitura.
   final int? deltaPercentual;
 
   const ActivitySummary({
@@ -32,12 +27,6 @@ class ActivitySummary {
 const _iniciaisDiaSemana = {1: 'S', 2: 'T', 3: 'Q', 4: 'Q', 5: 'S', 6: 'S', 7: 'D'};
 const _iniciaisMes = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
 
-/// Agrupa [datas] (data de cada avaliação feita pelo consumidor) nos baldes
-/// do [periodo] escolhido, sempre terminando em hoje.
-///
-/// Tudo é calculado no cliente a partir da lista que o perfil já busca — não
-/// há endpoint de série temporal na API, e inventar um só pra este gráfico
-/// seria mudança de backend por causa de estética.
 ActivitySummary resumirAtividade(List<DateTime> datas, ActivityPeriod periodo) {
   final agora = DateTime.now();
   final hoje = DateTime(agora.year, agora.month, agora.day);
@@ -92,7 +81,6 @@ ActivitySummary _porDia(
 
 ActivitySummary _porMes(List<DateTime> datas, DateTime hoje) {
   const baldes = 12;
-  // Primeiro dia do mês de 11 meses atrás — o balde 11 é o mês corrente.
   final inicio = DateTime(hoje.year, hoje.month - (baldes - 1), 1);
   final inicioAnterior = DateTime(hoje.year, hoje.month - (baldes * 2 - 1), 1);
 

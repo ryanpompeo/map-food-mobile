@@ -8,10 +8,6 @@ class AuthStorage {
   static const _keyUserTipo = 'user_tipo';
   static const _keyUserEmail = 'user_email';
 
-  // Não faz parte da sessão (não é limpa em `clear()`/logout) — é a data do
-  // primeiro login já feito neste aparelho, usada como proxy de "Dias no
-  // App" pra consumidor, que não tem `dataCadastro` no backend (diferente
-  // de Comerciante). Só reseta se o app for desinstalado/reinstalado.
   static const _keyFirstLoginAt = 'first_login_at';
 
   static Future<void> saveSession(AuthResponse response) async {
@@ -29,9 +25,6 @@ class AuthStorage {
     await prefs.setString(_keyFirstLoginAt, DateTime.now().toIso8601String());
   }
 
-  /// Dias desde o primeiro login neste aparelho — se a sessão já existia
-  /// antes desta marca ter sido introduzida, o primeiro acesso ao perfil
-  /// grava "agora" como marco inicial (dia 0), em vez de quebrar.
   static Future<int> diasNoApp() async {
     final prefs = await SharedPreferences.getInstance();
     await _ensureFirstLoginDate(prefs);
@@ -39,10 +32,6 @@ class AuthStorage {
     return DateTime.now().difference(DateTime.parse(raw)).inDays;
   }
 
-  /// Atualiza nome/e-mail da sessão salva localmente — chamado depois de um
-  /// "Editar Perfil" bem-sucedido. Sem isso, `getSession()` continuava
-  /// devolvendo o nome antigo (o do login) até o usuário deslogar e logar de
-  /// novo, mesmo com o backend já salvo com o dado novo.
   static Future<void> updateNomeEmail(String nome, String email) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyUserNome, nome);

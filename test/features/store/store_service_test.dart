@@ -7,9 +7,6 @@ import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/interceptors/error_interceptor.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
-/// Adapter que devolve uma resposta fixa sem tocar na rede — é o que a costura
-/// de DI do `ApiClient` passou a permitir. Antes deste PR, exercitar
-/// service + model exigia uma API real rodando em localhost:8080.
 class _AdapterFalso implements HttpClientAdapter {
   _AdapterFalso({required this.statusCode, required this.body});
 
@@ -35,8 +32,6 @@ class _AdapterFalso implements HttpClientAdapter {
 StoreService _serviceQueResponde({int statusCode = 200, required String body}) {
   final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
     ..httpClientAdapter = _AdapterFalso(statusCode: statusCode, body: body)
-    // Sem AuthInterceptor: ele leria SharedPreferences, que não existe fora de
-    // um binding de teste. O ErrorInterceptor é o que interessa aqui.
     ..interceptors.add(ErrorInterceptor());
   return StoreService(client: ApiClient(dio: dio));
 }
@@ -79,7 +74,6 @@ void main() {
       expect(lojas.single.temLocalizacao, isFalse);
       expect(lojas.single.avaliacao, isNull);
       expect(lojas.single.totalAvaliacoes, 0);
-      // Campos ausentes caem nos padrões, sem estourar.
       expect(lojas.single.galeria, isEmpty);
     });
 
@@ -93,8 +87,6 @@ void main() {
     });
 
     test('corpo vazio numa rota de lista vira ParseException', () async {
-      // Um 200 com corpo vazio antes produzia `null as List<dynamic>` —
-      // TypeError que escapava de todo `on AppException` do app.
       final service = _serviceQueResponde(body: '');
 
       await expectLater(service.getActive(), throwsA(isA<ParseException>()));

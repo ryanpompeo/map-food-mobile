@@ -9,33 +9,11 @@ import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
-/// Capa da loja como cabeçalho colapsável da tela de detalhe.
-///
-/// Antes a tela tinha uma `SliverAppBar` **vazia** e, logo abaixo, um bloco de
-/// 260px com a capa. Rolar a página levava a foto embora e deixava no topo uma
-/// barra sem nada além de dois botões — em nenhum momento da rolagem dava para
-/// saber de qual comércio era aquela tela.
-///
-/// Agora a foto é o próprio cabeçalho: expandida, carrega o nome e o endereço
-/// sobre um scrim; colapsada, entrega o nome à barra. A troca é comandada pela
-/// altura real do `flexibleSpace` (via [LayoutBuilder]), não por um
-/// `ScrollController` paralelo — o sliver já sabe o quanto encolheu.
 class StoreDetailHero extends StatelessWidget {
   final StoreDto store;
 
-  /// Altura da capa aberta. 280 é o ponto em que a foto ainda é o assunto da
-  /// tela e o conteúdo abaixo já se anuncia — acima disso, a primeira dobra
-  /// vira só imagem.
   static const double alturaExpandida = 280.0;
 
-  /// Largura com que a capa é decodificada.
-  ///
-  /// É um método estático, e não um número solto dentro de [_Capa], porque o
-  /// precache disparado antes da navegação (ver `abrirDetalheDaLoja`) precisa
-  /// usar **exatamente** este valor: a largura entra na chave do cache de
-  /// imagem, e divergir aqui faria o pré-carregamento aquecer uma entrada que
-  /// esta tela nunca leria — sem erro nenhum aparecendo, só a lentidão de
-  /// volta.
   static double larguraDaCapa(BuildContext context) => MediaQuery.sizeOf(context).width;
 
   const StoreDetailHero({super.key, required this.store});
@@ -51,9 +29,6 @@ class StoreDetailHero extends StatelessWidget {
       backgroundColor: colors.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      // A barra fixa não escurece ao ter conteúdo por baixo: ela já muda de
-      // estado ao colapsar (ganha o nome da loja), e o tint do Material 3
-      // por cima disso lê como uma terceira cor de fundo aparecendo do nada.
       scrolledUnderElevation: 0,
       leadingWidth: 60.0,
       leading: Center(
@@ -71,18 +46,11 @@ class StoreDetailHero extends StatelessWidget {
       ],
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {
-          // A barra "colapsada" é a altura da toolbar mais o recorte do
-          // sistema; a margem de 8 evita que o nome pisque no último pixel
-          // da animação.
           final alturaColapsada = kToolbarHeight + MediaQuery.paddingOf(context).top;
           final colapsado = constraints.maxHeight <= alturaColapsada + 8.0;
 
           return FlexibleSpaceBar(
-            // O título não escala junto com a barra: ele só aparece quando ela
-            // já está colapsada, e crescer nesse instante pareceria um salto.
             expandedTitleScale: 1.0,
-            // Abre espaço para o botão de voltar e para o de favoritar — sem
-            // isso o nome nasce por baixo dos dois.
             titlePadding: const EdgeInsetsDirectional.only(
               start: 60.0,
               end: 60.0,
@@ -110,8 +78,6 @@ class StoreDetailHero extends StatelessWidget {
 class _Capa extends StatelessWidget {
   final StoreDto store;
 
-  /// O bloco de texto sobre a foto some quando a barra colapsa — a partir daí
-  /// quem carrega o nome é o título da própria barra.
   final bool visivel;
 
   const _Capa({required this.store, required this.visivel});
@@ -128,9 +94,6 @@ class _Capa extends StatelessWidget {
           fallback: const _CapaVazia(),
         ),
 
-        // Scrim só na metade de baixo, que é onde o texto cai. Um véu no
-        // quadro inteiro escureceria a foto sem necessidade — e a foto do
-        // comércio é o motivo de este cabeçalho existir.
         const DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -171,8 +134,6 @@ class _Capa extends StatelessWidget {
                       Expanded(
                         child: Text(
                           store.enderecoCompleto!,
-                          // Branco a 85%: um degrau abaixo do nome, sem cair
-                          // no cinza (que sobre foto some).
                           style: AppText.secondary(context).copyWith(
                             color: ColorsPalette.white.withValues(alpha: 0.85),
                             fontWeight: FontWeight.w500,
@@ -193,11 +154,6 @@ class _Capa extends StatelessWidget {
   }
 }
 
-/// Placeholder da loja sem capa.
-///
-/// Gradiente da marca, e não a superfície cinza de antes: o texto do cabeçalho
-/// é branco: sobre cinza-claro ele sumiria, e o hero perderia justamente a
-/// função de dizer onde você está.
 class _CapaVazia extends StatelessWidget {
   const _CapaVazia();
 
@@ -222,9 +178,6 @@ class _CapaVazia extends StatelessWidget {
   }
 }
 
-/// Botão circular sobre a capa. Superfície do tema (não vidro translúcido) de
-/// propósito: ele continua na tela depois que a barra colapsa, e um círculo
-/// translúcido sobre a superfície opaca da barra desapareceria.
 class _HeroCircleButton extends StatelessWidget {
   final IconData icon;
   final String label;

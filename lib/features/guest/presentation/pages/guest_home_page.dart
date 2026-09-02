@@ -13,10 +13,6 @@ class GuestHomePage extends StatefulWidget {
 }
 
 class _GuestHomePageState extends State<GuestHomePage> {
-  /// Mesma decisão das homes de consumidor e comerciante: com `setState`, cada
-  /// toque na barra recriava as instâncias de `HomeMapExplorer`, `SearchPage` e
-  /// `GuestProfilePage` e o Flutter reconstruía o mapa inteiro só pra trocar o
-  /// índice do `IndexedStack`. Ver a nota longa em `KeyboardAwareBottomBar`.
   final ValueNotifier<int> _abaAtual = ValueNotifier(0);
 
   @override
@@ -32,11 +28,7 @@ class _GuestHomePageState extends State<GuestHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Fora do builder de propósito — ver a nota no campo `_abaAtual`.
     final abas = [
-      // RepaintBoundary em cada aba: isola o layer de pintura de cada uma
-      // — a troca de aba passa a ser só trocar qual layer já pronto
-      // mostrar, sem repintar o mapa das abas que não mudaram.
       RepaintBoundary(
         child: HomeMapExplorer(onSearchTap: () => _onItemTapped(1)),
       ),

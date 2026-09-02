@@ -13,7 +13,6 @@ import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 import 'package:map_food/features/store/presentation/widgets/home_section_title.dart';
 
-/// Carrossel "Perto de você" — lojas ordenadas por distância até o usuário.
 class PertoDeVoceCarrosselWidget extends StatefulWidget {
   final List<StoreDto> items;
 
@@ -40,17 +39,12 @@ class _PertoDeVoceCarrosselWidgetState extends State<PertoDeVoceCarrosselWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Mesma seta da rota usada no mapa e no detalhe da loja: aqui ela diz
-        // "isto é medido a partir de onde você está".
         const HomeSectionTitle(
           icon: AppIcons.navigationArrow,
           title: 'Perto de você',
         ),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
-          // Carrossel horizontal: o card interno tem foto + texto, então a
-          // altura acompanha a escala. Com teto, porque um PageView que cresce
-          // sem limite empurra o resto da home para fora da primeira dobra.
           height: escalaComTeto(context, 230.0, teto: 1.5),
           child: PageView.builder(
             controller: _pageController,
@@ -89,18 +83,9 @@ class _PertoDeVoceCarrosselWidgetState extends State<PertoDeVoceCarrosselWidget>
   }
 }
 
-/// Card "imersivo": a foto preenche o card inteiro, com nome/endereço e
-/// nota/categorias sobrepostos num gradiente escuro — sem CTA em pill (o
-/// card inteiro já é clicável, o botão "Ver loja" quebrava a estética
-/// minimalista sem agregar nada que o tap no card não fizesse). Casca de
-/// foto+gradiente vem de `PhotoHeroCard` — este widget só monta o conteúdo
-/// (badges, texto) específico do card de destaque.
 class DestaqueCardWidget extends StatelessWidget {
   final StoreDto destaque;
 
-  // Bem mais aberto que o AppRadius.xl (24) padrão do resto do app — mesmo
-  // valor do card do "Em Alta", de propósito, pra esses dois se destacarem
-  // como os cards "hero" da home.
   static const double _radius = 32.0;
 
   const DestaqueCardWidget({super.key, required this.destaque});

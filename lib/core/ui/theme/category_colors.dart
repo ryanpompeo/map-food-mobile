@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
 
-
-/// Cor de marca de cada categoria — pinta o círculo atrás da arte (a 12% de
-/// opacidade) e o rótulo quando o filtro está ativo. As chaves espelham a
-/// coluna `nome` da tabela `categoria`, igual a `utils/category_images.dart`.
-///
-/// Sem entrada aqui a categoria cai no cinza padrão. Isso não quebra nada, mas
-/// deixa o filtro sem identidade — foi o que acontecia com as seis categorias
-/// não-comida.
 const Map<String, Color> categoriaCores = {
-  // id 1..12 — comida
   'Lanches e Hot Dogs': Color(0xFFF97316),
   'Espetinhos': Color(0xFFDC2626),
   'Pizzas': Color(0xFFC2410C),
@@ -23,11 +14,7 @@ const Map<String, Color> categoriaCores = {
   'Bebidas': Color(0xFF2563EB),
   'Food Truck': Color(0xFF475569),
 
-  // id 13..18 — não-comida
   'Produtos Artesanais': Color(0xFFB45309),
-  // Ver a nota sobre os ids 14/16 duplicados em utils/category_images.dart.
-  // As duas recebem a mesma cor de propósito: enquanto forem a mesma categoria
-  // na prática, ficar com cores diferentes só confundiria quem filtra.
   'Vestuario e Acessórios': Color(0xFF0891B2),
   'Vestuário': Color(0xFF0891B2),
   'Pet Shop': Color(0xFF0D9488),

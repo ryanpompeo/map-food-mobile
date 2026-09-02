@@ -9,23 +9,10 @@ import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/review_card.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/section_header.dart';
 
-/// As avaliações públicas da loja: cabeçalho, filtro por nota e a lista.
-///
-/// O estado de "recolhida" e o filtro por estrelas moravam na página, junto com
-/// o carregamento da capa, da galeria e do resumo da loja. Trazidos para cá,
-/// tocar num chip de filtro deixa de reconstruir a tela inteira — e a página
-/// volta a ser só composição.
 class StoreReviewsSection extends StatefulWidget {
   final List<AvaliacaoModel> avaliacoes;
   final bool carregando;
 
-  /// Quantas avaliações a loja tem, segundo o dado que a página já tinha em
-  /// mãos antes de a lista chegar.
-  ///
-  /// O cabeçalho dizia "Carregando..." durante a busca — uma informação que o
-  /// app já possuía desde a listagem. Mostrar "12 avaliações" de cara, e só
-  /// então preencher a lista, é a diferença entre uma tela que está trabalhando
-  /// e uma que parece vazia.
   final int totalConhecido;
 
   final String? erro;
@@ -45,13 +32,8 @@ class StoreReviewsSection extends StatefulWidget {
 }
 
 class _StoreReviewsSectionState extends State<StoreReviewsSection> {
-  /// Teto de escala da faixa de filtros. Tira horizontal dentro da lista de
-  /// avaliações: crescer sem limite empurraria as próprias avaliações para
-  /// fora da tela, que é o conteúdo que o filtro existe para organizar.
   static const double _tetoEscalaFiltros = 1.5;
 
-  /// `null` significa "todas". A API sempre devolve a lista completa; o filtro
-  /// é só client-side.
   int? _filtroEstrelas;
 
   bool _expandida = true;
@@ -62,7 +44,6 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
 
   @override
   Widget build(BuildContext context) {
-    // Durante a carga vale o total que a página já conhecia; depois, a lista.
     final total = widget.carregando ? widget.totalConhecido : widget.avaliacoes.length;
     final temLista = !widget.carregando && widget.erro == null && total > 0;
 
@@ -71,8 +52,6 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
       children: [
         SectionHeader(
           title: 'Avaliações',
-          // "Carregando..." só quando de fato não se sabe o número — nas telas
-          // que chegam aqui sem a agregação do backend.
           subtitle: widget.carregando && total == 0
               ? 'Carregando...'
               : '$total ${total == 1 ? 'avaliação' : 'avaliações'}',
@@ -151,9 +130,6 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
   }
 
   Widget _buildFiltro(BuildContext context) {
-    // O teto entra nos dois lugares de propósito: na altura da faixa e na
-    // escala do texto dentro dela. Limitar só um dos dois é o que produz ou
-    // texto cortado (faixa parada, texto crescendo) ou faixa com sobra.
     return MaxTextScale(
       max: _tetoEscalaFiltros,
       child: SizedBox(

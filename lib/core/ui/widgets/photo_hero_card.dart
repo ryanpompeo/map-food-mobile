@@ -3,13 +3,6 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_network_image.dart';
 
-/// Card "imersivo": foto preenche o espaço inteiro, com um gradiente escuro
-/// em três estágios por baixo e conteúdo (badges, texto) sobreposto —
-/// extraído do `DestaqueCardWidget` original (carrossel "Perto de você") pra
-/// virar o padrão visual reaproveitável do app: qualquer superfície que
-/// precise de tratamento "hero" (capa da loja no dashboard, header da tela
-/// de detalhe) usa este widget por baixo, em vez de reimplementar o
-/// Stack+gradiente+ClipRRect toda vez.
 class PhotoHeroCard extends StatelessWidget {
   final String? imageUrl;
   final double radius;
@@ -18,10 +11,6 @@ class PhotoHeroCard extends StatelessWidget {
   final Widget? topRight;
   final Widget? bottomContent;
 
-  /// Largura **lógica** com que o card aparece na tela — normalmente a largura
-  /// do viewport, já que este é um card de tela cheia. Era `cacheWidth`, em
-  /// pixels físicos, e cada chamador precisava lembrar de multiplicar pelo
-  /// `devicePixelRatio`; a conta agora mora no [AppNetworkImage].
   final double? displayWidth;
 
   const PhotoHeroCard({
@@ -42,16 +31,9 @@ class PhotoHeroCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // RepaintBoundary própria pra a foto não repintar por causa de
-          // interações no conteúdo sobreposto (favorito, scroll do carrossel
-          // ao lado etc.).
           RepaintBoundary(
             child: Container(
-              // Um tom abaixo do cardSurface, senão o placeholder fica
-              // invisível contra o próprio fundo antes da imagem carregar.
               color: context.mapColors.mainBackground,
-              // Sem `semanticLabel`: decorativa. O conteúdo textual sobreposto
-              // já descreve o card pra leitor de tela.
               child: AppNetworkImage(
                 path: imageUrl,
                 displayWidth: displayWidth,
@@ -59,8 +41,6 @@ class PhotoHeroCard extends StatelessWidget {
               ),
             ),
           ),
-          // Gradiente em três estágios — fecha em preto quase opaco no
-          // último stop, senão fotos claras/quentes vazam sob o texto.
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -86,9 +66,6 @@ class PhotoHeroCard extends StatelessWidget {
   }
 }
 
-/// Badge translúcido flutuando sobre a foto de um [PhotoHeroCard] (nota,
-/// status...) — vidro fosco escuro, mesmo estilo do `FavoriteButtonWidget`
-/// em modo `frosted`.
 class FrostedBadge extends StatelessWidget {
   final Widget child;
   const FrostedBadge({super.key, required this.child});
