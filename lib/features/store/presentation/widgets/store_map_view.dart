@@ -1,20 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:map_food/core/ui/theme/map_tiles.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
-import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/features/store/data/map_cluster.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
-import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/features/store/presentation/controllers/store_map_controller.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 import 'package:map_food/features/store/presentation/widgets/map_controls.dart';
+import 'package:map_food/features/store/presentation/widgets/store_markers_layer.dart';
 
 class StoreMapView extends StatefulWidget {
   final List<StoreDto> stores;
@@ -162,46 +161,19 @@ class _StoreMapViewState extends State<StoreMapView> {
 
   void _alternarTravaDeRotacao() => _ctrl.alternarTravaDeRotacao();
 
-  Widget _buildStoreMarker(StoreDto store, {required bool isFocused}) {
-    final imagemUrl = resolveImagemUrl(store.capaUrl);
-    final tamanho = isFocused ? 52.0 : 42.0;
-
-    return RepaintBoundary(
-      child: Container(
-        width: tamanho,
-        height: tamanho,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: Colors.white, width: isFocused ? 3.5 : 2.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: isFocused ? 0.3 : 0.18),
-              blurRadius: isFocused ? 10.0 : 6.0,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: ClipOval(
-          child: AppNetworkImage(
-            path: imagemUrl,
-            displayWidth: tamanho,
-            fallback: _buildStoreMarkerFallback(isFocused),
-          ),
-        ),
-      ),
-    );
+  void _abrirLoja(StoreDto store) {
+    final onTap = widget.onStoreTap;
+    if (onTap != null) {
+      onTap(store);
+      return;
+    }
+    abrirDetalheDaLoja(context, store);
   }
 
-  Widget _buildStoreMarkerFallback(bool isFocused) {
-    return Container(
-      color: isFocused ? ColorsPalette.redComponents : ColorsPalette.redComponents.withValues(alpha: 0.12),
-      child: Icon(
-        AppIcons.storefront,
-        color: isFocused ? Colors.white : ColorsPalette.redComponents,
-        size: isFocused ? 24.0 : 18.0,
-      ),
-    );
+  void _aproximarNoGrupo(MapCluster cluster) {
+    final destino = (_mapController.camera.zoom + 2.0)
+        .clamp(StoreMapController.zoomMinimo, StoreMapController.zoomMaximo);
+    _mapController.move(cluster.centro, destino);
   }
 
   Widget _buildUserMarker() {
@@ -262,7 +234,7 @@ class _StoreMapViewState extends State<StoreMapView> {
 
   @override
   Widget build(BuildContext context) {
-    final comLocalizacao = widget.stores.where((s) => s.temLocalizacao).toList();
+    final semLocalizacao = !widget.stores.any((s) => s.temLocalizacao);
     final (center, zoom) = _centroEZoomIniciais();
 
     return Stack(
@@ -292,30 +264,11 @@ class _StoreMapViewState extends State<StoreMapView> {
                   ),
                 ],
               ),
-            MarkerLayer(
-              markers: comLocalizacao.map((store) {
-                final isFocused = widget.focusedStore?.id == store.id;
-                return Marker(
-                  point: LatLng(store.latitude!, store.longitude!),
-                  width: isFocused ? 60.0 : 48.0,
-                  height: isFocused ? 60.0 : 48.0,
-                  child: SemanticTapArea(
-                    label: store.nome,
-                    hint: 'Abre os detalhes do comércio',
-                    selected: isFocused ? true : null,
-                    pressFeedback: false,
-                    onTap: () {
-                      final onTap = widget.onStoreTap;
-                      if (onTap != null) {
-                        onTap(store);
-                        return;
-                      }
-                      abrirDetalheDaLoja(context, store);
-                    },
-                    child: _buildStoreMarker(store, isFocused: isFocused),
-                  ),
-                );
-              }).toList(),
+            StoreMarkersLayer(
+              stores: widget.stores,
+              focusedStore: widget.focusedStore,
+              onStoreTap: _abrirLoja,
+              onClusterTap: _aproximarNoGrupo,
             ),
             if (widget.userPosition != null)
               ValueListenableBuilder<LatLng?>(
@@ -338,7 +291,7 @@ class _StoreMapViewState extends State<StoreMapView> {
           ],
         ),
         if (widget.showFloatingControls) _buildFloatingControls(),
-        if (comLocalizacao.isEmpty && widget.showEmptyBanner)
+        if (semLocalizacao && widget.showEmptyBanner)
           Positioned(
             top: widget.topBannerOffset,
             left: 16.0,
