@@ -100,11 +100,12 @@ class StoreService {
     return update(atual.id, StoreCreateRequest.fromStore(atual, statusLoja: status));
   }
 
-  Future<StoreDto> atualizarPosicao(StoreDto atual, double latitude, double longitude) {
-    return update(
-      atual.id,
-      StoreCreateRequest.fromStore(atual, latitude: latitude, longitude: longitude),
+  Future<StoreDto> atualizarPosicao(StoreDto atual, double latitude, double longitude) async {
+    await _client.patch<dynamic>(
+      '${ApiConstants.lojas}/${atual.id}/posicao',
+      data: {'latitude': latitude, 'longitude': longitude},
     );
+    return atual.comPosicao(latitude, longitude);
   }
 
   Future<void> excluirLoja(int id) async {

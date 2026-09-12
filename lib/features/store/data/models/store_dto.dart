@@ -43,6 +43,27 @@ class StoreDto {
 
   bool get temLocalizacao => latitude != null && longitude != null;
 
+  StoreDto comPosicao(double latitude, double longitude) => StoreDto(
+        id: id,
+        nome: nome,
+        descricao: descricao,
+        statusLoja: statusLoja,
+        dataCadastro: dataCadastro,
+        categoria: categoria,
+        categoriaIds: categoriaIds,
+        categoriaNomes: categoriaNomes,
+        imagemUrl: imagemUrl,
+        galeria: galeria,
+        avaliacao: avaliacao,
+        totalAvaliacoes: totalAvaliacoes,
+        endereco: endereco,
+        cidade: cidade,
+        estado: estado,
+        cep: cep,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
   String? get enderecoCompleto {
     final partes = [
       if (endereco != null && endereco!.isNotEmpty) endereco,

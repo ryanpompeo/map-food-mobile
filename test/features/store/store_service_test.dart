@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/interceptors/error_interceptor.dart';
+import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
 class _AdapterFalso implements HttpClientAdapter {
@@ -36,7 +37,68 @@ StoreService _serviceQueResponde({int statusCode = 200, required String body}) {
   return StoreService(client: ApiClient(dio: dio));
 }
 
+class _AdapterEspiao implements HttpClientAdapter {
+  final List<RequestOptions> chamadas = [];
+
+  @override
+  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream,
+      Future<void>? cancelFuture) async {
+    chamadas.add(options);
+    return ResponseBody.fromString('', 204, headers: {
+      Headers.contentTypeHeader: [Headers.jsonContentType],
+    });
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+StoreDto _lojaDeTeste() => const StoreDto(
+      id: 7,
+      nome: 'Carrinho do Zé',
+      descricao: 'Cachorro-quente',
+      statusLoja: 'ATIVA',
+      categoria: 'Lanches',
+      categoriaIds: [3],
+      categoriaNomes: ['Lanches'],
+      latitude: -22.9068,
+      longitude: -43.1729,
+    );
+
 void main() {
+  group('atualizarPosicao', () {
+    late _AdapterEspiao espiao;
+    late StoreService service;
+
+    setUp(() {
+      espiao = _AdapterEspiao();
+      final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
+        ..httpClientAdapter = espiao
+        ..interceptors.add(ErrorInterceptor());
+      service = StoreService(client: ApiClient(dio: dio));
+    });
+
+    test('sobe só as coordenadas, sem reescrever o cadastro da loja', () async {
+      await service.atualizarPosicao(_lojaDeTeste(), -22.92, -43.19);
+
+      expect(espiao.chamadas, hasLength(1));
+      final chamada = espiao.chamadas.single;
+      expect(chamada.method, 'PATCH');
+      expect(chamada.path, '/lojas/7/posicao');
+      expect(chamada.data, {'latitude': -22.92, 'longitude': -43.19});
+    });
+
+    test('devolve a loja reposicionada sem uma segunda ida à API', () async {
+      final atualizada = await service.atualizarPosicao(_lojaDeTeste(), -22.92, -43.19);
+
+      expect(espiao.chamadas, hasLength(1));
+      expect(atualizada.latitude, -22.92);
+      expect(atualizada.longitude, -43.19);
+      expect(atualizada.nome, 'Carrinho do Zé');
+      expect(atualizada.categoriaIds, [3]);
+    });
+  });
+
   group('getActive', () {
     test('converte o payload em StoreDto', () async {
       final service = _serviceQueResponde(body: '''
