@@ -63,7 +63,7 @@ class FavoritesManager extends ChangeNotifier with WidgetsBindingObserver {
     } on AppException catch (e) {
       _errorMessage = e.message;
     } catch (_) {
-      _errorMessage = 'Não foi possível carregar seus favoritos.';
+      _errorMessage = 'Não foi possível carregar seus favoritos';
     } finally {
       _loading = false;
       notifyListeners();

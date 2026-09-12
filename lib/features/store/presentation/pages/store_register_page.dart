@@ -97,7 +97,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     if (_controller.nasceuSemLocalizacao) {
       AppToast.success(
         context,
-        'Loja cadastrada como Fechada — abra "Em Ronda" pra ativar com sua localização.',
+        'Loja cadastrada como Fechada — abra "Em Ronda" pra ativar',
       );
     }
 
@@ -242,7 +242,7 @@ class _EtapaIdentidade extends StatelessWidget {
     return _MolduraEtapa(
       formKey: formKey,
       titulo: 'Sua loja',
-      apoio: 'É o que o cliente vê primeiro no mapa: uma foto e o nome do seu comércio.',
+      apoio: 'É o que o cliente vê primeiro no mapa: uma foto e o nome do comércio',
       filhos: [
         StorePhotosEditor(
           editando: true,
@@ -291,8 +291,8 @@ class _EtapaLocalizacao extends StatelessWidget {
     return _MolduraEtapa(
       formKey: formKey,
       titulo: 'Onde você fica',
-      apoio: 'Opcional. Sua loja entra no mapa pela sua localização em tempo real — '
-          'preencha só se quiser indicar uma área de referência.',
+      apoio: 'Opcional — sua loja entra no mapa pela localização em tempo real, '
+          'preencha só para indicar uma área de referência',
       filhos: [
         StoreAddressFields(
           cep: controller.cep,
@@ -324,7 +324,7 @@ class _EtapaExposicao extends StatelessWidget {
     return _MolduraEtapa(
       formKey: formKey,
       titulo: 'Como você aparece',
-      apoio: 'As categorias são o filtro que o cliente usa no mapa para chegar até você.',
+      apoio: 'As categorias são o filtro que o cliente usa para chegar até você',
       filhos: [
         CategoryPicker(
           categorias: controller.categorias,
@@ -335,7 +335,7 @@ class _EtapaExposicao extends StatelessWidget {
           maxSelecao: StoreRegisterController.maxCategorias,
           onLimiteExcedido: () => AppToast.error(
             context,
-            'Escolha no máximo ${StoreRegisterController.maxCategorias} categorias.',
+            'Escolha no máximo ${StoreRegisterController.maxCategorias} categorias',
           ),
           onToggle: controller.alternarCategoria,
         ),
@@ -347,9 +347,8 @@ class _EtapaExposicao extends StatelessWidget {
             const SizedBox(width: Spacing.md),
             Expanded(
               child: Text(
-                'Depois do cadastro, você abre a loja na aba "Ronda". É quando sua '
-                'posição passa a aparecer no mapa dos clientes — e acompanha você '
-                'enquanto estiver aberta.',
+                'Depois do cadastro, abra a loja na aba "Ronda" — é aí que sua '
+                'posição aparece no mapa e acompanha você enquanto estiver aberta',
                 style: AppText.secondary(context).copyWith(height: 1.45),
               ),
             ),

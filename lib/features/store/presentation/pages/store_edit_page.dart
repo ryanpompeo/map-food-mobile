@@ -123,7 +123,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
       if (mounted) setState(() => _erroCategorias = e.message);
     } catch (_) {
       if (mounted) {
-        setState(() => _erroCategorias = 'Não foi possível carregar as categorias.');
+        setState(() => _erroCategorias = 'Não foi possível carregar as categorias');
       }
     } finally {
       if (mounted) setState(() => _carregandoCategorias = false);
@@ -142,7 +142,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
       _houveMudanca = true;
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Não foi possível remover a foto. Tente novamente.');
+        AppToast.error(context, 'Não foi possível remover a foto');
       }
     } finally {
       if (mounted) setState(() => _removendoCapa = false);
@@ -160,7 +160,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
       _houveMudanca = true;
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Não foi possível remover a foto. Tente novamente.');
+        AppToast.error(context, 'Não foi possível remover a foto');
       }
     } finally {
       if (mounted) setState(() => _removendoGaleriaUrl = null);
@@ -190,7 +190,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
 
     if (!(_formKey.currentState?.validate() ?? true)) return;
     if (_categoriasSelecionadas.isEmpty) {
-      setState(() => _erro = 'Selecione pelo menos uma categoria.');
+      setState(() => _erro = 'Selecione pelo menos uma categoria');
       return;
     }
 
@@ -234,7 +234,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
       AppToast.success(context, 'Informações atualizadas com sucesso!');
       Navigator.pop(context, atualizada);
     } catch (_) {
-      if (mounted) setState(() => _erro = 'Erro ao salvar. Tente novamente.');
+      if (mounted) setState(() => _erro = 'Erro ao salvar, tente de novo');
     } finally {
       if (mounted) setState(() => _salvando = false);
     }
@@ -331,8 +331,8 @@ class _StoreEditPageState extends State<StoreEditPage> {
               Text('Endereço', style: AppText.h2(context)),
               const SizedBox(height: 2),
               Text(
-                'Opcional. Sua loja entra no mapa pela localização em tempo real ao '
-                'ficar "Aberta" — o endereço serve só como área de referência.',
+                'Opcional — sua loja entra no mapa pela localização em tempo real, '
+                'o endereço serve só como área de referência',
                 style: AppText.secondary(context).copyWith(height: 1.4),
               ),
               const SizedBox(height: Spacing.base),
@@ -348,7 +348,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
               Text('Categorias', style: AppText.h2(context)),
               const SizedBox(height: 2),
               Text(
-                'Escolha até $_maxCategorias — é por elas que o cliente filtra no mapa.',
+                'Escolha até $_maxCategorias — é por elas que o cliente filtra no mapa',
                 style: AppText.secondary(context).copyWith(height: 1.4),
               ),
               const SizedBox(height: Spacing.base),
@@ -360,7 +360,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
                 onRetry: _carregarCategorias,
                 maxSelecao: _maxCategorias,
                 onLimiteExcedido: () =>
-                    AppToast.error(context, 'Escolha no máximo $_maxCategorias categorias.'),
+                    AppToast.error(context, 'Escolha no máximo $_maxCategorias categorias'),
                 onToggle: (cat) {
                   setState(() {
                     if (_categoriasSelecionadas.contains(cat.id)) {

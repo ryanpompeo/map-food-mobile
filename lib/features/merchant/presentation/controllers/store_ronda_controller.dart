@@ -136,8 +136,8 @@ class StoreRondaController extends ChangeNotifier {
       onStoreUpdated?.call(atualizada);
     } catch (_) {
       if (seq != _posicaoSeq || _descartado) return;
-      _avisoPosicao = 'Sua posição não está subindo. Verifique a conexão — no mapa dos '
-          'clientes você continua no último ponto enviado.';
+      _avisoPosicao = 'Sua posição não está subindo — verifique a conexão, no mapa '
+          'dos clientes você segue no último ponto enviado';
       _notificar();
     }
   }
@@ -158,8 +158,8 @@ class StoreRondaController extends ChangeNotifier {
       if (abrir) {
         final posicao = await _obterPosicaoAtual();
         if (posicao == null) {
-          return 'Não foi possível obter sua localização. Ative o GPS e permita '
-              'o acesso pra abrir a loja.';
+          return 'Sem localização — ative o GPS e permita o acesso '
+              'pra abrir a loja';
         }
         atualizada = await _storeService.update(
           _store.id,
@@ -200,7 +200,7 @@ class StoreRondaController extends ChangeNotifier {
       }
       return null;
     } catch (_) {
-      return 'Erro ao alterar status da loja.';
+      return 'Erro ao alterar status da loja';
     } finally {
       _alternando = false;
       _notificar();

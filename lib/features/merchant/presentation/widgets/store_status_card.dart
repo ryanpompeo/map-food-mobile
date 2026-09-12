@@ -72,8 +72,8 @@ class StoreStatusCard extends StatelessWidget {
           const SizedBox(height: Spacing.xs),
           Text(
             aberta
-                ? 'Os clientes estão vendo você no mapa agora.'
-                : 'Você não aparece no mapa enquanto estiver fechada.',
+                ? 'Os clientes estão vendo você no mapa agora'
+                : 'Você não aparece no mapa enquanto estiver fechada',
             style: AppText.secondary(context).copyWith(color: apoio, height: 1.4),
           ),
 
@@ -192,7 +192,7 @@ class _RondaInfo extends StatelessWidget {
           const SizedBox(width: Spacing.sm),
           Expanded(
             child: Text(
-              'GPS desligado — sua loja fica parada no último ponto conhecido.',
+              'GPS desligado — sua loja fica parada no último ponto conhecido',
               style: AppText.caption(context).copyWith(color: corApoio, height: 1.4),
             ),
           ),

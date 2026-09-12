@@ -575,7 +575,7 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
           return EmptyState(
             icon: AppIcons.heart,
             title: 'Nenhum favorito ainda',
-            description: 'Toque no coração de um comércio para salvá-lo aqui.',
+            description: 'Toque no coração de um comércio para salvá-lo aqui',
             actionLabel: 'Explorar comércios',
             onAction: widget.onExplorarTap,
             dense: true,
@@ -643,7 +643,7 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
       }
     }
     if (store == null) {
-      AppToast.error(context, "Não foi possível abrir esta loja.");
+      AppToast.error(context, "Não foi possível abrir esta loja");
       return;
     }
     precacheCapaDaLoja(context, store);

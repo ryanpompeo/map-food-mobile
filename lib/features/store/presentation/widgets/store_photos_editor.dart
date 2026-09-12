@@ -64,7 +64,7 @@ class StorePhotosEditor extends StatelessWidget {
       children: [
         _Cabecalho(
           titulo: 'Foto de destaque',
-          apoio: 'É a primeira imagem que o cliente vê da sua loja.',
+          apoio: 'É a primeira imagem que o cliente vê da sua loja',
           selo: capaObrigatoria ? 'Obrigatório' : null,
         ),
         const SizedBox(height: Spacing.md),
@@ -80,7 +80,7 @@ class StorePhotosEditor extends StatelessWidget {
         const SizedBox(height: Spacing.xl),
         _Cabecalho(
           titulo: 'Galeria',
-          apoio: 'Mostre o cardápio, o ponto e o que você vende.',
+          apoio: 'Mostre o cardápio, o ponto e o que você vende',
           contador: '$_totalGaleria/$maxFotos',
         ),
         const SizedBox(height: Spacing.md),
@@ -90,7 +90,7 @@ class StorePhotosEditor extends StatelessWidget {
             icon: AppIcons.imagesSquare,
             title: 'Sem fotos na galeria',
             description: 'Lojas com fotos recebem mais visitas — toque em '
-                '"Editar" para adicionar.',
+                '"Editar" para adicionar',
           )
         else
           _TiraGaleria(

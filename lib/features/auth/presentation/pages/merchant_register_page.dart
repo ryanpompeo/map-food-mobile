@@ -144,12 +144,12 @@ class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
       ));
     } on AppException catch (e) {
       _mostrarErro(
-        e.statusCode == 409 ? 'E-mail, CPF ou CNPJ já cadastrado.' : e.message,
+        e.statusCode == 409 ? 'E-mail, CPF ou CNPJ já cadastrado' : e.message,
       );
     } catch (e, st) {
       debugPrint('Erro no cadastro de comerciante: $e');
       debugPrint('$st');
-      _mostrarErro('Erro inesperado. Tente novamente.');
+      _mostrarErro('Erro inesperado, tente de novo');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

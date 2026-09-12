@@ -9,20 +9,20 @@ class HowItWorksPage extends StatelessWidget {
     (
       icone: AppIcons.mapPin,
       titulo: 'Explore o mapa',
-      descricao: 'Os comércios abertos aparecem no mapa em tempo real, com a '
-          'posição de agora — não a de ontem.',
+      descricao: 'Os comércios abertos aparecem em tempo real, na posição '
+          'de agora — não a de ontem',
     ),
     (
       icone: AppIcons.slidersHorizontal,
       titulo: 'Escolha sua categoria',
-      descricao: 'Filtre por categoria e distância para encontrar exatamente o '
-          'que deseja: de espetinhos e lanches até doces e açaí.',
+      descricao: 'Filtre por categoria e distância: de espetinhos e lanches '
+          'até doces e açaí',
     ),
     (
       icone: AppIcons.navigationArrow,
       titulo: 'Siga a rota',
       descricao: 'Toque em "Visualizar no mapa" para traçar a rota até o '
-          'comércio escolhido e aproveite.',
+          'comércio escolhido',
     ),
   ];
 
@@ -30,8 +30,8 @@ class HowItWorksPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const HowItWorksScaffold(
       titulo: 'Como funciona',
-      subtitulo: 'Descubra os melhores comércios e vendedores de rua da sua '
-          'cidade em três passos.',
+      subtitulo: 'Descubra os melhores vendedores de rua da sua cidade '
+          'em três passos',
       passos: _passos,
       ctaLabel: 'Começar a explorar',
     );

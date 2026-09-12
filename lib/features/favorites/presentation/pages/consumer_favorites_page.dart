@@ -233,7 +233,7 @@ class _ConsumerFavoritesPageState extends State<ConsumerFavoritesPage> {
                       if (!context.mounted) return;
                       AppToast.error(
                         context,
-                        "Não foi possível remover dos favoritos. Tente novamente.",
+                        "Não foi possível remover dos favoritos",
                       );
                     }
                   },
@@ -254,7 +254,7 @@ class _EmptyFavoritesWidget extends StatelessWidget {
       child: EmptyState(
         icon: AppIcons.heart,
         title: "Nenhum favorito ainda",
-        description: "Os comércios que você favoritar aparecerão aqui.",
+        description: "Os comércios que você favoritar aparecem aqui",
       ),
     );
   }

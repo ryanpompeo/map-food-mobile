@@ -70,7 +70,7 @@ void main() {
         });
         expect(e.message, isNot(contains('2026')));
         expect(e.message, isNot('Bad Request'));
-        expect(e.message, 'Dados inválidos.');
+        expect(e.message, 'Dados inválidos');
       },
     );
 

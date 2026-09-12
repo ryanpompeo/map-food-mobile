@@ -44,7 +44,7 @@ class ApiClient {
   T _parseResponse<T>(dynamic data) {
     if (data == null || (data is String && data.trim().isEmpty)) {
       if (null is T) return null as T;
-      throw const ParseException('O servidor devolveu uma resposta vazia.');
+      throw const ParseException('O servidor devolveu uma resposta vazia');
     }
     if (data is T) return data;
     if (data is String) {
@@ -53,16 +53,16 @@ class ApiClient {
         decoded = jsonDecode(data);
       } on FormatException {
         throw const ParseException(
-          'O servidor devolveu um conteúdo que não é JSON.',
+          'O servidor devolveu um conteúdo que não é JSON',
         );
       }
       if (decoded is T) return decoded;
       throw ParseException(
-        'Formato inesperado: esperava $T, recebeu ${decoded.runtimeType}.',
+        'Formato inesperado: esperava $T, recebeu ${decoded.runtimeType}',
       );
     }
     throw ParseException(
-      'Formato inesperado: esperava $T, recebeu ${data.runtimeType}.',
+      'Formato inesperado: esperava $T, recebeu ${data.runtimeType}',
     );
   }
 

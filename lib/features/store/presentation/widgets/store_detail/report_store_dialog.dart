@@ -73,7 +73,7 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
       if (consumidorId == null) {
         if (!mounted) return;
         setState(() => _isSubmitting = false);
-        UIUtils.showErrorDialog(context, 'Sessão expirada. Faça login novamente.');
+        UIUtils.showErrorDialog(context, 'Sessão expirada, entre de novo');
         return;
       }
       await _denunciaService.create(
@@ -84,11 +84,11 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
       );
       if (!mounted) return;
       Navigator.pop(context);
-      AppToast.success(context, 'Denúncia enviada.');
+      AppToast.success(context, 'Denúncia enviada');
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
-      UIUtils.showErrorDialog(context, 'Erro ao enviar denúncia. Tente novamente.');
+      UIUtils.showErrorDialog(context, 'Erro ao enviar denúncia, tente de novo');
     }
   }
 
@@ -128,7 +128,7 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Seu relatório será analisado pela nossa equipe. Obrigado por manter a plataforma segura.',
+                  'Nossa equipe analisa seu relato — obrigado por manter a plataforma segura',
                   style: AppText.secondary(context),
                 ),
                 const SizedBox(height: Spacing.lg),
@@ -179,7 +179,7 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
                 AppFormField(
                   controller: _descricaoController,
                   label: 'Descrição (opcional)',
-                  hint: 'Conte mais detalhes sobre o ocorrido...',
+                  hint: 'Conte mais detalhes sobre o ocorrido',
                   maxLines: 3,
                   maxLength: 2000,
                   showIcon: false,

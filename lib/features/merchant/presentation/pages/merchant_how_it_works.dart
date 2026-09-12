@@ -10,20 +10,20 @@ class MerchantHowItWorksPage extends StatelessWidget {
     (
       icone: AppIcons.storefront,
       titulo: 'Abra sua loja',
-      descricao: 'O botão "Abrir loja" é o que coloca você no mapa. Fechada, '
-          'você não aparece para ninguém.',
+      descricao: 'O botão "Abrir loja" coloca você no mapa — fechada, '
+          'você não aparece para ninguém',
     ),
     (
       icone: AppIcons.navigationArrow,
       titulo: 'Fique em ronda',
-      descricao: 'Com a loja aberta, sua posição acompanha o seu deslocamento '
-          'automaticamente — quem está por perto vê você se aproximando.',
+      descricao: 'Com a loja aberta, sua posição segue o seu deslocamento — '
+          'quem está por perto vê você se aproximando',
     ),
     (
       icone: AppIcons.chatCircle,
       titulo: 'Acompanhe as avaliações',
-      descricao: 'As notas e comentários dos clientes ficam no perfil da loja. '
-          'Reputação alta é o que traz o próximo cliente.',
+      descricao: 'Notas e comentários ficam no perfil da loja — reputação alta '
+          'traz o próximo cliente',
     ),
   ];
 
@@ -32,7 +32,7 @@ class MerchantHowItWorksPage extends StatelessWidget {
     return const HowItWorksScaffold(
       titulo: 'Como funciona',
       subtitulo: 'Três passos para o seu comércio ser encontrado por quem está '
-          'perto agora.',
+          'perto agora',
       passos: _passos,
       ctaLabel: 'Entendi, vamos lá',
       ctaVariant: AppButtonVariant.inverse,

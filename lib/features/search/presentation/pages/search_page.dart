@@ -165,7 +165,7 @@ class _SearchPageState extends State<SearchPage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Não foi possível carregar as lojas. Tente novamente.';
+        _errorMessage = 'Não foi possível carregar as lojas';
       });
     }
   }

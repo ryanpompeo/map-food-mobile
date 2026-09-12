@@ -16,7 +16,7 @@ mixin AsyncLoadMixin<T, W extends StatefulWidget> on State<W> {
   AsyncState<T> asyncState = const AsyncState();
 
   String get genericErrorMessage =>
-      'Não foi possível carregar os dados. Tente novamente.';
+      'Não foi possível carregar os dados, tente de novo';
 
   Future<void> load(
     Future<T> Function() fetch, {

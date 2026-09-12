@@ -106,7 +106,7 @@ class _ContatoPageState extends State<ContatoPage> {
       _assuntoController.clear();
       _mensagemController.clear();
       _telefoneController.clear();
-      AppToast.success(context, 'Mensagem enviada! Responderemos em breve.');
+      AppToast.success(context, 'Mensagem enviada! Responderemos em breve');
       Navigator.pop(context);
     } on AppException catch (e) {
       if (!mounted) return;
@@ -118,7 +118,7 @@ class _ContatoPageState extends State<ContatoPage> {
       if (!mounted) return;
       setState(() {
         _enviando = false;
-        _errorMessage = 'Não foi possível enviar sua mensagem. Tente novamente.';
+        _errorMessage = 'Não foi possível enviar sua mensagem';
       });
     }
   }
@@ -160,8 +160,8 @@ class _ContatoPageState extends State<ContatoPage> {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Escreva para a equipe do MapFood. Respondemos no e-mail que '
-                  'você informar aqui.',
+                  'Escreva para a equipe do MapFood — respondemos no e-mail que '
+                  'você informar aqui',
                   style: AppText.body(context).copyWith(
                     color: colors.textSecondary,
                     height: 1.5,
@@ -236,7 +236,7 @@ class _ContatoPageState extends State<ContatoPage> {
                   controller: _mensagemController,
                   focusNode: _mensagemFocus,
                   label: 'Mensagem',
-                  hint: 'Escreva sua mensagem aqui...',
+                  hint: 'Escreva sua mensagem aqui',
                   icon: AppIcons.chatCircle,
                   maxLines: 6,
                   maxLength: 5000,

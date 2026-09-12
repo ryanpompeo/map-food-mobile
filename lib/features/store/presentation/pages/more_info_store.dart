@@ -105,7 +105,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _ratingsError = 'Não foi possível carregar as avaliações.';
+        _ratingsError = 'Não foi possível carregar as avaliações';
         _isLoadingRatings = false;
       });
     }
@@ -167,7 +167,7 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     Text(
                       store.descricao?.trim().isNotEmpty == true
                           ? store.descricao!
-                          : 'O vendedor ainda não adicionou uma descrição para este comércio.',
+                          : 'O vendedor ainda não escreveu uma descrição',
                       style: AppText.body(
                         context,
                       ).copyWith(color: colors.textSecondary, height: 1.5),

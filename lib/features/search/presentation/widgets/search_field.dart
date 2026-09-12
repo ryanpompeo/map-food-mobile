@@ -72,7 +72,7 @@ class _SearchFieldWidgetState extends State<SearchFieldWidget> {
           decoration: InputDecoration(
             isDense: true,
             filled: false,
-            hintText: "Buscar por comércios...",
+            hintText: "Buscar por comércios",
             hintStyle: AppText.body(
               context,
             ).copyWith(color: context.mapColors.textSecondary),

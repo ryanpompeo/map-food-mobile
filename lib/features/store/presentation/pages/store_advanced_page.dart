@@ -40,9 +40,8 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
       context,
       icone: AppIcons.eyeSlash,
       titulo: 'Inativar loja',
-      mensagem: '"${_store.nome}" sai do mapa e deixa de aparecer nas buscas até você '
-          'reativá-la. Nada é apagado: avaliações, fotos e cadastro continuam '
-          'como estão.',
+      mensagem: '"${_store.nome}" sai do mapa e das buscas até você reativá-la — '
+          'nada é apagado: avaliações, fotos e cadastro continuam como estão',
       labelConfirmar: 'Inativar',
     );
     if (!confirmou || !mounted) return;
@@ -53,12 +52,12 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
       if (!mounted) return;
       setState(() => _store = atualizada);
       widget.onStoreUpdated?.call(atualizada);
-      AppToast.success(context, 'Loja inativada.');
+      AppToast.success(context, 'Loja inativada');
     } on AppException catch (e) {
       if (mounted) AppToast.error(context, e.message);
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Não foi possível inativar a loja. Tente novamente.');
+        AppToast.error(context, 'Não foi possível inativar a loja');
       }
     } finally {
       if (mounted) setState(() => _inativando = false);
@@ -75,13 +74,13 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
     try {
       await _storeService.excluirLoja(_store.id);
       if (!mounted) return;
-      AppToast.success(context, 'Loja excluída.');
+      AppToast.success(context, 'Loja excluída');
       Navigator.pop(context, true);
     } on AppException catch (e) {
       if (mounted) AppToast.error(context, e.message);
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Não foi possível excluir a loja. Tente novamente.');
+        AppToast.error(context, 'Não foi possível excluir a loja');
       }
     } finally {
       if (mounted) setState(() => _excluindo = false);
@@ -129,9 +128,8 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
           if (_suspensa)
             _Aviso(
               icone: AppIcons.warningCircle,
-              texto: 'Esta loja está suspensa pela moderação. Ela não aparece no mapa, '
-                  'não pode ser aberta nem excluída por aqui — só a equipe do MapFood '
-                  'pode reverter esse status.',
+              texto: 'Loja suspensa pela moderação — não aparece no mapa e não pode '
+                  'ser aberta nem excluída por aqui, só a equipe do MapFood reverte',
             )
           else if (_inativando)
             const _CarregandoLinha()
@@ -145,9 +143,8 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
           else
             _Aviso(
               icone: AppIcons.eyeSlash,
-              texto: 'Esta loja está inativa: ela não aparece no mapa nem nas buscas. '
-                  'Para voltar ao mapa, use "Abrir loja" no painel — precisamos da sua '
-                  'localização na hora para colocá-la de volta.',
+              texto: 'Loja inativa: não aparece no mapa nem nas buscas — use "Abrir '
+                  'loja" no painel, precisamos da sua localização na hora',
             ),
 
           const SizedBox(height: Spacing.lg),

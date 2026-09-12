@@ -130,7 +130,7 @@ class StoreRegisterController extends ChangeNotifier {
     } on AppException catch (e) {
       _erroCategorias = e.message;
     } catch (_) {
-      _erroCategorias = 'Não foi possível carregar as categorias.';
+      _erroCategorias = 'Não foi possível carregar as categorias';
     } finally {
       _carregandoCategorias = false;
       notifyListeners();
@@ -175,12 +175,12 @@ class StoreRegisterController extends ChangeNotifier {
     switch (_etapa) {
       case StoreRegisterStep.identidade:
         if (_capa == null) {
-          return 'Adicione uma foto de destaque para o seu comércio.';
+          return 'Adicione uma foto de destaque para o seu comércio';
         }
       case StoreRegisterStep.localizacao:
         break;
       case StoreRegisterStep.exposicao:
-        if (_selecionadas.isEmpty) return 'Selecione pelo menos uma categoria.';
+        if (_selecionadas.isEmpty) return 'Selecione pelo menos uma categoria';
     }
     return null;
   }
@@ -226,8 +226,8 @@ class StoreRegisterController extends ChangeNotifier {
           await _storeService.uploadGaleria(loja.id, _galeria);
         }
       } catch (_) {
-        avisoFotos = 'Loja cadastrada, mas houve um erro ao enviar as fotos. '
-            'Tente novamente na edição da loja.';
+        avisoFotos = 'Loja cadastrada, mas as fotos não subiram — tente de novo '
+            'na edição da loja';
       }
 
       temRascunho.value = false;
@@ -236,7 +236,7 @@ class StoreRegisterController extends ChangeNotifier {
       _erro = e.message;
       return null;
     } catch (_) {
-      _erro = 'Erro ao cadastrar loja. Tente novamente.';
+      _erro = 'Erro ao cadastrar loja, tente de novo';
       return null;
     } finally {
       _enviando = false;

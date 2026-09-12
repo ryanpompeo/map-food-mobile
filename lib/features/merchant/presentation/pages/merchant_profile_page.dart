@@ -53,7 +53,7 @@ class MerchantProfilePage extends StatelessWidget {
       featuredSectionTitle: "Minhas Lojas",
       featuredEmptyIcon: AppIcons.storefront,
       featuredEmptyTitle: "Nenhuma loja cadastrada",
-      featuredEmptyMessage: "Cadastre sua loja para aparecer no mapa dos clientes.",
+      featuredEmptyMessage: "Cadastre sua loja para aparecer no mapa dos clientes",
       featuredEmptyActionLabel: "Cadastrar loja",
       onFeaturedEmptyAction: () => Navigator.push(
         context,
@@ -82,7 +82,7 @@ class MerchantProfilePage extends StatelessWidget {
           unawaited(abrirDetalheDaLoja(context, store));
         } catch (_) {
           if (context.mounted) {
-            AppToast.error(context, "Não foi possível abrir esta loja.");
+            AppToast.error(context, "Não foi possível abrir esta loja");
           }
         }
       },

@@ -70,7 +70,7 @@ class OnboardingPage extends StatelessWidget {
               Text('Comida de rua,\nperto de você', style: AppText.display(context)),
               const SizedBox(height: Spacing.md),
               Text(
-                'Encontre comerciantes ambulantes em tempo real e descubra quem está em rota agora.',
+                'Encontre vendedores ambulantes em tempo real e veja quem está em rota agora',
                 style: AppText.body(context).copyWith(color: colors.textSecondary),
               ),
 

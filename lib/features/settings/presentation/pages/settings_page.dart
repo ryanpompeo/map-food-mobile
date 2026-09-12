@@ -53,7 +53,7 @@ class SettingsPage extends StatelessWidget {
       ));
     } catch (_) {
       if (context.mounted) {
-        AppToast.error(context, "Erro ao excluir a conta. Tente novamente.");
+        AppToast.error(context, "Erro ao excluir a conta, tente de novo");
       }
     }
   }

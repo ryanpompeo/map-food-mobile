@@ -82,7 +82,7 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
       icon: AppIcons.star,
       title: 'Conte como foi sua experiência',
       description:
-          'Crie uma conta gratuita em segundos para avaliar este comércio e ajudar outras pessoas a decidir.',
+          'Crie uma conta grátis para avaliar este comércio e ajudar outras pessoas',
     );
   }
 
@@ -102,7 +102,7 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
 
   Future<void> _submit() async {
     if (_rating == 0) {
-      AppToast.error(context, 'Selecione uma nota de 1 a 5 estrelas.');
+      AppToast.error(context, 'Selecione uma nota de 1 a 5 estrelas');
       return;
     }
 
@@ -203,8 +203,8 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
           const SizedBox(height: 2.0),
           Text(
             _isGuest
-                ? 'Entre na sua conta para avaliar este comércio.'
-                : 'Sua nota ajuda outras pessoas a decidir.',
+                ? 'Entre na sua conta para avaliar este comércio'
+                : 'Sua nota ajuda outras pessoas a decidir',
             style: AppText.secondary(context),
           ),
           const SizedBox(height: Spacing.base),
@@ -219,7 +219,7 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
           AppFormField(
             controller: _commentController,
             label: 'Comentário (opcional)',
-            hint: 'Conte como foi sua experiência...',
+            hint: 'Conte como foi sua experiência',
             maxLines: 3,
             maxLength: 1000,
             showIcon: false,
@@ -239,7 +239,7 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
 
     return Semantics(
       button: true,
-      label: 'Avaliar este comércio. Requer entrar na conta.',
+      label: 'Avaliar este comércio, requer entrar na conta',
       child: GestureDetector(
         onTap: _mostrarParedeLogin,
         behavior: HitTestBehavior.opaque,
@@ -268,7 +268,7 @@ class _HistoricoCarregando extends StatelessWidget {
           const SizedBox(width: Spacing.md),
           Expanded(
             child: Text(
-              'Carregando suas avaliações...',
+              'Carregando suas avaliações',
               style: AppText.secondary(context),
             ),
           ),

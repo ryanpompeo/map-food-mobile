@@ -75,7 +75,7 @@ class _HomeFilterModalContentState extends State<_HomeFilterModalContent> {
     if (_categorias.length >= maxCategoriasFiltro) {
       AppToast.warning(
         context,
-        'Você pode combinar até $maxCategoriasFiltro categorias.',
+        'Você pode combinar até $maxCategoriasFiltro categorias',
       );
       return;
     }

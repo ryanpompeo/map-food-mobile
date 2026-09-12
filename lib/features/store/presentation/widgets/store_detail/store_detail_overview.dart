@@ -31,7 +31,7 @@ class StoreActionsRow extends StatelessWidget {
         icon: AppIcons.flag,
         title: 'Viu algo errado neste comércio?',
         description:
-            'Crie uma conta gratuita em segundos para denunciar e acompanhar a situação da sua denúncia.',
+            'Crie uma conta grátis para denunciar e acompanhar sua denúncia',
       );
       return;
     }
@@ -74,7 +74,7 @@ class StoreActionsRow extends StatelessWidget {
         if (!store.temLocalizacao) ...[
           const SizedBox(height: Spacing.sm),
           Text(
-            'Este comércio ainda não informou a localização no mapa.',
+            'Este comércio ainda não informou a localização',
             style: AppText.caption(context),
           ),
         ],

@@ -104,7 +104,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
       } on AppException {
         if (!mounted) return;
         setState(() => _errorMessage =
-            'Conta criada, mas não foi possível entrar automaticamente. Faça login.');
+            'Conta criada — entre com seu e-mail e senha');
         unawaited(Navigator.pushReplacementNamed(context, AppRoutes.login,
             arguments: 'CONSUMIDOR'));
         return;
@@ -118,11 +118,11 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
         (route) => false,
       ));
     } on AppException catch (e) {
-      _mostrarErro(e.statusCode == 409 ? 'E-mail ou CPF já cadastrado.' : e.message);
+      _mostrarErro(e.statusCode == 409 ? 'E-mail ou CPF já cadastrado' : e.message);
     } catch (e, st) {
       debugPrint('Erro no cadastro de consumidor: $e');
       debugPrint('$st');
-      _mostrarErro('Erro inesperado. Tente novamente.');
+      _mostrarErro('Erro inesperado, tente de novo');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

@@ -8,7 +8,7 @@ extension JsonReader on Map<String, dynamic> {
       final parsed = int.tryParse(value);
       if (parsed != null) return parsed;
     }
-    throw ParseException('Campo "$key" ausente ou inválido na resposta.');
+    throw ParseException('Campo "$key" ausente ou inválido na resposta');
   }
 
   String requireString(String key) {
@@ -17,7 +17,7 @@ extension JsonReader on Map<String, dynamic> {
       final text = value.toString();
       if (text.isNotEmpty) return text;
     }
-    throw ParseException('Campo "$key" ausente ou inválido na resposta.');
+    throw ParseException('Campo "$key" ausente ou inválido na resposta');
   }
 
   int? optInt(String key) {

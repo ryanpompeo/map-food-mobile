@@ -50,7 +50,7 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
                   const SizedBox(height: 2),
                   Text(
                     carregando
-                        ? 'Carregando o que dizem sobre você...'
+                        ? 'Carregando o que dizem sobre você'
                         : _resumo(avaliacoes.length),
                     style: AppText.secondary(context),
                   ),
@@ -69,8 +69,8 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
             dense: true,
             icon: AppIcons.chatCircle,
             title: 'Nenhuma avaliação ainda',
-            description: 'Assim que um cliente avaliar sua loja, o comentário '
-                'aparece aqui.',
+            description: 'Quando um cliente avaliar sua loja, o comentário '
+                'aparece aqui',
           ),
 
         if (temListaParaExpandir) ...[

@@ -50,7 +50,7 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Não foi possível carregar suas denúncias.';
+        _errorMessage = 'Não foi possível carregar suas denúncias';
       });
     }
   }
@@ -93,7 +93,7 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
                         child: EmptyState(
                           icon: AppIcons.flag,
                           title: 'Nenhuma denúncia registrada',
-                          description: 'As denúncias que você fizer aparecerão aqui.',
+                          description: 'As denúncias que você fizer aparecem aqui',
                         ),
                       )
                     : RefreshIndicator(

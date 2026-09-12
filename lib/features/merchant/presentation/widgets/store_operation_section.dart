@@ -89,8 +89,8 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
                   const SizedBox(height: 2),
                   Text(
                     aberta
-                        ? 'É este o ponto que os clientes veem no mapa.'
-                        : 'Último ponto registrado. Abra a loja para voltar ao mapa.',
+                        ? 'É este o ponto que os clientes veem no mapa'
+                        : 'Último ponto registrado — abra a loja para voltar ao mapa',
                     style: AppText.secondary(context).copyWith(height: 1.4),
                   ),
                 ],
@@ -165,10 +165,10 @@ class _DicaRonda extends StatelessWidget {
           Expanded(
             child: Text(
               aberta
-                  ? 'Enquanto a loja estiver aberta e este app em primeiro plano, sua '
-                      'posição no mapa acompanha o seu deslocamento.'
-                  : 'Ao abrir a loja, sua posição passa a ser atualizada automaticamente '
-                      'conforme você se movimenta.',
+                  ? 'Com a loja aberta e o app em primeiro plano, sua posição no '
+                      'mapa acompanha o seu deslocamento'
+                  : 'Ao abrir a loja, sua posição passa a ser atualizada conforme '
+                      'você se movimenta',
               style: AppText.secondary(context).copyWith(height: 1.45),
             ),
           ),

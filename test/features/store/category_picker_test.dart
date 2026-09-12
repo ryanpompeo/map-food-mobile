@@ -69,7 +69,7 @@ void main() {
   testWidgets('lista vazia explica sem oferecer retry', (tester) async {
     await tester.pumpWidget(montar(picker(lista: const [])));
 
-    expect(find.textContaining('Fale com o suporte'), findsOneWidget);
+    expect(find.textContaining('fale com o suporte'), findsOneWidget);
     expect(find.text('Tentar novamente'), findsNothing);
   });
 
@@ -84,7 +84,7 @@ void main() {
     testWidgets('sem nenhuma escolhida, diz isso em vez de ficar em branco', (tester) async {
       await tester.pumpWidget(montar(picker()));
 
-      expect(find.text('Nenhuma categoria selecionada.'), findsOneWidget);
+      expect(find.text('Nenhuma categoria selecionada'), findsOneWidget);
     });
   });
 

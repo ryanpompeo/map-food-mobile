@@ -239,7 +239,7 @@ class _PerfilPublico extends StatelessWidget {
                     Text('Perfil da loja', style: AppText.h2(context)),
                     const SizedBox(height: 2),
                     Text(
-                      'É assim que os clientes veem a sua loja.',
+                      'É assim que os clientes veem a sua loja',
                       style: AppText.secondary(context).copyWith(height: 1.4),
                     ),
                   ],

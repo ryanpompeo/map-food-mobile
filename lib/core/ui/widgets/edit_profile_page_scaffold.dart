@@ -127,7 +127,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
       }
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Não foi possível carregar seus dados.');
+        AppToast.error(context, 'Não foi possível carregar seus dados');
         Navigator.pop(context);
       }
     }
@@ -145,7 +145,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
       setState(() => _imagemUrl = imagemUrl);
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Não foi possível enviar a foto. Tente novamente.');
+        AppToast.error(context, 'Não foi possível enviar a foto');
       }
     } finally {
       if (mounted) setState(() => _isUploadingFoto = false);
@@ -164,7 +164,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
       setState(() => _imagemUrl = imagemUrl);
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Não foi possível remover a foto. Tente novamente.');
+        AppToast.error(context, 'Não foi possível remover a foto');
       }
     } finally {
       if (mounted) setState(() => _isUploadingFoto = false);
@@ -178,7 +178,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     final novaSenha = _senhaController.text.trim();
     final confirmar = _confirmarSenhaController.text.trim();
     if (novaSenha.isNotEmpty && novaSenha != confirmar) {
-      setState(() => _errorMsg = 'As senhas não coincidem.');
+      setState(() => _errorMsg = 'As senhas não coincidem');
       return;
     }
 
@@ -205,7 +205,7 @@ class _EditProfilePageScaffoldState extends State<EditProfilePageScaffold> {
     } on AppException catch (e) {
       setState(() => _errorMsg = e.message);
     } catch (_) {
-      setState(() => _errorMsg = 'Erro ao salvar. Tente novamente.');
+      setState(() => _errorMsg = 'Erro ao salvar, tente de novo');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

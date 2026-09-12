@@ -58,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
   void _avisarRecuperacaoIndisponivel() {
     AppToast.info(
       context,
-      'Recuperação de senha em desenvolvimento. Em breve você poderá redefinir por aqui.',
+      'Recuperação de senha ainda em desenvolvimento',
     );
   }
 
@@ -87,11 +87,11 @@ class _LoginPageState extends State<LoginPage> {
       unawaited(
           Navigator.pushNamedAndRemoveUntil(context, destino, (route) => false));
     } on UnauthorizedException {
-      setState(() => _errorMessage = 'E-mail ou senha incorretos.');
+      setState(() => _errorMessage = 'E-mail ou senha incorretos');
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);
     } catch (_) {
-      setState(() => _errorMessage = 'Não foi possível entrar. Tente novamente.');
+      setState(() => _errorMessage = 'Não foi possível entrar, tente de novo');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

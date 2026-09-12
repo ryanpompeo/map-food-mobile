@@ -40,7 +40,7 @@ class _MerchantHomePageState extends State<MerchantHomePage>
   final _storeService = StoreService();
 
   @override
-  String get genericErrorMessage => 'Erro ao carregar dados da loja.';
+  String get genericErrorMessage => 'Erro ao carregar dados da loja';
 
   @override
   void initState() {
@@ -151,7 +151,7 @@ class _MerchantHomePageState extends State<MerchantHomePage>
           child: EmptyState(
             icon: AppIcons.storefront,
             title: 'Nenhuma loja disponível',
-            description: 'Faça login novamente para acessar suas lojas.',
+            description: 'Entre de novo para acessar suas lojas',
             actionLabel: 'Tentar novamente',
             onAction: _loadData,
           ),

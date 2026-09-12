@@ -97,7 +97,7 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     if (_categoriasAtivas.length >= maxCategoriasFiltro) {
       AppToast.warning(
         context,
-        'Você pode combinar até $maxCategoriasFiltro categorias.',
+        'Você pode combinar até $maxCategoriasFiltro categorias',
       );
       return;
     }
@@ -224,7 +224,7 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
                   ),
                   const SizedBox(width: Spacing.md),
                   Text(
-                    'Buscar comércios...',
+                    'Buscar comércios',
                     style: AppText.body(context).copyWith(color: context.mapColors.textTertiary),
                   ),
                 ],

@@ -54,7 +54,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
         setState(() {
           _isLoading = false;
           _errorMessage =
-              'Não foi possível carregar suas avaliações. Tente novamente.';
+              'Não foi possível carregar suas avaliações';
         });
       }
     }
@@ -77,7 +77,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
       unawaited(abrirDetalheDaLoja(context, store));
     } catch (_) {
       if (!mounted) return;
-      AppToast.error(context, "Não foi possível abrir esta loja.");
+      AppToast.error(context, "Não foi possível abrir esta loja");
     }
   }
 
@@ -232,7 +232,7 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
         icon: AppIcons.star,
         title: "Nenhuma avaliação ainda",
         description:
-            "As avaliações que você fizer nos comércios aparecerão aqui.",
+            "As avaliações que você fizer aparecem aqui",
       ),
     );
   }

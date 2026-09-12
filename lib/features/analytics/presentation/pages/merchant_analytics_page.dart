@@ -130,7 +130,7 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
         child: EmptyState(
           icon: AppIcons.storefront,
           title: 'Nenhuma loja cadastrada',
-          description: 'Cadastre sua loja para começar a acompanhar os acessos.',
+          description: 'Cadastre sua loja para acompanhar os acessos',
         ),
       );
     }
@@ -180,8 +180,8 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
       return AnalyticsSectionCard(
         titulo: 'Como te avaliam',
         child: Text(
-          'Nenhuma avaliação ainda. Elas aparecem aqui assim que o primeiro '
-          'cliente avaliar sua loja.',
+          'Nenhuma avaliação ainda — elas aparecem aqui quando o primeiro '
+          'cliente avaliar sua loja',
           style: AppText.secondary(context).copyWith(height: 1.4),
         ),
       );
@@ -231,7 +231,7 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
             const SizedBox(width: Spacing.md),
             Expanded(
               child: Text(
-                'Não foi possível carregar as denúncias agora. Puxe para atualizar.',
+                'Não foi possível carregar as denúncias — puxe para atualizar',
                 style: AppText.secondary(context).copyWith(height: 1.45),
               ),
             ),
@@ -269,7 +269,7 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
                   ),
                   const SizedBox(height: 2.0),
                   Text(
-                    'Nenhuma denúncia neste período.',
+                    'Nenhuma denúncia neste período',
                     style: AppText.secondary(context).copyWith(height: 1.4),
                   ),
                 ],

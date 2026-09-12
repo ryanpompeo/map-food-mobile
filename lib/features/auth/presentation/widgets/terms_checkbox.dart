@@ -70,7 +70,7 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
     return FormField<bool>(
       initialValue: widget.value,
       validator: (aceito) =>
-          (aceito ?? false) ? null : 'É preciso aceitar os termos para continuar.',
+          (aceito ?? false) ? null : 'É preciso aceitar os termos para continuar',
       builder: (state) {
         void alternar() {
           final novo = !widget.value;
@@ -125,7 +125,6 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
                               style: _linkStyle(context, colors.textPrimary),
                             ),
                           ],
-                          const TextSpan(text: '.'),
                         ],
                       ),
                     ),

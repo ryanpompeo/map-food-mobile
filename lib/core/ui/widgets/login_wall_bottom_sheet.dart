@@ -14,7 +14,7 @@ class LoginWallHelper {
     IconData icon = AppIcons.heart,
     String title = "Salve seus comércios favoritos!",
     String description =
-        "Crie uma conta gratuita em segundos para salvar, avaliar e denunciar comércios na sua cidade.",
+        "Crie uma conta grátis para salvar, avaliar e denunciar comércios",
   }) {
     showModalBottomSheet(
       context: context,

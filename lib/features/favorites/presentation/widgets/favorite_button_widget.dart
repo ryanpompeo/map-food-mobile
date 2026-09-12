@@ -37,7 +37,7 @@ class FavoriteButtonWidget extends StatelessWidget {
       return _tapArea(
         context,
         label: 'Favoritar ${store.nome}',
-        onTap: () => AppToast.error(context, "Apenas contas de consumidor podem favoritar estabelecimentos."),
+        onTap: () => AppToast.error(context, "Só contas de consumidor podem favoritar"),
         icon: Icon(AppIcons.heart, color: frosted ? ColorsPalette.white : context.mapColors.iconMuted, size: iconSize),
       );
     }
@@ -54,10 +54,10 @@ class FavoriteButtonWidget extends StatelessWidget {
             try {
               await FavoritesManager.instance.toggle(store);
               if (!context.mounted) return;
-              AppToast.success(context, isFavorite ? "Removido dos favoritos." : "Favoritado com sucesso!");
+              AppToast.success(context, isFavorite ? "Removido dos favoritos" : "Favoritado com sucesso!");
             } catch (_) {
               if (!context.mounted) return;
-              AppToast.error(context, "Não foi possível atualizar seus favoritos. Tente novamente.");
+              AppToast.error(context, "Não foi possível atualizar seus favoritos");
             }
           },
           icon: _heartIcon(

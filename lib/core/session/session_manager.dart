@@ -34,7 +34,7 @@ class SessionManager {
       final context = navigatorKey.currentContext;
       if (context != null && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'Sessão expirada. Faça login novamente.')),
+          SnackBar(content: Text(message ?? 'Sessão expirada, entre de novo')),
         );
       }
     } finally {

@@ -220,7 +220,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
         ),
         const SizedBox(width: 8.0),
         Text(
-          "Traçando rota...",
+          "Traçando rota",
           style: AppText.legenda(context).copyWith(
             fontWeight: FontWeight.w600,
           ),

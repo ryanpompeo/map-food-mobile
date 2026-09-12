@@ -18,17 +18,17 @@ class ErrorInterceptor extends Interceptor {
 
       exception = switch (status) {
         400 => AppException(
-          _extractValidationMessage(data) ?? message ?? 'Dados inválidos.',
+          _extractValidationMessage(data) ?? message ?? 'Dados inválidos',
           statusCode: 400,
         ),
-        401 => UnauthorizedException(message ?? 'Credenciais inválidas.'),
-        403 => AppException(message ?? 'Acesso negado.', statusCode: 403),
-        404 => NotFoundException(message ?? 'Não encontrado.'),
-        409 => AppException(message ?? 'Conflito de dados.', statusCode: 409),
+        401 => UnauthorizedException(message ?? 'Credenciais inválidas'),
+        403 => AppException(message ?? 'Acesso negado', statusCode: 403),
+        404 => NotFoundException(message ?? 'Não encontrado'),
+        409 => AppException(message ?? 'Conflito de dados', statusCode: 409),
         _ when (status ?? 0) >= 500 => ServerException(
-          message ?? 'Erro no servidor.',
+          message ?? 'Erro no servidor',
         ),
-        _ => AppException(message ?? 'Erro desconhecido.', statusCode: status),
+        _ => AppException(message ?? 'Erro desconhecido', statusCode: status),
       };
     }
 

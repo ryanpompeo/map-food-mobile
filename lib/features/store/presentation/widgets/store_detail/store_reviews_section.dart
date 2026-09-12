@@ -53,7 +53,7 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
         SectionHeader(
           title: 'Avaliações',
           subtitle: widget.carregando && total == 0
-              ? 'Carregando...'
+              ? 'Carregando'
               : '$total ${total == 1 ? 'avaliação' : 'avaliações'}',
           expanded: _expandida,
           onToggle: () => setState(() => _expandida = !_expandida),
@@ -116,7 +116,7 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
       return EmptyState(
         icon: AppIcons.star,
         title: 'Nada com $_filtroEstrelas estrelas',
-        description: 'Toque em "Todas" para ver as demais avaliações.',
+        description: 'Toque em "Todas" para ver as demais avaliações',
         actionLabel: 'Ver todas',
         onAction: () => setState(() => _filtroEstrelas = null),
         dense: true,
