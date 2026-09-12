@@ -9,11 +9,14 @@ class MapTiles {
 
   static const _userAgentPackageName = 'com.example.map_food';
 
+  @visibleForTesting
+  static TileProvider Function()? provedorDeTeste;
+
   static Widget layer(BuildContext context) {
     return TileLayer(
       urlTemplate: _osm,
       userAgentPackageName: _userAgentPackageName,
-      tileProvider: CancellableNetworkTileProvider(),
+      tileProvider: (provedorDeTeste ?? CancellableNetworkTileProvider.new)(),
     );
   }
 
