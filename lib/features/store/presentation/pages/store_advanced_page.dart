@@ -9,6 +9,7 @@ import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
 import 'package:map_food/core/ui/widgets/confirm_dialog.dart';
 import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
@@ -30,8 +31,8 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
   bool _excluindo = false;
   bool _inativando = false;
 
-  bool get _suspensa => _store.statusLoja == 'SUSPENSA';
-  bool get _ativa => _store.statusLoja == 'ATIVA';
+  bool get _suspensa => _store.status == StatusLoja.suspensa;
+  bool get _ativa => _store.status == StatusLoja.ativa;
 
   Future<void> _inativar() async {
     if (_inativando) return;
@@ -48,7 +49,7 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
 
     setState(() => _inativando = true);
     try {
-      final atualizada = await _storeService.atualizarStatus(_store, 'INATIVA');
+      final atualizada = await _storeService.atualizarStatus(_store, StatusLoja.inativa);
       if (!mounted) return;
       setState(() => _store = atualizada);
       widget.onStoreUpdated?.call(atualizada);

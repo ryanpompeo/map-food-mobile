@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/session/session_store.dart';
-import 'package:map_food/features/store/data/models/store_create_request.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
@@ -14,7 +14,7 @@ class StoreRondaController extends ChangeNotifier {
     this.onStoreUpdated,
     StoreService? storeService,
   })  : _store = store,
-        _aberta = store.statusLoja == 'ATIVA',
+        _aberta = store.status == StatusLoja.ativa,
         _storeService = storeService ?? StoreService() {
     if (_aberta) unawaited(iniciarRastreamento());
   }
@@ -58,7 +58,7 @@ class StoreRondaController extends ChangeNotifier {
       return;
     }
     _store = store;
-    final aberta = store.statusLoja == 'ATIVA';
+    final aberta = store.status == StatusLoja.ativa;
     if (aberta != _aberta) {
       _aberta = aberta;
       if (!aberta) pararRastreamento();
@@ -72,7 +72,7 @@ class StoreRondaController extends ChangeNotifier {
     pararRastreamento();
     _posicaoSeq++;
     _store = store;
-    _aberta = store.statusLoja == 'ATIVA';
+    _aberta = store.status == StatusLoja.ativa;
     _notificar();
 
     if (_aberta) unawaited(iniciarRastreamento());
@@ -161,18 +161,14 @@ class StoreRondaController extends ChangeNotifier {
           return 'Sem localização — ative o GPS e permita o acesso '
               'pra abrir a loja';
         }
-        atualizada = await _storeService.update(
-          _store.id,
-          StoreCreateRequest.fromStore(
-            _store,
-            statusLoja: 'ATIVA',
-            latitude: posicao.latitude,
-            longitude: posicao.longitude,
-          ),
+        atualizada = await _storeService.abrirLoja(
+          _store,
+          posicao.latitude,
+          posicao.longitude,
         );
         posicaoAberta = posicao;
       } else {
-        atualizada = await _storeService.atualizarStatus(_store, 'INATIVA');
+        atualizada = await _storeService.atualizarStatus(_store, StatusLoja.inativa);
       }
 
       if (_descartado) return null;

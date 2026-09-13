@@ -24,7 +24,11 @@ class ErrorInterceptor extends Interceptor {
         401 => UnauthorizedException(message ?? 'Credenciais inválidas'),
         403 => AppException(message ?? 'Acesso negado', statusCode: 403),
         404 => NotFoundException(message ?? 'Não encontrado'),
-        409 => AppException(message ?? 'Conflito de dados', statusCode: 409),
+        409 => AppException(
+          message ?? 'Conflito de dados',
+          statusCode: 409,
+          dados: _comoMapa(data),
+        ),
         _ when (status ?? 0) >= 500 => ServerException(
           message ?? 'Erro no servidor',
         ),
@@ -59,6 +63,9 @@ class ErrorInterceptor extends Interceptor {
     }
     return null;
   }
+
+  Map<String, dynamic>? _comoMapa(dynamic data) =>
+      data is Map ? Map<String, dynamic>.from(data) : null;
 
   bool _ehErroPadraoDoSpring(Map<dynamic, dynamic> data) =>
       data.containsKey('timestamp') &&

@@ -4,6 +4,7 @@ import 'package:geocoding/geocoding.dart' as geocoding;
 import 'package:image_picker/image_picker.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
@@ -207,7 +208,7 @@ class StoreRegisterController extends ChangeNotifier {
         StoreCreateRequest(
           nome: nome.text.trim(),
           descricao: _textoOuNulo(descricao),
-          statusLoja: temLocalizacao ? 'ATIVA' : 'INATIVA',
+          statusLoja: (temLocalizacao ? StatusLoja.ativa : StatusLoja.inativa).valor,
           categoriaIds: List<int>.from(_selecionadas),
           endereco: _textoOuNulo(endereco),
           cidade: _textoOuNulo(cidade),

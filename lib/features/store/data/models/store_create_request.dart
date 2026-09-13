@@ -1,3 +1,4 @@
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
 class StoreCreateRequest {
@@ -42,6 +43,20 @@ class StoreCreateRequest {
         cep: loja.cep,
         latitude: latitude ?? loja.latitude,
         longitude: longitude ?? loja.longitude,
+      );
+
+  factory StoreCreateRequest.paraStatus(
+    StoreDto loja,
+    StatusLoja status, {
+    double? latitude,
+    double? longitude,
+  }) =>
+      StoreCreateRequest(
+        nome: loja.nome,
+        statusLoja: status.valor,
+        categoriaIds: loja.categoriaIds,
+        latitude: latitude,
+        longitude: longitude,
       );
 
   Map<String, dynamic> toJson() => {

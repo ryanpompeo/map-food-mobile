@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
@@ -94,6 +95,38 @@ void main() {
       expect(json.containsKey('endereco'), isFalse);
       expect(json.containsKey('latitude'), isFalse);
       expect(json['categorias'], isEmpty);
+    });
+  });
+
+  group('paraStatus', () {
+    test('mudar o status não reenvia endereço, CEP nem descrição', () {
+      final json = StoreCreateRequest.paraStatus(_loja, StatusLoja.inativa).toJson();
+
+      expect(json.keys, unorderedEquals(['nome', 'statusLoja', 'categorias']));
+      expect(json['statusLoja'], 'INATIVA');
+    });
+
+    test('categorias vão sempre junto, senão o PUT apaga as da loja', () {
+      final json = StoreCreateRequest.paraStatus(_loja, StatusLoja.inativa).toJson();
+
+      expect(json['categorias'], [
+        {'id': 3},
+        {'id': 5},
+      ]);
+    });
+
+    test('abrir a loja leva a posição do GPS, e só ela', () {
+      final json = StoreCreateRequest.paraStatus(
+        _loja,
+        StatusLoja.ativa,
+        latitude: -22.92,
+        longitude: -43.19,
+      ).toJson();
+
+      expect(json['statusLoja'], 'ATIVA');
+      expect(json['latitude'], -22.92);
+      expect(json['longitude'], -43.19);
+      expect(json.containsKey('cep'), isFalse);
     });
   });
 }

@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/store_register_page.dart';
 
@@ -63,7 +64,7 @@ class _LojaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.mapColors;
-    final aberta = store.statusLoja == 'ATIVA';
+    final aberta = store.status == StatusLoja.ativa;
 
     final fundo = selecionada ? colors.selectedSurface : colors.surfaceAlt;
     final conteudo = selecionada ? colors.onSelectedSurface : colors.textSecondary;

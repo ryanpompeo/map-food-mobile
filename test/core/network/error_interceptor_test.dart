@@ -108,4 +108,15 @@ void main() {
       );
     });
   });
+
+  test('409 preserva o corpo para quem precisa do motivo do conflito', () async {
+    final e = await _traduzir(
+      status: 409,
+      body: {'statusLoja': 'SUSPENSA', 'message': 'Sua loja foi suspensa pela moderação'},
+    );
+
+    expect(e.statusCode, 409);
+    expect(e.message, 'Sua loja foi suspensa pela moderação');
+    expect(e.dados?['statusLoja'], 'SUSPENSA');
+  });
 }

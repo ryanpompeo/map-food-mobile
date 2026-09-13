@@ -1,4 +1,5 @@
 import 'package:map_food/core/network/json_reader.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 
 class StoreDto {
   final int id;
@@ -19,6 +20,7 @@ class StoreDto {
   final String? cep;
   final double? latitude;
   final double? longitude;
+  final int? segundosSemSinal;
 
   const StoreDto({
     required this.id,
@@ -39,11 +41,36 @@ class StoreDto {
     this.cep,
     this.latitude,
     this.longitude,
+    this.segundosSemSinal,
   });
 
   bool get temLocalizacao => latitude != null && longitude != null;
 
-  StoreDto comPosicao(double latitude, double longitude) => StoreDto(
+  StatusLoja get status => StatusLoja.de(statusLoja);
+
+  bool get emRonda => segundosSemSinal != null;
+
+  StoreDto comPosicao(double latitude, double longitude) => _copiar(
+        statusLoja: statusLoja,
+        latitude: latitude,
+        longitude: longitude,
+        segundosSemSinal: 0,
+      );
+
+  StoreDto comStatus(StatusLoja novo) => _copiar(
+        statusLoja: novo.valor,
+        latitude: latitude,
+        longitude: longitude,
+        segundosSemSinal: novo == StatusLoja.ativa ? segundosSemSinal : null,
+      );
+
+  StoreDto _copiar({
+    required String statusLoja,
+    required double? latitude,
+    required double? longitude,
+    required int? segundosSemSinal,
+  }) =>
+      StoreDto(
         id: id,
         nome: nome,
         descricao: descricao,
@@ -62,6 +89,7 @@ class StoreDto {
         cep: cep,
         latitude: latitude,
         longitude: longitude,
+        segundosSemSinal: segundosSemSinal,
       );
 
   String? get enderecoCompleto {
@@ -79,7 +107,7 @@ class StoreDto {
         id: json.requireInt('id'),
         nome: json.stringOr('nome', ''),
         descricao: json.optString('descricao'),
-        statusLoja: json.stringOr('statusLoja', 'INATIVA'),
+        statusLoja: json.stringOr('statusLoja', StatusLoja.inativa.valor),
         dataCadastro: json.optString('dataCadastro'),
         categoria: _parseCategoriaName(json),
         categoriaIds: _parseCategoriaIds(json),
@@ -94,6 +122,7 @@ class StoreDto {
         cep: json.optString('cep'),
         latitude: json.optDouble('latitude'),
         longitude: json.optDouble('longitude'),
+        segundosSemSinal: json.optInt('segundosSemSinal'),
       );
 
   static String _parseCategoriaName(Map<String, dynamic> json) {

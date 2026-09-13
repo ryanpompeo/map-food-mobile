@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
+import 'package:map_food/features/store/data/loja_fora_de_ronda_exception.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_create_request.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
@@ -96,15 +99,32 @@ class StoreService {
     return StoreDto.fromJson(data);
   }
 
-  Future<StoreDto> atualizarStatus(StoreDto atual, String status) {
-    return update(atual.id, StoreCreateRequest.fromStore(atual, statusLoja: status));
+  Future<StoreDto> atualizarStatus(StoreDto atual, StatusLoja status) {
+    return update(atual.id, StoreCreateRequest.paraStatus(atual, status));
+  }
+
+  Future<StoreDto> abrirLoja(StoreDto atual, double latitude, double longitude) {
+    return update(
+      atual.id,
+      StoreCreateRequest.paraStatus(
+        atual,
+        StatusLoja.ativa,
+        latitude: latitude,
+        longitude: longitude,
+      ),
+    );
   }
 
   Future<StoreDto> atualizarPosicao(StoreDto atual, double latitude, double longitude) async {
-    await _client.patch<dynamic>(
-      '${ApiConstants.lojas}/${atual.id}/posicao',
-      data: {'latitude': latitude, 'longitude': longitude},
-    );
+    try {
+      await _client.patch<dynamic>(
+        '${ApiConstants.lojas}/${atual.id}/posicao',
+        data: {'latitude': latitude, 'longitude': longitude},
+      );
+    } on AppException catch (e) {
+      if (e.statusCode != 409) rethrow;
+      throw LojaForaDeRondaException(StatusLoja.de(e.dados?['statusLoja']?.toString()), e.message);
+    }
     return atual.comPosicao(latitude, longitude);
   }
 

@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/interceptors/error_interceptor.dart';
+import 'package:map_food/features/store/data/loja_fora_de_ronda_exception.dart';
+import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
@@ -177,4 +179,101 @@ void main() {
       await expectLater(service.getById(99), throwsA(isA<NotFoundException>()));
     });
   });
+
+  group('ping recusado pela API', () {
+    test('409 vira LojaForaDeRondaException com o status e o motivo', () async {
+      final service = _serviceQueResponde(
+        statusCode: 409,
+        body: '{"statusLoja": "SUSPENSA", "message": "Sua loja foi suspensa pela moderação"}',
+      );
+
+      await expectLater(
+        service.atualizarPosicao(_lojaDeTeste(), -22.92, -43.19),
+        throwsA(isA<LojaForaDeRondaException>()
+            .having((e) => e.status, 'status', StatusLoja.suspensa)
+            .having((e) => e.message, 'message', 'Sua loja foi suspensa pela moderação')),
+      );
+    });
+
+    test('409 sem status no corpo não inventa um status', () async {
+      final service = _serviceQueResponde(statusCode: 409, body: '{}');
+
+      await expectLater(
+        service.atualizarPosicao(_lojaDeTeste(), -22.92, -43.19),
+        throwsA(isA<LojaForaDeRondaException>()
+            .having((e) => e.status, 'status', StatusLoja.desconhecido)),
+      );
+    });
+
+    test('falha de servidor continua transitória, não encerra a ronda', () async {
+      final service = _serviceQueResponde(statusCode: 500, body: '{}');
+
+      await expectLater(
+        service.atualizarPosicao(_lojaDeTeste(), -22.92, -43.19),
+        throwsA(allOf(isA<ServerException>(), isNot(isA<LojaForaDeRondaException>()))),
+      );
+    });
+  });
+
+  group('mudança de status', () {
+    late _AdapterDeStatus adapter;
+    late StoreService service;
+
+    setUp(() {
+      adapter = _AdapterDeStatus();
+      final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
+        ..httpClientAdapter = adapter
+        ..interceptors.add(ErrorInterceptor());
+      service = StoreService(client: ApiClient(dio: dio));
+    });
+
+    test('fechar a loja não reenvia o CEP, que pode ser legado e inválido', () async {
+      await service.atualizarStatus(_lojaComCepLegado(), StatusLoja.inativa);
+
+      final corpo = adapter.chamadas.single.data as Map<String, dynamic>;
+      expect(adapter.chamadas.single.method, 'PUT');
+      expect(corpo.keys, unorderedEquals(['nome', 'statusLoja', 'categorias']));
+      expect(corpo['statusLoja'], 'INATIVA');
+    });
+
+    test('abrir a loja manda ATIVA com a posição do GPS, sem o CEP', () async {
+      await service.abrirLoja(_lojaComCepLegado(), -22.92, -43.19);
+
+      final corpo = adapter.chamadas.single.data as Map<String, dynamic>;
+      expect(corpo['statusLoja'], 'ATIVA');
+      expect(corpo['latitude'], -22.92);
+      expect(corpo['longitude'], -43.19);
+      expect(corpo.containsKey('cep'), isFalse);
+    });
+  });
+}
+
+StoreDto _lojaComCepLegado() => const StoreDto(
+      id: 7,
+      nome: 'Carrinho do Zé',
+      statusLoja: 'INATIVA',
+      categoria: 'Lanches',
+      categoriaIds: [3],
+      cep: '00000-000',
+      estado: 'XX',
+    );
+
+class _AdapterDeStatus implements HttpClientAdapter {
+  final List<RequestOptions> chamadas = [];
+
+  @override
+  Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream,
+      Future<void>? cancelFuture) async {
+    chamadas.add(options);
+    return ResponseBody.fromString(
+      '{"id": 7, "nome": "Carrinho do Zé", "statusLoja": "INATIVA"}',
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
 }
