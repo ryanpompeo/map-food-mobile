@@ -41,6 +41,11 @@ class LocationService {
   static Stream<bool> get servicoAtivo =>
       _fonte.statusDoServico().map((status) => status == ServiceStatus.enabled);
 
+  static Future<AcessoLocalizacao> verificarAcesso() => _fonte.verificarAcesso();
+
+  static Future<Position> posicaoAtual(PerfilLocalizacao perfil) =>
+      _fonte.posicaoAtual(configuracaoPara(perfil, defaultTargetPlatform));
+
   static _CanalDePosicao _canalDe(PerfilLocalizacao perfil) => _canais.putIfAbsent(
         perfil,
         () => _CanalDePosicao(configuracaoPara(perfil, defaultTargetPlatform), _fonte, _esperas),

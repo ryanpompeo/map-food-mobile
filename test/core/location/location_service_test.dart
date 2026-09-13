@@ -25,6 +25,12 @@ class _FonteFalsa implements FontePosicao {
   @override
   Stream<ServiceStatus> statusDoServico() => servico.stream;
 
+  @override
+  Future<AcessoLocalizacao> verificarAcesso() async => AcessoLocalizacao.liberado;
+
+  @override
+  Future<Position> posicaoAtual(LocationSettings configuracao) async => _posicao(-22.9);
+
   Future<void> fechar() async {
     await servico.close();
     for (final emissor in emissores) {

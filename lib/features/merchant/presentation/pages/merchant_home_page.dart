@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
@@ -9,6 +11,7 @@ import 'package:map_food/core/ui/widgets/keyboard_aware_bottom_bar.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/analytics/presentation/pages/merchant_analytics_page.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
+import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_store_page.dart';
 import 'package:map_food/features/merchant/presentation/pages/merchant_profile_page.dart';
 import 'package:map_food/features/search/presentation/pages/search_page.dart';
@@ -84,6 +87,7 @@ class _MerchantHomePageState extends State<MerchantHomePage>
         if (_lojaSelecionadaIndex >= stores.length) {
           setState(() => _lojaSelecionadaIndex = 0);
         }
+        unawaited(RondaManager.instance.sincronizar(stores));
         return true;
       },
     );

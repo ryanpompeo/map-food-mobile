@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
+import 'package:map_food/core/location/perfil_localizacao.dart';
 import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
+import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
 import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
@@ -13,188 +17,69 @@ class StoreRondaController extends ChangeNotifier {
     required StoreDto store,
     this.onStoreUpdated,
     StoreService? storeService,
+    RondaManager? ronda,
   })  : _store = store,
-        _aberta = store.status == StatusLoja.ativa,
-        _storeService = storeService ?? StoreService() {
-    if (_aberta) unawaited(iniciarRastreamento());
+        _storeService = storeService ?? StoreService(),
+        _ronda = ronda ?? RondaManager.instance {
+    _vincular(store.id);
+    _relogio = Timer.periodic(const Duration(minutes: 1), (_) => _notificar());
   }
 
-  final StoreService _storeService;
+  static const String _semGpsParaAbrir =
+      'Sem localização — ative o GPS e permita o acesso pra abrir a loja';
+  static const String _lojaSuspensa =
+      'Sua loja está suspensa pela moderação — fale com o suporte';
 
+  final StoreService _storeService;
+  final RondaManager _ronda;
   final ValueChanged<StoreDto>? onStoreUpdated;
 
   StoreDto _store;
-  StoreDto get store => _store;
-
-  bool _aberta;
-  bool get aberta => _aberta;
-
+  ValueListenable<EstadoRonda>? _estadoVinculado;
+  Timer? _relogio;
   bool _alternando = false;
+  bool _descartado = false;
+
+  EstadoRonda get _estado => _estadoVinculado?.value ?? EstadoRonda.parada;
+
+  StoreDto get store {
+    final latitude = _estado.latitude;
+    final longitude = _estado.longitude;
+    if (latitude == null || longitude == null) return _store;
+    return _store.comPosicao(latitude, longitude);
+  }
+
+  bool get aberta => _store.status == StatusLoja.ativa;
+
+  bool get suspensa => _store.status == StatusLoja.suspensa;
+
   bool get alternando => _alternando;
 
-  bool _rastreioAtivo = false;
-  bool get rastreioAtivo => _rastreioAtivo;
+  bool get rastreioAtivo => aberta && _estado.transmitindo;
 
-  DateTime? _ultimaPosicaoEm;
-  DateTime? get ultimaPosicaoEm => _ultimaPosicaoEm;
+  DateTime? get ultimaPosicaoEm => _estado.ultimoEnvioEm;
 
-  double? _precisaoMetros;
-  double? get precisaoMetros => _precisaoMetros;
+  double? get precisaoMetros => _estado.precisaoMetros;
 
-  String? _avisoPosicao;
-  String? get avisoPosicao => _avisoPosicao;
-
-  StreamSubscription<Position>? _positionSub;
-
-  int _posicaoSeq = 0;
-
-  Timer? _tickRelogio;
-
-  bool _descartado = false;
+  String? get avisoPosicao =>
+      _estado.recusa?.message ?? _avisoDaFase(_estado.fase) ?? _avisoDeTransmissao(_estado);
 
   void atualizarStore(StoreDto store) {
     if (store.id != _store.id) {
-      trocarLoja(store);
+      _trocar(store);
       return;
     }
     _store = store;
-    final aberta = store.status == StatusLoja.ativa;
-    if (aberta != _aberta) {
-      _aberta = aberta;
-      if (!aberta) pararRastreamento();
-    }
+    if (!aberta) _ronda.soltar(store.id);
     _notificar();
-  }
-
-  void trocarLoja(StoreDto store) {
-    if (store.id == _store.id) return;
-
-    pararRastreamento();
-    _posicaoSeq++;
-    _store = store;
-    _aberta = store.status == StatusLoja.ativa;
-    _notificar();
-
-    if (_aberta) unawaited(iniciarRastreamento());
-  }
-
-  void _iniciarRelogio() {
-    _tickRelogio?.cancel();
-    _tickRelogio = Timer.periodic(const Duration(minutes: 1), (_) => _notificar());
-  }
-
-  Future<void> iniciarRastreamento() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return;
-      }
-
-      if (_descartado) return;
-      _rastreioAtivo = true;
-      _notificar();
-      _iniciarRelogio();
-
-      _positionSub = LocationService.positionStream.listen(_enviarNovaPosicao);
-    } catch (_) {
-    }
-  }
-
-  void pararRastreamento() {
-    _positionSub?.cancel();
-    _positionSub = null;
-    _tickRelogio?.cancel();
-    _tickRelogio = null;
-    _rastreioAtivo = false;
-    _ultimaPosicaoEm = null;
-    _precisaoMetros = null;
-    _avisoPosicao = null;
-    _notificar();
-  }
-
-  Future<void> _enviarNovaPosicao(Position posicao) async {
-    final seq = ++_posicaoSeq;
-    try {
-      final atualizada = await _storeService.atualizarPosicao(
-        _store,
-        posicao.latitude,
-        posicao.longitude,
-      );
-      if (seq != _posicaoSeq || _descartado) return;
-      _store = atualizada;
-      _ultimaPosicaoEm = DateTime.now();
-      _precisaoMetros = posicao.accuracy;
-      _avisoPosicao = null;
-      _notificar();
-      onStoreUpdated?.call(atualizada);
-    } catch (_) {
-      if (seq != _posicaoSeq || _descartado) return;
-      _avisoPosicao = 'Sua posição não está subindo — verifique a conexão, no mapa '
-          'dos clientes você segue no último ponto enviado';
-      _notificar();
-    }
   }
 
   Future<String?> alternarStatus() async {
-    if (_alternando) return null;
-    final abrir = !_aberta;
-    final alvoId = _store.id;
-
+    if (_alternando || SessionStore.instance.isGuest) return null;
     _alternando = true;
     _notificar();
-
     try {
-      if (SessionStore.instance.isGuest) return null;
-
-      StoreDto atualizada;
-      Position? posicaoAberta;
-      if (abrir) {
-        final posicao = await _obterPosicaoAtual();
-        if (posicao == null) {
-          return 'Sem localização — ative o GPS e permita o acesso '
-              'pra abrir a loja';
-        }
-        atualizada = await _storeService.abrirLoja(
-          _store,
-          posicao.latitude,
-          posicao.longitude,
-        );
-        posicaoAberta = posicao;
-      } else {
-        atualizada = await _storeService.atualizarStatus(_store, StatusLoja.inativa);
-      }
-
-      if (_descartado) return null;
-
-      if (alvoId != _store.id) {
-        onStoreUpdated?.call(atualizada);
-        return null;
-      }
-
-      if (posicaoAberta != null) {
-        _ultimaPosicaoEm = DateTime.now();
-        _precisaoMetros = posicaoAberta.accuracy;
-        _avisoPosicao = null;
-      }
-
-      _aberta = abrir;
-      _store = atualizada;
-      _notificar();
-      onStoreUpdated?.call(atualizada);
-
-      if (abrir) {
-        unawaited(iniciarRastreamento());
-      } else {
-        pararRastreamento();
-      }
-      return null;
+      return aberta ? await _fechar() : await _abrir();
     } catch (_) {
       return 'Erro ao alterar status da loja';
     } finally {
@@ -203,29 +88,81 @@ class StoreRondaController extends ChangeNotifier {
     }
   }
 
-  Future<Position?> _obterPosicaoAtual() async {
+  Future<String?> _abrir() async {
+    if (suspensa) return _lojaSuspensa;
+    final posicao = await _posicaoParaAbrir();
+    if (posicao == null) return _semGpsParaAbrir;
+    final alvo = _store;
+    final atualizada = await _storeService.abrirLoja(alvo, posicao.latitude, posicao.longitude);
+    _ronda.acompanhar(atualizada, posicaoInicial: posicao);
+    _aplicar(alvo.id, atualizada);
+    return null;
+  }
+
+  Future<String?> _fechar() async {
+    final alvo = _store;
+    final atualizada = await _storeService.atualizarStatus(alvo, StatusLoja.inativa);
+    _ronda.soltar(alvo.id);
+    _aplicar(alvo.id, atualizada);
+    return null;
+  }
+
+  Future<Position?> _posicaoParaAbrir() async {
+    if (await LocationService.verificarAcesso() != AcessoLocalizacao.liberado) return null;
     try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
-          .timeout(const Duration(seconds: 10));
-      if (!serviceEnabled) return null;
-
-      LocationPermission permission = await Geolocator.checkPermission()
-          .timeout(const Duration(seconds: 10));
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission()
-            .timeout(const Duration(seconds: 10));
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return null;
-      }
-
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-      ).timeout(const Duration(seconds: 10));
+      return await LocationService.posicaoAtual(PerfilLocalizacao.ronda);
     } catch (_) {
       return null;
     }
+  }
+
+  void _aplicar(int alvoId, StoreDto atualizada) {
+    if (_descartado) return;
+    if (alvoId == _store.id) _store = atualizada;
+    onStoreUpdated?.call(atualizada);
+  }
+
+  void _trocar(StoreDto store) {
+    _desvincular();
+    _store = store;
+    _vincular(store.id);
+    _notificar();
+  }
+
+  void _vincular(int lojaId) {
+    _estadoVinculado = _ronda.estadoDe(lojaId)..addListener(_aoMudarEstado);
+  }
+
+  void _desvincular() {
+    _estadoVinculado?.removeListener(_aoMudarEstado);
+    _estadoVinculado = null;
+  }
+
+  void _aoMudarEstado() {
+    final recusa = _estado.recusa;
+    if (recusa != null && _statusConhecidoEDiferente(recusa.status)) {
+      _store = _store.comStatus(recusa.status);
+      onStoreUpdated?.call(_store);
+    }
+    _notificar();
+  }
+
+  bool _statusConhecidoEDiferente(StatusLoja status) =>
+      status != StatusLoja.desconhecido && status != _store.status;
+
+  static String? _avisoDaFase(FaseRonda fase) => switch (fase) {
+        FaseRonda.semPermissao =>
+          'Sem permissão de localização — libere o acesso nas configurações do aparelho',
+        _ => null,
+      };
+
+  String? _avisoDeTransmissao(EstadoRonda estado) {
+    if (estado.falhasSeguidas >= _ronda.configuracao.falhasAteAvisar) {
+      return 'Sua posição não está subindo — verifique a conexão, no mapa '
+          'dos clientes você segue no último ponto enviado';
+    }
+    if (estado.precisaoBaixa) return 'Sinal de GPS fraco — sua posição no mapa pode estar imprecisa';
+    return null;
   }
 
   void _notificar() {
@@ -236,8 +173,8 @@ class StoreRondaController extends ChangeNotifier {
   @override
   void dispose() {
     _descartado = true;
-    _positionSub?.cancel();
-    _tickRelogio?.cancel();
+    _relogio?.cancel();
+    _desvincular();
     super.dispose();
   }
 }

@@ -123,7 +123,9 @@ class StoreService {
       );
     } on AppException catch (e) {
       if (e.statusCode != 409) rethrow;
-      throw LojaForaDeRondaException(StatusLoja.de(e.dados?['statusLoja']?.toString()), e.message);
+      final status = StatusLoja.de(e.dados?['statusLoja']?.toString());
+      if (status == StatusLoja.ativa) rethrow;
+      throw LojaForaDeRondaException(status, e.message);
     }
     return atual.comPosicao(latitude, longitude);
   }

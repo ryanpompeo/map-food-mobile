@@ -195,6 +195,15 @@ void main() {
       );
     });
 
+    test('409 dizendo que a loja está ATIVA é corrida rara: falha passageira, não recusa', () async {
+      final service = _serviceQueResponde(statusCode: 409, body: '{"statusLoja": "ATIVA"}');
+
+      await expectLater(
+        service.atualizarPosicao(_lojaDeTeste(), -22.92, -43.19),
+        throwsA(allOf(isA<AppException>(), isNot(isA<LojaForaDeRondaException>()))),
+      );
+    });
+
     test('409 sem status no corpo não inventa um status', () async {
       final service = _serviceQueResponde(statusCode: 409, body: '{}');
 

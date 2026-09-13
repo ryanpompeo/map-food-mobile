@@ -5,6 +5,7 @@ import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
+import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
 
 class SessionManager {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -13,6 +14,7 @@ class SessionManager {
 
   static void clearUserScopedState() {
     FavoritesManager.instance.clear();
+    RondaManager.instance.encerrar();
   }
 
   static Future<void> handleUnauthorized([String? message]) async {
