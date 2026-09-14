@@ -17,6 +17,7 @@ import 'package:map_food/features/store/data/services/route_service.dart';
 import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 import 'package:map_food/features/store/presentation/controllers/rota_reativa_controller.dart';
 import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
+import 'package:map_food/features/store/presentation/widgets/visto_ha.dart';
 
 class StoreMapPage extends StatefulWidget {
   final StoreDto store;
@@ -198,16 +199,28 @@ class _StoreMapPageState extends State<StoreMapPage> {
   }
 
   Widget _buildPillDistancia(double metros) {
-    return Row(
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(AppIcons.footprints, size: 16.0, color: ColorsPalette.redComponents),
-        const SizedBox(width: 6.0),
-        Text(
-          _distanciaLabel(metros),
-          style: AppText.legenda(context).copyWith(
-            fontWeight: FontWeight.bold,
-            color: context.mapColors.primaryText,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(AppIcons.footprints, size: 16.0, color: ColorsPalette.redComponents),
+            const SizedBox(width: 6.0),
+            Text(
+              _distanciaLabel(metros),
+              style: AppText.legenda(context).copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.mapColors.primaryText,
+              ),
+            ),
+          ],
+        ),
+        VistoHa(
+          lojaId: widget.store.id,
+          builder: (context, texto) => Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: Text(texto, style: AppText.legenda(context)),
           ),
         ),
       ],

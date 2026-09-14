@@ -14,6 +14,7 @@ import 'package:map_food/core/ui/widgets/login_wall_bottom_sheet.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/store_map_page.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/report_store_dialog.dart';
+import 'package:map_food/features/store/presentation/widgets/visto_ha.dart';
 
 class StoreActionsRow extends StatelessWidget {
   final StoreDto store;
@@ -78,6 +79,23 @@ class StoreActionsRow extends StatelessWidget {
             style: AppText.caption(context),
           ),
         ],
+        VistoHa(
+          lojaId: store.id,
+          builder: (context, texto) => Padding(
+            padding: const EdgeInsets.only(top: Spacing.sm),
+            child: Row(
+              children: [
+                Icon(
+                  AppIcons.broadcast,
+                  size: escalaIcone(context, 14.0),
+                  color: context.mapColors.textSecondary,
+                ),
+                const SizedBox(width: 6.0),
+                Text(texto, style: AppText.caption(context)),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

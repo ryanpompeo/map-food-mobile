@@ -122,6 +122,7 @@ void main() {
     expect(pedidosDeRota, hasLength(1));
     expect(pedidosDeRota.single.$2, _pontoInicial);
     expect(find.text('≈ 420 m'), findsOneWidget);
+    expect(find.text('Visto agora'), findsOneWidget);
 
     await fechar(tester);
   });
