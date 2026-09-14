@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
+import 'package:map_food/core/location/permissao_notificacoes.dart';
 import 'package:map_food/core/location/perfil_localizacao.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
@@ -22,10 +23,12 @@ class StoreRondaController extends ChangeNotifier {
     StoreService? storeService,
     RondaManager? ronda,
     DateTime Function()? agora,
+    Future<bool> Function()? pedirNotificacoes,
   })  : _store = store,
         _storeService = storeService ?? StoreService(),
         _ronda = ronda ?? RondaManager.instance,
-        _agora = agora ?? DateTime.now {
+        _agora = agora ?? DateTime.now,
+        _pedirNotificacoes = pedirNotificacoes ?? PermissaoNotificacoes.pedir {
     _vincular(store.id);
     _relogio = Timer.periodic(const Duration(minutes: 1), (_) => _notificar());
   }
@@ -40,6 +43,7 @@ class StoreRondaController extends ChangeNotifier {
   final StoreService _storeService;
   final RondaManager _ronda;
   final DateTime Function() _agora;
+  final Future<bool> Function() _pedirNotificacoes;
   final ValueChanged<StoreDto>? onStoreUpdated;
 
   StoreDto _store;
@@ -124,6 +128,7 @@ class StoreRondaController extends ChangeNotifier {
   Future<String?> _comecarRonda() async {
     final posicao = await _posicaoParaAbrir();
     if (posicao == null) return _semGpsParaAcompanhar;
+    await _pedirNotificacoes();
     if (situacao == SituacaoLoja.fixa) _ronda.acompanhar(_store, posicaoInicial: posicao);
     return null;
   }
@@ -132,6 +137,7 @@ class StoreRondaController extends ChangeNotifier {
     if (suspensa) return _lojaSuspensa;
     final posicao = await _posicaoParaAbrir();
     if (posicao == null) return _semGpsParaAbrir;
+    await _pedirNotificacoes();
     final alvo = _store;
     final atualizada = await _storeService.abrirLoja(alvo, posicao.latitude, posicao.longitude);
     _ronda.acompanhar(atualizada, posicaoInicial: posicao);

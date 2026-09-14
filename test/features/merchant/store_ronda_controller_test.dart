@@ -43,6 +43,8 @@ void main() {
   late FontePosicaoFalsa fonte;
   late ApiFalsa api;
   late RondaManager ronda;
+  late int pedidosDeNotificacao;
+  late bool notificacaoConcedida;
   final criados = <StoreRondaController>[];
 
   StoreRondaController tela(
@@ -56,6 +58,10 @@ void main() {
       storeService: api.servico,
       ronda: ronda,
       agora: agora,
+      pedirNotificacoes: () async {
+        pedidosDeNotificacao++;
+        return notificacaoConcedida;
+      },
     );
     criados.add(controller);
     return controller;
@@ -73,6 +79,8 @@ void main() {
     fonte = FontePosicaoFalsa();
     LocationService.substituirFonte(fonte, esperas: const [Duration(milliseconds: 1)]);
     api = ApiFalsa();
+    pedidosDeNotificacao = 0;
+    notificacaoConcedida = true;
     ronda = RondaManager(
       storeService: api.servico,
       configuracao: const ConfiguracaoRonda(esperasDeReenvio: [Duration(milliseconds: 1)]),
@@ -210,6 +218,41 @@ void main() {
 
     expect(erro, contains('Sem localização'));
     expect(api.chamadas, isEmpty);
+  });
+
+  test('abrir pede a permissão de notificações e abre mesmo se ela for recusada', () async {
+    notificacaoConcedida = false;
+    api.responder('PUT', '/lojas/7', 200, _lojaAberta);
+    final controller = tela(_loja(status: 'INATIVA'));
+
+    final erro = await controller.alternarStatus();
+
+    expect(erro, isNull);
+    expect(pedidosDeNotificacao, 1);
+    expect(controller.aberta, isTrue);
+    expect(ronda.acompanha(7), isTrue);
+  });
+
+  test('sem GPS, abrir nem chega a pedir a permissão de notificações', () async {
+    fonte.acesso = AcessoLocalizacao.servicoDesligado;
+
+    await tela(_loja(status: 'INATIVA')).alternarStatus();
+
+    expect(pedidosDeNotificacao, 0);
+  });
+
+  test('acompanhar a posição também pede a permissão de notificações', () async {
+    await tela(_loja()).acompanharPosicao();
+
+    expect(pedidosDeNotificacao, 1);
+  });
+
+  test('fechar a loja não pede a permissão de notificações', () async {
+    api.responder('PUT', '/lojas/7', 200, _lojaFechada);
+
+    await tela(_loja()).alternarStatus();
+
+    expect(pedidosDeNotificacao, 0);
   });
 
   test('fechar solta a ronda', () async {
