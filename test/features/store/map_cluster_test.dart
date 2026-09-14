@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:map_food/features/store/data/map_cluster.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
@@ -88,5 +89,64 @@ void main() {
 
     expect(clusters.length, lessThan(lojas.length));
     expect(relogio.elapsedMilliseconds, lessThan(100));
+  });
+
+  group('espalhamento no zoom máximo', () {
+    const ponto = LatLng(-22.9068, -43.1729);
+    const distancia = Distance();
+
+    List<StoreDto> mesmoPonto(List<int> ids) =>
+        [for (final id in ids) _loja(id, ponto.latitude, ponto.longitude)];
+
+    test('lojas no mesmo ponto se abrem em círculo, cada uma no seu lugar', () {
+      final clusters = agruparLojas(mesmoPonto([1, 2, 3]), zoom: 18.0);
+
+      expect(clusters, hasLength(3));
+      expect(clusters.every((c) => c.isUnico && c.espalhado), isTrue);
+      expect(clusters.map((c) => c.centro).toSet(), hasLength(3));
+      expect(clusters.map((c) => c.origem).toSet(), {ponto});
+    });
+
+    test('o deslocamento é pequeno: poucos metros do ponto real', () {
+      final clusters = agruparLojas(mesmoPonto([1, 2, 3]), zoom: 18.0);
+
+      for (final c in clusters) {
+        expect(distancia.as(LengthUnit.Meter, ponto, c.centro), inInclusiveRange(10, 25));
+      }
+    });
+
+    test('cada loja fica sempre na mesma posição do círculo, qualquer que seja a ordem', () {
+      final primeira = agruparLojas(mesmoPonto([1, 2, 3]), zoom: 18.0);
+      final embaralhada = agruparLojas(mesmoPonto([3, 1, 2]), zoom: 18.0);
+
+      Map<int, LatLng> porId(List<MapCluster> cs) => {for (final c in cs) c.lojaUnica.id: c.centro};
+
+      expect(porId(embaralhada), porId(primeira));
+    });
+
+    test('grupo maior abre um círculo maior, para os marcadores não se sobreporem', () {
+      double raio(int n) {
+        final c = agruparLojas(mesmoPonto([for (var i = 1; i <= n; i++) i]), zoom: 18.0).first;
+        return distancia.as(LengthUnit.Meter, ponto, c.centro);
+      }
+
+      expect(raio(8), greaterThan(raio(2)));
+    });
+
+    test('loja sozinha no zoom máximo fica exatamente onde está', () {
+      final clusters = agruparLojas([_loja(1, ponto.latitude, ponto.longitude)], zoom: 18.0);
+
+      expect(clusters.single.espalhado, isFalse);
+      expect(clusters.single.centro, ponto);
+    });
+
+    test('lojas distantes no zoom máximo não são espalhadas', () {
+      final clusters = agruparLojas([
+        _loja(1, ponto.latitude, ponto.longitude),
+        _loja(2, ponto.latitude - 0.002, ponto.longitude),
+      ], zoom: 18.0);
+
+      expect(clusters.any((c) => c.espalhado), isFalse);
+    });
   });
 }

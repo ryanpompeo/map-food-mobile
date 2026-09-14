@@ -10,7 +10,7 @@ import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/store/data/map_cluster.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
-class StoreMarkersLayer extends StatelessWidget {
+class StoreMarkersLayer extends StatefulWidget {
   const StoreMarkersLayer({
     super.key,
     required this.stores,
@@ -24,22 +24,41 @@ class StoreMarkersLayer extends StatelessWidget {
   final ValueChanged<StoreDto> onStoreTap;
   final void Function(MapCluster cluster) onClusterTap;
 
+  @override
+  State<StoreMarkersLayer> createState() => _StoreMarkersLayerState();
+}
+
+class _StoreMarkersLayerState extends State<StoreMarkersLayer> {
   static const double _tamanhoPadrao = 42.0;
   static const double _tamanhoFocado = 52.0;
+  static const double _passoDeZoom = 0.25;
+
+  List<StoreDto>? _lojasEmCache;
+  (double, int?)? _chaveEmCache;
+  List<MapCluster> _clustersEmCache = const [];
 
   @override
   Widget build(BuildContext context) {
     final camera = MapCamera.of(context);
-    final clusters = agruparLojas(
-      stores,
-      zoom: camera.zoom,
-      area: _areaDe(camera).comMargem(0.25),
-      idSempreVisivel: focusedStore?.id,
-    );
+    final area = _areaDe(camera).comMargem(0.25);
+    final visiveis = _clustersDoZoom(camera.zoom)
+        .where((c) => area.contem(c.centro.latitude, c.centro.longitude))
+        .toList(growable: false);
 
     return MarkerLayer(
-      markers: clusters.map((c) => _marcador(context, c)).toList(growable: false),
+      markers: [
+        ..._pontosDeOrigem(visiveis),
+        ...visiveis.map(_marcador),
+      ],
     );
+  }
+
+  List<MapCluster> _clustersDoZoom(double zoom) {
+    final chave = ((zoom / _passoDeZoom).floorToDouble() * _passoDeZoom, widget.focusedStore?.id);
+    if (identical(_lojasEmCache, widget.stores) && _chaveEmCache == chave) return _clustersEmCache;
+    _lojasEmCache = widget.stores;
+    _chaveEmCache = chave;
+    return _clustersEmCache = agruparLojas(widget.stores, zoom: chave.$1, idSempreVisivel: chave.$2);
   }
 
   static AreaVisivel _areaDe(MapCamera camera) {
@@ -52,17 +71,27 @@ class StoreMarkersLayer extends StatelessWidget {
     );
   }
 
-  Marker _marcador(BuildContext context, MapCluster cluster) {
-    if (cluster.isUnico) return _marcadorDeLoja(cluster.lojaUnica);
+  Iterable<Marker> _pontosDeOrigem(List<MapCluster> clusters) =>
+      {for (final c in clusters) ?c.origem}.map(
+        (origem) => Marker(
+          point: origem,
+          width: 12.0,
+          height: 12.0,
+          child: const ExcludeSemantics(child: _PontoDeOrigem()),
+        ),
+      );
+
+  Marker _marcador(MapCluster cluster) {
+    if (cluster.isUnico) return _marcadorDeLoja(cluster.lojaUnica, cluster.centro);
     return _marcadorDeGrupo(cluster);
   }
 
-  Marker _marcadorDeLoja(StoreDto store) {
-    final isFocused = focusedStore?.id == store.id;
+  Marker _marcadorDeLoja(StoreDto store, LatLng ponto) {
+    final isFocused = widget.focusedStore?.id == store.id;
     final tamanho = isFocused ? _tamanhoFocado : _tamanhoPadrao;
     return Marker(
       key: ValueKey<int>(store.id),
-      point: LatLng(store.latitude!, store.longitude!),
+      point: ponto,
       width: tamanho + 8.0,
       height: tamanho + 8.0,
       child: SemanticTapArea(
@@ -70,7 +99,7 @@ class StoreMarkersLayer extends StatelessWidget {
         hint: 'Abre os detalhes do comércio',
         selected: isFocused ? true : null,
         pressFeedback: false,
-        onTap: () => onStoreTap(store),
+        onTap: () => widget.onStoreTap(store),
         child: _StoreMarkerDot(
           imagemUrl: resolveImagemUrl(store.capaUrl),
           tamanho: tamanho,
@@ -89,8 +118,23 @@ class StoreMarkersLayer extends StatelessWidget {
         label: '${cluster.total} comércios nesta área',
         hint: 'Aproxima o mapa para separá-los',
         pressFeedback: false,
-        onTap: () => onClusterTap(cluster),
+        onTap: () => widget.onClusterTap(cluster),
         child: _ClusterDot(total: cluster.total),
+      ),
+    );
+  }
+}
+
+class _PontoDeOrigem extends StatelessWidget {
+  const _PontoDeOrigem();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: ColorsPalette.redComponents.withValues(alpha: 0.35),
+        border: Border.all(color: Colors.white, width: 1.5),
       ),
     );
   }

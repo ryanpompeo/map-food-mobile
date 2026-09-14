@@ -243,9 +243,16 @@ class _StoreMapViewState extends State<StoreMapView> {
   }
 
   void _aproximarNoGrupo(MapCluster cluster) {
-    final destino = (_mapController.camera.zoom + 2.0)
-        .clamp(StoreMapController.zoomMinimo, StoreMapController.zoomMaximo);
-    _mapController.move(cluster.centro, destino);
+    _ctrl.modo.value = ModoCamera.livre;
+    _mapController.fitCamera(
+      CameraFit.coordinates(
+        coordinates: [
+          for (final loja in cluster.lojas) LatLng(loja.latitude!, loja.longitude!),
+        ],
+        padding: const EdgeInsets.all(72.0),
+        maxZoom: StoreMapController.zoomMaximo,
+      ),
+    );
   }
 
   Widget _buildUserMarker() {

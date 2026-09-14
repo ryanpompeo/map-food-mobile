@@ -32,12 +32,15 @@ class AreaVisivel {
 }
 
 class MapCluster {
-  const MapCluster(this.centro, this.lojas);
+  const MapCluster(this.centro, this.lojas, {this.origem});
 
   final LatLng centro;
   final List<StoreDto> lojas;
+  final LatLng? origem;
 
   bool get isUnico => lojas.length == 1;
+
+  bool get espalhado => origem != null;
 
   StoreDto get lojaUnica => lojas.first;
 
@@ -47,6 +50,12 @@ class MapCluster {
 const double raioAgrupamentoPx = 68.0;
 
 const double zoomSemAgrupamento = 17.0;
+
+const double raioColisaoPx = 24.0;
+
+const double raioMinimoEspalhamentoPx = 30.0;
+
+const double _espacoPorLojaNoCirculoPx = 8.0;
 
 const double _tamanhoTilePx = 256.0;
 
@@ -58,6 +67,13 @@ double _projetarY(double latitude, double mundo) {
   final seno = math.sin(latitude * math.pi / 180.0).clamp(-0.9999, 0.9999);
   final y = 0.5 - math.log((1 + seno) / (1 - seno)) / (4 * math.pi);
   return y * mundo;
+}
+
+LatLng _desprojetar(double x, double y, double mundo) {
+  final longitude = x / mundo * 360.0 - 180.0;
+  final n = math.pi * (1 - 2 * y / mundo);
+  final latitude = math.atan((math.exp(n) - math.exp(-n)) / 2) * 180.0 / math.pi;
+  return LatLng(latitude, longitude);
 }
 
 List<StoreDto> lojasVisiveis(List<StoreDto> lojas, AreaVisivel? area) {
@@ -75,25 +91,47 @@ List<MapCluster> agruparLojas(
   int? idSempreVisivel,
 }) {
   final candidatas = lojasVisiveis(lojas, area);
-  if (zoom >= zoomSemAgrupamento) {
-    return candidatas.map(_clusterDeUma).toList(growable: false);
-  }
-
   final mundo = _mundoEmPixels(zoom);
-  final celulas = <int, List<StoreDto>>{};
-  final isoladas = <MapCluster>[];
+  if (zoom >= zoomSemAgrupamento) return _espalharSobrepostas(candidatas, mundo);
 
-  for (final loja in candidatas) {
-    if (loja.id == idSempreVisivel) {
-      isoladas.add(_clusterDeUma(loja));
-      continue;
-    }
-    final coluna = (_projetarX(loja.longitude!, mundo) / raioPx).floor();
-    final linha = (_projetarY(loja.latitude!, mundo) / raioPx).floor();
-    celulas.putIfAbsent(_chave(coluna, linha), () => <StoreDto>[]).add(loja);
-  }
+  final isoladas = candidatas.where((l) => l.id == idSempreVisivel).map(_clusterDeUma);
+  final agrupaveis = candidatas.where((l) => l.id != idSempreVisivel);
+  final celulas = _porCelula(agrupaveis, mundo, raioPx);
 
   return [...isoladas, ...celulas.values.map(_consolidar)];
+}
+
+Map<int, List<StoreDto>> _porCelula(Iterable<StoreDto> lojas, double mundo, double ladoPx) {
+  final celulas = <int, List<StoreDto>>{};
+  for (final loja in lojas) {
+    final coluna = (_projetarX(loja.longitude!, mundo) / ladoPx).floor();
+    final linha = (_projetarY(loja.latitude!, mundo) / ladoPx).floor();
+    celulas.putIfAbsent(_chave(coluna, linha), () => <StoreDto>[]).add(loja);
+  }
+  return celulas;
+}
+
+List<MapCluster> _espalharSobrepostas(List<StoreDto> lojas, double mundo) => [
+      for (final grupo in _porCelula(lojas, mundo, raioColisaoPx).values)
+        ..._espalhar(grupo, mundo),
+    ];
+
+List<MapCluster> _espalhar(List<StoreDto> grupo, double mundo) {
+  if (grupo.length == 1) return [_clusterDeUma(grupo.first)];
+  final ordenado = [...grupo]..sort((a, b) => a.id.compareTo(b.id));
+  final origem = _consolidar(ordenado).centro;
+  final cx = _projetarX(origem.longitude, mundo);
+  final cy = _projetarY(origem.latitude, mundo);
+  final raio = math.max(raioMinimoEspalhamentoPx, ordenado.length * _espacoPorLojaNoCirculoPx);
+  final passo = 2 * math.pi / ordenado.length;
+  return [
+    for (var i = 0; i < ordenado.length; i++)
+      MapCluster(
+        _desprojetar(cx + raio * math.cos(passo * i), cy + raio * math.sin(passo * i), mundo),
+        [ordenado[i]],
+        origem: origem,
+      ),
+  ];
 }
 
 MapCluster _clusterDeUma(StoreDto loja) =>

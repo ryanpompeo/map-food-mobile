@@ -165,4 +165,22 @@ void main() {
 
     expect(_marcadoresDeLoja(tester), hasLength(1));
   });
+
+  testWidgets('tocar num grupo de lojas no mesmo ponto aproxima até separá-las', (tester) async {
+    await tester.pumpWidget(_Palco(inicial: [
+      _loja(id: 1, lat: -22.9068, lng: -43.1729),
+      _loja(id: 2, lat: -22.9068, lng: -43.1729),
+      _loja(id: 3, lat: -22.9068, lng: -43.1729),
+    ]));
+    await tester.pump();
+    expect(find.text('3'), findsOneWidget);
+
+    await tester.tap(find.text('3'));
+    await tester.pump();
+
+    expect(find.text('3'), findsNothing);
+    final marcadoresDeLoja = _marcadoresDeLoja(tester).where((m) => m.key is ValueKey<int>);
+    expect(marcadoresDeLoja, hasLength(3));
+    expect(marcadoresDeLoja.map((m) => m.point).toSet(), hasLength(3));
+  });
 }
