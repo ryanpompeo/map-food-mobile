@@ -228,11 +228,16 @@ class RondaManager with WidgetsBindingObserver {
 
   void _vigiarLeituras(DateTime agora) {
     final referencia = _ultimaLeituraEm ?? _inicioDaLeituraEm;
-    if (_leituras == null || referencia == null) return;
+    if (_leituras == null || referencia == null || _emSegundoPlano) return;
     if (agora.difference(referencia) < configuracao.watchdog) return;
     _ultimaLeituraEm = agora;
     LocationService.reiniciar(PerfilLocalizacao.ronda);
   }
+
+  static bool get _emSegundoPlano => switch (WidgetsBinding.instance.lifecycleState) {
+        AppLifecycleState.paused || AppLifecycleState.hidden || AppLifecycleState.detached => true,
+        _ => false,
+      };
 
   void _mandarSinalDeVida(DateTime agora) {
     final ultima = _filtro.ultimaAceita;

@@ -81,6 +81,12 @@ void main() {
       expect(c.distanceFilter, 50);
     });
 
+    test('consumidor no Android não sobe serviço em primeiro plano nem notificação', () {
+      final c = configuracaoPara(PerfilLocalizacao.consumidor, TargetPlatform.android);
+
+      expect(c, isNot(isA<AndroidSettings>()));
+    });
+
     test('ronda no Android usa GPS, filtro de 20 m e leitura a cada 5 s', () {
       final c = configuracaoPara(PerfilLocalizacao.ronda, TargetPlatform.android);
 
@@ -90,14 +96,25 @@ void main() {
       expect((c as AndroidSettings).intervalDuration, const Duration(seconds: 5));
     });
 
-    test('ronda no iOS não pausa sozinha nem pede segundo plano antes da hora', () {
+    test('ronda no Android segue com a tela bloqueada, com notificação fixa e CPU acordada', () {
+      final c = configuracaoPara(PerfilLocalizacao.ronda, TargetPlatform.android) as AndroidSettings;
+      final notificacao = c.foregroundNotificationConfig;
+
+      expect(notificacao?.notificationTitle, 'MapFood — loja aberta');
+      expect(notificacao?.notificationIcon.name, 'ic_stat_ronda');
+      expect(notificacao?.setOngoing, isTrue);
+      expect(notificacao?.enableWakeLock, isTrue);
+    });
+
+    test('ronda no iOS não pausa sozinha e segue em segundo plano com o indicador azul', () {
       final c = configuracaoPara(PerfilLocalizacao.ronda, TargetPlatform.iOS) as AppleSettings;
 
       expect(c.accuracy, LocationAccuracy.high);
       expect(c.distanceFilter, 20);
       expect(c.activityType, ActivityType.otherNavigation);
       expect(c.pauseLocationUpdatesAutomatically, isFalse);
-      expect(c.allowBackgroundLocationUpdates, isFalse);
+      expect(c.allowBackgroundLocationUpdates, isTrue);
+      expect(c.showBackgroundLocationIndicator, isTrue);
     });
   });
 

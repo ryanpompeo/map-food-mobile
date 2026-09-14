@@ -50,6 +50,10 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Precisamos acessar a câmera para você tirar uma foto de perfil ou da sua loja.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Usamos sua localização para mostrar comércios próximos de você.</string>
+	<string>Usamos sua localização para mostrar comércios próximos de você e, se você for comerciante, mostrar sua loja no mapa enquanto ela estiver aberta.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

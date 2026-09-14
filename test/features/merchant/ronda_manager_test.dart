@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/location/fonte_posicao.dart';
@@ -208,6 +209,20 @@ void main() {
       ronda.verificarSaude();
 
       expect(fonte.pedidos, hasLength(2));
+    });
+
+    test('com o app em segundo plano, o watchdog não religa o GPS, mas o heartbeat segue', () async {
+      final binding = TestWidgetsFlutterBinding.instance;
+      ronda.acompanhar(_loja(7), posicaoInicial: abertura);
+      await aguardarEnvio(7);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      addTearDown(() => binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed));
+
+      agora = agora.add(const Duration(minutes: 5));
+      ronda.verificarSaude();
+      await aguardarAte(() => api.patches.length == 2);
+
+      expect(fonte.pedidos, hasLength(1));
     });
 
     test('GPS desligado no meio da ronda muda a fase, e religá-lo retoma a leitura', () async {
