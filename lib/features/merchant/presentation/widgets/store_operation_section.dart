@@ -4,6 +4,7 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
+import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 import 'package:map_food/features/merchant/presentation/controllers/store_ronda_controller.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_status_card.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -67,6 +68,7 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
       listenable: _ronda,
       builder: (context, _) {
         final aberta = _ronda.aberta;
+        final situacao = _ronda.situacao;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +76,7 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
               child: StoreStatusCard(
-                situacao: _ronda.situacao,
+                situacao: situacao,
                 ocupado: _ronda.alternando,
                 ligandoAcompanhamento: _ronda.ligandoAcompanhamento,
                 ultimaPosicaoEm: _ronda.ultimaPosicaoEm,
@@ -95,9 +97,7 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
                   Text('Onde você aparece', style: AppText.h2(context)),
                   const SizedBox(height: 2),
                   Text(
-                    aberta
-                        ? 'É este o ponto que os clientes veem no mapa'
-                        : 'Último ponto registrado — abra a loja para voltar ao mapa',
+                    _legendaDoMapa(situacao),
                     style: AppText.secondary(context).copyWith(height: 1.4),
                   ),
                 ],
@@ -133,16 +133,25 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
                 ),
               ),
             ),
-            const SizedBox(height: Spacing.base),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-              child: _DicaRonda(aberta: aberta),
-            ),
+            if (situacao != SituacaoLoja.suspensa) ...[
+              const SizedBox(height: Spacing.base),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
+                child: _DicaRonda(aberta: aberta),
+              ),
+            ],
           ],
         );
       },
     );
   }
+
+  static String _legendaDoMapa(SituacaoLoja situacao) => switch (situacao) {
+        SituacaoLoja.suspensa =>
+          'Último ponto registrado — enquanto a loja estiver suspensa, ela não aparece no mapa',
+        SituacaoLoja.fechada => 'Último ponto registrado — abra a loja para voltar ao mapa',
+        _ => 'É este o ponto que os clientes veem no mapa',
+      };
 }
 
 class _DicaRonda extends StatelessWidget {
@@ -172,8 +181,8 @@ class _DicaRonda extends StatelessWidget {
           Expanded(
             child: Text(
               aberta
-                  ? 'Com a loja aberta e o app em primeiro plano, sua posição no '
-                      'mapa acompanha o seu deslocamento'
+                  ? 'Com a loja aberta, sua posição no mapa acompanha o seu '
+                      'deslocamento, mesmo com a tela bloqueada'
                   : 'Ao abrir a loja, sua posição passa a ser atualizada conforme '
                       'você se movimenta',
               style: AppText.secondary(context).copyWith(height: 1.45),
