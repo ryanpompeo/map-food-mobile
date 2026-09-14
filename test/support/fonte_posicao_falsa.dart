@@ -51,6 +51,11 @@ class FontePosicaoFalsa implements FontePosicao {
   @override
   Future<Position> posicaoAtual(LocationSettings configuracao) async => posicaoAtualDevolvida;
 
+  Position? ultimaConhecidaDevolvida;
+
+  @override
+  Future<Position?> ultimaConhecida() async => ultimaConhecidaDevolvida;
+
   Future<void> fechar() async {
     await servico.close();
     for (final emissor in emissores) {

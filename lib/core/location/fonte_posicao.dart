@@ -10,6 +10,8 @@ abstract interface class FontePosicao {
   Future<AcessoLocalizacao> verificarAcesso();
 
   Future<Position> posicaoAtual(LocationSettings configuracao);
+
+  Future<Position?> ultimaConhecida();
 }
 
 class FontePosicaoGeolocator implements FontePosicao {
@@ -39,6 +41,15 @@ class FontePosicaoGeolocator implements FontePosicao {
   @override
   Future<Position> posicaoAtual(LocationSettings configuracao) =>
       Geolocator.getCurrentPosition(locationSettings: configuracao).timeout(_limite);
+
+  @override
+  Future<Position?> ultimaConhecida() async {
+    try {
+      return await Geolocator.getLastKnownPosition().timeout(_limite);
+    } catch (_) {
+      return null;
+    }
+  }
 
   static Future<LocationPermission> _permissao() async {
     final atual = await Geolocator.checkPermission().timeout(_limite);

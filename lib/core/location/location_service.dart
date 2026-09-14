@@ -46,6 +46,8 @@ class LocationService {
   static Future<Position> posicaoAtual(PerfilLocalizacao perfil) =>
       _fonte.posicaoAtual(configuracaoPara(perfil, defaultTargetPlatform));
 
+  static Future<Position?> ultimaConhecida() => _fonte.ultimaConhecida();
+
   static _CanalDePosicao _canalDe(PerfilLocalizacao perfil) => _canais.putIfAbsent(
         perfil,
         () => _CanalDePosicao(configuracaoPara(perfil, defaultTargetPlatform), _fonte, _esperas),
