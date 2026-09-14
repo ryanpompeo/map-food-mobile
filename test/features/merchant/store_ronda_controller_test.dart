@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/session/session_store.dart';
@@ -6,6 +7,7 @@ import 'package:map_food/features/auth/data/models/auth_response.dart';
 import 'package:map_food/features/merchant/presentation/controllers/configuracao_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
+import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 import 'package:map_food/features/merchant/presentation/controllers/store_ronda_controller.dart';
 import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -43,12 +45,17 @@ void main() {
   late RondaManager ronda;
   final criados = <StoreRondaController>[];
 
-  StoreRondaController tela(StoreDto loja, {void Function(StoreDto)? aoAtualizar}) {
+  StoreRondaController tela(
+    StoreDto loja, {
+    void Function(StoreDto)? aoAtualizar,
+    DateTime Function()? agora,
+  }) {
     final controller = StoreRondaController(
       store: loja,
       onStoreUpdated: aoAtualizar,
       storeService: api.servico,
       ronda: ronda,
+      agora: agora,
     );
     criados.add(controller);
     return controller;
@@ -98,9 +105,78 @@ void main() {
 
     final controller = tela(_loja());
 
-    expect(controller.rastreioAtivo, isTrue);
+    expect(controller.situacao, SituacaoLoja.transmitindo);
     expect(controller.ultimaPosicaoEm, isNotNull);
     expect(controller.precisaoMetros, 8);
+  });
+
+  test('loja aberta sem ronda é fixa e não finge que o GPS caiu', () {
+    final controller = tela(_loja());
+
+    expect(controller.situacao, SituacaoLoja.fixa);
+    expect(controller.avisoPosicao, isNull);
+  });
+
+  test('loja suspensa tem situação própria, não a de fechada', () {
+    expect(tela(_loja(status: 'SUSPENSA')).situacao, SituacaoLoja.suspensa);
+  });
+
+  test('acompanhar a posição de uma loja fixa liga a ronda sem mexer no status', () async {
+    final controller = tela(_loja());
+
+    final erro = await controller.acompanharPosicao();
+    await aguardarAte(() => api.patches.isNotEmpty);
+
+    expect(erro, isNull);
+    expect(ronda.acompanha(7), isTrue);
+    expect(api.patches, ['/lojas/7/posicao']);
+    expect(api.doMetodo('PUT'), isEmpty);
+    expect(controller.situacao, SituacaoLoja.transmitindo);
+  });
+
+  test('acompanhar sem GPS explica o motivo e não liga a ronda', () async {
+    fonte.acesso = AcessoLocalizacao.negado;
+
+    final erro = await tela(_loja()).acompanharPosicao();
+
+    expect(erro, contains('acompanhar sua posição'));
+    expect(ronda.acompanha(7), isFalse);
+    expect(api.chamadas, isEmpty);
+  });
+
+  test('GPS desligado depois de enviar vira sem sinal, com o prazo do fechamento automático',
+      () async {
+    await rondaEmAndamento();
+    final envio = ronda.estadoDe(7).value.ultimoEnvioEm!;
+    final controller = tela(_loja(), agora: () => envio.add(const Duration(minutes: 4)));
+
+    fonte.atual.addError(const LocationServiceDisabledException());
+    await aguardarAte(() => controller.situacao == SituacaoLoja.semSinal);
+
+    expect(controller.semSinalHa, const Duration(minutes: 4));
+    expect(controller.fechaEm, const Duration(minutes: 11));
+    expect(controller.avisoPosicao, contains('GPS desligado'));
+  });
+
+  test('passado o limite de 15 min, o prazo para em zero', () async {
+    await rondaEmAndamento();
+    final envio = ronda.estadoDe(7).value.ultimoEnvioEm!;
+    final controller = tela(_loja(), agora: () => envio.add(const Duration(minutes: 20)));
+
+    fonte.atual.addError(const LocationServiceDisabledException());
+    await aguardarAte(() => controller.situacao == SituacaoLoja.semSinal);
+
+    expect(controller.fechaEm, Duration.zero);
+  });
+
+  test('transmitindo normalmente não tem prazo de fechamento', () async {
+    await rondaEmAndamento();
+    final envio = ronda.estadoDe(7).value.ultimoEnvioEm!;
+
+    final controller = tela(_loja(), agora: () => envio.add(const Duration(minutes: 4)));
+
+    expect(controller.situacao, SituacaoLoja.transmitindo);
+    expect(controller.fechaEm, isNull);
   });
 
   test('abrir loja suspensa é recusado antes de pedir GPS ou chamar a API', () async {
@@ -176,5 +252,7 @@ void main() {
 
     ronda.acompanhar(_loja(), posicaoInicial: posicaoDeTeste());
     await aguardarAte(() => controller.avisoPosicao?.contains('não está subindo') ?? false);
+
+    expect(controller.situacao, SituacaoLoja.semSinal);
   });
 }

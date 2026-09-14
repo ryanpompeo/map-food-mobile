@@ -48,8 +48,12 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
     super.dispose();
   }
 
-  Future<void> _alternar() async {
-    final erro = await _ronda.alternarStatus();
+  Future<void> _alternar() => _avisarSeFalhar(_ronda.alternarStatus());
+
+  Future<void> _acompanhar() => _avisarSeFalhar(_ronda.acompanharPosicao());
+
+  Future<void> _avisarSeFalhar(Future<String?> acao) async {
+    final erro = await acao;
     if (erro != null && mounted) AppToast.error(context, erro);
   }
 
@@ -70,13 +74,16 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
               child: StoreStatusCard(
-                aberta: aberta,
-                rastreioAtivo: _ronda.rastreioAtivo,
+                situacao: _ronda.situacao,
                 ocupado: _ronda.alternando,
+                ligandoAcompanhamento: _ronda.ligandoAcompanhamento,
                 ultimaPosicaoEm: _ronda.ultimaPosicaoEm,
                 precisaoMetros: _ronda.precisaoMetros,
+                semSinalHa: _ronda.semSinalHa,
+                fechaEm: _ronda.fechaEm,
                 avisoPosicao: _ronda.avisoPosicao,
                 onToggle: _alternar,
+                onAcompanhar: _acompanhar,
               ),
             ),
             const SizedBox(height: Spacing.xl),

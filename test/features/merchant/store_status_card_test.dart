@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/ui/theme/app_theme.dart';
+import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_status_card.dart';
 
 void main() {
@@ -10,28 +12,38 @@ void main() {
       );
 
   StoreStatusCard card({
-    required bool aberta,
-    bool rastreioAtivo = false,
+    required SituacaoLoja situacao,
     bool ocupado = false,
+    bool ligandoAcompanhamento = false,
     DateTime? ultimaPosicaoEm,
     double? precisaoMetros,
+    Duration? semSinalHa,
+    Duration? fechaEm,
     String? avisoPosicao,
     VoidCallback? onToggle,
+    VoidCallback? onAcompanhar,
   }) =>
       StoreStatusCard(
-        aberta: aberta,
-        rastreioAtivo: rastreioAtivo,
+        situacao: situacao,
         ocupado: ocupado,
+        ligandoAcompanhamento: ligandoAcompanhamento,
         ultimaPosicaoEm: ultimaPosicaoEm,
         precisaoMetros: precisaoMetros,
+        semSinalHa: semSinalHa,
+        fechaEm: fechaEm,
         avisoPosicao: avisoPosicao,
         onToggle: onToggle ?? () {},
+        onAcompanhar: onAcompanhar ?? () {},
       );
+
+  Future<void> mostrar(WidgetTester tester, StoreStatusCard cartao) async {
+    await tester.pumpWidget(montar(cartao));
+    await tester.pump();
+  }
 
   group('estado fechado', () {
     testWidgets('anuncia que não aparece no mapa e oferece abrir', (tester) async {
-      await tester.pumpWidget(montar(card(aberta: false)));
-      await tester.pump();
+      await mostrar(tester, card(situacao: SituacaoLoja.fechada));
 
       expect(find.text('Loja fechada'), findsOneWidget);
       expect(find.text('Abrir loja'), findsOneWidget);
@@ -39,80 +51,154 @@ void main() {
     });
 
     testWidgets('não mostra selo ao vivo nem dados da ronda', (tester) async {
-      await tester.pumpWidget(montar(card(aberta: false, rastreioAtivo: true)));
-      await tester.pump();
+      await mostrar(tester, card(situacao: SituacaoLoja.fechada, ultimaPosicaoEm: DateTime.now()));
 
       expect(find.text('AO VIVO'), findsNothing);
       expect(find.text('Posição enviada'), findsNothing);
+      expect(find.text('Acompanhar minha posição'), findsNothing);
     });
   });
 
-  group('estado aberto', () {
-    testWidgets('oferece fechar e mostra o selo ao vivo com a ronda ligada', (tester) async {
-      await tester.pumpWidget(montar(card(aberta: true, rastreioAtivo: true)));
-      await tester.pump();
+  group('estado suspenso', () {
+    testWidgets('explica a suspensão e não oferece nenhum botão', (tester) async {
+      await mostrar(tester, card(situacao: SituacaoLoja.suspensa));
+
+      expect(find.text('Loja suspensa'), findsOneWidget);
+      expect(find.textContaining('moderação'), findsOneWidget);
+      expect(find.byType(AppButton), findsNothing);
+    });
+  });
+
+  group('transmitindo', () {
+    testWidgets('oferece fechar e mostra o selo ao vivo', (tester) async {
+      await mostrar(tester, card(situacao: SituacaoLoja.transmitindo));
 
       expect(find.text('Loja aberta'), findsOneWidget);
       expect(find.text('Fechar loja'), findsOneWidget);
       expect(find.text('AO VIVO'), findsOneWidget);
+      expect(find.text('Acompanhar minha posição'), findsNothing);
     });
 
     testWidgets('mostra precisão e o tempo da última posição', (tester) async {
-      await tester.pumpWidget(montar(card(
-        aberta: true,
-        rastreioAtivo: true,
+      await mostrar(tester, card(
+        situacao: SituacaoLoja.transmitindo,
         ultimaPosicaoEm: DateTime.now(),
         precisaoMetros: 12.4,
-      )));
-      await tester.pump();
+      ));
 
       expect(find.text('agora'), findsOneWidget);
       expect(find.text('±12 m'), findsOneWidget);
     });
 
     testWidgets('posição de minutos atrás é datada, não "agora"', (tester) async {
-      await tester.pumpWidget(montar(card(
-        aberta: true,
-        rastreioAtivo: true,
+      await mostrar(tester, card(
+        situacao: SituacaoLoja.transmitindo,
         ultimaPosicaoEm: DateTime.now().subtract(const Duration(minutes: 3)),
-      )));
-      await tester.pump();
+      ));
 
       expect(find.text('há 3 min'), findsOneWidget);
       expect(find.text('agora'), findsNothing);
     });
 
     testWidgets('sem precisão conhecida mostra travessão, não zero', (tester) async {
-      await tester.pumpWidget(montar(card(aberta: true, rastreioAtivo: true)));
-      await tester.pump();
+      await mostrar(tester, card(situacao: SituacaoLoja.transmitindo));
 
       expect(find.text('—'), findsOneWidget);
     });
+  });
 
-    testWidgets('aberta com GPS desligado avisa que a posição está parada', (tester) async {
-      await tester.pumpWidget(montar(card(aberta: true, rastreioAtivo: false)));
+  group('loja fixa', () {
+    testWidgets('diz que a posição é a do cadastro e oferece acompanhar', (tester) async {
+      await mostrar(tester, card(situacao: SituacaoLoja.fixa));
+
+      expect(find.text('Loja aberta'), findsOneWidget);
+      expect(find.textContaining('Posição fixa'), findsOneWidget);
+      expect(find.text('Acompanhar minha posição'), findsOneWidget);
+      expect(find.text('Fechar loja'), findsOneWidget);
+      expect(find.text('AO VIVO'), findsNothing);
+    });
+
+    testWidgets('tocar em acompanhar dispara a ação, não o toggle', (tester) async {
+      var acompanhar = 0;
+      var toggle = 0;
+      await mostrar(tester, card(
+        situacao: SituacaoLoja.fixa,
+        onAcompanhar: () => acompanhar++,
+        onToggle: () => toggle++,
+      ));
+
+      await tester.tap(find.text('Acompanhar minha posição'));
       await tester.pump();
 
-      expect(find.textContaining('GPS desligado'), findsOneWidget);
-      expect(find.text('AO VIVO'), findsNothing);
+      expect(acompanhar, 1);
+      expect(toggle, 0);
+    });
+
+    testWidgets('enquanto liga o acompanhamento, fechar a loja não aceita toque', (tester) async {
+      var toggle = 0;
+      await mostrar(tester, card(
+        situacao: SituacaoLoja.fixa,
+        ligandoAcompanhamento: true,
+        onToggle: () => toggle++,
+      ));
+
+      await tester.tap(find.text('Fechar loja'));
+      await tester.pump();
+
+      expect(toggle, 0);
     });
   });
 
+  group('sem sinal', () {
+    testWidgets('diz há quanto tempo está sem sinal e quando a loja fecha sozinha', (tester) async {
+      await mostrar(tester, card(
+        situacao: SituacaoLoja.semSinal,
+        semSinalHa: const Duration(minutes: 4, seconds: 10),
+        fechaEm: const Duration(minutes: 10, seconds: 50),
+      ));
+
+      expect(
+        find.text('Sem sinal há 4 min — se não voltar, a loja fecha sozinha em 11 min'),
+        findsOneWidget,
+      );
+      expect(find.text('AO VIVO'), findsNothing);
+    });
+
+    testWidgets('prazo vencido não mostra minutos negativos', (tester) async {
+      await mostrar(tester, card(
+        situacao: SituacaoLoja.semSinal,
+        semSinalHa: const Duration(minutes: 16),
+        fechaEm: Duration.zero,
+      ));
+
+      expect(find.textContaining('a loja fecha sozinha a qualquer momento'), findsOneWidget);
+    });
+
+    testWidgets('sem nenhum envio ainda, não promete prazo', (tester) async {
+      await mostrar(tester, card(situacao: SituacaoLoja.semSinal));
+
+      expect(find.text('Sem sinal — os clientes veem o último ponto enviado'), findsOneWidget);
+    });
+  });
+
+  testWidgets('iniciando mostra que está obtendo a posição', (tester) async {
+    await mostrar(tester, card(situacao: SituacaoLoja.iniciando));
+
+    expect(find.text('Obtendo sua posição…'), findsOneWidget);
+  });
+
   testWidgets('falha de envio de posição fica visível no card', (tester) async {
-    await tester.pumpWidget(montar(card(
-      aberta: true,
-      rastreioAtivo: true,
+    await mostrar(tester, card(
+      situacao: SituacaoLoja.transmitindo,
       avisoPosicao: 'Sua posição não está subindo.',
-    )));
-    await tester.pump();
+    ));
 
     expect(find.text('Sua posição não está subindo.'), findsOneWidget);
   });
 
   testWidgets('tocar no botão dispara o toggle', (tester) async {
     var toques = 0;
-    await tester.pumpWidget(montar(card(aberta: false, onToggle: () => toques++)));
-    await tester.pump();
+    await mostrar(tester, card(situacao: SituacaoLoja.fechada, onToggle: () => toques++));
 
     await tester.tap(find.text('Abrir loja'));
     await tester.pump();
@@ -122,12 +208,11 @@ void main() {
 
   testWidgets('durante a chamada o botão não aceita um segundo toque', (tester) async {
     var toques = 0;
-    await tester.pumpWidget(montar(card(
-      aberta: false,
+    await mostrar(tester, card(
+      situacao: SituacaoLoja.fechada,
       ocupado: true,
       onToggle: () => toques++,
-    )));
-    await tester.pump();
+    ));
 
     await tester.tap(find.byType(StoreStatusCard), warnIfMissed: false);
     await tester.pump();

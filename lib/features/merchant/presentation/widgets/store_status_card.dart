@@ -6,36 +6,48 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 
 class StoreStatusCard extends StatelessWidget {
-  final bool aberta;
-
-  final bool rastreioAtivo;
+  final SituacaoLoja situacao;
 
   final bool ocupado;
+
+  final bool ligandoAcompanhamento;
 
   final DateTime? ultimaPosicaoEm;
 
   final double? precisaoMetros;
 
+  final Duration? semSinalHa;
+
+  final Duration? fechaEm;
+
   final String? avisoPosicao;
 
   final VoidCallback? onToggle;
 
+  final VoidCallback? onAcompanhar;
+
   const StoreStatusCard({
     super.key,
-    required this.aberta,
-    required this.rastreioAtivo,
+    required this.situacao,
     required this.ocupado,
     required this.onToggle,
+    this.ligandoAcompanhamento = false,
     this.ultimaPosicaoEm,
     this.precisaoMetros,
+    this.semSinalHa,
+    this.fechaEm,
     this.avisoPosicao,
+    this.onAcompanhar,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.mapColors;
+    final aberta = situacao.aberta;
+    final (icone, titulo, subtitulo) = _cabecalho(situacao);
 
     final fundo = aberta ? colors.selectedSurface : colors.surface;
     final conteudo = aberta ? colors.onSelectedSurface : colors.textPrimary;
@@ -55,25 +67,16 @@ class StoreStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                aberta ? AppIcons.storefront : AppIcons.eyeSlash,
-                size: AppIconSize.lg,
-                color: conteudo,
-              ),
+              Icon(icone, size: AppIconSize.lg, color: conteudo),
               const Spacer(),
-              if (aberta && rastreioAtivo) const _LiveBadge(),
+              if (situacao == SituacaoLoja.transmitindo) const _LiveBadge(),
             ],
           ),
           const SizedBox(height: Spacing.base),
-          Text(
-            aberta ? 'Loja aberta' : 'Loja fechada',
-            style: AppText.h1(context).copyWith(color: conteudo),
-          ),
+          Text(titulo, style: AppText.h1(context).copyWith(color: conteudo)),
           const SizedBox(height: Spacing.xs),
           Text(
-            aberta
-                ? 'Os clientes estão vendo você no mapa agora'
-                : 'Você não aparece no mapa enquanto estiver fechada',
+            subtitulo,
             style: AppText.secondary(context).copyWith(color: apoio, height: 1.4),
           ),
 
@@ -82,9 +85,11 @@ class StoreStatusCard extends StatelessWidget {
             Divider(color: conteudo.withValues(alpha: 0.12), height: 1),
             const SizedBox(height: Spacing.md),
             _RondaInfo(
-              rastreioAtivo: rastreioAtivo,
+              situacao: situacao,
               ultimaPosicaoEm: ultimaPosicaoEm,
               precisaoMetros: precisaoMetros,
+              semSinalHa: semSinalHa,
+              fechaEm: fechaEm,
               corConteudo: conteudo,
               corApoio: apoio,
             ),
@@ -95,18 +100,48 @@ class StoreStatusCard extends StatelessWidget {
             _AvisoPosicao(mensagem: avisoPosicao!, sobreSuperficieAtiva: aberta),
           ],
 
-          const SizedBox(height: Spacing.lg),
-          AppButton(
-            label: aberta ? 'Fechar loja' : 'Abrir loja',
-            icon: aberta ? AppIcons.eyeSlash : AppIcons.storefront,
-            onPressed: onToggle,
-            loading: ocupado,
-            variant: aberta ? AppButtonVariant.onBrand : AppButtonVariant.primary,
-          ),
+          if (situacao == SituacaoLoja.fixa) ...[
+            const SizedBox(height: Spacing.lg),
+            AppButton(
+              label: 'Acompanhar minha posição',
+              icon: AppIcons.navigationArrow,
+              onPressed: ocupado ? null : onAcompanhar,
+              loading: ligandoAcompanhamento,
+            ),
+          ],
+
+          if (situacao != SituacaoLoja.suspensa) ...[
+            SizedBox(height: situacao == SituacaoLoja.fixa ? Spacing.sm : Spacing.lg),
+            AppButton(
+              label: aberta ? 'Fechar loja' : 'Abrir loja',
+              icon: aberta ? AppIcons.eyeSlash : AppIcons.storefront,
+              onPressed: ligandoAcompanhamento ? null : onToggle,
+              loading: ocupado,
+              variant: aberta ? AppButtonVariant.onBrand : AppButtonVariant.primary,
+            ),
+          ],
         ],
       ),
     );
   }
+
+  static (IconData, String, String) _cabecalho(SituacaoLoja situacao) => switch (situacao) {
+        SituacaoLoja.suspensa => (
+            AppIcons.lock,
+            'Loja suspensa',
+            'A moderação suspendeu sua loja — fale com o suporte pra entender o motivo',
+          ),
+        SituacaoLoja.fechada => (
+            AppIcons.eyeSlash,
+            'Loja fechada',
+            'Você não aparece no mapa enquanto estiver fechada',
+          ),
+        _ => (
+            AppIcons.storefront,
+            'Loja aberta',
+            'Os clientes estão vendo você no mapa agora',
+          ),
+      };
 }
 
 class _LiveBadge extends StatefulWidget {
@@ -169,37 +204,65 @@ class _LiveBadgeState extends State<_LiveBadge> with SingleTickerProviderStateMi
 }
 
 class _RondaInfo extends StatelessWidget {
-  final bool rastreioAtivo;
+  final SituacaoLoja situacao;
   final DateTime? ultimaPosicaoEm;
   final double? precisaoMetros;
+  final Duration? semSinalHa;
+  final Duration? fechaEm;
   final Color corConteudo;
   final Color corApoio;
 
   const _RondaInfo({
-    required this.rastreioAtivo,
+    required this.situacao,
     required this.ultimaPosicaoEm,
     required this.precisaoMetros,
+    required this.semSinalHa,
+    required this.fechaEm,
     required this.corConteudo,
     required this.corApoio,
   });
 
   @override
-  Widget build(BuildContext context) {
-    if (!rastreioAtivo) {
-      return Row(
-        children: [
-          Icon(AppIcons.warningCircle, size: AppIconSize.sm, color: corApoio),
-          const SizedBox(width: Spacing.sm),
-          Expanded(
-            child: Text(
-              'GPS desligado — sua loja fica parada no último ponto conhecido',
-              style: AppText.caption(context).copyWith(color: corApoio, height: 1.4),
-            ),
-          ),
-        ],
-      );
-    }
+  Widget build(BuildContext context) => switch (situacao) {
+        SituacaoLoja.transmitindo => _metricas(),
+        SituacaoLoja.semSinal => _linha(context, AppIcons.wifiSlash, _textoSemSinal()),
+        SituacaoLoja.iniciando => _linha(context, AppIcons.gpsFix, 'Obtendo sua posição…'),
+        _ => _linha(context, AppIcons.mapPin, 'Posição fixa — os clientes veem o ponto do cadastro'),
+      };
 
+  Widget _linha(BuildContext context, IconData icone, String texto) {
+    return Row(
+      children: [
+        Icon(icone, size: AppIconSize.sm, color: corApoio),
+        const SizedBox(width: Spacing.sm),
+        Expanded(
+          child: Text(
+            texto,
+            style: AppText.caption(context).copyWith(color: corApoio, height: 1.4),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _textoSemSinal() {
+    final desde = semSinalHa;
+    final restante = fechaEm;
+    if (desde == null || restante == null) {
+      return 'Sem sinal — os clientes veem o último ponto enviado';
+    }
+    return 'Sem sinal ${_ha(desde)} — se não voltar, a loja fecha sozinha ${_prazo(restante)}';
+  }
+
+  static String _ha(Duration desde) =>
+      desde.inMinutes < 1 ? 'há menos de 1 min' : 'há ${desde.inMinutes} min';
+
+  static String _prazo(Duration restante) {
+    if (restante == Duration.zero) return 'a qualquer momento';
+    return 'em ${(restante.inSeconds / 60).ceil()} min';
+  }
+
+  Widget _metricas() {
     return Row(
       children: [
         Expanded(

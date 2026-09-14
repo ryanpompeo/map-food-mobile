@@ -14,6 +14,7 @@ class ConfiguracaoRonda {
       Duration(seconds: 30),
     ],
     this.falhasAteAvisar = 3,
+    this.limiteSemSinal = const Duration(minutes: 15),
   });
 
   final double precisaoMaximaMetros;
@@ -24,4 +25,5 @@ class ConfiguracaoRonda {
   final Duration intervaloDeVerificacao;
   final List<Duration> esperasDeReenvio;
   final int falhasAteAvisar;
+  final Duration limiteSemSinal;
 }
