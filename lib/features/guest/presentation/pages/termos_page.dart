@@ -14,7 +14,7 @@ class TermosPage extends StatelessWidget {
   final String _termosMarkdown = '''
 # Termos de Uso e Política de Privacidade – MapFood
 
-**Última atualização:** 30 de agosto de 2026
+**Última atualização:** 14 de setembro de 2026
 
 Bem-vindo(a) ao **MapFood**! Ao acessar e utilizar nosso aplicativo (seja como Consumidor ou Comerciante), você concorda expressamente com os presentes Termos de Uso e Política de Privacidade. Caso não concorde com alguma das regras aqui estabelecidas, pedimos que não utilize o aplicativo.
 
@@ -59,7 +59,7 @@ Tratamos seus dados com base na execução do contrato firmado ao criar sua cont
 **3. Uso de Geolocalização (GPS)**
 A base do MapFood é a localização. Coletamos seus dados de GPS sob as seguintes regras rígidas:
 * **Para Consumidores:** A localização só é rastreada **em primeiro plano** (quando o aplicativo está aberto e em uso). O aplicativo atualiza sua posição conforme você se move para recalcular e exibir os comerciantes mais próximos em tempo real. Sua posição é usada **apenas no seu aparelho** para desenhar o mapa e calcular distâncias — ela não é enviada nem armazenada nos nossos servidores.
-* **Para Comerciantes ("Em Ronda"):** Enquanto o interruptor de "Loja Aberta" estiver ativado e o aplicativo estiver aberto, sua posição é atualizada conforme você se movimenta, para que os consumidores encontrem sua loja no mapa. **Garantia de Privacidade:** Não armazenamos histórico de trajeto — apenas a posição mais recente da loja é mantida. Ao alterar o status para "Fechado", a loja deixa de ser exibida no mapa e sua posição para de ser atualizada.
+* **Para Comerciantes ("Em Ronda"):** Enquanto a loja estiver aberta, sua posição é atualizada conforme você se movimenta — inclusive com a tela bloqueada ou o aplicativo em segundo plano —, para que os consumidores encontrem sua loja no mapa. Nesse período, o Android mostra a notificação "MapFood — loja aberta" (se as notificações estiverem permitidas) e o iPhone mostra o indicador azul de localização. Mesmo parado, o aplicativo envia um sinal a cada 5 minutos; se a loja ficar 15 minutos sem sinal, ela é fechada automaticamente. **Garantia de Privacidade:** Não armazenamos histórico de trajeto — apenas a posição mais recente da loja e o horário desse último sinal são mantidos. Ao alterar o status para "Fechado", a loja deixa de ser exibida no mapa e sua posição para de ser atualizada.
 
 **4. O que é Público e o que é Restrito**
 O MapFood **não vende, não aluga e não compartilha** seus dados pessoais com terceiros para fins publicitários.
