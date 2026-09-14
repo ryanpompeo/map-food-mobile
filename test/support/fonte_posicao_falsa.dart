@@ -36,6 +36,9 @@ class FontePosicaoFalsa implements FontePosicao {
 
   @override
   Stream<Position> posicoes(LocationSettings configuracao) {
+    if (emissores.any((emissor) => emissor.hasListener)) {
+      throw StateError('o plugin de GPS mantém um único stream nativo por app');
+    }
     pedidos.add(configuracao);
     final emissor = StreamController<Position>();
     emissores.add(emissor);

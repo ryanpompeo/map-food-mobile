@@ -16,6 +16,9 @@ class _FonteFalsa implements FontePosicao {
 
   @override
   Stream<Position> posicoes(LocationSettings configuracao) {
+    if (emissores.any((emissor) => emissor.hasListener)) {
+      throw StateError('o plugin de GPS mantém um único stream nativo por app');
+    }
     pedidos.add(configuracao);
     final emissor = StreamController<Position>();
     emissores.add(emissor);
@@ -108,7 +111,7 @@ void main() {
       expect(fonte.pedidos, hasLength(1));
     });
 
-    test('perfis diferentes abrem leituras separadas, cada uma com a sua precisão', () async {
+    test('ronda entrando com o consumidor ativo troca a leitura única para alta precisão', () async {
       final a = LocationService.streamDe(PerfilLocalizacao.consumidor).listen((_) {});
       final b = LocationService.streamDe(PerfilLocalizacao.ronda).listen((_) {});
       addTearDown(a.cancel);
@@ -116,6 +119,46 @@ void main() {
 
       expect(fonte.pedidos.map((c) => c.accuracy),
           [LocationAccuracy.medium, LocationAccuracy.high]);
+      expect(fonte.emissores.where((e) => e.hasListener), hasLength(1));
+      expect(fonte.emissores.last.hasListener, isTrue);
+    });
+
+    test('ronda saindo devolve a leitura ao perfil do consumidor', () async {
+      final a = LocationService.streamDe(PerfilLocalizacao.consumidor).listen((_) {});
+      final b = LocationService.streamDe(PerfilLocalizacao.ronda).listen((_) {});
+      addTearDown(a.cancel);
+
+      await b.cancel();
+
+      expect(fonte.pedidos.last.accuracy, LocationAccuracy.medium);
+      expect(fonte.emissores.where((e) => e.hasListener), hasLength(1));
+    });
+
+    test('consumidor chegando com a ronda ativa não abre outra leitura', () async {
+      final a = LocationService.streamDe(PerfilLocalizacao.ronda).listen((_) {});
+      final b = LocationService.streamDe(PerfilLocalizacao.consumidor).listen((_) {});
+      addTearDown(a.cancel);
+      addTearDown(b.cancel);
+
+      expect(fonte.pedidos.single.accuracy, LocationAccuracy.high);
+    });
+
+    test('com a ronda ligada, o consumidor só recebe deslocamentos de 50 m ou mais', () async {
+      final doConsumidor = <double>[];
+      final daRonda = <double>[];
+      final a = LocationService.streamDe(PerfilLocalizacao.consumidor)
+          .listen((p) => doConsumidor.add(p.latitude));
+      final b = LocationService.streamDe(PerfilLocalizacao.ronda).listen((p) => daRonda.add(p.latitude));
+      addTearDown(a.cancel);
+      addTearDown(b.cancel);
+
+      for (final latitude in [-22.90000, -22.90025, -22.90050, -22.90075]) {
+        fonte.atual.add(_posicao(latitude));
+      }
+      await _escoarEventos();
+
+      expect(daRonda, [-22.90000, -22.90025, -22.90050, -22.90075]);
+      expect(doConsumidor, [-22.90000, -22.90050]);
     });
 
     test('positionStream continua sendo o perfil do consumidor', () async {

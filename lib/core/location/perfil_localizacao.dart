@@ -7,6 +7,16 @@ const int distanciaMinimaConsumidorMetros = 50;
 const int distanciaMinimaRondaMetros = 20;
 const Duration intervaloRondaAndroid = Duration(seconds: 5);
 
+const List<PerfilLocalizacao> perfisPorExigencia = [
+  PerfilLocalizacao.ronda,
+  PerfilLocalizacao.consumidor,
+];
+
+int distanciaMinimaDe(PerfilLocalizacao perfil) => switch (perfil) {
+      PerfilLocalizacao.consumidor => distanciaMinimaConsumidorMetros,
+      PerfilLocalizacao.ronda => distanciaMinimaRondaMetros,
+    };
+
 LocationSettings configuracaoPara(PerfilLocalizacao perfil, TargetPlatform plataforma) {
   if (perfil == PerfilLocalizacao.consumidor) {
     return const LocationSettings(
