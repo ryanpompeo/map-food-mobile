@@ -4,8 +4,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+enum ModoCamera { livre, seguindoUsuario, seguindoLoja, enquadrandoRota }
+
 class StoreMapController {
   MapController? _map;
+
+  static const Set<MapEventSource> _gestosDoUsuario = {
+    MapEventSource.dragStart,
+    MapEventSource.onDrag,
+    MapEventSource.multiFingerGestureStart,
+    MapEventSource.onMultiFinger,
+    MapEventSource.flingAnimationController,
+    MapEventSource.cursorKeyboardRotation,
+  };
 
   final ValueNotifier<bool> rotacaoTravada = ValueNotifier(false);
 
@@ -13,8 +24,22 @@ class StoreMapController {
 
   final ValueNotifier<LatLng?> posicaoUsuario = ValueNotifier(null);
 
+  final ValueNotifier<ModoCamera> modo = ValueNotifier(ModoCamera.livre);
+
   void attach(MapController controller) => _map = controller;
   void detach() => _map = null;
+
+  void aoEventoDoMapa(MapEvent evento) {
+    zoom.value = evento.camera.zoom;
+    if (_gestosDoUsuario.contains(evento.source)) modo.value = ModoCamera.livre;
+  }
+
+  void seguirUsuario({required double alturaVisivel}) {
+    final posicao = posicaoUsuario.value;
+    if (posicao == null) return;
+    modo.value = ModoCamera.seguindoUsuario;
+    centralizarNoUsuario(posicao, alturaVisivel: alturaVisivel);
+  }
 
   void alternarTravaDeRotacao() {
     rotacaoTravada.value = !rotacaoTravada.value;
@@ -25,9 +50,12 @@ class StoreMapController {
     rotacaoTravada.dispose();
     zoom.dispose();
     posicaoUsuario.dispose();
+    modo.dispose();
   }
 
   bool get isAttached => _map != null;
+
+  LatLng? get centro => _map?.camera.center;
 
   double get zoomAtual => _map?.camera.zoom ?? zoom.value;
 

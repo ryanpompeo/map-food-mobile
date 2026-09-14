@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_elevation.dart';
@@ -101,13 +100,8 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     setState(() => _categoriasAtivas.add(nome));
   }
 
-  void _centralizarNoUsuario() {
-    final posicao = _mapController.posicaoUsuario.value;
-    if (posicao == null) return;
-    _mapController.centralizarNoUsuario(
-      posicao,
-      alturaVisivel: MediaQuery.sizeOf(context).height,
-    );
+  void _seguirUsuario() {
+    _mapController.seguirUsuario(alturaVisivel: MediaQuery.sizeOf(context).height);
   }
 
   @override
@@ -318,12 +312,13 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
             ),
           ),
           const SizedBox(height: Spacing.sm),
-          ValueListenableBuilder<LatLng?>(
-            valueListenable: _mapController.posicaoUsuario,
-            builder: (context, posicao, _) => MapControlButton(
+          ListenableBuilder(
+            listenable: Listenable.merge([_mapController.posicaoUsuario, _mapController.modo]),
+            builder: (context, _) => MapControlButton(
               icon: AppIcons.gpsFix,
-              tooltip: 'Centralizar na minha posição',
-              onTap: posicao == null ? null : _centralizarNoUsuario,
+              tooltip: 'Recentralizar',
+              isActive: _mapController.modo.value == ModoCamera.seguindoUsuario,
+              onTap: _mapController.posicaoUsuario.value == null ? null : _seguirUsuario,
             ),
           ),
         ],

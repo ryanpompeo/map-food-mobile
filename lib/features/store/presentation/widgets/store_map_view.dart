@@ -74,6 +74,7 @@ class _StoreMapViewState extends State<StoreMapView> {
 
   @override
   void dispose() {
+    widget.userPosition?.removeListener(_aoMoverUsuario);
     _ctrl.rotacaoTravada.removeListener(_onRotacaoExternaMudou);
     _ctrl.detach();
     if (_ctrlProprio) _ctrl.dispose();
@@ -116,7 +117,9 @@ class _StoreMapViewState extends State<StoreMapView> {
     _ctrl = widget.controller ?? StoreMapController();
     _ctrl.attach(_mapController);
     _ctrl.zoom.value = _centroEZoomIniciais().$2;
+    _ctrl.modo.value = _modoPadrao;
     _ctrl.rotacaoTravada.addListener(_onRotacaoExternaMudou);
+    widget.userPosition?.addListener(_aoMoverUsuario);
   }
 
   void _onRotacaoExternaMudou() {
@@ -129,34 +132,103 @@ class _StoreMapViewState extends State<StoreMapView> {
   @override
   void didUpdateWidget(StoreMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    final rota = widget.routePoints;
-    if (rota != null && rota.length >= 2 && oldWidget.routePoints != rota) {
-      _mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(rota),
-          padding: const EdgeInsets.all(48.0),
-        ),
-      );
+    _trocarOuvinteDePosicao(oldWidget.userPosition);
+    if (_rotaNova(oldWidget)) {
+      _aoChegarRota();
       return;
     }
-
-    final novoCentro = _centroRastreado;
-    if (novoCentro == null) return;
-
-    final anterior = _centroRastreadoAnterior;
-    if (anterior == null ||
-        _distance.as(LengthUnit.Meter, anterior, novoCentro) > _limiarRecentralizarMetros) {
-      _centroRastreadoAnterior = novoCentro;
-      _mapController.move(novoCentro, _mapController.camera.zoom);
-    }
+    _seguirAlvo();
   }
 
-  void _centralizarNaMinhaPosicao() {
-    final pos = widget.userPosition?.value;
-    if (pos == null) return;
+  ModoCamera get _modoPadrao {
+    if (_rotaValida(widget.routePoints)) return ModoCamera.enquadrandoRota;
+    if (widget.controller == null && _posicaoDaLojaFocada != null) return ModoCamera.seguindoLoja;
+    return ModoCamera.seguindoUsuario;
+  }
+
+  ModoCamera get _modoDoRecentralizar =>
+      widget.userPosition?.value != null ? ModoCamera.seguindoUsuario : _modoPadrao;
+
+  LatLng? get _posicaoDaLojaFocada {
+    final focada = widget.focusedStore;
+    if (focada == null || !focada.temLocalizacao) return null;
+    return LatLng(focada.latitude!, focada.longitude!);
+  }
+
+  LatLng? get _posicaoInicial {
+    final latitude = widget.initialLatitude;
+    final longitude = widget.initialLongitude;
+    if (latitude == null || longitude == null) return null;
+    return LatLng(latitude, longitude);
+  }
+
+  LatLng? get _alvoDoModo => switch (_ctrl.modo.value) {
+        ModoCamera.seguindoLoja => _posicaoDaLojaFocada,
+        ModoCamera.seguindoUsuario => widget.userPosition?.value ?? _posicaoInicial,
+        _ => null,
+      };
+
+  bool get _temAlvoParaRecentralizar =>
+      widget.userPosition != null ||
+      _posicaoDaLojaFocada != null ||
+      _rotaValida(widget.routePoints);
+
+  static bool _rotaValida(List<LatLng>? rota) => rota != null && rota.length >= 2;
+
+  bool _rotaNova(StoreMapView antigo) =>
+      _rotaValida(widget.routePoints) && antigo.routePoints != widget.routePoints;
+
+  void _trocarOuvinteDePosicao(ValueListenable<LatLng?>? anterior) {
+    if (identical(anterior, widget.userPosition)) return;
+    anterior?.removeListener(_aoMoverUsuario);
+    widget.userPosition?.addListener(_aoMoverUsuario);
+  }
+
+  void _aoChegarRota() {
+    if (_ctrl.modo.value == ModoCamera.livre) return;
+    _ctrl.modo.value = ModoCamera.enquadrandoRota;
+    _enquadrarRota();
+  }
+
+  void _enquadrarRota() {
+    final rota = widget.routePoints;
+    if (!_rotaValida(rota)) return;
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints(rota!),
+        padding: const EdgeInsets.all(48.0),
+      ),
+    );
+  }
+
+  void _aoMoverUsuario() {
+    if (_ctrl.modo.value == ModoCamera.seguindoUsuario) _seguirAlvo();
+  }
+
+  void _seguirAlvo() {
+    final alvo = _alvoDoModo;
+    if (alvo == null || !_afastouDoUltimoAlvo(alvo)) return;
+    _centroRastreadoAnterior = alvo;
+    _mapController.move(alvo, _mapController.camera.zoom);
+  }
+
+  bool _afastouDoUltimoAlvo(LatLng alvo) {
+    final anterior = _centroRastreadoAnterior;
+    return anterior == null ||
+        _distance.as(LengthUnit.Meter, anterior, alvo) > _limiarRecentralizarMetros;
+  }
+
+  void _recentralizar() {
+    _ctrl.modo.value = _modoDoRecentralizar;
+    if (_ctrl.modo.value == ModoCamera.enquadrandoRota) {
+      _enquadrarRota();
+      return;
+    }
+    final alvo = _alvoDoModo;
+    if (alvo == null) return;
+    _centroRastreadoAnterior = alvo;
     final zoomAtual = _mapController.camera.zoom;
-    _mapController.move(pos, zoomAtual < 15.0 ? 16.0 : zoomAtual);
+    _mapController.move(alvo, zoomAtual < 15.0 ? 16.0 : zoomAtual);
   }
 
   void _alternarTravaDeRotacao() => _ctrl.alternarTravaDeRotacao();
@@ -195,8 +267,20 @@ class _StoreMapViewState extends State<StoreMapView> {
     );
   }
 
-  Widget _buildFloatingControls() {
+  Widget _buildBotaoRecentralizar() {
     final userPosition = widget.userPosition;
+    return ListenableBuilder(
+      listenable: Listenable.merge([_ctrl.modo, ?userPosition]),
+      builder: (context, _) => MapControlButton(
+        icon: AppIcons.gpsFix,
+        tooltip: 'Recentralizar',
+        isActive: _ctrl.modo.value == _modoDoRecentralizar,
+        onTap: _recentralizar,
+      ),
+    );
+  }
+
+  Widget _buildFloatingControls() {
     return Positioned(
       right: AppSpacing.md,
       bottom: widget.floatingControlsBottomPadding,
@@ -204,23 +288,10 @@ class _StoreMapViewState extends State<StoreMapView> {
         children: [
           MapZoomControls(controller: _ctrl),
           const SizedBox(height: AppSpacing.sm),
-          if (userPosition != null)
-            ValueListenableBuilder<LatLng?>(
-              valueListenable: userPosition,
-              builder: (context, pos, _) {
-                if (pos == null) return const SizedBox.shrink();
-                return Column(
-                  children: [
-                    MapControlButton(
-                      icon: AppIcons.gpsFix,
-                      tooltip: 'Centralizar na minha posição',
-                      onTap: _centralizarNaMinhaPosicao,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                );
-              },
-            ),
+          if (_temAlvoParaRecentralizar) ...[
+            _buildBotaoRecentralizar(),
+            const SizedBox(height: AppSpacing.sm),
+          ],
           MapControlButton(
             icon: _rotacaoTravada ? AppIcons.lock : AppIcons.compass,
             tooltip: _rotacaoTravada ? 'Destravar rotação do mapa' : 'Travar rotação do mapa',
@@ -246,7 +317,7 @@ class _StoreMapViewState extends State<StoreMapView> {
             initialZoom: zoom,
             minZoom: StoreMapController.zoomMinimo,
             maxZoom: StoreMapController.zoomMaximo,
-            onMapEvent: (evento) => _ctrl.zoom.value = evento.camera.zoom,
+            onMapEvent: _ctrl.aoEventoDoMapa,
             interactionOptions: InteractionOptions(
               flags: _rotacaoTravada ? InteractiveFlag.all & ~InteractiveFlag.rotate : InteractiveFlag.all,
             ),
