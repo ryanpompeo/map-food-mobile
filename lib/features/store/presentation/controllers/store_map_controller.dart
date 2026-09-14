@@ -11,6 +11,8 @@ class StoreMapController {
 
   final ValueNotifier<double> zoom = ValueNotifier(14.0);
 
+  final ValueNotifier<LatLng?> posicaoUsuario = ValueNotifier(null);
+
   void attach(MapController controller) => _map = controller;
   void detach() => _map = null;
 
@@ -22,6 +24,7 @@ class StoreMapController {
   void dispose() {
     rotacaoTravada.dispose();
     zoom.dispose();
+    posicaoUsuario.dispose();
   }
 
   bool get isAttached => _map != null;

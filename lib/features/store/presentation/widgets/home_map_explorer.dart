@@ -12,7 +12,6 @@ import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
-import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 import 'package:map_food/features/store/presentation/controllers/store_map_controller.dart';
@@ -45,8 +44,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
   final Set<String> _categoriasAtivas = {};
 
   double? _raioKm = 5.0;
-
-  LatLng? _posicaoUsuario;
 
   @override
   void initState() {
@@ -104,13 +101,8 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
     setState(() => _categoriasAtivas.add(nome));
   }
 
-  void _onNearbyChanged(List<StoreDto> lojas, LatLng? posicao) {
-    if (posicao == _posicaoUsuario) return;
-    setState(() => _posicaoUsuario = posicao);
-  }
-
   void _centralizarNoUsuario() {
-    final posicao = _posicaoUsuario;
+    final posicao = _mapController.posicaoUsuario.value;
     if (posicao == null) return;
     _mapController.centralizarNoUsuario(
       posicao,
@@ -192,7 +184,6 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
           initialLongitude: widget.initialLongitude,
           raioKm: _raioKm,
           mapController: _mapController,
-          onNearbyChanged: _onNearbyChanged,
           showFloatingControls: false,
           showEmptyBanner: false,
         );
@@ -327,10 +318,13 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
             ),
           ),
           const SizedBox(height: Spacing.sm),
-          MapControlButton(
-            icon: AppIcons.gpsFix,
-            tooltip: 'Centralizar na minha posição',
-            onTap: _posicaoUsuario == null ? null : _centralizarNoUsuario,
+          ValueListenableBuilder<LatLng?>(
+            valueListenable: _mapController.posicaoUsuario,
+            builder: (context, posicao, _) => MapControlButton(
+              icon: AppIcons.gpsFix,
+              tooltip: 'Centralizar na minha posição',
+              onTap: posicao == null ? null : _centralizarNoUsuario,
+            ),
           ),
         ],
       ),

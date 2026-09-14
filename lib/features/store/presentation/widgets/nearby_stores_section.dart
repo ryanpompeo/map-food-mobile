@@ -23,8 +23,6 @@ class NearbyStoresSection extends StatefulWidget {
   final bool showFloatingControls;
   final bool showEmptyBanner;
 
-  final void Function(List<StoreDto> lojas, LatLng? posicaoUsuario)? onNearbyChanged;
-
   const NearbyStoresSection({
     super.key,
     required this.stores,
@@ -36,7 +34,6 @@ class NearbyStoresSection extends StatefulWidget {
     this.onStoreTap,
     this.showFloatingControls = true,
     this.showEmptyBanner = true,
-    this.onNearbyChanged,
   });
 
   @override
@@ -50,7 +47,13 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   double? _lng;
   StreamSubscription<Position>? _positionSub;
 
-  final ValueNotifier<LatLng?> _userPosition = ValueNotifier(null);
+  late final bool _posicaoPropria = widget.mapController == null;
+  late final ValueNotifier<LatLng?> _userPosition =
+      widget.mapController?.posicaoUsuario ?? ValueNotifier(null);
+
+  List<StoreDto>? _entradaEmCache;
+  (double?, double?, double?)? _chaveEmCache;
+  List<StoreDto> _lojasEmCache = const [];
 
   @override
   void initState() {
@@ -128,31 +131,27 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   @override
   void dispose() {
     _positionSub?.cancel();
-    _userPosition.dispose();
+    if (_posicaoPropria) _userPosition.dispose();
     super.dispose();
   }
 
-  List<StoreDto> get _lojasNoRaio => lojasDentroDoRaio(
-        widget.stores,
-        lat: _lat,
-        lng: _lng,
-        raioKm: widget.raioKm,
-      );
+  List<StoreDto> get _lojasNoRaio {
+    final chave = (_lat, _lng, widget.raioKm);
+    if (identical(_entradaEmCache, widget.stores) && _chaveEmCache == chave) return _lojasEmCache;
+    _entradaEmCache = widget.stores;
+    _chaveEmCache = chave;
+    return _lojasEmCache = lojasDentroDoRaio(
+      widget.stores,
+      lat: _lat,
+      lng: _lng,
+      raioKm: widget.raioKm,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final lojas = _lojasNoRaio;
-
-    final aviso = widget.onNearbyChanged;
-    if (aviso != null) {
-      final posicao = _lat != null && _lng != null ? LatLng(_lat!, _lng!) : null;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) aviso(lojas, posicao);
-      });
-    }
-
     return StoreMapView(
-      stores: lojas,
+      stores: _lojasNoRaio,
       focusedStore: widget.focusedStore,
       controller: widget.mapController,
       onStoreTap: widget.onStoreTap,
