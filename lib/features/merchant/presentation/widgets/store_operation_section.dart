@@ -4,8 +4,10 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
+import 'package:map_food/features/merchant/presentation/controllers/modo_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 import 'package:map_food/features/merchant/presentation/controllers/store_ronda_controller.dart';
+import 'package:map_food/features/merchant/presentation/widgets/sheet_abrir_loja.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_status_card.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/widgets/store_map_view.dart';
@@ -49,7 +51,25 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
     super.dispose();
   }
 
-  Future<void> _alternar() => _avisarSeFalhar(_ronda.alternarStatus());
+  Future<void> _alternar() async {
+    if (_ronda.aberta || _ronda.suspensa) {
+      await _avisarSeFalhar(_ronda.alternarStatus());
+      return;
+    }
+    final escolha = await mostrarSheetAbrirLoja(context);
+    if (escolha == null || !mounted) return;
+    await _avisarSeFalhar(_ronda.abrirComo(escolha.modo, encerraEm: escolha.encerraEm));
+  }
+
+  Future<void> _trocarModo() async {
+    if (_ronda.modo == ModoRonda.emMovimento) {
+      _ronda.trocarModo(ModoRonda.parado);
+      return;
+    }
+    _ronda.trocarModo(ModoRonda.emMovimento);
+  }
+
+  Future<void> _prorrogar() => _ronda.prorrogar();
 
   Future<void> _acompanhar() => _avisarSeFalhar(_ronda.acompanharPosicao());
 
@@ -86,6 +106,11 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
                 avisoPosicao: _ronda.avisoPosicao,
                 onToggle: _alternar,
                 onAcompanhar: _acompanhar,
+                modo: _ronda.modo,
+                prazo: _ronda.prazo,
+                fimProximo: _ronda.fimProximo,
+                onProrrogar: _prorrogar,
+                onTrocarModo: _trocarModo,
               ),
             ),
             const SizedBox(height: Spacing.xl),

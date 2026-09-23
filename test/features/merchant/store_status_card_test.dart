@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/ui/theme/app_theme.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/features/merchant/presentation/controllers/modo_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_status_card.dart';
 
@@ -22,8 +23,18 @@ void main() {
     String? avisoPosicao,
     VoidCallback? onToggle,
     VoidCallback? onAcompanhar,
+    ModoRonda modo = ModoRonda.emMovimento,
+    DateTime? prazo,
+    bool fimProximo = false,
+    VoidCallback? onProrrogar,
+    VoidCallback? onTrocarModo,
   }) =>
       StoreStatusCard(
+        modo: modo,
+        prazo: prazo,
+        fimProximo: fimProximo,
+        onProrrogar: onProrrogar,
+        onTrocarModo: onTrocarModo,
         situacao: situacao,
         ocupado: ocupado,
         ligandoAcompanhamento: ligandoAcompanhamento,
@@ -218,5 +229,78 @@ void main() {
     await tester.pump();
 
     expect(toques, 0);
+  });
+
+  group('estou aqui', () {
+    final prazo = DateTime(2026, 9, 21, 18, 30);
+
+    testWidgets('modo parado troca o título e não mostra o selo ao vivo', (tester) async {
+      await mostrar(
+        tester,
+        card(situacao: SituacaoLoja.transmitindo, modo: ModoRonda.parado),
+      );
+
+      expect(find.text('Loja aberta neste ponto'), findsOneWidget);
+      expect(find.text('AO VIVO'), findsNothing);
+    });
+
+    testWidgets('com prazo, mostra até que horas a loja fica aberta', (tester) async {
+      await mostrar(
+        tester,
+        card(situacao: SituacaoLoja.transmitindo, modo: ModoRonda.parado, prazo: prazo),
+      );
+
+      expect(find.text('Aberta até as 18:30'), findsOneWidget);
+      expect(find.text('Ficar mais 2 horas'), findsNothing);
+    });
+
+    testWidgets('perto do fim, oferece ficar mais 2 horas', (tester) async {
+      var prorrogou = false;
+      await mostrar(
+        tester,
+        card(
+          situacao: SituacaoLoja.transmitindo,
+          modo: ModoRonda.parado,
+          prazo: prazo,
+          fimProximo: true,
+          onProrrogar: () => prorrogou = true,
+        ),
+      );
+
+      expect(find.text('Ela fecha sozinha às 18:30'), findsOneWidget);
+      await tester.tap(find.text('Ficar mais 2 horas'));
+
+      expect(prorrogou, isTrue);
+    });
+
+    testWidgets('loja aberta oferece trocar de modo', (tester) async {
+      var trocou = false;
+      await mostrar(
+        tester,
+        card(
+          situacao: SituacaoLoja.transmitindo,
+          modo: ModoRonda.parado,
+          onTrocarModo: () => trocou = true,
+        ),
+      );
+
+      await tester.tap(find.text('Passar para em movimento'));
+
+      expect(trocou, isTrue);
+    });
+
+    testWidgets('loja fechada não mostra prazo nem troca de modo', (tester) async {
+      await mostrar(
+        tester,
+        card(
+          situacao: SituacaoLoja.fechada,
+          prazo: prazo,
+          onTrocarModo: () {},
+        ),
+      );
+
+      expect(find.textContaining('Aberta até'), findsNothing);
+      expect(find.text('Estou parado aqui'), findsNothing);
+    });
   });
 }

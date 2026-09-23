@@ -4,8 +4,10 @@ import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/features/auth/data/models/auth_response.dart';
+import 'package:map_food/features/merchant/presentation/controllers/agenda_de_fechamento.dart';
 import 'package:map_food/features/merchant/presentation/controllers/configuracao_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
+import 'package:map_food/features/merchant/presentation/controllers/modo_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
 import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 import 'package:map_food/features/merchant/presentation/controllers/store_ronda_controller.dart';
@@ -43,6 +45,8 @@ void main() {
   late FontePosicaoFalsa fonte;
   late ApiFalsa api;
   late RondaManager ronda;
+  late AgendaDeFechamento agenda;
+  late DateTime agora;
   late int pedidosDeNotificacao;
   late bool notificacaoConcedida;
   final criados = <StoreRondaController>[];
@@ -50,14 +54,15 @@ void main() {
   StoreRondaController tela(
     StoreDto loja, {
     void Function(StoreDto)? aoAtualizar,
-    DateTime Function()? agora,
+    DateTime Function()? relogio,
   }) {
     final controller = StoreRondaController(
       store: loja,
       onStoreUpdated: aoAtualizar,
       storeService: api.servico,
       ronda: ronda,
-      agora: agora,
+      agenda: agenda,
+      agora: relogio ?? () => agora,
       pedirNotificacoes: () async {
         pedidosDeNotificacao++;
         return notificacaoConcedida;
@@ -85,6 +90,13 @@ void main() {
       storeService: api.servico,
       configuracao: const ConfiguracaoRonda(esperasDeReenvio: [Duration(milliseconds: 1)]),
     );
+    agora = DateTime(2026, 9, 21, 12);
+    agenda = AgendaDeFechamento(
+      storeService: api.servico,
+      agora: () => agora,
+      minimo: Duration.zero,
+      maximo: const Duration(hours: 12),
+    );
   });
 
   tearDown(() async {
@@ -93,6 +105,7 @@ void main() {
     }
     criados.clear();
     ronda.encerrar();
+    await agenda.esquecerTudo();
     LocationService.restaurarFonte();
     await fonte.fechar();
     await SessionStore.instance.signOut();
@@ -156,7 +169,7 @@ void main() {
       () async {
     await rondaEmAndamento();
     final envio = ronda.estadoDe(7).value.ultimoEnvioEm!;
-    final controller = tela(_loja(), agora: () => envio.add(const Duration(minutes: 4)));
+    final controller = tela(_loja(), relogio: () => envio.add(const Duration(minutes: 4)));
 
     fonte.atual.addError(const LocationServiceDisabledException());
     await aguardarAte(() => controller.situacao == SituacaoLoja.semSinal);
@@ -169,7 +182,7 @@ void main() {
   test('passado o limite de 15 min, o prazo para em zero', () async {
     await rondaEmAndamento();
     final envio = ronda.estadoDe(7).value.ultimoEnvioEm!;
-    final controller = tela(_loja(), agora: () => envio.add(const Duration(minutes: 20)));
+    final controller = tela(_loja(), relogio: () => envio.add(const Duration(minutes: 20)));
 
     fonte.atual.addError(const LocationServiceDisabledException());
     await aguardarAte(() => controller.situacao == SituacaoLoja.semSinal);
@@ -181,7 +194,7 @@ void main() {
     await rondaEmAndamento();
     final envio = ronda.estadoDe(7).value.ultimoEnvioEm!;
 
-    final controller = tela(_loja(), agora: () => envio.add(const Duration(minutes: 4)));
+    final controller = tela(_loja(), relogio: () => envio.add(const Duration(minutes: 4)));
 
     expect(controller.situacao, SituacaoLoja.transmitindo);
     expect(controller.fechaEm, isNull);
@@ -297,5 +310,79 @@ void main() {
     await aguardarAte(() => controller.avisoPosicao?.contains('não está subindo') ?? false);
 
     expect(controller.situacao, SituacaoLoja.semSinal);
+  });
+
+  group('estou aqui', () {
+    Future<StoreRondaController> abrirParado({Duration duracao = const Duration(hours: 4)}) async {
+      api.responder('PUT', '/lojas/7', 200, _lojaAberta);
+      final controller = tela(_loja(status: 'INATIVA'));
+      final erro = await controller.abrirComo(
+        ModoRonda.parado,
+        encerraEm: agora.add(duracao),
+      );
+      expect(erro, isNull);
+      return controller;
+    }
+
+    test('abrir parado liga o modo parado e agenda o fechamento', () async {
+      final controller = await abrirParado();
+
+      expect(ronda.modo, ModoRonda.parado);
+      expect(controller.modo, ModoRonda.parado);
+      expect(controller.prazo, agora.add(const Duration(hours: 4)));
+      expect(controller.fimProximo, isFalse);
+    });
+
+    test('abrir em movimento não agenda nada', () async {
+      api.responder('PUT', '/lojas/7', 200, _lojaAberta);
+      final controller = tela(_loja(status: 'INATIVA'));
+
+      await controller.abrirComo(ModoRonda.emMovimento);
+
+      expect(ronda.modo, ModoRonda.emMovimento);
+      expect(controller.prazo, isNull);
+    });
+
+    test('faltando 15 min ou menos, o fim fica próximo e prorrogar empurra o prazo', () async {
+      final controller = await abrirParado(duracao: const Duration(minutes: 20));
+      expect(controller.fimProximo, isFalse);
+
+      agora = agora.add(const Duration(minutes: 10));
+      expect(controller.fimProximo, isTrue);
+
+      final prazoAntigo = controller.prazo!;
+      await controller.prorrogar();
+
+      expect(controller.prazo, prazoAntigo.add(StoreRondaController.prorrogacao));
+      expect(controller.fimProximo, isFalse);
+    });
+
+    test('fechar a loja cancela o fechamento automático', () async {
+      final controller = await abrirParado();
+      api.responder('PUT', '/lojas/7', 200, _lojaFechada);
+
+      await controller.alternarStatus();
+
+      expect(controller.prazo, isNull);
+    });
+
+    test('trocar de modo com a loja aberta não fecha a loja', () async {
+      final controller = await abrirParado();
+
+      controller.trocarModo(ModoRonda.emMovimento);
+
+      expect(ronda.modo, ModoRonda.emMovimento);
+      expect(controller.aberta, isTrue);
+      expect(ronda.acompanha(7), isTrue);
+    });
+
+    test('quando o prazo fecha a loja, a tela passa a mostrar fechada', () async {
+      final controller = await abrirParado();
+      expect(controller.aberta, isTrue);
+
+      agenda.lojaFechadaPeloPrazo.value = 7;
+
+      expect(controller.aberta, isFalse);
+    });
   });
 }

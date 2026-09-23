@@ -7,7 +7,9 @@ import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/location/permissao_notificacoes.dart';
 import 'package:map_food/core/location/perfil_localizacao.dart';
 import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/features/merchant/presentation/controllers/agenda_de_fechamento.dart';
 import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
+import 'package:map_food/features/merchant/presentation/controllers/modo_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
 import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 import 'package:map_food/features/store/data/models/status_loja.dart';
@@ -22,16 +24,22 @@ class StoreRondaController extends ChangeNotifier {
     this.onStoreUpdated,
     StoreService? storeService,
     RondaManager? ronda,
+    AgendaDeFechamento? agenda,
     DateTime Function()? agora,
     Future<bool> Function()? pedirNotificacoes,
   })  : _store = store,
         _storeService = storeService ?? StoreService(),
         _ronda = ronda ?? RondaManager.instance,
+        _agenda = agenda ?? AgendaDeFechamento.instance,
         _agora = agora ?? DateTime.now,
         _pedirNotificacoes = pedirNotificacoes ?? PermissaoNotificacoes.pedir {
     _vincular(store.id);
+    _agenda.lojaFechadaPeloPrazo.addListener(_aoFecharPeloPrazo);
     _relogio = Timer.periodic(const Duration(minutes: 1), (_) => _notificar());
   }
+
+  static const Duration avisoDeFimProximo = Duration(minutes: 15);
+  static const Duration prorrogacao = Duration(hours: 2);
 
   static const String _semGpsParaAbrir =
       'Sem localização — ative o GPS e permita o acesso pra abrir a loja';
@@ -42,6 +50,7 @@ class StoreRondaController extends ChangeNotifier {
 
   final StoreService _storeService;
   final RondaManager _ronda;
+  final AgendaDeFechamento _agenda;
   final DateTime Function() _agora;
   final Future<bool> Function() _pedirNotificacoes;
   final ValueChanged<StoreDto>? onStoreUpdated;
@@ -105,8 +114,42 @@ class StoreRondaController extends ChangeNotifier {
     _notificar();
   }
 
+  DateTime? get prazo => _agenda.prazoDe(_store.id).value;
+
+  ModoRonda get modo => _ronda.modo;
+
+  Duration? get faltaParaFechar {
+    final fim = prazo;
+    if (fim == null) return null;
+    final falta = fim.difference(_agora());
+    return falta.isNegative ? Duration.zero : falta;
+  }
+
+  bool get fimProximo {
+    final falta = faltaParaFechar;
+    return falta != null && falta <= avisoDeFimProximo;
+  }
+
   Future<String?> alternarStatus() =>
       _executar(_Acao.alternar, aberta ? _fechar : _abrir, 'Erro ao alterar status da loja');
+
+  Future<String?> abrirComo(ModoRonda modo, {DateTime? encerraEm}) => _executar(
+        _Acao.alternar,
+        () => _abrir(modo: modo, encerraEm: encerraEm),
+        'Erro ao alterar status da loja',
+      );
+
+  void trocarModo(ModoRonda modo) {
+    if (!aberta || _ronda.modo == modo) return;
+    _ronda.definirModo(modo);
+    _notificar();
+  }
+
+  Future<void> prorrogar() async {
+    if (prazo == null) return;
+    await _agenda.prorrogar(_store.id, prorrogacao);
+    _notificar();
+  }
 
   Future<String?> acompanharPosicao() =>
       _executar(_Acao.acompanhar, _comecarRonda, 'Erro ao ligar o acompanhamento da posição');
@@ -133,14 +176,17 @@ class StoreRondaController extends ChangeNotifier {
     return null;
   }
 
-  Future<String?> _abrir() async {
+  Future<String?> _abrir({ModoRonda modo = ModoRonda.emMovimento, DateTime? encerraEm}) async {
     if (suspensa) return _lojaSuspensa;
     final posicao = await _posicaoParaAbrir();
     if (posicao == null) return _semGpsParaAbrir;
     await _pedirNotificacoes();
     final alvo = _store;
     final atualizada = await _storeService.abrirLoja(alvo, posicao.latitude, posicao.longitude);
-    _ronda.acompanhar(atualizada, posicaoInicial: posicao);
+    _ronda.acompanhar(atualizada, posicaoInicial: posicao, modo: modo);
+    if (modo == ModoRonda.parado && encerraEm != null) {
+      await _agenda.agendar(alvo.id, encerraEm);
+    }
     _aplicar(alvo.id, atualizada);
     return null;
   }
@@ -149,8 +195,16 @@ class StoreRondaController extends ChangeNotifier {
     final alvo = _store;
     final atualizada = await _storeService.atualizarStatus(alvo, StatusLoja.inativa);
     _ronda.soltar(alvo.id);
+    await _agenda.cancelar(alvo.id);
     _aplicar(alvo.id, atualizada);
     return null;
+  }
+
+  void _aoFecharPeloPrazo() {
+    if (_descartado || _agenda.lojaFechadaPeloPrazo.value != _store.id) return;
+    _store = _store.comStatus(StatusLoja.inativa);
+    onStoreUpdated?.call(_store);
+    _notificar();
   }
 
   Future<Position?> _posicaoParaAbrir() async {
@@ -177,11 +231,13 @@ class StoreRondaController extends ChangeNotifier {
 
   void _vincular(int lojaId) {
     _estadoVinculado = _ronda.estadoDe(lojaId)..addListener(_aoMudarEstado);
+    _agenda.prazoDe(lojaId).addListener(_notificar);
   }
 
   void _desvincular() {
     _estadoVinculado?.removeListener(_aoMudarEstado);
     _estadoVinculado = null;
+    _agenda.prazoDe(_store.id).removeListener(_notificar);
   }
 
   void _aoMudarEstado() {
@@ -229,6 +285,7 @@ class StoreRondaController extends ChangeNotifier {
   void dispose() {
     _descartado = true;
     _relogio?.cancel();
+    _agenda.lojaFechadaPeloPrazo.removeListener(_aoFecharPeloPrazo);
     _desvincular();
     super.dispose();
   }

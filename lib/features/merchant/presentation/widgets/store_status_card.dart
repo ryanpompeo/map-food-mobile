@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
+import 'package:map_food/features/merchant/presentation/controllers/modo_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/situacao_loja.dart';
 
 class StoreStatusCard extends StatelessWidget {
@@ -29,6 +30,16 @@ class StoreStatusCard extends StatelessWidget {
 
   final VoidCallback? onAcompanhar;
 
+  final ModoRonda modo;
+
+  final DateTime? prazo;
+
+  final bool fimProximo;
+
+  final VoidCallback? onProrrogar;
+
+  final VoidCallback? onTrocarModo;
+
   const StoreStatusCard({
     super.key,
     required this.situacao,
@@ -41,13 +52,22 @@ class StoreStatusCard extends StatelessWidget {
     this.fechaEm,
     this.avisoPosicao,
     this.onAcompanhar,
+    this.modo = ModoRonda.emMovimento,
+    this.prazo,
+    this.fimProximo = false,
+    this.onProrrogar,
+    this.onTrocarModo,
   });
+
+  static String horaDe(DateTime quando) =>
+      '${quando.hour.toString().padLeft(2, '0')}:${quando.minute.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
     final colors = context.mapColors;
     final aberta = situacao.aberta;
-    final (icone, titulo, subtitulo) = _cabecalho(situacao);
+    final parada = modo == ModoRonda.parado && aberta;
+    final (icone, titulo, subtitulo) = _cabecalho(situacao, parada: parada);
 
     final fundo = aberta ? colors.selectedSurface : colors.surface;
     final conteudo = aberta ? colors.onSelectedSurface : colors.textPrimary;
@@ -69,7 +89,7 @@ class StoreStatusCard extends StatelessWidget {
             children: [
               Icon(icone, size: AppIconSize.lg, color: conteudo),
               const Spacer(),
-              if (situacao == SituacaoLoja.transmitindo) const _LiveBadge(),
+              if (situacao == SituacaoLoja.transmitindo && !parada) const _LiveBadge(),
             ],
           ),
           const SizedBox(height: Spacing.base),
@@ -95,6 +115,17 @@ class StoreStatusCard extends StatelessWidget {
             ),
           ],
 
+          if (aberta && prazo != null) ...[
+            const SizedBox(height: Spacing.md),
+            _PrazoDeFechamento(
+              prazo: prazo!,
+              fimProximo: fimProximo,
+              onProrrogar: onProrrogar,
+              corConteudo: conteudo,
+              corApoio: apoio,
+            ),
+          ],
+
           if (avisoPosicao != null) ...[
             const SizedBox(height: Spacing.md),
             _AvisoPosicao(mensagem: avisoPosicao!, sobreSuperficieAtiva: aberta),
@@ -107,6 +138,16 @@ class StoreStatusCard extends StatelessWidget {
               icon: AppIcons.navigationArrow,
               onPressed: ocupado ? null : onAcompanhar,
               loading: ligandoAcompanhamento,
+            ),
+          ],
+
+          if (aberta && onTrocarModo != null) ...[
+            const SizedBox(height: Spacing.sm),
+            _TrocaDeModo(
+              rotulo: parada ? 'Passar para em movimento' : 'Estou parado aqui',
+              icone: parada ? AppIcons.navigationArrow : AppIcons.mapPin,
+              cor: conteudo,
+              onTap: ocupado ? null : onTrocarModo,
             ),
           ],
 
@@ -125,7 +166,8 @@ class StoreStatusCard extends StatelessWidget {
     );
   }
 
-  static (IconData, String, String) _cabecalho(SituacaoLoja situacao) => switch (situacao) {
+  static (IconData, String, String) _cabecalho(SituacaoLoja situacao, {bool parada = false}) =>
+      switch (situacao) {
         SituacaoLoja.suspensa => (
             AppIcons.lock,
             'Loja suspensa',
@@ -135,6 +177,11 @@ class StoreStatusCard extends StatelessWidget {
             AppIcons.eyeSlash,
             'Loja fechada',
             'Você não aparece no mapa enquanto estiver fechada',
+          ),
+        _ when parada => (
+            AppIcons.mapPin,
+            'Loja aberta neste ponto',
+            'Os clientes veem você parado aqui',
           ),
         _ => (
             AppIcons.storefront,
@@ -382,6 +429,106 @@ class _AvisoPosicao extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TrocaDeModo extends StatelessWidget {
+  final String rotulo;
+
+  final IconData icone;
+
+  final Color cor;
+
+  final VoidCallback? onTap;
+
+  const _TrocaDeModo({
+    required this.rotulo,
+    required this.icone,
+    required this.cor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Radii.pill),
+        child: Container(
+          height: 48,
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icone, size: AppIconSize.sm, color: cor),
+              const SizedBox(width: Spacing.sm),
+              Text(
+                rotulo,
+                style: AppText.button(context).copyWith(color: cor),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrazoDeFechamento extends StatelessWidget {
+  final DateTime prazo;
+
+  final bool fimProximo;
+
+  final VoidCallback? onProrrogar;
+
+  final Color corConteudo;
+
+  final Color corApoio;
+
+  const _PrazoDeFechamento({
+    required this.prazo,
+    required this.fimProximo,
+    required this.onProrrogar,
+    required this.corConteudo,
+    required this.corApoio,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hora = StoreStatusCard.horaDe(prazo);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(AppIcons.clock, size: AppIconSize.sm, color: corApoio),
+            const SizedBox(width: Spacing.sm),
+            Expanded(
+              child: Text(
+                'Aberta até as $hora',
+                style: AppText.bodyStrong(context).copyWith(color: corConteudo),
+              ),
+            ),
+          ],
+        ),
+        if (fimProximo && onProrrogar != null) ...[
+          const SizedBox(height: Spacing.xs),
+          Text(
+            'Ela fecha sozinha às $hora',
+            style: AppText.caption(context).copyWith(color: corApoio, height: 1.3),
+          ),
+          const SizedBox(height: Spacing.xs),
+          _TrocaDeModo(
+            rotulo: 'Ficar mais 2 horas',
+            icone: AppIcons.clock,
+            cor: corConteudo,
+            onTap: onProrrogar,
+          ),
+        ],
+      ],
     );
   }
 }
