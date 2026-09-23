@@ -115,4 +115,38 @@ void main() {
 
     expect(transmitidas, [p1]);
   });
+
+  test('intervalo mínimo segura o envio seguinte sem perder a posição mais nova', () async {
+    final transmitidasCurtas = <Position>[];
+    final respostasCurtas = <Completer<void>>[];
+    final comJanela = RondaUplink(
+      transmitir: (posicao) {
+        transmitidasCurtas.add(posicao);
+        final resposta = Completer<void>();
+        respostasCurtas.add(resposta);
+        return resposta.future;
+      },
+      esperas: const [Duration(milliseconds: 1)],
+      aoEnviar: (_) {},
+      aoFalhar: (_) {},
+      aoSerRecusado: (_) {},
+      intervaloMinimo: const Duration(milliseconds: 120),
+    );
+    addTearDown(comJanela.encerrar);
+
+    comJanela.enviar(p1);
+    expect(transmitidasCurtas, [p1]);
+    respostasCurtas[0].complete();
+    await _escoar();
+
+    comJanela.enviar(p2);
+    comJanela.enviar(p3);
+    await _escoar();
+    expect(transmitidasCurtas, [p1]);
+
+    await Future<void>.delayed(const Duration(milliseconds: 140));
+    expect(transmitidasCurtas, [p1, p3]);
+    respostasCurtas[1].complete();
+    await _escoar();
+  });
 }

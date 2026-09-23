@@ -6,7 +6,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/features/merchant/presentation/controllers/configuracao_ronda.dart';
+import 'package:map_food/core/location/perfil_localizacao.dart';
 import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
+import 'package:map_food/features/merchant/presentation/controllers/modo_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
 import 'package:map_food/features/store/data/models/status_loja.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -257,6 +259,85 @@ void main() {
       await escoar();
 
       expect(fonte.pedidos, isEmpty);
+    });
+  });
+
+  group('modo parado', () {
+    test('usa o GPS econômico e não segue o comerciante que se mexe', () async {
+      ronda.acompanhar(_loja(7), posicaoInicial: abertura, modo: ModoRonda.parado);
+      await aguardarEnvio(7);
+      await aguardarAte(() => fonte.lendo);
+
+      expect(fonte.pedidos.last.distanceFilter, distanciaMinimaRondaParadaMetros);
+      expect(fonte.pedidos.last.accuracy, LocationAccuracy.low);
+
+      fonte.atual.add(cemMetrosAdiante);
+      await escoar();
+
+      expect(api.patches, hasLength(1));
+      expect(estado(7).latitude, abertura.latitude);
+    });
+
+    test('o sinal de vida repete a posição de abertura', () async {
+      ronda.acompanhar(_loja(7), posicaoInicial: abertura, modo: ModoRonda.parado);
+      await aguardarEnvio(7);
+
+      agora = agora.add(const Duration(minutes: 5));
+      ronda.verificarSaude();
+      await aguardarAte(() => api.patches.length == 2);
+
+      expect(estado(7).latitude, abertura.latitude);
+    });
+
+    test('trocar para em movimento volta a seguir o comerciante sem fechar a loja', () async {
+      ronda.acompanhar(_loja(7), posicaoInicial: abertura, modo: ModoRonda.parado);
+      await aguardarEnvio(7);
+      await aguardarAte(() => fonte.lendo);
+
+      ronda.definirModo(ModoRonda.emMovimento);
+      await aguardarAte(() => fonte.pedidos.length == 2 && fonte.lendo);
+      expect(fonte.pedidos.last.distanceFilter, distanciaMinimaRondaMetros);
+      expect(ronda.acompanha(7), isTrue);
+
+      agora = agora.add(const Duration(seconds: 20));
+      fonte.atual.add(cemMetrosAdiante);
+      await aguardarAte(() => api.patches.length == 2);
+
+      expect(estado(7).latitude, cemMetrosAdiante.latitude);
+    });
+
+    test('a leitura do GPS é que manda o sinal de vida, e não o relógio do app', () async {
+      ronda.acompanhar(_loja(7), posicaoInicial: abertura, modo: ModoRonda.parado);
+      await aguardarEnvio(7);
+      await aguardarAte(() => fonte.lendo);
+
+      agora = agora.add(const Duration(minutes: 5));
+      fonte.atual.add(cemMetrosAdiante);
+      await aguardarAte(() => api.patches.length == 2);
+
+      expect(estado(7).latitude, abertura.latitude);
+    });
+
+    test('duas leituras seguidas respeitam o intervalo mínimo entre envios', () async {
+      final curta = RondaManager(
+        storeService: api.servico,
+        configuracao: const ConfiguracaoRonda(
+          esperasDeReenvio: [Duration(milliseconds: 1)],
+          intervaloMinimoEntreEnvios: Duration(milliseconds: 80),
+        ),
+        agora: () => agora,
+      );
+      addTearDown(curta.encerrar);
+
+      curta.acompanhar(_loja(9), posicaoInicial: abertura);
+      await aguardarAte(() => api.patches.length == 1);
+      await aguardarAte(() => fonte.lendo);
+
+      fonte.atual.add(cemMetrosAdiante);
+      await escoar();
+      expect(api.patches, hasLength(1));
+
+      await aguardarAte(() => api.patches.length == 2);
     });
   });
 }

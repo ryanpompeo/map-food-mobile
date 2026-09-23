@@ -6,6 +6,7 @@ class ConfiguracaoRonda {
     this.heartbeat = const Duration(minutes: 5),
     this.watchdog = const Duration(minutes: 2),
     this.intervaloDeVerificacao = const Duration(seconds: 30),
+    this.intervaloMinimoEntreEnvios = const Duration(seconds: 15),
     this.esperasDeReenvio = const [
       Duration(seconds: 2),
       Duration(seconds: 4),
@@ -23,6 +24,7 @@ class ConfiguracaoRonda {
   final Duration heartbeat;
   final Duration watchdog;
   final Duration intervaloDeVerificacao;
+  final Duration intervaloMinimoEntreEnvios;
   final List<Duration> esperasDeReenvio;
   final int falhasAteAvisar;
   final Duration limiteSemSinal;

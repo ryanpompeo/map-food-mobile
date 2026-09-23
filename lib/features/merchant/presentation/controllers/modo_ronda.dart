@@ -1,0 +1,1 @@
+enum ModoRonda { emMovimento, parado }

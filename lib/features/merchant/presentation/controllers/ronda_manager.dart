@@ -9,6 +9,7 @@ import 'package:map_food/core/location/perfil_localizacao.dart';
 import 'package:map_food/features/merchant/presentation/controllers/configuracao_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/filtro_de_leituras.dart';
+import 'package:map_food/features/merchant/presentation/controllers/modo_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/ronda_uplink.dart';
 import 'package:map_food/features/store/data/loja_fora_de_ronda_exception.dart';
 import 'package:map_food/features/store/data/models/status_loja.dart';
@@ -41,6 +42,7 @@ class RondaManager with WidgetsBindingObserver {
   int _geracaoLeitura = 0;
   int _geracaoSincronia = 0;
   bool _observando = false;
+  ModoRonda _modo = ModoRonda.emMovimento;
   FaseRonda _faseGps = FaseRonda.parada;
   DateTime? _inicioDaLeituraEm;
   DateTime? _ultimaLeituraEm;
@@ -65,8 +67,27 @@ class RondaManager with WidgetsBindingObserver {
     }
   }
 
-  void acompanhar(StoreDto loja, {Position? posicaoInicial}) {
+  ModoRonda get modo => _modo;
+
+  void definirModo(ModoRonda modo) {
+    if (_modo == modo) return;
+    _modo = modo;
+    if (_uplinks.isEmpty || _leituras == null) return;
+    unawaited(_reassinarLeitura());
+  }
+
+  Future<void> _reassinarLeitura() async {
+    final leituras = _leituras;
+    _leituras = null;
+    _inicioDaLeituraEm = null;
+    _ultimaLeituraEm = null;
+    await leituras?.cancel();
+    await _garantirLeitura();
+  }
+
+  void acompanhar(StoreDto loja, {Position? posicaoInicial, ModoRonda? modo}) {
     _dispensadas.remove(loja.id);
+    if (modo != null) definirModo(modo);
     if (acompanha(loja.id)) return;
     _uplinks[loja.id] = _criarUplink(loja);
     _notificadorDe(loja.id).value = EstadoRonda(fase: _faseInicial());
@@ -117,6 +138,8 @@ class RondaManager with WidgetsBindingObserver {
         transmitir: (posicao) =>
             _storeService.atualizarPosicao(loja, posicao.latitude, posicao.longitude),
         esperas: configuracao.esperasDeReenvio,
+        intervaloMinimo: configuracao.intervaloMinimoEntreEnvios,
+        agora: _agora,
         aoEnviar: (posicao) => _aoEnviar(loja.id, posicao),
         aoFalhar: (falhas) => _alterar(loja.id, (estado) => estado.comFalhas(falhas)),
         aoSerRecusado: (recusa) => _aoSerRecusado(loja.id, recusa),
@@ -177,9 +200,12 @@ class RondaManager with WidgetsBindingObserver {
     }
   }
 
+  PerfilLocalizacao get _perfil =>
+      _modo == ModoRonda.parado ? PerfilLocalizacao.rondaParada : PerfilLocalizacao.ronda;
+
   void _assinarLeituras() {
     _inicioDaLeituraEm = _agora();
-    _leituras = LocationService.streamDe(PerfilLocalizacao.ronda).listen(
+    _leituras = LocationService.streamDe(_perfil).listen(
           _aoLer,
           onError: _aoErroDeGps,
         );
@@ -191,6 +217,10 @@ class RondaManager with WidgetsBindingObserver {
     final agora = _agora();
     _ultimaLeituraEm = agora;
     if (_faseGps != FaseRonda.ativa) _definirFaseGps(FaseRonda.ativa);
+    if (_modo == ModoRonda.parado) {
+      _mandarSinalDeVida(agora);
+      return;
+    }
     final aceita = _filtro.avaliar(leitura, agora);
     if (aceita != null) _distribuir(aceita);
   }
@@ -223,7 +253,7 @@ class RondaManager with WidgetsBindingObserver {
       unawaited(_garantirLeitura());
       return;
     }
-    LocationService.reiniciar(PerfilLocalizacao.ronda);
+    LocationService.reiniciar(_perfil);
   }
 
   void _vigiarLeituras(DateTime agora) {
@@ -231,7 +261,7 @@ class RondaManager with WidgetsBindingObserver {
     if (_leituras == null || referencia == null || _emSegundoPlano) return;
     if (agora.difference(referencia) < configuracao.watchdog) return;
     _ultimaLeituraEm = agora;
-    LocationService.reiniciar(PerfilLocalizacao.ronda);
+    LocationService.reiniciar(_perfil);
   }
 
   static bool get _emSegundoPlano => switch (WidgetsBinding.instance.lifecycleState) {
@@ -277,6 +307,7 @@ class RondaManager with WidgetsBindingObserver {
     _servico = null;
     _filtro.reiniciar();
     _ultimoEnvioEm = null;
+    _modo = ModoRonda.emMovimento;
     _faseGps = FaseRonda.parada;
     _pararDeObservar();
   }
