@@ -322,10 +322,55 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
   > "Lista de strings, ignorando entradas vazias."
   - 💡 Explicação Leiga: A função lê uma lista de textos e joga fora os itens em branco.
 
+### 📂 ARQUIVO: lib/core/notificacoes/avisos_da_loja.dart
+
+- ⚙️ Função: Escreve os avisos que o comerciante recebe quando a loja sai do mapa ou fecha no horário.
+- 💬 Comentários Removidos:
+
+  > "Os textos moram aqui, e não espalhados por quem dispara. O comerciante recebe aviso em cinco situações — GPS desligado, permissão retirada, recusa do servidor, sessão vencida e fechamento pelo prazo — e todas precisam soar como a mesma voz."
+  - 💡 Explicação Leiga: Este arquivo guarda as frases dos avisos, para todas falarem do mesmo jeito.
+
+  > "Quando o servidor recusa o envio, o aviso repete a mensagem que veio de lá, sem inventar texto próprio. Só o servidor sabe se a loja foi fechada, suspensa pela moderação ou expirada por falta de sinal, e cada um desses casos pede uma frase diferente."
+  - 💡 Explicação Leiga: Se o servidor recusa, o aviso mostra o motivo que o próprio servidor mandou.
+
+  > "Dois números de aviso, um para 'saiu do mapa' e outro para 'fechou no horário': avisos de assuntos diferentes não podem se apagar na barra de notificações."
+  - 💡 Explicação Leiga: Cada tipo de aviso tem seu número, então um não some por causa do outro.
+
+### 📂 ARQUIVO: lib/core/notificacoes/notificacoes.dart
+
+- ⚙️ Função: Mostra uma notificação do app na barra do Android.
+- 💬 Comentários Removidos:
+
+  > "O app não tinha como mostrar notificação nenhuma. A única que existia, a 'MapFood — loja aberta', é criada por dentro do pacote de GPS, junto com o serviço que mantém o app vivo — não dá para reaproveitar."
+  - 💡 Explicação Leiga: Antes, o app não sabia mostrar aviso nenhum por conta própria.
+
+  > "Feito estendendo a ponte nativa que já existia para pedir permissão, em vez de trazer um pacote de notificações. A escolha foi deliberada: a compilação final tinha acabado de voltar a funcionar, e um pacote novo traz ajuste de configuração no Android e risco de briga de versão. O custo é que só o Android tem aviso — no iPhone a função devolve 'não mostrei' e a vida segue."
+  - 💡 Explicação Leiga: Os avisos foram feitos com o código que já existia, sem instalar nada novo. Por isso, por enquanto, só funcionam no Android.
+
+  > "O lado Android vive no MainActivity: cria o canal 'Avisos da loja', usa o ícone que a ronda já usava, mostra o texto inteiro quando é longo, some ao ser tocada e abre o app no toque. Exige Android 8 ou mais novo — abaixo disso responde que não mostrou, em vez de estourar."
+  - 💡 Explicação Leiga: No Android, o aviso abre o app quando tocado. Em aparelhos muito antigos, ele simplesmente não aparece.
+
+  > "Falha ao notificar nunca derruba quem chamou: um aviso que não aparece é ruim, mas uma ronda que cai por causa de um aviso é pior."
+  - 💡 Explicação Leiga: Se o aviso falhar, o resto do app continua funcionando normalmente.
+
+### 📂 ARQUIVO: lib/core/notificacoes/permissao_notificacoes.dart
+
+- ⚙️ Função: Pede ao Android a permissão de mostrar notificações.
+- 💬 Comentários Removidos:
+
+  > "Pedido feito por ponte nativa, e não por pacote: é uma chamada só, e no Android 12 ou mais antigo a permissão nem existe — a resposta é 'pode' direto."
+  - 💡 Explicação Leiga: O app pergunta ao Android se pode mostrar avisos. Em versões antigas, nem precisa perguntar.
+
+  > "Morava em core/location por acidente de origem: nasceu junto com a ronda, que é quem pede a permissão ao abrir a loja. Mudou para cá quando o app passou a ter avisos próprios."
+  - 💡 Explicação Leiga: O arquivo mudou de pasta para ficar junto dos outros de notificação.
+
 ### 📂 ARQUIVO: lib/core/session/session_manager.dart
 
 - ⚙️ Função: Desconecta o usuário e volta para o login quando o crachá digital expira.
 - 💬 Comentários Removidos:
+
+  > "Avisa o comerciante que a loja saiu do mapa antes de limpar a sessão, e só aqui: a mesma limpeza roda quando a pessoa sai da conta de propósito, e notificar nesse caso seria avisar de algo que ela acabou de fazer."
+  - 💡 Explicação Leiga: O aviso de sessão vencida só aparece quando a sessão cai sozinha, nunca quando a pessoa sai da conta.
 
   > "Reage a um 401 vindo da API limpando a sessão e voltando pro login — sem isso, um token expirado deixava o app 'logado' falhando em silêncio, já que cada tela só fazia catch(_) do erro."
   - 💡 Explicação Leiga: A classe percebe quando o servidor recusa o crachá do usuário. Ela então apaga a sessão e leva o usuário para a tela de login.
@@ -2788,6 +2833,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Sair da conta apaga todos os prazos: eles pertencem a quem estava logado, e um prazo órfão fecharia a loja do próximo comerciante que entrasse no mesmo aparelho."
   - 💡 Explicação Leiga: Ao sair da conta, os horários guardados são apagados.
 
+  > "O aviso de fechamento sai mesmo com o app aberto, ao contrário dos avisos de 'saiu do mapa', que só aparecem com o celular no bolso. É confirmação de algo que o comerciante marcou, e ele vai querer encontrar depois no histórico de notificações."
+  - 💡 Explicação Leiga: O aviso de que a loja fechou aparece sempre, porque confirma algo que o comerciante pediu.
+
 ### 📂 ARQUIVO: lib/features/merchant/presentation/controllers/modo_ronda.dart
 
 - ⚙️ Função: Diz se a loja aberta está parada num ponto ou andando com o comerciante.
@@ -4718,6 +4766,14 @@ Eles conferem sozinhos se o código continua funcionando depois de cada mudança
 
   > "Toda desserialização do app passa por aqui. O que estes casos garantem é que uma quebra de contrato da API vira `ParseException` legível — e não o `TypeError` cru que atravessava todo o tratamento de erro das telas."
   - 💡 Explicação Leiga: Os testes garantem que dados errados do servidor produzem um erro que o app sabe mostrar.
+
+### 📂 ARQUIVO: test/core/notificacoes/notificacoes_test.dart
+
+- ⚙️ Função: Confere se o pedido de notificação chega ao Android com os campos certos.
+- 💬 Comentários Removidos:
+
+  > "O teste prova o que o Dart pede ao Android, não que o aviso apareceu na barra — isso só um aparelho de verdade mostra. O que dá para garantir aqui é o contrato: título, texto e número do aviso, e que uma falha do lado nativo devolve 'não mostrei' em vez de estourar."
+  - 💡 Explicação Leiga: O teste confere o pedido enviado ao Android. Ver o aviso aparecendo exige um celular de verdade.
 
 ### 📂 ARQUIVO: test/core/session/session_store_test.dart
 
