@@ -26,6 +26,7 @@ class SessionManager {
       final hadSession = await AuthStorage.getToken() != null;
       if (!hadSession) return;
 
+      RondaManager.instance.avisarQueASessaoCaiu();
       await SessionStore.instance.signOut();
       clearUserScopedState();
       final navigator = navigatorKey.currentState;

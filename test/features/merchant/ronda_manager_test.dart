@@ -340,4 +340,78 @@ void main() {
       await aguardarAte(() => api.patches.length == 2);
     });
   });
+
+  group('aviso de que saiu do mapa', () {
+    late List<String> avisos;
+    late RondaManager comAviso;
+
+    Future<void> emRonda({bool emSegundoPlano = true}) async {
+      comAviso = RondaManager(
+        storeService: api.servico,
+        configuracao: const ConfiguracaoRonda(esperasDeReenvio: [Duration(milliseconds: 1)]),
+        agora: () => agora,
+        avisar: (motivo) async => avisos.add(motivo),
+      );
+      addTearDown(comAviso.encerrar);
+      comAviso.acompanhar(_loja(7), posicaoInicial: abertura);
+      await aguardarAte(() => comAviso.estadoDe(7).value.ultimoEnvioEm != null);
+      await aguardarAte(() => fonte.lendo);
+      if (emSegundoPlano) {
+        final binding = TestWidgetsFlutterBinding.instance;
+        binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+        addTearDown(() => binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed));
+      }
+    }
+
+    setUp(() => avisos = []);
+
+    test('GPS desligado com o celular no bolso avisa o comerciante', () async {
+      await emRonda();
+
+      fonte.atual.addError(const LocationServiceDisabledException());
+      await aguardarAte(() => avisos.isNotEmpty);
+
+      expect(avisos.single, contains('GPS foi desligado'));
+    });
+
+    test('com o app na tela, não avisa: a tela já mostra', () async {
+      await emRonda(emSegundoPlano: false);
+
+      fonte.atual.addError(const LocationServiceDisabledException());
+      await escoar();
+
+      expect(avisos, isEmpty);
+    });
+
+    test('recusa do servidor avisa com a mensagem que veio de lá', () async {
+      await emRonda();
+      api.responder('PATCH', '/lojas/7/posicao', 409,
+          '{"statusLoja": "SUSPENSA", "message": "Sua loja foi suspensa pela moderação"}');
+
+      agora = agora.add(const Duration(seconds: 20));
+      fonte.atual.add(cemMetrosAdiante);
+      await aguardarAte(() => avisos.isNotEmpty);
+
+      expect(avisos.single, 'Sua loja foi suspensa pela moderação');
+    });
+
+    test('não repete o aviso enquanto o problema continua', () async {
+      await emRonda();
+
+      fonte.atual.addError(const LocationServiceDisabledException());
+      await aguardarAte(() => avisos.isNotEmpty);
+      fonte.atual.addError(const LocationServiceDisabledException());
+      await escoar();
+
+      expect(avisos, hasLength(1));
+    });
+
+    test('sessão caída avisa, mas só com alguma loja em ronda', () async {
+      await emRonda();
+
+      comAviso.avisarQueASessaoCaiu();
+
+      expect(avisos.single, contains('sessão expirou'));
+    });
+  });
 }

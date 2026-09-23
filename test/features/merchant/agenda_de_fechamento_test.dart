@@ -19,11 +19,13 @@ void main() {
   late ApiFalsa api;
   late DateTime agora;
   late AgendaDeFechamento agenda;
+  late List<String> avisos;
 
   AgendaDeFechamento criar({Duration maximo = const Duration(milliseconds: 500)}) =>
       AgendaDeFechamento(
         storeService: api.servico,
         agora: () => agora,
+        avisar: (motivo) async => avisos.add(motivo),
         minimo: Duration.zero,
         maximo: maximo,
       );
@@ -35,6 +37,7 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues({});
     api = ApiFalsa();
+    avisos = [];
     api.responder('GET', '/lojas/7/completa', 200, _corpo(7));
     api.responder('PUT', '/lojas/7', 200, _corpo(7, status: 'INATIVA'));
     agora = DateTime(2026, 9, 21, 14);
@@ -63,6 +66,7 @@ void main() {
 
     expect(fechamentos(), isEmpty);
     expect(agenda.prazoDe(7).value, isNull);
+    expect(avisos, isEmpty);
   });
 
   test('o prazo nunca passa do teto, mesmo pedindo mais', () async {

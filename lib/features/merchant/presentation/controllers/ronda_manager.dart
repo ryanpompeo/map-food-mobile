@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
 import 'package:map_food/core/location/perfil_localizacao.dart';
+import 'package:map_food/core/notificacoes/avisos_da_loja.dart';
 import 'package:map_food/features/merchant/presentation/controllers/configuracao_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/estado_ronda.dart';
 import 'package:map_food/features/merchant/presentation/controllers/filtro_de_leituras.dart';
@@ -21,8 +22,10 @@ class RondaManager with WidgetsBindingObserver {
     StoreService? storeService,
     this.configuracao = const ConfiguracaoRonda(),
     DateTime Function()? agora,
+    Aviso? avisar,
   })  : _storeService = storeService ?? StoreService(),
         _agora = agora ?? DateTime.now,
+        _avisar = avisar ?? AvisosDaLoja.saiuDoMapa,
         _filtro = FiltroDeLeituras(configuracao);
 
   static final RondaManager instance = RondaManager();
@@ -30,6 +33,7 @@ class RondaManager with WidgetsBindingObserver {
   final ConfiguracaoRonda configuracao;
   final StoreService _storeService;
   final DateTime Function() _agora;
+  final Aviso _avisar;
   final FiltroDeLeituras _filtro;
 
   final Map<int, RondaUplink> _uplinks = {};
@@ -42,6 +46,7 @@ class RondaManager with WidgetsBindingObserver {
   int _geracaoLeitura = 0;
   int _geracaoSincronia = 0;
   bool _observando = false;
+  bool _jaAvisou = false;
   ModoRonda _modo = ModoRonda.emMovimento;
   FaseRonda _faseGps = FaseRonda.parada;
   DateTime? _inicioDaLeituraEm;
@@ -87,6 +92,7 @@ class RondaManager with WidgetsBindingObserver {
 
   void acompanhar(StoreDto loja, {Position? posicaoInicial, ModoRonda? modo}) {
     _dispensadas.remove(loja.id);
+    _jaAvisou = false;
     if (modo != null) definirModo(modo);
     if (acompanha(loja.id)) return;
     _uplinks[loja.id] = _criarUplink(loja);
@@ -156,6 +162,7 @@ class RondaManager with WidgetsBindingObserver {
   void _aoEnviar(int lojaId, Position posicao) {
     final agora = _agora();
     _ultimoEnvioEm = agora;
+    _jaAvisou = false;
     _alterar(lojaId, (estado) {
       final fase = estado.fase == FaseRonda.iniciando ? FaseRonda.ativa : estado.fase;
       return estado
@@ -172,6 +179,18 @@ class RondaManager with WidgetsBindingObserver {
 
   void _aoSerRecusado(int lojaId, LojaForaDeRondaException recusa) {
     _encerrarLoja(lojaId, EstadoRonda(fase: FaseRonda.recusada, recusa: recusa));
+    _avisarQueSaiu(recusa.message);
+  }
+
+  void avisarQueASessaoCaiu() {
+    if (_uplinks.isEmpty) return;
+    _avisarQueSaiu(_sessaoExpirada);
+  }
+
+  void _avisarQueSaiu(String motivo) {
+    if (_jaAvisou || !_emSegundoPlano) return;
+    _jaAvisou = true;
+    unawaited(_avisar(motivo));
   }
 
   void _encerrarLoja(int lojaId, EstadoRonda estadoFinal) {
@@ -282,8 +301,25 @@ class RondaManager with WidgetsBindingObserver {
     }
   }
 
+  static const String _sessaoExpirada =
+      'Sua sessão expirou. Entre de novo para sua loja voltar ao mapa.';
+  static const String _semPermissaoNoBolso =
+      'A permissão de localização foi retirada. Sua posição parou de ser enviada e a loja sai do mapa em poucos minutos.';
+  static const String _gpsDesligadoNoBolso =
+      'O GPS foi desligado. Sua posição parou de ser enviada e a loja sai do mapa em poucos minutos.';
+
   void _definirFaseGps(FaseRonda fase) {
     _faseGps = fase;
+    if (_uplinks.isNotEmpty) {
+      switch (fase) {
+        case FaseRonda.semPermissao:
+          _avisarQueSaiu(_semPermissaoNoBolso);
+        case FaseRonda.gpsDesligado:
+          _avisarQueSaiu(_gpsDesligadoNoBolso);
+        default:
+          break;
+      }
+    }
     for (final id in _uplinks.keys) {
       _alterar(id, (estado) => estado.naFase(fase));
     }

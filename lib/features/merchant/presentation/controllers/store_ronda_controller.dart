@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
-import 'package:map_food/core/location/permissao_notificacoes.dart';
+import 'package:map_food/core/notificacoes/permissao_notificacoes.dart';
 import 'package:map_food/core/location/perfil_localizacao.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/features/merchant/presentation/controllers/agenda_de_fechamento.dart';
