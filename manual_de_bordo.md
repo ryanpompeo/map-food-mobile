@@ -183,6 +183,23 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
   > "Retorna 'Bairro, Cidade' (ou só 'Cidade' se não houver bairro) a partir da posição atual do dispositivo, ou o motivo pelo qual não foi possível."
   - 💡 Explicação Leiga: A função pega as coordenadas do GPS e devolve o nome do lugar em texto. Se não conseguir, ela devolve o motivo da falha.
 
+### 📂 ARQUIVO: lib/core/location/perfil_localizacao.dart
+
+- ⚙️ Função: Define o quanto o GPS trabalha em cada situação: cliente olhando o mapa, loja andando e loja parada.
+- 💬 Comentários Removidos:
+
+  > "Três perfis para o mesmo hardware. O consumidor precisa de precisão média e reage a cada 50 metros; a loja em movimento precisa de precisão alta e reage a cada 20 metros, porque o marcador dela anda no mapa de outras pessoas; a loja parada quase não precisa de GPS nenhum."
+  - 💡 Explicação Leiga: O GPS trabalha mais ou menos conforme a necessidade de cada tela.
+
+  > "O perfil da loja parada existe por um detalhe do Android: a notificação fixa que mantém o app vivo em segundo plano é criada pela própria leitura de GPS. Sem leitura nenhuma, o sistema fecharia o app com a tela bloqueada, o sinal de vida pararia e a loja cairia em 15 minutos — pior do que o modo em movimento. Então ele mantém uma leitura de baixa precisão, que só reage acima de 500 metros, apenas para segurar o app de pé. A posição mostrada aos clientes continua sendo a do momento em que o comerciante tocou no botão."
+  - 💡 Explicação Leiga: No modo parado o GPS continua ligado no mínimo, só para o app não ser fechado pelo celular.
+
+  > "O modo parado não mantém o celular acordado, ao contrário do modo em movimento: é a maior economia de bateria dos dois, e quem está parado não precisa de leitura contínua."
+  - 💡 Explicação Leiga: No modo parado o app deixa o celular dormir, o que economiza bateria.
+
+  > "A ordem da lista é 'do mais exigente para o menos exigente'. Quando duas telas pedem GPS ao mesmo tempo, vale o perfil mais exigente entre elas — uma única assinatura de hardware serve todo mundo."
+  - 💡 Explicação Leiga: Se duas telas pedem GPS juntas, vale a configuração mais forte das duas.
+
 ### 📂 ARQUIVO: lib/core/network/api_client.dart
 
 - ⚙️ Função: É o carteiro do aplicativo; todo pedido enviado ao servidor passa por aqui.
@@ -370,6 +387,20 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
 ---
 
 ## 🎨 PARTE 3 — AS REGRAS VISUAIS (cores, letras, tamanhos)
+
+### 📂 ARQUIVO: lib/core/storage/prazo_abertura_storage.dart
+
+- ⚙️ Função: Guarda no aparelho até que horas cada loja aberta deve fechar sozinha.
+- 💬 Comentários Removidos:
+
+  > "O prazo do 'Estou aqui' vive no aparelho, e não no servidor, porque a API não tem campo para ele. Isso é deliberado: a regra combinada com o time é que mudanças para o app sejam aditivas na API, e um horário de fechamento exigiria coluna nova. O servidor continua com a rede de proteção que já existe — 15 minutos sem sinal fecham a loja de qualquer jeito."
+  - 💡 Explicação Leiga: O horário de fechar fica guardado no celular, porque o servidor ainda não tem esse campo.
+
+  > "Um mapa de loja para horário, e não um único prazo: o comerciante pode ter mais de uma loja aberta, e cada uma tem o seu horário."
+  - 💡 Explicação Leiga: Cada loja tem o seu horário guardado separadamente.
+
+  > "Registro corrompido ou de uma versão antiga do app vira mapa vazio em vez de exceção: perder o prazo só significa que a loja vai fechar pela regra dos 15 minutos sem sinal, enquanto uma exceção aqui derrubaria a tela do comerciante na abertura."
+  - 💡 Explicação Leiga: Se o dado estiver estragado, o app ignora em vez de quebrar.
 
 ### 📂 ARQUIVO: lib/core/ui/charts/chart_data.dart
 
@@ -2731,6 +2762,60 @@ Mudar uma delas muda todas as telas que a usam.
   > "PUT /comerciantes/{id} faz replace completo no backend, então [merchant] deve carregar todos os campos existentes (inclusive os não editáveis nesta tela, como cpf) para não serem apagados. [novaSenha] só é enviada se o usuário quiser trocar a senha — omitida, o backend preserva a senha atual automaticamente."
   - 💡 Explicação Leiga: A função salva os dados do comerciante, reenviando todos os campos.
 
+### 📂 ARQUIVO: lib/features/merchant/presentation/controllers/agenda_de_fechamento.dart
+
+- ⚙️ Função: Fecha sozinha a loja aberta no modo "Estou aqui" quando chega o horário escolhido.
+- 💬 Comentários Removidos:
+
+  > "O 'Estou aqui' promete duas coisas ao comerciante: que a posição fica onde ele parou, e que a loja fecha sozinha no horário. A primeira é da ronda; esta classe é a segunda. Sem ela, o 'até as 18h' seria só um texto na tela."
+  - 💡 Explicação Leiga: Esta classe é quem realmente fecha a loja na hora marcada.
+
+  > "Mínimo de 30 minutos e teto de 12 horas. O teto é a defesa contra a loja fantasma: sem ele, 'aberta até um horário' vira uma loja aberta para sempre, que é a reclamação de quem anda até um ponto e não encontra ninguém. O horário pode virar a meia-noite de propósito — food truck noturno abre às 22h e fecha às 2h."
+  - 💡 Explicação Leiga: O comerciante escolhe o horário, mas só entre meia hora e 12 horas.
+
+  > "Prorrogar soma ao prazo que já existia, não à hora atual: quem fecharia às 18h30 passa a fechar às 20h30. É o que 'ficar mais 2 horas' significa para quem está na rua. O teto de 12 horas continua sendo medido a partir de agora, então prorrogar não empurra o prazo indefinidamente."
+  - 💡 Explicação Leiga: O botão de ficar mais tempo soma duas horas ao horário que já estava marcado.
+
+  > "Ao voltar para o app, três situações distintas: prazo ainda de pé (religa o relógio com o tempo que sobrou), prazo vencido com o app fechado (fecha a loja agora) e loja que já não está aberta (só limpa o registro, sem chamar a API). A terceira existe porque a loja pode ter sido fechada pelo site, pela moderação ou pela regra dos 15 minutos — tentar fechar de novo seria um PUT inútil."
+  - 💡 Explicação Leiga: Quando o app volta, ele confere o horário guardado e decide se fecha a loja, espera ou apaga o registro.
+
+  > "Avisa a ronda antes de fechar: se a posição continuasse subindo, o servidor recusaria o envio com 409 e o comerciante veria um erro no lugar de um fechamento normal."
+  - 💡 Explicação Leiga: O envio de posição é desligado antes de a loja fechar.
+
+  > "`lojaFechadaPeloPrazo` existe porque quem fecha aqui é um relógio, não um toque na tela. Sem esse aviso, o cartão do comerciante continuaria dizendo 'Loja aberta' até a próxima vez que a tela buscasse os dados."
+  - 💡 Explicação Leiga: A tela é avisada quando o relógio fecha a loja, para não mostrar informação velha.
+
+  > "Sair da conta apaga todos os prazos: eles pertencem a quem estava logado, e um prazo órfão fecharia a loja do próximo comerciante que entrasse no mesmo aparelho."
+  - 💡 Explicação Leiga: Ao sair da conta, os horários guardados são apagados.
+
+### 📂 ARQUIVO: lib/features/merchant/presentation/controllers/modo_ronda.dart
+
+- ⚙️ Função: Diz se a loja aberta está parada num ponto ou andando com o comerciante.
+- 💬 Comentários Removidos:
+
+  > "Dois modos em vez de um. A maioria dos comerciantes estaciona num ponto e fica horas: para eles, o GPS de alta precisão a cada 5 segundos é desperdício de bateria sem nenhum ganho, porque o ponto no mapa não muda. Quem realmente circula escolhe 'em movimento' e paga esse custo. A ronda ao vivo continua existindo porque é o diferencial do produto — e porque um toque no botão prova presença só naquele segundo, enquanto o rastreamento prova ao longo do tempo."
+  - 💡 Explicação Leiga: A loja pode ficar parada num ponto ou andar junto com o comerciante, e cada modo gasta bateria de um jeito.
+
+### 📂 ARQUIVO: lib/features/merchant/presentation/controllers/ronda_uplink.dart
+
+- ⚙️ Função: Envia a posição da loja ao servidor, uma de cada vez, sem acumular fila.
+- 💬 Comentários Removidos:
+
+  > "Uma requisição em voo por vez, e só a posição mais recente espera a vez. Numa rede lenta, enviar cada leitura criaria uma fila de posições velhas: o servidor gravaria, uma por uma, onde o comerciante esteve, em vez de onde ele está."
+  - 💡 Explicação Leiga: O app manda uma posição por vez e guarda só a mais nova para enviar depois.
+
+  > "Falha não é motivo para insistir mais: a espera cresce de 2 até 30 segundos. Sob problema de rede, o app manda menos, nunca mais — o contrário derrubaria um servidor que já está com dificuldade."
+  - 💡 Explicação Leiga: Quando falha, o app espera cada vez mais antes de tentar de novo.
+
+  > "Intervalo mínimo de 15 segundos entre envios da mesma loja. Antes, o teto era um efeito colateral da configuração do GPS, e uma medição contra a API local mostrou que o servidor aguenta cerca de 84 envios por segundo, enquanto a lista que os clientes consultam aguenta 30 — ou seja, o gargalo nunca foi este lado. O intervalo explícito troca 'deve dar certo' por uma conta fechada: no pior caso, 4 envios por minuto por loja, aconteça o que acontecer com o GPS. Em movimento urbano isso é uma atualização a cada 100 ou 200 metros, imperceptível para quem olha o mapa."
+  - 💡 Explicação Leiga: A mesma loja manda posição no máximo a cada 15 segundos, para o servidor não receber pedidos demais.
+
+  > "Segurar o envio não descarta a posição nova: quando a janela fecha, sai a leitura mais recente que chegou nesse meio-tempo. Nunca uma posição velha, nunca duas requisições."
+  - 💡 Explicação Leiga: Enquanto espera, o app troca a posição guardada pela mais nova, e envia só essa.
+
+  > "Recusa do servidor (409) encerra a ronda em vez de tentar de novo: a loja não está mais aberta, e insistir seria gastar bateria e rede para receber o mesmo não."
+  - 💡 Explicação Leiga: Se o servidor diz que a loja está fechada, o app para de mandar posição.
+
 ### 📂 ARQUIVO: lib/features/merchant/presentation/controllers/store_ronda_controller.dart
 
 - ⚙️ Função: Controla abrir e fechar a loja e envia a posição do GPS enquanto ela está aberta.
@@ -2970,6 +3055,23 @@ Mudar uma delas muda todas as telas que a usam.
   > "'Ronda' e 'Minha loja' eram duas abas para o mesmo objeto — o toggle de aberta/fechada agora é o topo do painel de gestão, que é onde ele sempre foi procurado."
   - 💡 Explicação Leiga: A linha junta duas abas antigas em uma só.
 
+### 📂 ARQUIVO: lib/features/merchant/presentation/widgets/sheet_abrir_loja.dart
+
+- ⚙️ Função: Pergunta, ao abrir a loja, se o comerciante está parado ou em movimento e até que horas fica aberto.
+- 💬 Comentários Removidos:
+
+  > "'Estou parado aqui' já vem escolhido porque é o caso mais comum e o mais econômico em bateria. O critério da tarefa era cadastrar a localização com poucos toques: abrir a folha e confirmar são dois."
+  - 💡 Explicação Leiga: A opção de ficar parado já vem marcada, para abrir a loja em dois toques.
+
+  > "As duas opções explicam a consequência, não a tecnologia: o que os clientes veem e quanta bateria gasta. 'Alta precisão' e 'segundo plano' não significam nada para quem está atendendo uma fila."
+  - 💡 Explicação Leiga: Cada opção explica o que muda para o cliente e para a bateria.
+
+  > "Horários sugeridos de 2, 4 e 6 horas cobrem quase todo turno de rua; 'escolher horário' resolve o resto. Quem escolhe um horário que já passou está falando do dia seguinte — às 22h, escolher 2h significa fechar às 2h da manhã, não voltar no tempo."
+  - 💡 Explicação Leiga: Dá para escolher entre horários prontos ou marcar um. Horário já passado vale para o dia seguinte.
+
+  > "O teto de 12 horas é aplicado aqui também, e não só na agenda: é melhor a folha já mostrar o horário real do que aceitar um valor que seria cortado depois, sem o comerciante entender por quê."
+  - 💡 Explicação Leiga: A tela já mostra o horário que vai valer, sem cortar depois escondido.
+
 ### 📂 ARQUIVO: lib/features/merchant/presentation/widgets/store_operation_section.dart
 
 - ⚙️ Função: Mostra o botão de abrir/fechar a loja e o mapa com a posição atual.
@@ -2989,6 +3091,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Nota de rodapé explicando a ronda. Curta e presente nos dois estados: é a única explicação de por que a loja 'anda' no mapa, e some do caminho de quem já sabe (uma linha, sem caixa colorida chamando atenção)."
   - 💡 Explicação Leiga: Esta classe escreve uma frase curta explicando por que a loja se move no mapa.
+
+  > "Abrir a loja passa pela folha de escolha; fechar não. Perguntar 'como você vai aparecer?' na hora de fechar seria uma pergunta sem sentido, e um toque a mais entre o comerciante e a ação mais urgente que ele tem."
+  - 💡 Explicação Leiga: A pergunta sobre o modo aparece só ao abrir a loja, nunca ao fechar.
 
 ### 📂 ARQUIVO: lib/features/merchant/presentation/widgets/store_reviews_section.dart
 
@@ -3071,6 +3176,15 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Sobre o card aberto (superfície invertida) a paleta de alerta precisa de outro fundo — o `dangerSurface` claro sumiria ali."
   - 💡 Explicação Leiga: A linha troca o fundo do aviso quando ele aparece sobre o cartão escuro.
+
+  > "No modo parado o selo 'AO VIVO' sai e o título vira 'Loja aberta neste ponto'. O selo promete movimento ao vivo; mantê-lo numa loja parada seria dizer ao comerciante que algo está sendo transmitido quando não está."
+  - 💡 Explicação Leiga: Quando a loja está parada, o cartão muda o título e tira o selo de transmissão ao vivo.
+
+  > "'Aberta até as 18:30' fica sempre visível quando há prazo, e o convite para ficar mais 2 horas só aparece nos últimos 15 minutos. Antes disso ele seria ruído; depois de fechar, seria tarde."
+  - 💡 Explicação Leiga: O cartão mostra o horário de fechar, e só oferece mais tempo quando falta pouco.
+
+  > "A troca de modo é um toque discreto, e não um segundo botão cheio: o botão de destaque do cartão é fechar a loja, e dois botões iguais fariam a pessoa parar para ler qual é qual. A altura de 48 pontos é mantida porque é o alvo mínimo de toque."
+  - 💡 Explicação Leiga: A troca de modo é um toque menor, para não competir com o botão de fechar a loja.
 
 ### 📂 ARQUIVO: lib/features/merchant/presentation/widgets/store_switcher_bar.dart
 
@@ -4725,6 +4839,25 @@ Eles conferem sozinhos se o código continua funcionando depois de cada mudança
 
   > "Não lança: quem chama normalmente não dá await (login, abertura de aba)."
   - 💡 Explicação Leiga: O teste confere que uma falha não derruba o aplicativo.
+
+### 📂 ARQUIVO: test/features/merchant/agenda_de_fechamento_test.dart
+
+- ⚙️ Função: Confere se a loja aberta com horário fecha sozinha na hora certa.
+- 💬 Comentários Removidos:
+
+  > "Os casos que importam não são o caminho feliz, e sim o retorno ao app: prazo vencido enquanto o celular estava desligado, prazo ainda de pé, e loja que já foi fechada por fora. Os três acontecem na rua, e o terceiro é o que evita um PUT inútil em cima de uma loja que a moderação fechou."
+  - 💡 Explicação Leiga: Os testes conferem o que acontece quando o comerciante volta ao app depois de um tempo fora.
+
+  > "O relógio é injetado e o teto de horas é reduzido no teste: sem isso, conferir o limite de 12 horas exigiria esperar 12 horas."
+  - 💡 Explicação Leiga: O teste usa um relógio de mentira para não precisar esperar horas.
+
+### 📂 ARQUIVO: test/features/merchant/sheet_abrir_loja_test.dart
+
+- ⚙️ Função: Confere a folha que pergunta como a loja vai aparecer ao abrir.
+- 💬 Comentários Removidos:
+
+  > "O que se testa aqui é o que volta para quem chamou: modo parado com horário, ou modo em movimento sem horário nenhum. O horário mostrado na tela e o horário devolvido têm que ser o mesmo — é ele que vira o fechamento automático."
+  - 💡 Explicação Leiga: O teste confere que o horário que aparece na tela é o mesmo que vai valer.
 
 ### 📂 ARQUIVO: test/features/merchant/store_status_card_test.dart
 
