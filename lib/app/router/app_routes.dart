@@ -9,6 +9,7 @@ class AppRoutes {
   static const consumerRegister = '/consumerRegister';
   static const merchantRegister = '/merchantRegister';
   static const storeRegister = '/storeRegister';
+  static const verificarEmail = '/verificarEmail';
 
   static const consumerHome = '/consumerHome';
   static const merchantDashboard = '/merchant';

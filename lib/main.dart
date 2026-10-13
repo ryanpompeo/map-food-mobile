@@ -7,6 +7,7 @@ import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_theme.dart';
 import 'package:map_food/core/ui/theme/theme_controller.dart';
 import 'package:map_food/features/auth/presentation/pages/login_page.dart';
+import 'package:map_food/features/auth/presentation/pages/verificar_email_page.dart';
 import 'package:map_food/features/auth/presentation/pages/merchant_register_page.dart';
 import 'package:map_food/features/auth/presentation/pages/consumer_register_page.dart';
 import 'package:map_food/features/consumer/presentation/pages/consumer_home_page.dart';
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
     AppRoutes.consumerRegister: (context) => const ConsumerRegisterPage(),
     AppRoutes.merchantRegister: (context) => const MerchantRegisterPage(),
     AppRoutes.storeRegister: (context) => const StoreRegisterPage(),
+    AppRoutes.verificarEmail: (context) => const VerificarEmailPage(),
     AppRoutes.merchantDashboard: (context) => const MerchantHomePage(),
     AppRoutes.consumerHome: (context) => const ConsumerHomePage(),
   };

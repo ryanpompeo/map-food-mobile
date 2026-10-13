@@ -32,6 +32,11 @@ class ErrorInterceptor extends Interceptor {
         _ when (status ?? 0) >= 500 => ServerException(
           message ?? 'Erro no servidor',
         ),
+        429 => AppException(
+          message ?? 'Muitas tentativas. Aguarde um pouco.',
+          statusCode: 429,
+          dados: _comoMapa(data),
+        ),
         _ => AppException(message ?? 'Erro desconhecido', statusCode: status),
       };
     }
