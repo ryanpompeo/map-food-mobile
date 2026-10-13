@@ -36,6 +36,12 @@ void main() {
 
   Future<void> aguardarEnvio(int id) => aguardarAte(() => estado(id).ultimoEnvioEm != null);
 
+  Future<void> emitirAte(Position leitura, bool Function() pronto) => aguardarAte(() {
+        if (pronto()) return true;
+        fonte.atual.add(leitura);
+        return false;
+      });
+
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     fonte = FontePosicaoFalsa();
@@ -300,8 +306,7 @@ void main() {
       expect(ronda.acompanha(7), isTrue);
 
       agora = agora.add(const Duration(seconds: 20));
-      fonte.atual.add(cemMetrosAdiante);
-      await aguardarAte(() => api.patches.length == 2);
+      await emitirAte(cemMetrosAdiante, () => api.patches.length == 2);
 
       expect(estado(7).latitude, cemMetrosAdiante.latitude);
     });
@@ -312,8 +317,7 @@ void main() {
       await aguardarAte(() => fonte.lendo);
 
       agora = agora.add(const Duration(minutes: 5));
-      fonte.atual.add(cemMetrosAdiante);
-      await aguardarAte(() => api.patches.length == 2);
+      await emitirAte(cemMetrosAdiante, () => api.patches.length == 2);
 
       expect(estado(7).latitude, abertura.latitude);
     });
