@@ -407,6 +407,9 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
   > "Reflete uma edição de perfil já salva no backend. Mantém token, id e tipo."
   - 💡 Explicação Leiga: A função atualiza o nome e o e-mail guardados. O crachá e o número do usuário continuam os mesmos.
 
+  > "`precisaVerificarEmail` é o que as telas perguntam, e não o campo cru: visitante sem conta nunca precisa verificar nada, e essa regra fica num lugar só em vez de repetida em cada tela."
+  - 💡 Explicação Leiga: As telas perguntam à sessão se falta confirmar o e-mail, e quem não tem conta nunca precisa.
+
 ### 📂 ARQUIVO: lib/core/storage/auth_storage.dart
 
 - ⚙️ Função: Salva no disco do celular os dados da sessão para o usuário não precisar logar de novo.
@@ -2050,6 +2053,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "`token`, `tipo` e `id` são obrigatórios: sem qualquer um deles não há sessão utilizável, e falhar aqui com [ParseException] nomeada é melhor do que gravar uma sessão pela metade (era o que `json['token'].toString()` fazia: um token nulo virava a string 'null' e só quebrava na requisição autenticada seguinte, como 401 sem explicação)."
   - 💡 Explicação Leiga: A função lê a resposta do login. Se faltar o crachá, o número ou o tipo, ela avisa o erro na hora.
 
+  > "`emailVerificado` ausente vale como verificado. É o que mantém o app funcionando contra a API que ainda não tem a verificação: sem esse padrão, todo mundo veria 'confirme seu e-mail' contra um servidor que nem bloqueia nada. Também segura a transição, quando parte do time já atualizou a API e parte não."
+  - 💡 Explicação Leiga: Se o servidor não disser nada sobre o e-mail, o app considera que está tudo certo.
+
 ### 📂 ARQUIVO: lib/features/auth/data/models/login_request.dart
 
 - ⚙️ Função: Monta o pacote com e-mail, senha e tipo de conta enviado ao servidor no login.
@@ -2068,6 +2074,20 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "signIn persiste E publica: nenhuma tela precisa reler o disco depois do login para saber quem entrou."
   - 💡 Explicação Leiga: A linha salva a sessão e avisa todas as telas ao mesmo tempo.
+
+### 📂 ARQUIVO: lib/features/auth/data/services/verificacao_email_service.dart
+
+- ⚙️ Função: Pede o código de verificação por e-mail e confirma o código digitado.
+- 💬 Comentários Removidos:
+
+  > "Três rotas: perguntar a situação, pedir o código e confirmar. As mensagens de erro (código expirado, inválido, muitas tentativas, nenhum código pendente) vêm prontas do servidor e sobem inteiras até a tela — quem sabe por que o código falhou é quem o guardou, não o app."
+  - 💡 Explicação Leiga: Este arquivo fala com o servidor para saber a situação, pedir e confirmar o código.
+
+  > "A consulta de situação devolve nulo em vez de estourar quando a rota não existe: contra uma API mais antiga, que ainda não tem verificação de e-mail, a tela cai no comportamento simples em vez de quebrar. É a mesma regra do campo `emailVerificado` ausente."
+  - 💡 Explicação Leiga: Se o servidor não tiver essa parte, o app segue funcionando do jeito simples.
+
+  > "Confirmar com sucesso marca a sessão como verificada na hora. Sem isso, a faixa do perfil e o bloqueio de avaliar continuariam aparecendo até a pessoa sair e entrar de novo."
+  - 💡 Explicação Leiga: Assim que o código é aceito, o app já sabe que o e-mail está confirmado.
 
 ### 📂 ARQUIVO: lib/features/auth/presentation/pages/account_type_page.dart
 
@@ -2146,6 +2166,29 @@ Mudar uma delas muda todas as telas que a usam.
   > "Rótulo de grupo do formulário. Em caixa alta e pequeno: separa as duas metades do cadastro sem competir com o título da tela, que é o único texto grande daqui."
   - 💡 Explicação Leiga: A função desenha um título pequeno em maiúsculas separando grupos de campos.
 
+### 📂 ARQUIVO: lib/features/auth/presentation/pages/verificar_email_page.dart
+
+- ⚙️ Função: Tela onde a pessoa digita o código de 6 números que chegou por e-mail.
+- 💬 Comentários Removidos:
+
+  > "Código incompleto nem chega a chamar o servidor: o aviso sai na hora, no aparelho. Gastar uma ida ao servidor para ouvir 'faltam dígitos' é lento e ainda queima uma das tentativas que o servidor conta."
+  - 💡 Explicação Leiga: Se o código estiver incompleto, o app avisa sem consultar o servidor.
+
+  > "Quem manda na espera do reenvio é o servidor, não o app: a tela pergunta a situação ao abrir e usa os segundos que vêm de lá, e repete a conta quando a recusa por excesso (429) traz outro número. O app chutando 60 segundos erra em dois casos reais — a pessoa fechou e abriu o app, ou pediu o código pelo site. Os 60 segundos continuam só como reserva, para quando a API não souber responder."
+  - 💡 Explicação Leiga: O tempo de espera vem do servidor, então ele continua certo mesmo se a pessoa fechar o app.
+
+  > "Limite diário de códigos desabilita o reenvio com o motivo escrito no botão. Sem isso, a pessoa ficaria tentando e levando a mesma recusa sem entender."
+  - 💡 Explicação Leiga: Se acabar o limite do dia, o botão explica em vez de só recusar.
+
+  > "Conta já verificada fecha a tela sozinha. Acontece de verdade: a pessoa confirma pelo site e depois abre a tela no app, ou toca na faixa do perfil que ficou de uma sessão antiga."
+  - 💡 Explicação Leiga: Se o e-mail já estiver confirmado, a tela se fecha sozinha.
+
+  > "Se o reenvio falhar, o botão volta a ficar disponível na hora, em vez de iniciar a espera. Senão a pessoa ficaria um minuto parada olhando para um erro, sem poder tentar de novo."
+  - 💡 Explicação Leiga: Quando o envio falha, dá para tentar de novo imediatamente.
+
+  > "'Confirmar depois' existe por decisão de produto: a exigência da banca é que conta não verificada não possa avaliar nem denunciar, não que não possa usar o app. Quem só quer achar um food truck não esbarra numa parede no primeiro uso, e o bloqueio de verdade está no servidor."
+  - 💡 Explicação Leiga: Dá para pular a confirmação e usar o app normalmente, menos para avaliar e denunciar.
+
 ### 📂 ARQUIVO: lib/features/auth/presentation/widgets/account_type_card.dart
 
 - ⚙️ Função: Desenha os dois cartões de escolha do tipo de conta.
@@ -2197,6 +2240,28 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Mesmo tratamento do seletor de tema: altura mínima."
   - 💡 Explicação Leiga: A linha define a altura mínima de 44 pontos para o toque.
+
+### 📂 ARQUIVO: lib/features/auth/presentation/widgets/aviso_email_nao_verificado.dart
+
+- ⚙️ Função: Reconhece a recusa do servidor por e-mail não confirmado e oferece confirmar na hora.
+- 💬 Comentários Removidos:
+
+  > "O bloqueio é reconhecido por dois caminhos: a frase que o servidor manda no 403, ou um 403 qualquer quando a própria sessão já sabe que o e-mail está pendente. Um caminho só não bastava — se a frase do servidor mudar, o segundo segura; se a sessão estiver desatualizada porque a pessoa confirmou em outro aparelho, o primeiro segura."
+  - 💡 Explicação Leiga: O app reconhece o bloqueio de dois jeitos, para não depender de uma frase exata.
+
+  > "Um 403 de outro motivo continua caindo no erro normal: nem toda recusa é falta de confirmação, e oferecer 'confirmar e-mail' para quem foi barrado por outra razão seria mandar a pessoa para o lugar errado."
+  - 💡 Explicação Leiga: Outros tipos de acesso negado continuam mostrando o erro de sempre.
+
+### 📂 ARQUIVO: lib/features/auth/presentation/widgets/faixa_email_nao_verificado.dart
+
+- ⚙️ Função: Faixa no perfil lembrando de confirmar o e-mail, enquanto estiver pendente.
+- 💬 Comentários Removidos:
+
+  > "Escuta a sessão em vez de ler o valor uma vez: assim a faixa some no instante em que a pessoa confirma, sem precisar sair da tela e voltar."
+  - 💡 Explicação Leiga: A faixa desaparece sozinha assim que o e-mail é confirmado.
+
+  > "Fica no esqueleto de perfil compartilhado, então vale para o comerciante também — ele é barrado do mesmo jeito ao denunciar uma loja sem ter confirmado o e-mail. Visitante sem conta nunca vê a faixa."
+  - 💡 Explicação Leiga: A faixa aparece no perfil do cliente e do comerciante, e nunca para quem não tem conta.
 
 ### 📂 ARQUIVO: lib/features/auth/presentation/widgets/terms_checkbox.dart
 
@@ -4351,6 +4416,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Reserva a linha mesmo sem nota escolhida: sem isso o card inteiro pula de altura no primeiro toque em uma estrela."
   - 💡 Explicação Leiga: A linha reserva o espaço do texto da nota, para o cartão não pular.
 
+  > "O 403 de e-mail não confirmado não vira erro genérico: mostra a frase do servidor com um atalho para confirmar e, se a pessoa confirmar ali mesmo, o envio é refeito sozinho. Sem isso ela perderia a nota e o comentário que acabou de escrever."
+  - 💡 Explicação Leiga: Se faltar confirmar o e-mail, o app oferece confirmar na hora e manda a avaliação de novo sozinho.
+
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/report_store_dialog.dart
 
 - ⚙️ Função: Abre o formulário para denunciar uma loja.
@@ -4376,6 +4444,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Mesma superfície rebaixada do AppFormField logo abaixo: os dois são campos, e antes o seletor usava `surface` (a cor do próprio dialog) com uma borda vermelha que o fazia parecer um campo em estado de erro."
   - 💡 Explicação Leiga: A linha usa a mesma cor de fundo dos campos de digitar.
+
+  > "Mesma recusa por e-mail não confirmado, mesmo atalho — só sem refazer o envio: a denúncia some junto com o diálogo, e reenviar sozinho uma acusação seria arriscado."
+  - 💡 Explicação Leiga: Na denúncia o app também oferece confirmar o e-mail, mas não reenvia nada sozinho.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/review_card.dart
 
@@ -4835,6 +4906,22 @@ Eles conferem sozinhos se o código continua funcionando depois de cada mudança
 
   > "Sem 'Todos' na lista: o filtro que limpa o recorte deixou de ser um item da tira — ver `CategoryFiltersWidget`, onde 'ver tudo' é o estado sem nenhuma categoria marcada."
   - 💡 Explicação Leiga: A linha monta a faixa de categorias sem a opção "Todos".
+
+### 📂 ARQUIVO: test/features/auth/aviso_email_nao_verificado_test.dart
+
+- ⚙️ Função: Confere o reconhecimento do bloqueio e a faixa do perfil.
+- 💬 Comentários Removidos:
+
+  > "O caso que mais importa é o contrário: um 403 de outro motivo não pode virar pedido de confirmação de e-mail. É o erro que mandaria a pessoa para uma tela que não resolve o problema dela."
+  - 💡 Explicação Leiga: O teste garante que outros erros de acesso não abrem a tela de confirmação.
+
+### 📂 ARQUIVO: test/features/auth/verificar_email_page_test.dart
+
+- ⚙️ Função: Confere a tela do código: confirmação, erros do servidor, reenvio e pular.
+- 💬 Comentários Removidos:
+
+  > "O dublê do serviço registra o que foi pedido, então dá para provar o que a tela faz e, principalmente, o que ela não faz: código incompleto não chega a chamar o servidor, e 'confirmar depois' não chama nada."
+  - 💡 Explicação Leiga: Os testes provam também o que a tela evita fazer, não só o que ela faz.
 
 ### 📂 ARQUIVO: test/features/auth/auth_service_test.dart
 
