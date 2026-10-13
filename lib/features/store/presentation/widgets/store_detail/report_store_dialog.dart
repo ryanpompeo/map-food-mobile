@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/features/auth/presentation/widgets/aviso_email_nao_verificado.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -85,6 +87,14 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
       if (!mounted) return;
       Navigator.pop(context);
       AppToast.success(context, 'Denúncia enviada');
+    } on AppException catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      if (ehBloqueioPorEmailNaoVerificado(e)) {
+        await pedirParaConfirmarEmail(context, e.message);
+        return;
+      }
+      UIUtils.showErrorDialog(context, 'Erro ao enviar denúncia, tente de novo');
     } catch (_) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);

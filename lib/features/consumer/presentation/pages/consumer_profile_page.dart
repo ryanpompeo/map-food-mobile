@@ -14,6 +14,7 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
+import 'package:map_food/features/auth/presentation/widgets/faixa_email_nao_verificado.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/theme/theme_controller.dart';
 import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
@@ -181,6 +182,8 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
               children: [
                 const SizedBox(height: Spacing.base),
                 _buildHeader(context),
+                const SizedBox(height: Spacing.md),
+                const FaixaEmailNaoVerificado(),
                 const SizedBox(height: Spacing.lg),
                 _buildTabs(context),
                 const SizedBox(height: Spacing.lg),

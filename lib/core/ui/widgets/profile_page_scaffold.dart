@@ -18,6 +18,7 @@ import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/stacked_card_carousel.dart';
 import 'package:map_food/core/ui/widgets/theme_mode_sheet.dart';
+import 'package:map_food/features/auth/presentation/widgets/faixa_email_nao_verificado.dart';
 import 'package:map_food/features/settings/presentation/pages/settings_page.dart';
 
 class ProfileMenuItem {
@@ -155,6 +156,8 @@ class _ProfilePageScaffoldState extends State<ProfilePageScaffold> {
               children: [
                 const SizedBox(height: Spacing.base),
                 _buildHeader(context),
+                const SizedBox(height: Spacing.md),
+                const FaixaEmailNaoVerificado(),
                 const SizedBox(height: Spacing.xl),
                 _buildFeaturedSection(context),
 

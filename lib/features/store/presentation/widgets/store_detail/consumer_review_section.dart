@@ -13,6 +13,7 @@ import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/app_card.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
+import 'package:map_food/features/auth/presentation/widgets/aviso_email_nao_verificado.dart';
 import 'package:map_food/core/ui/widgets/login_wall_bottom_sheet.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
@@ -128,6 +129,11 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
     } on AppException catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
+      if (ehBloqueioPorEmailNaoVerificado(e)) {
+        final confirmou = await pedirParaConfirmarEmail(context, e.message);
+        if (confirmou && mounted) unawaited(_submit());
+        return;
+      }
       UIUtils.showErrorDialog(
         context,
         'Erro ao enviar avaliação (${e.statusCode ?? 's/ status'}): ${e.message}',

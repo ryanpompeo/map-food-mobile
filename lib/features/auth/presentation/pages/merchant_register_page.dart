@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
@@ -14,6 +15,7 @@ import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
+import 'package:map_food/features/auth/presentation/widgets/aviso_email_nao_verificado.dart';
 import 'package:map_food/features/auth/presentation/widgets/terms_checkbox.dart';
 import 'package:map_food/features/merchant/data/models/merchant_register_request.dart';
 import 'package:map_food/features/merchant/data/services/merchant_service.dart';
@@ -136,6 +138,11 @@ class _MerchantRegisterPageState extends State<MerchantRegisterPage> {
       }
 
       if (!mounted) return;
+
+      if (SessionStore.instance.precisaVerificarEmail) {
+        await abrirConfirmacaoDeEmail(context);
+        if (!mounted) return;
+      }
 
       unawaited(Navigator.pushAndRemoveUntil(
         context,
