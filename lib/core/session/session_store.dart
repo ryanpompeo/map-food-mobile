@@ -15,6 +15,10 @@ class SessionStore extends ValueNotifier<AuthResponse?> {
 
   int? get userId => value?.id;
 
+  bool get emailVerificado => value?.emailVerificado ?? true;
+
+  bool get precisaVerificarEmail => !isGuest && !emailVerificado;
+
   String get nome => value?.nome ?? '';
   String get email => value?.email ?? '';
 
@@ -32,6 +36,13 @@ class SessionStore extends ValueNotifier<AuthResponse?> {
     value = null;
   }
 
+  Future<void> marcarEmailVerificado(bool verificado) async {
+    final atual = value;
+    if (atual == null || atual.emailVerificado == verificado) return;
+    await AuthStorage.updateEmailVerificado(verificado);
+    value = atual.comEmailVerificado(verificado);
+  }
+
   Future<void> updateNomeEmail(String nome, String email) async {
     final atual = value;
     if (atual == null) return;
@@ -42,6 +53,7 @@ class SessionStore extends ValueNotifier<AuthResponse?> {
       id: atual.id,
       nome: nome,
       email: email,
+      emailVerificado: atual.emailVerificado,
     );
   }
 }

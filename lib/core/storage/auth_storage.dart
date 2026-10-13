@@ -7,6 +7,7 @@ class AuthStorage {
   static const _keyUserNome = 'user_nome';
   static const _keyUserTipo = 'user_tipo';
   static const _keyUserEmail = 'user_email';
+  static const _keyEmailVerificado = 'user_email_verificado';
 
   static const _keyFirstLoginAt = 'first_login_at';
 
@@ -17,6 +18,7 @@ class AuthStorage {
     await prefs.setString(_keyUserNome, response.nome);
     await prefs.setString(_keyUserTipo, response.tipo);
     await prefs.setString(_keyUserEmail, response.email);
+    await prefs.setBool(_keyEmailVerificado, response.emailVerificado);
     await _ensureFirstLoginDate(prefs);
   }
 
@@ -30,6 +32,11 @@ class AuthStorage {
     await _ensureFirstLoginDate(prefs);
     final raw = prefs.getString(_keyFirstLoginAt)!;
     return DateTime.now().difference(DateTime.parse(raw)).inDays;
+  }
+
+  static Future<void> updateEmailVerificado(bool verificado) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyEmailVerificado, verificado);
   }
 
   static Future<void> updateNomeEmail(String nome, String email) async {
@@ -53,6 +60,7 @@ class AuthStorage {
       nome: prefs.getString(_keyUserNome) ?? '',
       tipo: prefs.getString(_keyUserTipo) ?? '',
       email: prefs.getString(_keyUserEmail) ?? '',
+      emailVerificado: prefs.getBool(_keyEmailVerificado) ?? true,
     );
   }
 
@@ -63,5 +71,6 @@ class AuthStorage {
     await prefs.remove(_keyUserNome);
     await prefs.remove(_keyUserTipo);
     await prefs.remove(_keyUserEmail);
+    await prefs.remove(_keyEmailVerificado);
   }
 }

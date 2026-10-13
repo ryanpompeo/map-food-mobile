@@ -25,10 +25,24 @@ class AuthService {
             id: autenticado.id,
             nome: autenticado.nome,
             email: email,
+            emailVerificado: autenticado.emailVerificado,
           );
 
     await SessionStore.instance.signIn(sessao);
     return sessao;
+  }
+
+  Future<bool?> conferirEmailVerificado() async {
+    if (SessionStore.instance.isGuest) return null;
+    try {
+      final json = await _client.get<Map<String, dynamic>>(ApiConstants.me);
+      final valor = json['emailVerificado'];
+      if (valor is! bool) return null;
+      await SessionStore.instance.marcarEmailVerificado(valor);
+      return valor;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> logout() => SessionStore.instance.signOut();

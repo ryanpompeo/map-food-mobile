@@ -11,6 +11,10 @@ class ApiConstants {
   static const Duration uploadTimeout = Duration(seconds: 90);
 
   static const String login = '/auth/login';
+  static const String me = '/auth/me';
+  static const String situacaoVerificacao = '/auth/verificacao-email';
+  static const String enviarCodigoVerificacao = '/auth/enviar-codigo-verificacao';
+  static const String verificarEmail = '/auth/verificar-email';
   static const String consumidores = '/consumidores';
   static const String comerciantes = '/comerciantes';
   static const String lojas = '/lojas';

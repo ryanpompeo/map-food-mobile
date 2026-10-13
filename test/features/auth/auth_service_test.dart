@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/interceptors/error_interceptor.dart';
+import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -123,6 +124,55 @@ void main() {
         throwsA(isA<ParseException>()),
       );
       expect(await AuthStorage.getToken(), isNull);
+    });
+  });
+
+  group('e-mail verificado', () {
+    const tokenFalso = '{"token": "t", "tipo": "CONSUMIDOR", "id": 9, "nome": "Ana", "email": "ana@mapfood.test"';
+
+    tearDown(() => SessionStore.instance.signOut());
+
+    test('API que não manda o campo é tratada como verificada', () async {
+      final service = _serviceQueResponde(body: '$tokenFalso}');
+
+      final sessao = await service.login('ana@mapfood.test', 'segredo', 'CONSUMIDOR');
+
+      expect(sessao.emailVerificado, isTrue);
+      expect(SessionStore.instance.precisaVerificarEmail, isFalse);
+    });
+
+    test('login de conta não verificada marca a sessão como pendente', () async {
+      final service = _serviceQueResponde(body: '$tokenFalso, "emailVerificado": false}');
+
+      final sessao = await service.login('ana@mapfood.test', 'segredo', 'CONSUMIDOR');
+
+      expect(sessao.emailVerificado, isFalse);
+      expect(SessionStore.instance.precisaVerificarEmail, isTrue);
+    });
+
+    test('o estado pendente sobrevive ao app fechar e abrir', () async {
+      final service = _serviceQueResponde(body: '$tokenFalso, "emailVerificado": false}');
+      await service.login('ana@mapfood.test', 'segredo', 'CONSUMIDOR');
+
+      await SessionStore.instance.hydrate();
+
+      expect(SessionStore.instance.precisaVerificarEmail, isTrue);
+    });
+
+    test('marcar como verificado atualiza a sessão e o aparelho', () async {
+      final service = _serviceQueResponde(body: '$tokenFalso, "emailVerificado": false}');
+      await service.login('ana@mapfood.test', 'segredo', 'CONSUMIDOR');
+
+      await SessionStore.instance.marcarEmailVerificado(true);
+      await SessionStore.instance.hydrate();
+
+      expect(SessionStore.instance.emailVerificado, isTrue);
+    });
+
+    test('visitante não precisa verificar nada', () async {
+      await SessionStore.instance.signOut();
+
+      expect(SessionStore.instance.precisaVerificarEmail, isFalse);
     });
   });
 }
