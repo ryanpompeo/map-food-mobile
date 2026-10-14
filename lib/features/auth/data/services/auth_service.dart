@@ -2,6 +2,7 @@ import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/api_constants.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/features/auth/data/models/auth_response.dart';
+import 'package:map_food/features/favorites/presentation/controllers/aviso_favorita_proxima.dart';
 
 class AuthService {
   AuthService({ApiClient? client}) : _client = client ?? ApiClient.instance;
@@ -29,6 +30,7 @@ class AuthService {
           );
 
     await SessionStore.instance.signIn(sessao);
+    AvisoFavoritaProxima.instance.ligar();
     return sessao;
   }
 

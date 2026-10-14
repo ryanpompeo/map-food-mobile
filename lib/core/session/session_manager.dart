@@ -5,6 +5,7 @@ import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/features/favorites/presentation/controllers/favorites_manager.dart';
+import 'package:map_food/features/favorites/presentation/controllers/aviso_favorita_proxima.dart';
 import 'package:map_food/features/merchant/presentation/controllers/agenda_de_fechamento.dart';
 import 'package:map_food/features/merchant/presentation/controllers/ronda_manager.dart';
 
@@ -15,6 +16,7 @@ class SessionManager {
 
   static void clearUserScopedState() {
     FavoritesManager.instance.clear();
+    AvisoFavoritaProxima.instance.desligar();
     RondaManager.instance.encerrar();
     unawaited(AgendaDeFechamento.instance.esquecerTudo());
   }

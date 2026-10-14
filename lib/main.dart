@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/session/session_manager.dart';
 import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/features/favorites/presentation/controllers/aviso_favorita_proxima.dart';
 import 'package:map_food/core/storage/onboarding_storage.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_theme.dart';
@@ -25,6 +26,7 @@ void main() async {
 
   await SessionStore.instance.hydrate();
   final session = SessionStore.instance.value;
+  AvisoFavoritaProxima.instance.ligar();
 
   String initialRoute;
   if (session != null) {

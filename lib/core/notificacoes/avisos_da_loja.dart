@@ -7,6 +7,7 @@ class AvisosDaLoja {
 
   static const int saiuDoMapaId = 7301;
   static const int fechouNoHorarioId = 7302;
+  static const int favoritaPertoId = 7303;
 
   static Future<void> saiuDoMapa(String motivo) => Notificacoes.mostrar(
         titulo: 'Sua loja saiu do mapa',
@@ -18,5 +19,11 @@ class AvisosDaLoja {
         titulo: 'Loja fechada',
         texto: motivo,
         id: fechouNoHorarioId,
+      );
+
+  static Future<void> favoritaPerto(String motivo) => Notificacoes.mostrar(
+        titulo: 'Sua favorita está por perto',
+        texto: motivo,
+        id: favoritaPertoId,
       );
 }

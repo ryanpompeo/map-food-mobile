@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:map_food/core/network/api_client.dart';
 import 'package:map_food/core/network/interceptors/error_interceptor.dart';
+import 'package:map_food/features/favorites/data/services/favorito_service.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 
 class ApiFalsa implements HttpClientAdapter {
@@ -19,13 +20,15 @@ class ApiFalsa implements HttpClientAdapter {
   void responder(String metodo, String caminho, int status, [String corpo = '']) =>
       respostas['$metodo $caminho'] = (status, corpo);
 
-  StoreService get servico => StoreService(
-        client: ApiClient(
-          dio: Dio(BaseOptions(baseUrl: 'http://test.local'))
-            ..httpClientAdapter = this
-            ..interceptors.add(ErrorInterceptor()),
-        ),
+  FavoritoService get servicoFavoritos => FavoritoService(client: _apiClient);
+
+  ApiClient get _apiClient => ApiClient(
+        dio: Dio(BaseOptions(baseUrl: 'http://test.local'))
+          ..httpClientAdapter = this
+          ..interceptors.add(ErrorInterceptor()),
       );
+
+  StoreService get servico => StoreService(client: _apiClient);
 
   @override
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream,
