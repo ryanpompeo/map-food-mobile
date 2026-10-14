@@ -333,8 +333,11 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
   > "Quando o servidor recusa o envio, o aviso repete a mensagem que veio de lá, sem inventar texto próprio. Só o servidor sabe se a loja foi fechada, suspensa pela moderação ou expirada por falta de sinal, e cada um desses casos pede uma frase diferente."
   - 💡 Explicação Leiga: Se o servidor recusa, o aviso mostra o motivo que o próprio servidor mandou.
 
-  > "Dois números de aviso, um para 'saiu do mapa' e outro para 'fechou no horário': avisos de assuntos diferentes não podem se apagar na barra de notificações."
+  > "Três números de aviso — 'saiu do mapa', 'fechou no horário' e 'favorita por perto': avisos de assuntos diferentes não podem se apagar na barra de notificações."
   - 💡 Explicação Leiga: Cada tipo de aviso tem seu número, então um não some por causa do outro.
+
+  > "O aviso de favorita por perto é o único dirigido ao consumidor; os outros dois falam com o comerciante. Ficam juntos aqui porque todos precisam soar como a mesma voz do app."
+  - 💡 Explicação Leiga: Um dos avisos é para o cliente e os outros dois para o comerciante.
 
 ### 📂 ARQUIVO: lib/core/notificacoes/notificacoes.dart
 
@@ -423,6 +426,14 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
 
   > "Atualiza nome/e-mail da sessão salva localmente — chamado depois de um 'Editar Perfil' bem-sucedido. Sem isso, `getSession()` continuava devolvendo o nome antigo (o do login) até o usuário deslogar e logar de novo, mesmo com o backend já salvo com o dado novo."
   - 💡 Explicação Leiga: A função grava no disco o nome e o e-mail novos. Sem ela, o app continuava mostrando o nome antigo.
+
+### 📂 ARQUIVO: lib/core/storage/aviso_proximidade_storage.dart
+
+- ⚙️ Função: Guarda no aparelho em que dia a pessoa já foi avisada de uma loja favorita por perto.
+- 💬 Comentários Removidos:
+
+  > "O limite de um aviso por dia é exigência do próprio pedido, e precisa valer mesmo fechando o app — por isso fica guardado no aparelho, e não na memória. Guarda também qual loja foi avisada, que serve para entender o histórico sem precisar de log."
+  - 💡 Explicação Leiga: O app anota o dia do último aviso para não repetir, mesmo que seja fechado e aberto.
 
 ### 📂 ARQUIVO: lib/core/storage/onboarding_storage.dart
 
@@ -2704,6 +2715,26 @@ Mudar uma delas muda todas as telas que a usam.
   > "GET /favoritos/completo (não o /favoritos legado): mesma listagem, mas com mediaAvaliacao/totalAvaliacoes já agregados, pra não mostrar 'Novo' em lojas favoritadas que já têm avaliações."
   - 💡 Explicação Leiga: A linha usa o endereço que já traz a nota das lojas. Sem ele, lojas avaliadas apareciam como "Novo".
 
+### 📂 ARQUIVO: lib/features/favorites/presentation/controllers/aviso_favorita_proxima.dart
+
+- ⚙️ Função: Avisa o consumidor quando uma loja favorita está a menos de 1 km dele.
+- 💬 Comentários Removidos:
+
+  > "A conta de distância é feita inteira no aparelho: a lista de favoritas já vem com latitude e longitude, e a posição do consumidor nunca sai dali. É a decisão de 13/07/2026 — localização de consumidor não é persistida no servidor — e ela também torna a funcionalidade possível sem nenhuma rota nova."
+  - 💡 Explicação Leiga: O app compara as distâncias sozinho, sem mandar a localização da pessoa para lugar nenhum.
+
+  > "Só loja aberta dispara o aviso. Avisar que uma favorita fechada está por perto manda a pessoa até uma porta fechada — o aviso só é útil se dá para comprar agora."
+  - 💡 Explicação Leiga: Só avisa de loja que está aberta naquele momento.
+
+  > "Entre várias favoritas dentro do raio, avisa a mais próxima: o limite é de um aviso por dia, então ele precisa ser gasto no melhor candidato."
+  - 💡 Explicação Leiga: Se houver mais de uma por perto, o app escolhe a mais próxima.
+
+  > "Vive enquanto o app está aberto e desliga sozinho quando ele vai para segundo plano. Avisar com o app fechado exigiria permissão de localização em segundo plano e mais uma justificativa na Play Store — decisão de produto: entregar a versão simples primeiro."
+  - 💡 Explicação Leiga: O aviso funciona com o app aberto. Com ele fechado exigiria outra permissão.
+
+  > "Usa o mesmo consumo de GPS que o mapa do consumidor já usa (precisão média, reagindo a cada 50 m), em vez de abrir uma leitura própria. O custo é o GPS seguir ligado em telas que não têm mapa, enquanto o app estiver aberto."
+  - 💡 Explicação Leiga: Ele aproveita o GPS que o mapa já usa, em vez de ligar outro.
+
 ### 📂 ARQUIVO: lib/features/favorites/presentation/controllers/favorites_manager.dart
 
 - ⚙️ Função: Guarda na memória a lista de lojas favoritas e mantém os corações sincronizados.
@@ -4965,6 +4996,17 @@ Eles conferem sozinhos se o código continua funcionando depois de cada mudança
 
   > "20 dias atrás está fora tanto da semana atual (0-6) quanto da anterior (7-13), então não vira base de comparação."
   - 💡 Explicação Leiga: O teste confere que datas muito antigas ficam fora da comparação.
+
+### 📂 ARQUIVO: test/features/favorites/aviso_favorita_proxima_test.dart
+
+- ⚙️ Função: Confere o aviso de loja favorita por perto e o limite de um por dia.
+- 💬 Comentários Removidos:
+
+  > "O relógio é injetado para o teste atravessar a virada do dia sem esperar: passar perto três vezes no mesmo dia avisa uma só, e no dia seguinte volta a avisar."
+  - 💡 Explicação Leiga: O teste usa um relógio de mentira para conferir a regra de um aviso por dia.
+
+  > "Os casos negativos valem tanto quanto o positivo: loja longe, loja fechada e loja sem localização cadastrada não podem gerar aviso nenhum."
+  - 💡 Explicação Leiga: O teste também garante quando o aviso NÃO deve aparecer.
 
 ### 📂 ARQUIVO: test/features/favorites/favorites_manager_test.dart
 
