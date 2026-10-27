@@ -10,11 +10,17 @@ import 'package:map_food/features/store/presentation/controllers/active_stores_m
 
 class _AdapterContador implements HttpClientAdapter {
   int chamadas = 0;
+  bool foraDoAr = false;
 
   @override
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream,
       Future<void>? cancelFuture) async {
     chamadas++;
+    if (foraDoAr) {
+      return ResponseBody.fromString('{}', 500, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      });
+    }
     return ResponseBody.fromString(
       '[{"id": 1, "nome": "Padaria", "statusLoja": "ATIVA"}]',
       200,
@@ -125,6 +131,49 @@ void main() {
 
     expect(ActiveStoresManager.instance.stores, hasLength(1),
         reason: 'mapa vazio seria pior do que mostrar o último estado conhecido');
+  });
+
+  group('sem conexão', () {
+    test('falha depois de ter dados marca o estado e guarda a idade do mapa', () async {
+      final manager = ActiveStoresManager.instance;
+      var agora = DateTime(2026, 10, 27, 14);
+      manager.relogio = () => agora;
+      addTearDown(() => manager.relogio = DateTime.now);
+
+      await manager.load();
+      expect(manager.semConexao, isFalse);
+
+      adapter.foraDoAr = true;
+      agora = agora.add(const Duration(minutes: 5));
+      await manager.load();
+
+      expect(manager.semConexao, isTrue);
+      expect(manager.idadeDosDados, const Duration(minutes: 5));
+    });
+
+    test('falha sem nenhum dado antes não acusa desconexão: a tela já está vazia', () async {
+      final manager = ActiveStoresManager.instance;
+      manager.limparParaTeste();
+      adapter.foraDoAr = true;
+
+      await manager.load();
+
+      expect(manager.stores, isEmpty);
+      expect(manager.semConexao, isFalse);
+    });
+
+    test('quando a conexão volta, o estado se limpa', () async {
+      final manager = ActiveStoresManager.instance;
+      await manager.load();
+      adapter.foraDoAr = true;
+      await manager.load();
+      expect(manager.semConexao, isTrue);
+
+      adapter.foraDoAr = false;
+      await manager.load();
+
+      expect(manager.semConexao, isFalse);
+    });
   });
 }
 

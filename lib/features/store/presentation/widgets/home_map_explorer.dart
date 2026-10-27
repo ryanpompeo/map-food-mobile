@@ -13,6 +13,7 @@ import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/store/data/models/categoria_model.dart';
 import 'package:map_food/features/store/data/services/categoria_service.dart';
 import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
+import 'package:map_food/features/store/presentation/widgets/faixa_sem_conexao.dart';
 import 'package:map_food/features/store/presentation/controllers/store_map_controller.dart';
 import 'package:map_food/features/store/presentation/widgets/home_filter_modal.dart';
 import 'package:map_food/features/store/presentation/widgets/map_controls.dart';
@@ -146,6 +147,13 @@ class _HomeMapExplorerState extends State<HomeMapExplorer> {
                 ),
                 const SizedBox(height: Spacing.md),
                 _buildChipsCategoria(),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(Spacing.lg, Spacing.sm, Spacing.lg, 0),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: FaixaSemConexao(),
+                  ),
+                ),
               ],
             ),
           ),

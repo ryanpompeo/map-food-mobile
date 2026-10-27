@@ -33,6 +33,8 @@ class ActiveStoresManager extends ChangeNotifier with WidgetsBindingObserver {
   final Map<int, ValueNotifier<StoreDto?>> _observadas = {};
   final Map<int, String?> _assinaturasObservadas = {};
   bool _loading = false;
+  bool _falhouUltimaCarga = false;
+  DateTime? _atualizadoEm;
   Future<void>? _emAndamento;
   Timer? _pollTimer;
   Timer? _reavaliacao;
@@ -40,6 +42,13 @@ class ActiveStoresManager extends ChangeNotifier with WidgetsBindingObserver {
 
   List<StoreDto> get stores => _visiveis;
   bool get isLoading => _loading;
+
+  bool get semConexao => _falhouUltimaCarga && _recebidas.isNotEmpty;
+
+  Duration? get idadeDosDados {
+    final atualizado = _atualizadoEm;
+    return atualizado == null ? null : _agora().difference(atualizado);
+  }
 
   Duration? semSinalHa(int lojaId) {
     final visto = _vistoEm[lojaId];
@@ -90,6 +99,8 @@ class ActiveStoresManager extends ChangeNotifier with WidgetsBindingObserver {
     _observadas.clear();
     _assinaturasObservadas.clear();
     _loading = false;
+    _falhouUltimaCarga = false;
+    _atualizadoEm = null;
     _agora = DateTime.now;
   }
 
@@ -113,8 +124,19 @@ class ActiveStoresManager extends ChangeNotifier with WidgetsBindingObserver {
       notifyListeners();
     }
     try {
-      _aplicar(await _service.getActive(), _agora());
+      final lojas = await _service.getActive();
+      final agora = _agora();
+      _atualizadoEm = agora;
+      _aplicar(lojas, agora);
+      if (_falhouUltimaCarga) {
+        _falhouUltimaCarga = false;
+        notifyListeners();
+      }
     } catch (_) {
+      if (!_falhouUltimaCarga) {
+        _falhouUltimaCarga = true;
+        notifyListeners();
+      }
     } finally {
       _encerrarCarregamento();
     }
