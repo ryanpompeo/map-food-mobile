@@ -105,7 +105,24 @@ class _Canal {
 
   bool get ativo => _saida.hasListener;
 
-  Stream<Position> get stream => _saida.stream;
+  Stream<Position> get stream {
+    if (_ultimaEntregue == null) return _saida.stream;
+    late StreamController<Position> comSemente;
+    StreamSubscription<Position>? assinatura;
+    comSemente = StreamController<Position>(
+      onListen: () {
+        assinatura = _saida.stream.listen(
+          comSemente.add,
+          onError: comSemente.addError,
+          onDone: comSemente.close,
+        );
+        final ultima = _ultimaEntregue;
+        if (ultima != null) comSemente.add(ultima);
+      },
+      onCancel: () => assinatura?.cancel(),
+    );
+    return comSemente.stream;
+  }
 
   void entregar(Position posicao) {
     if (!ativo || !_andouOSuficiente(posicao)) return;

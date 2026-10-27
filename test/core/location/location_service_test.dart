@@ -119,6 +119,24 @@ void main() {
   });
 
   group('canal compartilhado', () {
+    test('quem chega depois recebe a última posição conhecida na hora', () async {
+      final primeiras = <Position>[];
+      final primeira = LocationService.streamDe(PerfilLocalizacao.consumidor).listen(primeiras.add);
+      addTearDown(primeira.cancel);
+      await _escoarEventos();
+
+      fonte.atual.add(_posicao(-22.90));
+      await _escoarEventos();
+      expect(primeiras, hasLength(1));
+
+      final atrasadas = <Position>[];
+      final segunda = LocationService.streamDe(PerfilLocalizacao.consumidor).listen(atrasadas.add);
+      addTearDown(segunda.cancel);
+      await _escoarEventos();
+
+      expect(atrasadas.single.latitude, -22.90);
+    });
+
     test('dois ouvintes do mesmo perfil usam uma única leitura do GPS', () async {
       final a = LocationService.streamDe(PerfilLocalizacao.ronda).listen((_) {});
       final b = LocationService.streamDe(PerfilLocalizacao.ronda).listen((_) {});
