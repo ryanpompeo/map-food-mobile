@@ -183,6 +183,17 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
   > "Retorna 'Bairro, Cidade' (ou só 'Cidade' se não houver bairro) a partir da posição atual do dispositivo, ou o motivo pelo qual não foi possível."
   - 💡 Explicação Leiga: A função pega as coordenadas do GPS e devolve o nome do lugar em texto. Se não conseguir, ela devolve o motivo da falha.
 
+### 📂 ARQUIVO: lib/core/location/rota_externa.dart
+
+- ⚙️ Função: Abre o aplicativo de mapas do celular com a rota até a loja.
+- 💬 Comentários Removidos:
+
+  > "A rota desenhada dentro do app é um desenho: quem usa leitor de tela não consegue seguir uma linha na tela. Entregar o destino para o app de mapas do aparelho resolve a navegação com a voz que a pessoa já conhece — e tira do nosso serviço de rotas o trabalho de recalcular o caminho inteiro."
+  - 💡 Explicação Leiga: O botão manda a loja para o Google Maps ou o Waze, que então guia a pessoa por voz.
+
+  > "Duas tentativas, nesta ordem: `geo:` abre a lista de apps de mapas instalados (Google Maps, Waze, o que a pessoa preferir); se nenhum atender — iPhone, ou aparelho sem app de mapas —, cai no endereço de rota do Google Maps na web. Falhar sem avisar seria pior: a tela mostra um aviso quando as duas tentativas não dão em nada."
+  - 💡 Explicação Leiga: Primeiro tenta abrir um aplicativo de mapas; se não houver nenhum, abre pelo navegador.
+
 ### 📂 ARQUIVO: lib/core/location/perfil_localizacao.dart
 
 - ⚙️ Função: Define o quanto o GPS trabalha em cada situação: cliente olhando o mapa, loja andando e loja parada.
@@ -1810,6 +1821,12 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Selo translúcido sobre o véu do card: categoria e nota. Branco a 22% em vez de uma cápsula opaca — o objetivo é marcar a informação sem abrir mais dois blocos sólidos por cima da foto. Sobre o véu (preto a 85%) o resultado é escuro o suficiente pra sustentar o texto branco em negrito."
   - 💡 Explicação Leiga: Esta classe desenha etiquetas translúcidas com a categoria e a nota.
+
+  > "O avanço automático para enquanto o dedo está no cartão, e não existe quando o aparelho tem leitor de tela ligado ou animações reduzidas: trocar o cartão no meio da leitura perde quem está lendo devagar ou ouvindo. Quem não está nessa situação continua vendo o baralho girar."
+  - 💡 Explicação Leiga: O carrossel espera enquanto a pessoa está com o dedo nele, e não gira sozinho se o celular estiver em modo de acessibilidade.
+
+  > "O cartão da frente fala o nome, a categoria, a nota e a posição no baralho ('cartão 2 de 5'), com o toque declarado no mesmo nó de acessibilidade. Sem a posição, quem ouve não tem como saber que existem outros cartões atrás."
+  - 💡 Explicação Leiga: O leitor de tela diz o que é o cartão e em que posição ele está.
 
 ### 📂 ARQUIVO: lib/core/ui/widgets/step_progress_header.dart
 
@@ -4081,6 +4098,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Sem override de cor: legenda() já resolve pra secondaryText."
   - 💡 Explicação Leiga: A linha usa a cor padrão do estilo de legenda.
 
+  > "A mesma rota externa da tela de detalhe fica na barra do mapa: é aqui que a pessoa está quando decide ir, e a rota desenhada na tela não serve para quem usa leitor de tela."
+  - 💡 Explicação Leiga: O botão no topo do mapa abre a rota no aplicativo de mapas do celular.
+
 ### 📂 ARQUIVO: lib/features/store/presentation/pages/store_register_page.dart
 
 - ⚙️ Função: Cadastro da loja em três etapas, obrigatório para o comerciante novo.
@@ -4628,6 +4648,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Categorias da loja, cada uma com a cor e o ícone que o app já usa para ela nos filtros e nos cards de lista — antes eram chips só de texto, sem relação visual nenhuma com a mesma categoria vista na busca."
   - 💡 Explicação Leiga: Esta classe desenha as categorias da loja com a mesma cor e ícone usados na busca.
 
+  > "O botão 'Traçar rota' só aparece quando a loja tem localização — oferecer rota para uma loja sem coordenada seria prometer o que não dá. Quando nenhum app de mapas atende, a tela avisa em vez de deixar o toque sem efeito."
+  - 💡 Explicação Leiga: O botão de rota só aparece se a loja tiver endereço no mapa, e avisa se não houver aplicativo de mapas no celular.
+
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/store_gallery_strip.dart
 
 - ⚙️ Função: Desenha a fileira horizontal com as fotos da loja.
@@ -4733,6 +4756,14 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Com o endereço em duas linhas, `center` (o padrão) descolaria o pin do começo do texto."
   - 💡 Explicação Leiga: A linha alinha o ícone de local no topo do endereço.
+
+### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_markers_layer.dart
+
+- ⚙️ Função: Desenha os pinos das lojas no mapa, agrupando os que ficam colados no zoom de longe.
+- 💬 Comentários Removidos:
+
+  > "O pino anuncia o nome, a distância até quem está olhando e, para loja em movimento, há quanto tempo ela foi vista. Para quem usa leitor de tela, 'Espetinho do Zé' sozinho não diz se vale sair de casa — a distância é a informação que o mapa dá de graça para quem vê e não dava para quem ouve."
+  - 💡 Explicação Leiga: O pino fala o nome da loja, a que distância ela está e quando foi vista pela última vez.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_map_view.dart
 
