@@ -6,11 +6,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:map_food/core/location/fonte_posicao.dart';
 import 'package:map_food/core/location/location_service.dart';
+import 'package:map_food/core/location/rota_externa.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/route_service.dart';
@@ -111,6 +113,19 @@ class _StoreMapPageState extends State<StoreMapPage> {
     _rota?.atualizarOrigem(ponto);
   }
 
+  Future<void> _abrirNoAppDeMapas() async {
+    final loja = _lojaNoMapa.value;
+    if (!loja.temLocalizacao) return;
+    final abriu = await RotaExterna.tracar(
+      latitude: loja.latitude!,
+      longitude: loja.longitude!,
+      nome: loja.nome,
+    );
+    if (!abriu && mounted) {
+      AppToast.error(context, 'Nenhum aplicativo de mapas encontrado neste celular');
+    }
+  }
+
   static String _distanciaLabel(double metros) {
     if (metros < 1000) return '≈ ${metros.round()} m';
     return '≈ ${(metros / 1000).toStringAsFixed(1)} km';
@@ -136,6 +151,14 @@ class _StoreMapPageState extends State<StoreMapPage> {
           widget.store.nome,
           style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w900, color: context.mapColors.primaryText),
         ),
+        actions: [
+          if (widget.store.temLocalizacao)
+            IconButton(
+              tooltip: 'Traçar rota no aplicativo de mapas',
+              onPressed: _abrirNoAppDeMapas,
+              icon: const Icon(AppIcons.navigationArrow, color: ColorsPalette.redComponents),
+            ),
+        ],
       ),
       body: ListenableBuilder(
         listenable: Listenable.merge([_lojaNoMapa, ?_rota?.estado]),

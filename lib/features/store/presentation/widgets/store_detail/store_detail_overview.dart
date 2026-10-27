@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:map_food/core/location/rota_externa.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
@@ -10,6 +11,7 @@ import 'package:map_food/core/ui/utils/rating_format.dart';
 import 'package:map_food/core/ui/utils/text_scale.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/app_card.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/login_wall_bottom_sheet.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/presentation/pages/store_map_page.dart';
@@ -37,6 +39,17 @@ class StoreActionsRow extends StatelessWidget {
       return;
     }
     showReportStoreDialog(context, lojaId: store.id);
+  }
+
+  Future<void> _tracarRota(BuildContext context) async {
+    final abriu = await RotaExterna.tracar(
+      latitude: store.latitude!,
+      longitude: store.longitude!,
+      nome: store.nome,
+    );
+    if (!abriu && context.mounted) {
+      AppToast.error(context, 'Nenhum aplicativo de mapas encontrado neste celular');
+    }
   }
 
   @override
@@ -72,6 +85,17 @@ class StoreActionsRow extends StatelessWidget {
             ],
           ],
         ),
+        if (store.temLocalizacao)
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.sm),
+            child: AppButton(
+              label: 'Traçar rota',
+              icon: AppIcons.navigationArrow,
+              variant: AppButtonVariant.outline,
+              size: AppButtonSize.sm,
+              onPressed: () => _tracarRota(context),
+            ),
+          ),
         if (!store.temLocalizacao) ...[
           const SizedBox(height: Spacing.sm),
           Text(
