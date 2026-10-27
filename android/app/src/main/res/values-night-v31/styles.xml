@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Esta pasta não é redundante com values-v31/: na ordem de precedência de
+         qualificadores do Android, "night" vem antes de "version", então um
+         aparelho Android 12+ em modo escuro escolheria values-night/styles.xml
+         (sem os atributos de splash) e ignoraria values-v31/. Só a combinação
+         night + v31 cobre esse caso. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+</resources>
