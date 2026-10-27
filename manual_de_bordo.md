@@ -2826,6 +2826,17 @@ Mudar uma delas muda todas as telas que a usam.
 
 ## 👀 PARTE 13 — O VISITANTE (SEM CONTA)
 
+### 📂 ARQUIVO: lib/features/guest/presentation/pages/documento_legal_page.dart
+
+- ⚙️ Função: Desenha a moldura e os estilos de texto usados pelos documentos legais do aplicativo.
+- 💬 Comentários Removidos:
+
+  > "Termos de Uso e Política de Privacidade são dois documentos, com perguntas e públicos diferentes, mas com o mesmo desenho de página: barra com título, rolagem e estilos de markdown. A moldura mora aqui para que ninguém seja tentado a juntar os dois textos de novo só para não repetir o layout."
+  - 💡 Explicação Leiga: Esta tela é a moldura comum dos dois documentos legais. Só o título e o texto mudam.
+
+  > "Sem override de cor: corpo() já herda o texto primário do tema — parágrafo de texto legal não deve ficar esmaecido como um texto secundário."
+  - 💡 Explicação Leiga: A linha usa a cor de texto principal nos parágrafos. Texto legal não deve ficar apagado.
+
 ### 📂 ARQUIVO: lib/features/guest/presentation/pages/guest_home_page.dart
 
 - ⚙️ Função: Tela principal de quem usa o aplicativo sem estar logado.
@@ -2859,13 +2870,27 @@ Mudar uma delas muda todas as telas que a usam.
   > "Três passos para quem procura comida entender a mecânica do app. O desenho da tela vive em [HowItWorksScaffold], compartilhado com a versão do comerciante — aqui fica só o conteúdo."
   - 💡 Explicação Leiga: Esta classe guarda apenas o texto dos três passos. O desenho vem de outro arquivo.
 
-### 📂 ARQUIVO: lib/features/guest/presentation/pages/termos_page.dart
+### 📂 ARQUIVO: lib/features/guest/presentation/pages/politica_privacidade_page.dart
 
-- ⚙️ Função: Mostra os termos de uso e a política de privacidade.
+- ⚙️ Função: Mostra a política de privacidade: quais dados o aplicativo usa, para quê, e o que nunca sai do aparelho.
 - 💬 Comentários Removidos:
 
-  > "Sem override de cor: corpo() já herda o texto primário do tema — parágrafo de texto legal não deve ficar esmaecido como um texto secundário."
-  - 💡 Explicação Leiga: A linha usa a cor de texto principal nos parágrafos. Texto legal não deve ficar apagado.
+  > "A política descreve o aplicativo que está na mão do usuário, não o que ele era: toda função que toca dado entra aqui no mesmo dia em que é publicada — a confirmação de e-mail, as três notificações, o aviso de favorita por perto (com a distância calculada no aparelho) e a sessão fora do backup do Android."
+  - 💡 Explicação Leiga: O texto é atualizado junto com o aplicativo, sempre que algo novo mexe com dados do usuário.
+
+  > "A frase sobre denúncia promete só o que o aplicativo cumpre: nenhuma tela mostra quem denunciou. O anonimato absoluto dependia do servidor, que ainda devolve a denúncia inteira — com o autor — para qualquer conta logada; enquanto isso não muda, a política não pode afirmar o contrário."
+  - 💡 Explicação Leiga: A promessa de sigilo foi ajustada para o que o aplicativo realmente garante hoje.
+
+### 📂 ARQUIVO: lib/features/guest/presentation/pages/termos_page.dart
+
+- ⚙️ Função: Mostra os termos de uso — as regras para usar o aplicativo, sem a parte de dados pessoais.
+- 💬 Comentários Removidos:
+
+  > "Documento dividido em dois: os termos tratam das regras de uso; a política, dos dados. Além de ser o que a LGPD espera, o aceite do cadastro tem dois links — enquanto os dois abriam o mesmo texto, o usuário 'aceitava' um documento que nunca viu."
+  - 💡 Explicação Leiga: Termos e política são telas separadas, cada uma no seu link.
+
+  > "Os termos também descrevem a loja aberta: o comerciante responde pelo estado que anuncia, e o fechamento automático existe para que uma loja esquecida aberta não leve ninguém a se deslocar em vão."
+  - 💡 Explicação Leiga: Os termos explicam a responsabilidade de quem abre a loja e por que ela fecha sozinha.
 
 ### 📂 ARQUIVO: lib/features/guest/presentation/widgets/floating_bottom_bar.dart
 
@@ -4151,6 +4176,17 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Lista vertical (mesmo formato de card usado na busca filtrada por categoria, via `StoreListItemWidget`) com as lojas de avaliação acima de 4.5."
   - 💡 Explicação Leiga: Esta classe desenha a lista de lojas com nota acima de 4,5.
+
+### 📂 ARQUIVO: lib/features/store/presentation/widgets/faixa_sem_conexao.dart
+
+- ⚙️ Função: Avisa, no topo do mapa, que o aplicativo está sem conexão e de quando é o mapa que está na tela.
+- 💬 Comentários Removidos:
+
+  > "Quando o servidor não responde, [ActiveStoresManager] mantém a última lista boa — mapa vazio seria pior. O efeito colateral é um mapa plausível e velho, então a faixa diz a idade do dado: sem isso, alguém se desloca até uma loja que fechou há meia hora."
+  - 💡 Explicação Leiga: A faixa aparece quando o mapa está sem atualizar e mostra de quando é a informação.
+
+  > "`liveRegion` faz o leitor de tela anunciar a faixa no momento em que ela aparece, sem o usuário ter que varrer a tela de novo. [FaixaDeDadosAntigos] é separada da que lê o singleton para poder ser testada sozinha, sem rede."
+  - 💡 Explicação Leiga: Quem usa leitor de tela ouve o aviso assim que ele aparece.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/home_filter_modal.dart
 
