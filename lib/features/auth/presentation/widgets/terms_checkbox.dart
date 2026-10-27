@@ -5,6 +5,7 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
+import 'package:map_food/features/guest/presentation/pages/politica_privacidade_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
 class TermsCheckbox extends StatefulWidget {
@@ -41,7 +42,7 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
   void initState() {
     super.initState();
     _termosRecognizer = TapGestureRecognizer()..onTap = _abrirTermos;
-    _privacidadeRecognizer = TapGestureRecognizer()..onTap = _abrirTermos;
+    _privacidadeRecognizer = TapGestureRecognizer()..onTap = _abrirPolitica;
   }
 
   @override
@@ -53,6 +54,13 @@ class _TermsCheckboxState extends State<TermsCheckbox> {
 
   void _abrirTermos() {
     Navigator.push(context, appPageRoute(builder: (_) => const TermosPage()));
+  }
+
+  void _abrirPolitica() {
+    Navigator.push(
+      context,
+      appPageRoute(builder: (_) => const PoliticaPrivacidadePage()),
+    );
   }
 
   TextStyle _linkStyle(BuildContext context, Color color) {

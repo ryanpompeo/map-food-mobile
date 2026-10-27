@@ -17,6 +17,7 @@ import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/confirm_delete_dialog.dart';
 import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/features/guest/presentation/pages/guest_home_page.dart';
+import 'package:map_food/features/guest/presentation/pages/politica_privacidade_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -109,9 +110,18 @@ class SettingsPage extends StatelessWidget {
               ),
               MenuListTile(
                 icon: AppIcons.fileText,
-                title: "Termos de Uso e Privacidade",
-                subtitle: "Termos, privacidade e políticas",
+                title: "Termos de Uso",
+                subtitle: "As regras para usar o MapFood",
                 onTap: () => Navigator.push(context, appPageRoute(builder: (_) => const TermosPage())),
+              ),
+              MenuListTile(
+                icon: AppIcons.fileText,
+                title: "Política de Privacidade",
+                subtitle: "Quais dados usamos e por quê",
+                onTap: () => Navigator.push(
+                  context,
+                  appPageRoute(builder: (_) => const PoliticaPrivacidadePage()),
+                ),
               ),
 
               const SizedBox(height: Spacing.xl),

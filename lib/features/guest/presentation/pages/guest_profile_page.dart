@@ -12,6 +12,7 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/theme_mode_sheet.dart';
 import 'package:map_food/features/contato/presentation/pages/contato_page.dart';
 import 'package:map_food/features/guest/presentation/pages/how_it_works_page.dart';
+import 'package:map_food/features/guest/presentation/pages/politica_privacidade_page.dart';
 import 'package:map_food/features/guest/presentation/pages/termos_page.dart';
 
 class GuestProfilePage extends StatelessWidget {
@@ -184,11 +185,22 @@ class GuestProfilePage extends StatelessWidget {
               buildListTile(
                 context: context,
                 icon: AppIcons.fileText,
-                title: "Termos de Uso e Privacidade",
+                title: "Termos de Uso",
                 onTap: () {
                   Navigator.push(
                     context,
-                    appPageRoute(builder: (_) => TermosPage()),
+                    appPageRoute(builder: (_) => const TermosPage()),
+                  );
+                },
+              ),
+              buildListTile(
+                context: context,
+                icon: AppIcons.fileText,
+                title: "Política de Privacidade",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    appPageRoute(builder: (_) => const PoliticaPrivacidadePage()),
                   );
                 },
               ),
