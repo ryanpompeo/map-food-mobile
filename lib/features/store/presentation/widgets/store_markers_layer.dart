@@ -9,6 +9,13 @@ import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/store/data/map_cluster.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
+import 'package:map_food/features/store/presentation/widgets/visto_ha.dart';
+
+String distanciaFalada(double metros) {
+  if (metros < 1000) return 'a ${metros.round()} m de você';
+  return 'a ${(metros / 1000).toStringAsFixed(1)} km de você';
+}
 
 class StoreMarkersLayer extends StatefulWidget {
   const StoreMarkersLayer({
@@ -17,10 +24,12 @@ class StoreMarkersLayer extends StatefulWidget {
     required this.onStoreTap,
     required this.onClusterTap,
     this.focusedStore,
+    this.posicaoDoUsuario,
   });
 
   final List<StoreDto> stores;
   final StoreDto? focusedStore;
+  final LatLng? posicaoDoUsuario;
   final ValueChanged<StoreDto> onStoreTap;
   final void Function(MapCluster cluster) onClusterTap;
 
@@ -86,6 +95,20 @@ class _StoreMarkersLayerState extends State<StoreMarkersLayer> {
     return _marcadorDeGrupo(cluster);
   }
 
+  String _rotuloDaLoja(StoreDto store, LatLng ponto) {
+    final partes = <String>[store.nome];
+
+    final usuario = widget.posicaoDoUsuario;
+    if (usuario != null) {
+      partes.add(distanciaFalada(const Distance().distance(usuario, ponto)));
+    }
+
+    final visto = rotuloVistoHa(ActiveStoresManager.instance.semSinalHa(store.id));
+    if (visto != null) partes.add(visto.toLowerCase());
+
+    return partes.join(', ');
+  }
+
   Marker _marcadorDeLoja(StoreDto store, LatLng ponto) {
     final isFocused = widget.focusedStore?.id == store.id;
     final tamanho = isFocused ? _tamanhoFocado : _tamanhoPadrao;
@@ -95,7 +118,7 @@ class _StoreMarkersLayerState extends State<StoreMarkersLayer> {
       width: tamanho + 8.0,
       height: tamanho + 8.0,
       child: SemanticTapArea(
-        label: store.nome,
+        label: _rotuloDaLoja(store, ponto),
         hint: 'Abre os detalhes do comércio',
         selected: isFocused ? true : null,
         pressFeedback: false,

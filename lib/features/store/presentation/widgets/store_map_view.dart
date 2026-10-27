@@ -342,12 +342,24 @@ class _StoreMapViewState extends State<StoreMapView> {
                   ),
                 ],
               ),
-            StoreMarkersLayer(
-              stores: widget.stores,
-              focusedStore: widget.focusedStore,
-              onStoreTap: _abrirLoja,
-              onClusterTap: _aproximarNoGrupo,
-            ),
+            if (widget.userPosition == null)
+              StoreMarkersLayer(
+                stores: widget.stores,
+                focusedStore: widget.focusedStore,
+                onStoreTap: _abrirLoja,
+                onClusterTap: _aproximarNoGrupo,
+              )
+            else
+              ValueListenableBuilder<LatLng?>(
+                valueListenable: widget.userPosition!,
+                builder: (context, pos, _) => StoreMarkersLayer(
+                  stores: widget.stores,
+                  focusedStore: widget.focusedStore,
+                  onStoreTap: _abrirLoja,
+                  onClusterTap: _aproximarNoGrupo,
+                  posicaoDoUsuario: pos,
+                ),
+              ),
             if (widget.userPosition != null)
               ValueListenableBuilder<LatLng?>(
                 valueListenable: widget.userPosition!,
