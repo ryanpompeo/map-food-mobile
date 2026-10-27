@@ -57,6 +57,8 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
 
   int _currentIndex = 0;
   Timer? _timer;
+  bool _autoAvancoPermitido = true;
+  bool _dedoNaTela = false;
 
   final ValueNotifier<double> _dragDx = ValueNotifier(0.0);
 
@@ -64,6 +66,17 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
   void initState() {
     super.initState();
     _restartTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final tela = MediaQuery.of(context);
+    final permitido = !tela.accessibleNavigation && !tela.disableAnimations;
+    if (permitido != _autoAvancoPermitido) {
+      _autoAvancoPermitido = permitido;
+      _restartTimer();
+    }
   }
 
   @override
@@ -84,8 +97,16 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
 
   void _restartTimer() {
     _timer?.cancel();
+    _timer = null;
+    if (!_autoAvancoPermitido || _dedoNaTela) return;
     if (widget.items.length <= 1) return;
     _timer = Timer.periodic(widget.autoAdvanceInterval, (_) => _advance());
+  }
+
+  void _aoTocar(bool encostou) {
+    if (_dedoNaTela == encostou) return;
+    _dedoNaTela = encostou;
+    _restartTimer();
   }
 
   void _advance() {
@@ -136,7 +157,13 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
       curve: Curves.easeOutCubic,
       opacity: opacity,
       child: isFront
-          ? _StoreStackCard(item: item, height: widget.cardHeight, onTap: () => widget.onTap(item))
+          ? _StoreStackCard(
+              item: item,
+              height: widget.cardHeight,
+              onTap: () => widget.onTap(item),
+              posicao: _currentIndex + 1,
+              total: count,
+            )
           : _StackedCardBackdrop(height: widget.cardHeight),
     );
 
@@ -148,14 +175,19 @@ class _StackedCardCarouselState extends State<StackedCardCarousel> {
       left: horizontalInset,
       right: horizontalInset,
       child: isFront
-          ? GestureDetector(
-              onHorizontalDragUpdate: (details) => _dragDx.value += details.delta.dx,
-              onHorizontalDragEnd: _onDragEnd,
-              child: ValueListenableBuilder<double>(
-                valueListenable: _dragDx,
-                builder: (context, dx, child) =>
-                    Transform.translate(offset: Offset(dx * 0.3, 0), child: child),
-                child: conteudo,
+          ? Listener(
+              onPointerDown: (_) => _aoTocar(true),
+              onPointerUp: (_) => _aoTocar(false),
+              onPointerCancel: (_) => _aoTocar(false),
+              child: GestureDetector(
+                onHorizontalDragUpdate: (details) => _dragDx.value += details.delta.dx,
+                onHorizontalDragEnd: _onDragEnd,
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _dragDx,
+                  builder: (context, dx, child) =>
+                      Transform.translate(offset: Offset(dx * 0.3, 0), child: child),
+                  child: conteudo,
+                ),
               ),
             )
           : IgnorePointer(child: conteudo),
@@ -188,11 +220,36 @@ class _StoreStackCard extends StatelessWidget {
   final StackedCardItem item;
   final double height;
   final VoidCallback onTap;
+  final int posicao;
+  final int total;
 
-  const _StoreStackCard({required this.item, required this.height, required this.onTap});
+  const _StoreStackCard({
+    required this.item,
+    required this.height,
+    required this.onTap,
+    required this.posicao,
+    required this.total,
+  });
+
+  String get _rotulo {
+    final partes = <String>[item.title];
+    if (item.subtitle != null) partes.add(item.subtitle!);
+    if (item.rating != null) partes.add('nota ${item.rating!.toStringAsFixed(1)}');
+    partes.add('cartão $posicao de $total');
+    return partes.join(', ');
+  }
 
   @override
   Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: _rotulo,
+      onTap: onTap,
+      child: ExcludeSemantics(child: _buildCartao(context)),
+    );
+  }
+
+  Widget _buildCartao(BuildContext context) {
     return SizedBox(
       height: height,
       child: Material(
