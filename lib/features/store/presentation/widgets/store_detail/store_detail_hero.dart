@@ -8,6 +8,7 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/presentation/widgets/selo_destaque.dart';
 
 class StoreDetailHero extends StatelessWidget {
   final StoreDto store;
@@ -115,6 +116,10 @@ class _Capa extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (store.emDestaque) ...[
+                  const SeloDestaque(sobreFoto: true),
+                  const SizedBox(height: Spacing.xs),
+                ],
                 Text(
                   store.nome,
                   style: AppText.h1(context).copyWith(color: ColorsPalette.white),

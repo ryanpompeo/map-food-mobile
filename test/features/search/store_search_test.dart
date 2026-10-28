@@ -8,6 +8,7 @@ StoreDto _loja(
   List<String> categorias = const [],
   String? cidade,
   String? descricao,
+  bool destaque = false,
 }) =>
     StoreDto(
       id: id,
@@ -17,6 +18,7 @@ StoreDto _loja(
       categoriaNomes: categorias,
       cidade: cidade,
       descricao: descricao,
+      tipoLoja: destaque ? 'DESTAQUE' : 'GRATUITO',
     );
 
 void main() {
@@ -106,6 +108,80 @@ void main() {
       final lojas = [_loja(1, 'Padaria'), _loja(2, 'Açaí')];
 
       expect(buscarLojas(lojas, 'sushi'), isEmpty);
+    });
+  });
+
+  group('plano Destaque na busca', () {
+    test('sem termo, as lojas em destaque vêm primeiro', () {
+      final lojas = [
+        _loja(1, 'Padaria'),
+        _loja(2, 'Espetinho', destaque: true),
+        _loja(3, 'Açaí'),
+        _loja(4, 'Tapioca', destaque: true),
+      ];
+
+      expect(buscarLojas(lojas, '').map((l) => l.id), [2, 4, 1, 3]);
+    });
+
+    test('a relevância ganha do plano: quem casa pelo nome vem antes', () {
+      final lojas = [
+        _loja(1, 'Açaí da Praça', descricao: 'o melhor açaí', destaque: true),
+        _loja(2, 'Tapioca da Ana', descricao: 'também temos açaí'),
+      ];
+
+      final porNome = buscarLojas([lojas[1], lojas[0]], 'tapioca');
+
+      expect(porNome.first.id, 2,
+          reason: 'plano não compra o primeiro lugar de quem o cliente procurou');
+    });
+
+    test('empate de relevância é desempatado pelo plano', () {
+      final lojas = [
+        _loja(1, 'Açaí do Centro'),
+        _loja(2, 'Açaí da Praça', destaque: true),
+      ];
+
+      expect(buscarLojas(lojas, 'acai').map((l) => l.id), [2, 1]);
+    });
+
+    test('sem nenhuma loja em destaque, a ordem original se mantém', () {
+      final lojas = [_loja(1, 'Padaria'), _loja(2, 'Açaí'), _loja(3, 'Tapioca')];
+
+      expect(buscarLojas(lojas, '').map((l) => l.id), [1, 2, 3]);
+    });
+  });
+
+  group('filtro e vitrine de destaques', () {
+    test('o filtro deixa só as lojas do plano', () {
+      final lojas = [
+        _loja(1, 'Padaria'),
+        _loja(2, 'Espetinho', destaque: true),
+        _loja(3, 'Açaí', destaque: true),
+      ];
+
+      expect(somenteEmDestaque(lojas).map((l) => l.id), [2, 3]);
+    });
+
+    test('sem nenhuma loja do plano, o filtro não tem o que mostrar', () {
+      final lojas = [_loja(1, 'Padaria'), _loja(2, 'Açaí')];
+
+      expect(somenteEmDestaque(lojas), isEmpty);
+      expect(existeLojaEmDestaque(lojas), isFalse);
+    });
+
+    test('a vitrine respeita o limite de itens da seção', () {
+      final lojas = [
+        for (var i = 1; i <= 8; i++) _loja(i, 'Loja $i', destaque: true),
+      ];
+
+      expect(vitrineDeDestaques(lojas, limite: 5), hasLength(5));
+      expect(vitrineDeDestaques(lojas, limite: 5).first.id, 1);
+    });
+
+    test('vitrine vazia quando ninguém assinou: a seção não aparece', () {
+      final lojas = [_loja(1, 'Padaria'), _loja(2, 'Açaí')];
+
+      expect(vitrineDeDestaques(lojas), isEmpty);
     });
   });
 }

@@ -12,6 +12,8 @@ import 'package:map_food/features/search/data/services/search_history_service.da
 import 'package:map_food/features/search/data/store_search.dart';
 import 'package:map_food/features/search/presentation/widgets/category_filters.dart';
 import 'package:map_food/features/store/presentation/widgets/em_alta_list_widget.dart';
+import 'package:map_food/features/store/presentation/widgets/home_section_title.dart';
+import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
 import 'package:map_food/features/store/presentation/widgets/perto_de_voce_carrossel_widget.dart';
 import 'package:map_food/features/search/presentation/widgets/search_field.dart';
 import 'package:map_food/features/search/presentation/widgets/search_history.dart';
@@ -57,11 +59,17 @@ class _SearchPageState extends State<SearchPage> {
 
   List<StoreDto> _emAltaStores = [];
 
+  bool _somenteDestaques = false;
+
+  List<StoreDto> _destaqueStores = [];
+
   double? _userLat;
   double? _userLng;
   List<StoreDto> _pertoDeVoceStores = [];
 
   List<String> get _filtros => _categorias.map((c) => c.nome).toList();
+
+  bool get _temAlgumaLojaEmDestaque => existeLojaEmDestaque(_allStores);
 
   @override
   void initState() {
@@ -179,6 +187,9 @@ class _SearchPageState extends State<SearchPage> {
           .where((s) => s.categoriaNomes.contains(categoryName))
           .toList();
     }
+    if (_somenteDestaques) {
+      lojasFiltradas = somenteEmDestaque(lojasFiltradas);
+    }
     lojasFiltradas = buscarLojas(lojasFiltradas, _searchQuery);
 
     final emAlta =
@@ -205,6 +216,7 @@ class _SearchPageState extends State<SearchPage> {
 
     setState(() {
       _filteredStores = lojasFiltradas;
+      _destaqueStores = vitrineDeDestaques(_allStores, limite: _maxSectionItems);
       _emAltaStores = emAlta.take(_maxSectionItems).toList();
       _pertoDeVoceStores = pertoDeVoce.take(_pertoDeVoceMaxItems).toList();
     });
@@ -220,8 +232,9 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool semRecorte =
-        _categoriaSelecionada == null && _searchQuery.isEmpty;
+    final bool semRecorte = _categoriaSelecionada == null &&
+        _searchQuery.isEmpty &&
+        !_somenteDestaques;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -293,6 +306,23 @@ class _SearchPageState extends State<SearchPage> {
                           _applyFilters();
                         },
                       ),
+                      if (_temAlgumaLojaEmDestaque) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: AppChoiceChip(
+                              label: 'Destaques',
+                              selected: _somenteDestaques,
+                              onTap: () {
+                                setState(() => _somenteDestaques = !_somenteDestaques);
+                                _applyFilters();
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                       if (_searchQuery.isEmpty &&
                           _searchHistory.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.xl),
@@ -338,6 +368,17 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   ),
                 ),
+                if (_destaqueStores.isNotEmpty) ...[
+                  const SliverToBoxAdapter(
+                    child: HomeSectionTitle(
+                      icon: AppIcons.crown,
+                      title: 'Lojas em destaque',
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+                  EmAltaListSliverWidget(lojas: _destaqueStores),
+                  const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
+                ],
                 const SliverToBoxAdapter(child: EmAltaSectionHeaderWidget()),
                 const SliverToBoxAdapter(
                   child: SizedBox(height: AppSpacing.md),

@@ -56,6 +56,8 @@ class AppIcons {
   static const IconData signOut = PhosphorIconsRegular.signOut;
   static const IconData slidersHorizontal = PhosphorIconsRegular.slidersHorizontal;
   static const IconData star = PhosphorIconsRegular.star;
+  static const IconData crown = PhosphorIconsRegular.crown;
+  static const IconData crownFill = PhosphorIconsFill.crown;
 
   static const IconData starFill = PhosphorIconsFill.star;
   static const IconData starHalfFill = PhosphorIconsFill.starHalf;

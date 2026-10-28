@@ -10,6 +10,7 @@ import 'package:map_food/core/ui/utils/rating_format.dart';
 import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/presentation/widgets/selo_destaque.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
 class VerticalDestaqueSliverWidget extends StatelessWidget {
@@ -92,11 +93,21 @@ class StoreListItemWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  store.nome,
-                  style: AppText.corpo(context).copyWith(fontSize: 15, fontWeight: FontWeight.w800, color: context.mapColors.primaryText),
-                  maxLines: linhasParaRotulo(context),
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        store.nome,
+                        style: AppText.corpo(context).copyWith(fontSize: 15, fontWeight: FontWeight.w800, color: context.mapColors.primaryText),
+                        maxLines: linhasParaRotulo(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (store.emDestaque) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      const SeloDestaque(),
+                    ],
+                  ],
                 ),
                 if (endereco != null) ...[
                   const SizedBox(height: 4.0),

@@ -10,6 +10,7 @@ import 'package:map_food/core/ui/utils/rating_format.dart';
 import 'package:map_food/core/ui/widgets/photo_hero_card.dart';
 import 'package:map_food/features/favorites/presentation/widgets/favorite_button_widget.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
+import 'package:map_food/features/store/presentation/widgets/selo_destaque.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 import 'package:map_food/features/store/presentation/widgets/home_section_title.dart';
 
@@ -129,6 +130,10 @@ class DestaqueCardWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (destaque.emDestaque) ...[
+            const SeloDestaque(sobreFoto: true),
+            const SizedBox(height: 4.0),
+          ],
           Text(
             destaque.nome,
             style: AppText.subtitulo(context).copyWith(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 18.0),

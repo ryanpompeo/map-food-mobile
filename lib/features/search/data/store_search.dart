@@ -2,9 +2,29 @@ import 'dart:math' as math;
 
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
+List<StoreDto> somenteEmDestaque(List<StoreDto> lojas) =>
+    lojas.where((loja) => loja.emDestaque).toList();
+
+bool existeLojaEmDestaque(List<StoreDto> lojas) =>
+    lojas.any((loja) => loja.emDestaque);
+
+List<StoreDto> vitrineDeDestaques(List<StoreDto> lojas, {int limite = 5}) =>
+    somenteEmDestaque(lojas).take(limite).toList();
+
+List<StoreDto> destaquesPrimeiro(List<StoreDto> lojas) {
+  final comIndice = <(int, StoreDto)>[
+    for (var i = 0; i < lojas.length; i++) (i, lojas[i]),
+  ];
+  comIndice.sort((a, b) {
+    final porDestaque = (b.$2.emDestaque ? 1 : 0) - (a.$2.emDestaque ? 1 : 0);
+    return porDestaque != 0 ? porDestaque : a.$1.compareTo(b.$1);
+  });
+  return comIndice.map((p) => p.$2).toList();
+}
+
 List<StoreDto> buscarLojas(List<StoreDto> lojas, String termo) {
   final alvo = normalizarTexto(termo);
-  if (alvo.isEmpty) return lojas;
+  if (alvo.isEmpty) return destaquesPrimeiro(lojas);
 
   final pontuadas = <(int posicao, int relevancia, StoreDto loja)>[];
   for (var i = 0; i < lojas.length; i++) {
@@ -14,7 +34,9 @@ List<StoreDto> buscarLojas(List<StoreDto> lojas, String termo) {
 
   pontuadas.sort((a, b) {
     final porRelevancia = a.$2.compareTo(b.$2);
-    return porRelevancia != 0 ? porRelevancia : a.$1.compareTo(b.$1);
+    if (porRelevancia != 0) return porRelevancia;
+    final porDestaque = (b.$3.emDestaque ? 1 : 0) - (a.$3.emDestaque ? 1 : 0);
+    return porDestaque != 0 ? porDestaque : a.$1.compareTo(b.$1);
   });
 
   return pontuadas.map((p) => p.$3).toList();

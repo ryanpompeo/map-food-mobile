@@ -22,6 +22,8 @@ class StoreDto {
   final double? longitude;
   final int? segundosSemSinal;
 
+  final String? tipoLoja;
+
   const StoreDto({
     required this.id,
     required this.nome,
@@ -42,6 +44,7 @@ class StoreDto {
     this.latitude,
     this.longitude,
     this.segundosSemSinal,
+    this.tipoLoja,
   });
 
   bool get temLocalizacao => latitude != null && longitude != null;
@@ -49,6 +52,8 @@ class StoreDto {
   StatusLoja get status => StatusLoja.de(statusLoja);
 
   bool get emRonda => segundosSemSinal != null;
+
+  bool get emDestaque => tipoLoja == 'DESTAQUE';
 
   StoreDto comPosicao(double latitude, double longitude) => _copiar(
         statusLoja: statusLoja,
@@ -90,6 +95,7 @@ class StoreDto {
         latitude: latitude,
         longitude: longitude,
         segundosSemSinal: segundosSemSinal,
+        tipoLoja: tipoLoja,
       );
 
   String? get enderecoCompleto {
@@ -123,6 +129,7 @@ class StoreDto {
         latitude: json.optDouble('latitude'),
         longitude: json.optDouble('longitude'),
         segundosSemSinal: json.optInt('segundosSemSinal'),
+        tipoLoja: json.optString('tipoLoja'),
       );
 
   static String _parseCategoriaName(Map<String, dynamic> json) {
