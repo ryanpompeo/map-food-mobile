@@ -27,6 +27,24 @@ void main() {
       expect(texto, isNot(contains('Lei Geral de Proteção de Dados')));
       expect(texto, isNot(contains('Dados Coletados')));
     });
+
+    testWidgets('a cláusula de custos descreve o Plano Destaque', (tester) async {
+      await _abrir(tester, const TermosPage());
+      final texto = _textoDe(tester);
+
+      expect(texto, contains('Plano Destaque'));
+      expect(texto, contains('R\$ 29,90 por mês'));
+      expect(texto, contains('não cobra nem processa pagamento'));
+      expect(texto, contains('volta ao plano gratuito'));
+    });
+
+    testWidgets('não afirma mais que tudo é 100% gratuito', (tester) async {
+      await _abrir(tester, const TermosPage());
+      final texto = _textoDe(tester);
+
+      expect(texto, isNot(contains('100% gratuito')));
+      expect(texto, contains('Para o Consumidor, o MapFood é **gratuito**'));
+    });
   });
 
   group('política de privacidade', () {

@@ -6,6 +6,7 @@ import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/features/denuncias/presentation/pages/merchant_complaints_page.dart';
+import 'package:map_food/features/merchant/presentation/pages/plano_destaque_page.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/profile_page_scaffold.dart';
 import 'package:map_food/core/ui/widgets/stacked_card_carousel.dart';
@@ -93,6 +94,15 @@ class MerchantProfilePage extends StatelessWidget {
           title: "Editar Perfil",
           subtitle: "Altere seus dados e senha",
           onTap: () => _abrirEditarPerfil(context),
+        ),
+        ProfileMenuItem(
+          icon: AppIcons.crown,
+          title: "Plano Destaque",
+          subtitle: "Apareça primeiro para quem está perto",
+          onTap: () => Navigator.push(
+            context,
+            appPageRoute(builder: (_) => const PlanoDestaquePage()),
+          ),
         ),
         ProfileMenuItem(
           icon: AppIcons.flag,

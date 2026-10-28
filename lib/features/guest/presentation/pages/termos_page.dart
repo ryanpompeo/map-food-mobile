@@ -5,7 +5,7 @@ import 'package:map_food/features/guest/presentation/pages/documento_legal_page.
 const String _termosMarkdown = '''
 # Termos de Uso – MapFood
 
-**Última atualização:** 27 de outubro de 2026
+**Última atualização:** 28 de outubro de 2026
 
 Bem-vindo(a) ao **MapFood**! Ao acessar e utilizar nosso aplicativo (seja como Consumidor ou Comerciante), você concorda expressamente com os presentes Termos de Uso. O tratamento dos seus dados é descrito em documento próprio, a **Política de Privacidade**, disponível na mesma tela em que você encontrou estes termos. Caso não concorde com alguma das regras aqui estabelecidas, pedimos que não utilize o aplicativo.
 
@@ -22,7 +22,11 @@ O MapFood é uma plataforma de tecnologia e **não atua como fornecedor de alime
 * Qualquer dano à saúde (como intoxicações alimentares) ou prejuízo financeiro decorrente da transação é de responsabilidade única e exclusiva do Comerciante que efetuou a venda.
 
 **3. Custos de Utilização**
-Atualmente, o uso do MapFood é **100% gratuito** tanto para Consumidores quanto para Comerciantes. O MapFood reserva-se o direito de, no futuro, implementar funcionalidades pagas ou planos de assinatura para comerciantes, o que será comunicado com aviso prévio, garantindo ao usuário a opção de aderir ou encerrar sua conta.
+Para o Consumidor, o MapFood é **gratuito**, sem exceção. Para o Comerciante, todo o uso descrito nestes termos — cadastro, presença no mapa, fotos e avaliações — também é gratuito.
+
+Existe um único plano pago e **opcional**, o **Plano Destaque**, por **R\$ 29,90 por mês**, que dá à loja o selo de destaque, mais posição nos resultados de busca e espaço na vitrine da tela inicial. Ele não altera nenhuma função do aplicativo: muda apenas onde a loja aparece.
+
+O aplicativo **não cobra nem processa pagamento**. A contratação é combinada diretamente com a equipe do MapFood, fora do aplicativo, e a ativação do selo é feita pela equipe. O cancelamento segue o mesmo caminho, e a loja volta ao plano gratuito sem perder nada do que já cadastrou. Mudanças de valor ou de regras do plano serão comunicadas com aviso prévio.
 
 **4. Confirmação de E-mail**
 Depois do cadastro, enviamos um código de 6 dígitos para o e-mail informado. A confirmação serve para garantir que o e-mail é seu de verdade e é exigida para **avaliar** um comércio e para **registrar denúncias**. Sem confirmar, você continua navegando, vendo o mapa e as lojas normalmente.
