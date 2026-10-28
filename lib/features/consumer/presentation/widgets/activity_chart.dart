@@ -6,7 +6,9 @@ class ActivityPoint {
   final String label;
   final int value;
 
-  const ActivityPoint({required this.label, required this.value});
+  final String? valorExibido;
+
+  const ActivityPoint({required this.label, required this.value, this.valorExibido});
 }
 
 class ActivityChart extends StatelessWidget {
@@ -130,7 +132,7 @@ class _ActivityChartPainter extends CustomPainter {
     final pico = coords[indicePico];
     canvas.drawCircle(pico, 6.0, Paint()..color = linha);
     canvas.drawCircle(pico, 2.5, Paint()..color = balaoTexto);
-    _desenharBalao(canvas, size, pico, '$maxValor');
+    _desenharBalao(canvas, size, pico, points[indicePico].valorExibido ?? '$maxValor');
   }
 
   Path _linhaSuave(List<Offset> coords) {

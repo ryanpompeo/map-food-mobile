@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/ui/charts/chart_data.dart';
@@ -11,19 +15,46 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_bottom_bar.dart';
 import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
 import 'package:map_food/core/ui/widgets/delta_badge.dart';
+import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
+import 'package:map_food/features/analytics/data/relatorio_csv.dart';
 import 'package:map_food/features/analytics/presentation/controllers/analytics_controller.dart';
 import 'package:map_food/features/consumer/presentation/widgets/activity_chart.dart';
 import 'package:map_food/features/analytics/presentation/widgets/analytics_scope_selector.dart';
 import 'package:map_food/features/analytics/presentation/widgets/analytics_section_card.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
+typedef EnviarRelatorio = Future<void> Function(String csv, String nomeDoArquivo);
+
+Future<void> compartilharPorPadrao(String csv, String nomeDoArquivo) async {
+  await SharePlus.instance.share(
+    ShareParams(
+      files: [
+        XFile.fromData(
+          Uint8List.fromList(utf8.encode('﻿$csv')),
+          name: nomeDoArquivo,
+          mimeType: 'text/csv',
+        ),
+      ],
+      fileNameOverrides: [nomeDoArquivo],
+      subject: 'MapFood · relatório da loja',
+    ),
+  );
+}
+
 class MerchantAnalyticsPage extends StatefulWidget {
   final List<StoreDto> lojas;
 
   final ValueListenable<bool>? visivel;
 
-  const MerchantAnalyticsPage({super.key, required this.lojas, this.visivel});
+  final EnviarRelatorio? enviarRelatorio;
+
+  const MerchantAnalyticsPage({
+    super.key,
+    required this.lojas,
+    this.visivel,
+    this.enviarRelatorio,
+  });
 
   @override
   State<MerchantAnalyticsPage> createState() => _MerchantAnalyticsPageState();
@@ -85,6 +116,11 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Compartilhar relatório',
+            onPressed: _compartilharRelatorio,
+            icon: Icon(AppIcons.shareNetwork, color: colors.textSecondary),
+          ),
           ListenableBuilder(
             listenable: _controller,
             builder: (context, _) => AnalyticsScopeSelector(
@@ -152,14 +188,65 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
           const SizedBox(height: Spacing.lg),
           _buildCardAvaliacoes(context, snapshot),
           const SizedBox(height: Spacing.lg),
+          _buildCardPorMes(context, snapshot),
+          const SizedBox(height: Spacing.lg),
           _buildCardDenuncias(context, snapshot.denuncias),
         ],
       ),
     );
   }
 
+  Future<void> _compartilharRelatorio() async {
+    final snapshot = _controller.state.data;
+    if (snapshot == null) {
+      AppToast.warning(context, 'Espere os números carregarem');
+      return;
+    }
+
+    final loja = _controller.lojaSelecionadaId == null
+        ? 'todas as lojas'
+        : _controller.lojas
+            .firstWhere((l) => l.id == _controller.lojaSelecionadaId)
+            .nome;
+
+    final csv = relatorioCsv(
+      snapshot: snapshot,
+      inicio: _controller.inicioDoPeriodo,
+      fim: _controller.fimDoPeriodo,
+      escopo: loja,
+    );
+
+    final enviar = widget.enviarRelatorio ?? compartilharPorPadrao;
+    try {
+      await enviar(
+        csv,
+        nomeDoArquivoCsv(_controller.inicioDoPeriodo, _controller.fimDoPeriodo),
+      );
+    } catch (_) {
+      if (mounted) AppToast.error(context, 'Não foi possível compartilhar o relatório');
+    }
+  }
+
+  Future<void> _escolherIntervalo() async {
+    final hoje = DateTime.now();
+    final escolhido = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(hoje.year - 1, hoje.month, hoje.day),
+      lastDate: hoje,
+      initialDateRange: DateTimeRange(
+        start: _controller.inicioDoPeriodo,
+        end: _controller.fimDoPeriodo,
+      ),
+      helpText: 'Escolha o período',
+      saveText: 'Aplicar',
+    );
+    if (escolhido == null) return;
+    _controller.definirIntervalo(escolhido.start, escolhido.end);
+  }
+
   Widget _buildPeriodos(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
       child: Row(
         children: [
@@ -167,10 +254,18 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
             if (range != AnalyticsRange.values.first) const SizedBox(width: Spacing.sm),
             AppChoiceChip(
               label: range.label,
-              selected: _controller.range == range,
+              selected: !_controller.periodoPersonalizado && _controller.range == range,
               onTap: () => _controller.definirPeriodo(range),
             ),
           ],
+          const SizedBox(width: Spacing.sm),
+          AppChoiceChip(
+            label: _controller.periodoPersonalizado
+                ? _controller.rotuloDoPeriodo
+                : 'Escolher',
+            selected: _controller.periodoPersonalizado,
+            onTap: _escolherIntervalo,
+          ),
         ],
       ),
     );
@@ -225,7 +320,7 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
           ),
           const SizedBox(height: Spacing.md),
           ActivityChart(
-            points: pontosDeAcesso(acessos, _controller.range),
+            points: pontosDeAcesso(acessos, _controller.diasDoPeriodo),
             mensagemVazia: 'Nenhuma visita neste período',
           ),
         ],
@@ -274,6 +369,36 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCardPorMes(BuildContext context, AnalyticsSnapshot snapshot) {
+    final meses = snapshot.porMes;
+    if (meses.isEmpty) return const SizedBox.shrink();
+
+    final comAvaliacao = meses.where((m) => m.quantidade > 0).toList();
+    final mediaDoAno = comAvaliacao.isEmpty
+        ? null
+        : comAvaliacao.fold<double>(0, (soma, m) => soma + m.media! * m.quantidade) /
+            comAvaliacao.fold<int>(0, (soma, m) => soma + m.quantidade);
+
+    return AnalyticsSectionCard(
+      titulo: 'Avaliações nos últimos 12 meses',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (mediaDoAno != null)
+            Text(
+              'Média do ano: ${mediaDoAno.toStringAsFixed(1).replaceAll('.', ',')}',
+              style: AppText.secondary(context),
+            ),
+          const SizedBox(height: Spacing.md),
+          ActivityChart(
+            points: pontosPorMes(meses),
+            mensagemVazia: 'Nenhuma avaliação nos últimos 12 meses',
+          ),
+        ],
       ),
     );
   }

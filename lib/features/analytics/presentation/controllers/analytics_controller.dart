@@ -98,11 +98,11 @@ class AcessoResumo {
   static const naoCarregou = AcessoResumo(total: 0, porDia: [], indisponivel: true);
 }
 
-List<ActivityPoint> pontosDeAcesso(AcessoResumo acessos, AnalyticsRange range) {
+List<ActivityPoint> pontosDeAcesso(AcessoResumo acessos, int dias) {
   if (acessos.porDia.isEmpty) return const [];
 
   final ordenados = [...acessos.porDia]..sort((a, b) => a.data.compareTo(b.data));
-  if (range == AnalyticsRange.seteDias) {
+  if (dias <= 7) {
     return [
       for (final dia in ordenados)
         ActivityPoint(label: _rotuloCurto(dia.data), value: dia.quantidade),
@@ -127,6 +127,65 @@ String _rotuloCurto(DateTime data) =>
     '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}';
 
 @immutable
+class MesDeAvaliacoes {
+  final DateTime mes;
+  final int quantidade;
+  final double? media;
+
+  const MesDeAvaliacoes({
+    required this.mes,
+    required this.quantidade,
+    required this.media,
+  });
+}
+
+List<MesDeAvaliacoes> avaliacoesPorMes(
+  List<AvaliacaoModel> avaliacoes,
+  DateTime hoje, {
+  int meses = 12,
+}) {
+  final soma = <DateTime, int>{};
+  final total = <DateTime, int>{};
+
+  for (final avaliacao in avaliacoes) {
+    final data = DateTime.tryParse(avaliacao.dataAvaliacao ?? '');
+    if (data == null) continue;
+    final mes = DateTime(data.year, data.month);
+    soma[mes] = (soma[mes] ?? 0) + avaliacao.nota;
+    total[mes] = (total[mes] ?? 0) + 1;
+  }
+
+  final referencia = DateTime(hoje.year, hoje.month);
+  return [
+    for (var atras = meses - 1; atras >= 0; atras--)
+      () {
+        final mes = DateTime(referencia.year, referencia.month - atras);
+        final quantidade = total[mes] ?? 0;
+        return MesDeAvaliacoes(
+          mes: mes,
+          quantidade: quantidade,
+          media: quantidade == 0 ? null : soma[mes]! / quantidade,
+        );
+      }(),
+  ];
+}
+
+List<ActivityPoint> pontosPorMes(List<MesDeAvaliacoes> meses) => [
+      for (final mes in meses)
+        ActivityPoint(
+          label: _rotuloDeMes(mes.mes),
+          value: mes.quantidade,
+        ),
+    ];
+
+const List<String> _mesesCurtos = [
+  'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+  'jul', 'ago', 'set', 'out', 'nov', 'dez',
+];
+
+String _rotuloDeMes(DateTime mes) => _mesesCurtos[mes.month - 1];
+
+@immutable
 class AnalyticsSnapshot {
   final List<RatingBucket> distribuicaoNotas;
 
@@ -137,12 +196,15 @@ class AnalyticsSnapshot {
 
   final AcessoResumo acessos;
 
+  final List<MesDeAvaliacoes> porMes;
+
   const AnalyticsSnapshot({
     required this.distribuicaoNotas,
     required this.mediaAvaliacao,
     required this.totalAvaliacoes,
     required this.denuncias,
     this.acessos = AcessoResumo.vazio,
+    this.porMes = const [],
   });
 
   bool get semAvaliacoes => totalAvaliacoes == 0;
@@ -174,6 +236,22 @@ class AnalyticsController extends ChangeNotifier {
 
   AnalyticsRange _range = AnalyticsRange.seteDias;
   AnalyticsRange get range => _range;
+
+  DateTime? _inicioEscolhido;
+  DateTime? _fimEscolhido;
+
+  bool get periodoPersonalizado => _inicioEscolhido != null && _fimEscolhido != null;
+
+  DateTime get inicioDoPeriodo =>
+      _inicioEscolhido ?? _hoje().subtract(Duration(days: _range.dias - 1));
+
+  DateTime get fimDoPeriodo => _fimEscolhido ?? _hoje();
+
+  int get diasDoPeriodo => fimDoPeriodo.difference(inicioDoPeriodo).inDays + 1;
+
+  String get rotuloDoPeriodo => periodoPersonalizado
+      ? '${_rotuloCurto(inicioDoPeriodo)} a ${_rotuloCurto(fimDoPeriodo)}'
+      : _range.label;
 
   AsyncState<AnalyticsSnapshot> _state = const AsyncState.loading();
   AsyncState<AnalyticsSnapshot> get state => _state;
@@ -209,8 +287,20 @@ class AnalyticsController extends ChangeNotifier {
   }
 
   void definirPeriodo(AnalyticsRange range) {
-    if (_range == range) return;
+    if (_range == range && !periodoPersonalizado) return;
     _range = range;
+    _inicioEscolhido = null;
+    _fimEscolhido = null;
+    notifyListeners();
+    carregar();
+  }
+
+  void definirIntervalo(DateTime inicio, DateTime fim) {
+    final comeco = DateTime(inicio.year, inicio.month, inicio.day);
+    final termino = DateTime(fim.year, fim.month, fim.day);
+    if (_inicioEscolhido == comeco && _fimEscolhido == termino) return;
+    _inicioEscolhido = comeco;
+    _fimEscolhido = termino;
     notifyListeners();
     carregar();
   }
@@ -231,8 +321,8 @@ class AnalyticsController extends ChangeNotifier {
       return;
     }
 
-    final hoje = _hoje();
-    final inicioSerie = hoje.subtract(Duration(days: _range.dias - 1));
+    final hoje = fimDoPeriodo;
+    final inicioSerie = inicioDoPeriodo;
 
     var falhasAvaliacoes = 0;
     final avaliacoes = await Future.wait(
@@ -325,6 +415,7 @@ class AnalyticsController extends ChangeNotifier {
       mediaAvaliacao: mediaAvaliacao,
       totalAvaliacoes: avaliacoes.length,
       acessos: somarAcessos(acessos),
+      porMes: avaliacoesPorMes(avaliacoes, hoje),
       denuncias: _resumirDenuncias(
         denuncias: denuncias,
         lojas: lojas,
@@ -367,7 +458,7 @@ class AnalyticsController extends ChangeNotifier {
     if (denuncias.isEmpty) return DenunciaResumo.vazio;
 
     final idsDoEscopo = lojas.map((l) => l.id).toSet();
-    final inicioAnterior = inicioSerie.subtract(Duration(days: _range.dias));
+    final inicioAnterior = inicioSerie.subtract(Duration(days: diasDoPeriodo));
     final fim = hoje.add(const Duration(days: 1));
 
     final noPeriodo = <DenunciaRecebidaModel>[];
