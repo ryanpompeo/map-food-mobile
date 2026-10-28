@@ -2352,6 +2352,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Foto de perfil de quem avaliou, como path cru da API (`/uploads/consumidores/x.jpg`). `null` em quem nunca enviou uma. O campo sempre veio no JSON de `/avaliacoes/loja/{id}` (o endpoint devolve a entidade `Avaliacao` inteira, e `Consumidor` tem `imagemUrl`) — era este parser que o descartava, e por isso a lista de avaliações do app só sabia desenhar a inicial do nome. A web já lia o mesmo campo."
   - 💡 Explicação Leiga: A linha guarda a foto de quem avaliou. Antes o aplicativo jogava fora esse dado sem querer.
 
+  > "Total de likes, de deslikes e o meu voto já chegavam na listagem da loja e eram ignorados pelo modelo. Agora entram, com zero como padrão para as consultas que não trazem esses campos (como 'minhas avaliações')."
+  - 💡 Explicação Leiga: O modelo passou a guardar os votos que a avaliação recebeu.
+
 ### 📂 ARQUIVO: lib/features/avaliacoes/data/services/avaliacao_service.dart
 
 - ⚙️ Função: Busca e envia avaliações no servidor.
@@ -2371,6 +2374,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Editar manda só nota e comentário, e comentário em branco vai como nulo — string vazia ficaria gravada como comentário existente e apareceria como linha vazia no comércio. O corpo devolvido pelo PUT não tem o formato da listagem (vem sem os votos), então quem chama recarrega a lista em vez de confiar nele."
   - 💡 Explicação Leiga: A função salva a nota e o comentário novos. Depois a tela busca a lista de novo.
+
+  > "Votar devolve a contagem nova e qual é o meu voto depois da troca, então a tela não precisa recarregar a lista nem adivinhar o resultado do toque."
+  - 💡 Explicação Leiga: Ao votar, o servidor devolve os números atualizados.
 
 ### 📂 ARQUIVO: lib/features/avaliacoes/presentation/controllers/acoes_da_avaliacao.dart
 
@@ -2422,6 +2428,20 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Saiu de dentro da seção de avaliação do comércio para ser usado também na folha de edição: duas réguas de estrelas diferentes dariam notas com aparências diferentes para a mesma coisa. Cada estrela é uma área de toque com rótulo próprio, para o leitor de tela anunciar '4 estrelas' em vez de 'botão'."
   - 💡 Explicação Leiga: As estrelas viraram peça compartilhada entre a tela do comércio e a folha de edição.
+
+### 📂 ARQUIVO: lib/features/avaliacoes/presentation/widgets/voto_avaliacao.dart
+
+- ⚙️ Função: Deixa marcar uma avaliação como útil ou não útil, com a contagem de cada lado.
+- 💬 Comentários Removidos:
+
+  > "A contagem e o meu voto já vinham na listagem de avaliações e eram descartados: o app mostrava comentários sem nenhum sinal de quais ajudaram as pessoas. Repetir o mesmo voto remove, o oposto troca — a regra é do servidor, e a tela só mostra o que ele devolve."
+  - 💡 Explicação Leiga: Agora dá para dizer se uma avaliação foi útil, e o número aparece do lado.
+
+  > "O autor não vê botões, só a contagem: o servidor recusa voto na própria avaliação, e oferecer o botão seria convidar ao erro. Visitante vê os números e, ao tocar, recebe o convite para criar conta."
+  - 💡 Explicação Leiga: Quem escreveu a avaliação vê só os números; quem não tem conta é convidado a criar uma.
+
+  > "Votar exige e-mail confirmado. Como no resto do app, o 403 abre a confirmação e repete o voto depois, em vez de mostrar erro cru."
+  - 💡 Explicação Leiga: Se o e-mail não estiver confirmado, o app pede a confirmação e registra o voto depois.
 
 ### 📂 ARQUIVO: lib/features/consumer/data/models/consumer_model.dart
 
@@ -4687,6 +4707,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "O menu de três pontos só existe quando quem chama passa as ações — ou seja, só na avaliação de quem está logado. O cartão não decide isso: ele não sabe quem é o usuário, e perguntar aqui faria cada cartão da lista consultar a sessão."
   - 💡 Explicação Leiga: O menu de editar e excluir aparece só nas suas próprias avaliações.
+
+  > "Os botões de voto aparecem só na lista pública da loja. No histórico compacto ('Suas avaliações') não fazem sentido: são as suas, e ninguém vota na própria."
+  - 💡 Explicação Leiga: O voto aparece nas avaliações dos outros, não nas suas.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/section_header.dart
 
