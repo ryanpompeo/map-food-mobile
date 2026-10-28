@@ -355,7 +355,7 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
 - ⚙️ Função: Mostra uma notificação do app na barra do Android.
 - 💬 Comentários Removidos:
 
-  > "O app não tinha como mostrar notificação nenhuma. A única que existia, a 'MapFood — loja aberta', é criada por dentro do pacote de GPS, junto com o serviço que mantém o app vivo — não dá para reaproveitar."
+  > "O app não tinha como mostrar notificação nenhuma. A única que existia, a 'MapFood · loja aberta', é criada por dentro do pacote de GPS, junto com o serviço que mantém o app vivo — não dá para reaproveitar."
   - 💡 Explicação Leiga: Antes, o app não sabia mostrar aviso nenhum por conta própria.
 
   > "Feito estendendo a ponte nativa que já existia para pedir permissão, em vez de trazer um pacote de notificações. A escolha foi deliberada: a compilação final tinha acabado de voltar a funcionar, e um pacote novo traz ajuste de configuração no Android e risco de briga de versão. O custo é que só o Android tem aviso — no iPhone a função devolve 'não mostrei' e a vida segue."
