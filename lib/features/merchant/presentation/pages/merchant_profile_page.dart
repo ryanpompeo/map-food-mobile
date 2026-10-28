@@ -5,6 +5,7 @@ import 'package:map_food/core/network/image_url_resolver.dart';
 import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/features/denuncias/presentation/pages/merchant_complaints_page.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/profile_page_scaffold.dart';
 import 'package:map_food/core/ui/widgets/stacked_card_carousel.dart';
@@ -92,6 +93,15 @@ class MerchantProfilePage extends StatelessWidget {
           title: "Editar Perfil",
           subtitle: "Altere seus dados e senha",
           onTap: () => _abrirEditarPerfil(context),
+        ),
+        ProfileMenuItem(
+          icon: AppIcons.flag,
+          title: "Denúncias recebidas",
+          subtitle: "Veja e responda as denúncias das suas lojas",
+          onTap: () => Navigator.push(
+            context,
+            appPageRoute(builder: (_) => const MerchantComplaintsPage()),
+          ),
         ),
         ProfileMenuItem(
           icon: AppIcons.envelope,

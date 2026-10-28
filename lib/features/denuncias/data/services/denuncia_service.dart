@@ -37,6 +37,14 @@ class DenunciaService {
         .toList();
   }
 
+  Future<DenunciaRecebidaModel> responder(int denunciaId, String texto) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      '${ApiConstants.denuncias}/$denunciaId/resposta',
+      data: <String, dynamic>{'texto': texto.trim()},
+    );
+    return DenunciaRecebidaModel.fromJson(data);
+  }
+
   Future<List<DenunciaRecebidaModel>> getRecebidas(int comercianteId) async {
     final data = await _client.get<List<dynamic>>(
       '${ApiConstants.denuncias}/loja/comerciante/$comercianteId',
