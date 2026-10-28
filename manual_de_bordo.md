@@ -1931,6 +1931,22 @@ Mudar uma delas muda todas as telas que a usam.
 
 ## 📊 PARTE 6 — ESTATÍSTICAS DO COMERCIANTE
 
+### 📂 ARQUIVO: lib/features/analytics/data/models/acesso_metricas.dart
+
+- ⚙️ Função: Guarda o total de visitas da loja e quantas foram em cada dia.
+- 💬 Comentários Removidos:
+
+  > "A rota devolve o total e a série por dia; o modelo aceita resposta sem a série (vira lista vazia) porque o painel precisa mostrar o número grande mesmo que o gráfico fique sem pontos."
+  - 💡 Explicação Leiga: O modelo guarda as visitas por dia e o total, e não quebra se vier só o total.
+
+### 📂 ARQUIVO: lib/features/analytics/data/services/acesso_service.dart
+
+- ⚙️ Função: Busca no servidor as visitas que a página da loja recebeu num período.
+- 💬 Comentários Removidos:
+
+  > "A rota `GET /lojas/{id}/acessos` existia desde sempre e o app nunca chamou: a tela de Estatísticas prometia 'acompanhar os acessos' no estado vazio e mostrava só avaliações e denúncias. As datas vão como dia simples, que é o formato que o servidor exige — qualquer outro volta 400."
+  - 💡 Explicação Leiga: Esta busca traz as visitas da loja, que o aplicativo mostrava prometidas e nunca buscava.
+
 ### 📂 ARQUIVO: lib/features/analytics/presentation/controllers/analytics_controller.dart
 
 - ⚙️ Função: Busca e calcula todos os números do painel de estatísticas do comerciante.
@@ -2002,6 +2018,15 @@ Mudar uma delas muda todas as telas que a usam.
   > "Meia-noite de hoje: as datas da API são dias, sem hora, e comparar com `DateTime.now()` deixaria o dia corrente sempre 'no futuro'."
   - 💡 Explicação Leiga: A função devolve a data de hoje zerada na meia-noite.
 
+  > "As visitas de todas as lojas do escopo são somadas por dia: dois pedidos no mesmo dia, de lojas diferentes, viram um ponto só. Se nenhuma loja respondeu, o resumo sai marcado como indisponível, e a tela diz isso em vez de desenhar um gráfico de zeros — zero visita e falha de rede são coisas diferentes."
+  - 💡 Explicação Leiga: As visitas de todas as suas lojas são somadas por dia, e falha de rede não é mostrada como zero.
+
+  > "O gráfico de 7 dias tem um ponto por dia. De 15 dias para cima, os dias são agrupados em seis blocos somados: não cabem 30 ou 90 colunas na tela de um celular, e agrupar não perde visita — o total continua exato."
+  - 💡 Explicação Leiga: Em períodos longos, o gráfico junta os dias em seis blocos para caber na tela.
+
+  > "Entrou o período de 15 dias, que a Web já tinha."
+  - 💡 Explicação Leiga: Agora existe também o período de 15 dias.
+
 ### 📂 ARQUIVO: lib/features/analytics/presentation/pages/merchant_analytics_page.dart
 
 - ⚙️ Função: Desenha a tela com os gráficos e números da loja do comerciante.
@@ -2054,6 +2079,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Pastilha de status das denúncias ('2 em análise', '5 já encerradas'). Ícone junto do texto, e não só cor: a diferença entre o que ainda pesa e o que já foi resolvido é a informação mais importante do card, e ela não pode depender de distinguir vermelho de verde."
   - 💡 Explicação Leiga: Esta classe desenha uma etiqueta com ícone e texto. O ícone permite entender sem depender da cor.
+
+  > "O cartão de visitas é o primeiro da tela, antes de avaliações e denúncias: é o número que o comerciante abre o painel para ver, e é o que o painel da Web mostra em destaque."
+  - 💡 Explicação Leiga: As visitas aparecem no topo da tela de estatísticas.
 
 ### 📂 ARQUIVO: lib/features/analytics/presentation/widgets/analytics_scope_selector.dart
 
@@ -2687,6 +2715,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "A `DeltaBadge` que morava aqui foi para `core/ui/widgets/delta_badge.dart`: a tela de Estatísticas do comerciante precisa da mesma pílula, e um widget compartilhado importado de dentro da feature do consumidor seria acoplamento entre dois módulos que não se conhecem. O visual daqui não mudou — é o `DeltaTone.marca`, que continua sendo o padrão."
   - 💡 Explicação Leiga: Anota que a etiqueta de variação foi movida para a pasta de peças compartilhadas.
 
+  > "A mensagem de 'nada neste período' virou parâmetro: o mesmo gráfico serve para avaliações do consumidor e para visitas da loja, e 'nenhuma avaliação' no cartão de visitas estaria errado."
+  - 💡 Explicação Leiga: O gráfico passou a aceitar a frase de vazio de quem o usa.
+
 ### 📂 ARQUIVO: lib/features/consumer/presentation/widgets/consumer_bottom_bar.dart
 
 - ⚙️ Função: Desenha a barra de navegação do rodapé para o cliente.
@@ -3032,6 +3063,12 @@ Mudar uma delas muda todas as telas que a usam.
   > "Os termos também descrevem a loja aberta: o comerciante responde pelo estado que anuncia, e o fechamento automático existe para que uma loja esquecida aberta não leve ninguém a se deslocar em vão."
   - 💡 Explicação Leiga: Os termos explicam a responsabilidade de quem abre a loja e por que ela fecha sozinha.
 
+  > "A cláusula de custos deixou de dizer '100% gratuito' no dia em que o app passou a anunciar o Plano Destaque. Agora separa: gratuito para o consumidor sem exceção, gratuito para o comerciante em tudo que os termos descrevem, e um plano opcional de R$ 29,90 que muda só onde a loja aparece. Documento que contradiz a tela é pior do que documento incompleto."
+  - 💡 Explicação Leiga: Os termos passaram a descrever o plano pago, porque o aplicativo agora mostra o preço.
+
+  > "A cláusula diz também que o aplicativo não cobra nem processa pagamento, que a contratação é combinada com a equipe e que cancelar devolve a loja ao plano gratuito sem perder nada — é o que acontece de fato, já que a ativação é manual."
+  - 💡 Explicação Leiga: O texto explica que o pagamento é feito fora do aplicativo e que dá para cancelar.
+
 ### 📂 ARQUIVO: lib/features/guest/presentation/widgets/floating_bottom_bar.dart
 
 - ⚙️ Função: Desenha a barra de navegação do rodapé para o visitante.
@@ -3271,6 +3308,20 @@ Mudar uma delas muda todas as telas que a usam.
   > "Três passos para o comerciante entender a mecânica do app. Os passos são uma sequência de operação (ativar → rodar → colher retorno), e é por isso que aparecem numa linha do tempo, e não como três cards soltos de mesmo peso. O desenho vive em [HowItWorksScaffold], compartilhado com a versão do visitante — aqui fica só o conteúdo."
   - 💡 Explicação Leiga: Esta classe guarda o texto dos três passos do comerciante.
 
+### 📂 ARQUIVO: lib/features/merchant/presentation/pages/plano_destaque_page.dart
+
+- ⚙️ Função: Explica ao comerciante o Plano Destaque, com preço, e leva ao contato com a equipe.
+- 💬 Comentários Removidos:
+
+  > "A tela lista só o que o app entrega hoje: selo, posição na busca, vitrine e o filtro de destaques. O site anuncia também marcador dourado no mapa, galeria ampliada e prioridade no assistente de IA — nada disso existe, nem no servidor, e prometer aqui seria vender o que não temos."
+  - 💡 Explicação Leiga: A tela só promete as vantagens que já funcionam no aplicativo.
+
+  > "Não há botão de assinar: o endereço que o site chama para pedir o plano (`POST /lojas/{id}/solicitar-destaque`) não existe na API, em nenhuma branch. Até existir, o caminho honesto é o formulário de contato, que funciona."
+  - 💡 Explicação Leiga: Por enquanto o pedido do plano é feito falando com a equipe.
+
+  > "O bloco 'como funciona a contratação' existe porque o aplicativo anuncia preço e não cobra: sem dizer que o pagamento é combinado fora e que a equipe ativa o selo, o preço fica no ar."
+  - 💡 Explicação Leiga: A tela explica que o pagamento é combinado com a equipe, fora do aplicativo.
+
 ### 📂 ARQUIVO: lib/features/merchant/presentation/pages/merchant_profile_page.dart
 
 - ⚙️ Função: Tela de perfil do comerciante.
@@ -3287,6 +3338,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "'Denúncias recebidas' fica no menu da conta, acima de 'Fale conosco': é assunto da conta dele, com prazo correndo, e não um canal de suporte."
   - 💡 Explicação Leiga: O acesso às denúncias recebidas fica no menu do perfil do comerciante.
+
+  > "'Plano Destaque' entra no menu da conta acima das denúncias: é oferta, não suporte, e é a única porta do assunto no app."
+  - 💡 Explicação Leiga: O acesso à tela de planos fica no menu do perfil do comerciante.
 
 ### 📂 ARQUIVO: lib/features/merchant/presentation/pages/merchant_store_page.dart
 
