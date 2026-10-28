@@ -438,6 +438,12 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
   > "Atualiza nome/e-mail da sessão salva localmente — chamado depois de um 'Editar Perfil' bem-sucedido. Sem isso, `getSession()` continuava devolvendo o nome antigo (o do login) até o usuário deslogar e logar de novo, mesmo com o backend já salvo com o dado novo."
   - 💡 Explicação Leiga: A função grava no disco o nome e o e-mail novos. Sem ela, o app continuava mostrando o nome antigo.
 
+  > "Só a chave de login mudou de lugar: nome, e-mail, tipo e id continuam no armazenamento comum, porque não são segredo e são lidos em telas que não podem esperar o cofre. A sessão passou a ser montada juntando as duas fontes."
+  - 💡 Explicação Leiga: A chave fica no cofre; o nome e o e-mail continuam no armazenamento normal.
+
+  > "Quem já estava logado tem a chave movida na primeira leitura: lê do armazenamento comum, grava no cofre e apaga da origem. Sem isso, a atualização deslogaria todo mundo — e deixar a chave nos dois lugares anularia a mudança."
+  - 💡 Explicação Leiga: Na atualização, a chave antiga é movida para o cofre sem precisar entrar de novo.
+
 ### 📂 ARQUIVO: lib/core/storage/aviso_proximidade_storage.dart
 
 - ⚙️ Função: Guarda no aparelho em que dia a pessoa já foi avisada de uma loja favorita por perto.
@@ -445,6 +451,20 @@ Primeiro a partida, depois as peças compartilhadas, depois cada funcionalidade.
 
   > "O limite de um aviso por dia é exigência do próprio pedido, e precisa valer mesmo fechando o app — por isso fica guardado no aparelho, e não na memória. Guarda também qual loja foi avisada, que serve para entender o histórico sem precisar de log."
   - 💡 Explicação Leiga: O app anota o dia do último aviso para não repetir, mesmo que seja fechado e aberto.
+
+### 📂 ARQUIVO: lib/core/storage/cofre_seguro.dart
+
+- ⚙️ Função: Guarda a chave de login na área protegida do aparelho, em vez do armazenamento comum.
+- 💬 Comentários Removidos:
+
+  > "A chave de login é a conta inteira: com ela na mão, qualquer requisição passa como se fosse o usuário. No armazenamento comum ela ficava em texto simples; aqui ela entra no cofre do sistema (EncryptedSharedPreferences no Android, chaveiro no iPhone), que é cifrado por uma chave do próprio aparelho."
+  - 💡 Explicação Leiga: A chave que mantém a pessoa logada passa a ficar guardada na parte protegida do celular.
+
+  > "Erro de cofre não derruba o app: alguns aparelhos devolvem falha quando o cofre do sistema está corrompido, e aí o pior resultado aceitável é a pessoa precisar entrar de novo — nunca uma tela de erro na abertura. A leitura devolve nulo e a gravação apenas registra o problema."
+  - 💡 Explicação Leiga: Se o cofre do celular falhar, a pessoa só precisa entrar de novo; o app não quebra.
+
+  > "[CofreEmMemoria] existe para os testes: o cofre de verdade é um canal nativo, que não existe no ambiente de teste — sem a troca, toda sessão gravada em teste se perderia silenciosamente."
+  - 💡 Explicação Leiga: Nos testes, o cofre é substituído por uma versão simples que roda na memória.
 
 ### 📂 ARQUIVO: lib/core/storage/onboarding_storage.dart
 
