@@ -2777,6 +2777,12 @@ Mudar uma delas muda todas as telas que a usam.
   > "Responder é a única escrita desta tela, e o servidor valida tudo: texto obrigatório, até 2000 caracteres, uma resposta por denúncia, dentro do prazo e só o dono da loja. O serviço manda o texto já sem espaços nas pontas e devolve a denúncia atualizada, que a tela usa para trocar o campo pelo texto enviado sem precisar recarregar a lista."
   - 💡 Explicação Leiga: A função envia a resposta e devolve a denúncia já atualizada.
 
+  > "A foto da denúncia sobe antes, num endereço próprio, e o que volta é o caminho que a denúncia vai citar. O servidor só aceita caminho de upload dele que ainda não instrui outra denúncia — citar a foto de outra pessoa era possível antes dessa checagem."
+  - 💡 Explicação Leiga: A foto é enviada primeiro e a denúncia aponta para ela.
+
+  > "Data, item e foto só vão no corpo quando existem, e o servidor ignora os três fora do motivo sanitário. A data vai como dia simples (sem hora), que é o formato que a coluna espera."
+  - 💡 Explicação Leiga: Os campos de prova só são enviados na denúncia de risco sanitário.
+
 ### 📂 ARQUIVO: lib/features/denuncias/presentation/pages/consumer_complaints_page.dart
 
 - ⚙️ Função: Mostra a lista de denúncias que o usuário já fez.
@@ -4637,6 +4643,21 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Mesma recusa por e-mail não confirmado, mesmo atalho — só sem refazer o envio: a denúncia some junto com o diálogo, e reenviar sozinho uma acusação seria arriscado."
   - 💡 Explicação Leiga: Na denúncia o app também oferece confirmar o e-mail, mas não reenvia nada sozinho.
+
+  > "'Risco sanitário' faltava na lista, e não por esquecimento: o servidor exige data do consumo, item e foto para esse motivo e recusava o envio. Na prática, quem passou mal com a comida só conseguia registrar pelo site. Com os três campos no formulário, o motivo mais grave finalmente existe no app."
+  - 💡 Explicação Leiga: Agora dá para denunciar risco sanitário pelo aplicativo, com foto e data.
+
+  > "Os três campos aparecem só nesse motivo, e a validação é a mesma do servidor: data que não pode estar no futuro, item escrito e foto escolhida. Vale checar aqui para a pessoa não descobrir o que falta depois de um erro de rede."
+  - 💡 Explicação Leiga: O app avisa o que falta antes de enviar, em vez de deixar o servidor recusar.
+
+  > "A foto sobe só quando a denúncia está pronta para ir, e o caminho devolvido fica guardado: uma segunda tentativa depois de erro não envia a mesma imagem de novo — o servidor recusaria a foto repetida."
+  - 💡 Explicação Leiga: A foto é enviada uma vez só, mesmo se precisar tentar de novo.
+
+  > "A recusa do servidor passou a ser mostrada como ele escreveu — 'você já denunciou esta loja nos últimos 30 dias', 'contém linguagem ofensiva', 'esta foto já foi usada'. O texto genérico de antes escondia a regra, e a pessoa tentava de novo sem saber o que mudar."
+  - 💡 Explicação Leiga: Quando o servidor recusa, o motivo aparece na tela.
+
+  > "A escolha da foto entra por parâmetro para o teste poder entregar um arquivo sem abrir a câmera do aparelho."
+  - 💡 Explicação Leiga: Nos testes, a foto é entregue direto, sem usar a câmera.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/review_card.dart
 
