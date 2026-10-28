@@ -2728,6 +2728,12 @@ Mudar uma delas muda todas as telas que a usam.
   > "Converte o enum da API de volta pro label da UI — usado pra pré-preencher o dropdown quando o consumidor já denunciou a loja."
   - 💡 Explicação Leiga: A função traduz o código do servidor de volta para a frase mostrada na tela.
 
+  > "Risco sanitário entrou na tradução dos motivos: sem ele, a denúncia mais grave aparecia como 'Outro' nas duas telas. Continua fora da lista de criação (ver [motivosQueOAppAindaNaoCria]) porque o servidor exige data, item e foto para esse motivo, e o app ainda não envia esses campos."
+  - 💡 Explicação Leiga: O nome do motivo mais grave agora aparece certo, mas ele ainda não pode ser criado pelo app.
+
+  > "O modelo do consumidor passou a ler a resposta do comerciante e o prazo dele: eram campos que já vinham na mesma consulta e eram jogados fora, então a pessoa não sabia que havia resposta."
+  - 💡 Explicação Leiga: A denúncia que você fez agora mostra a resposta do comerciante.
+
 ### 📂 ARQUIVO: lib/features/denuncias/data/models/denuncia_recebida_model.dart
 
 - ⚙️ Função: Guarda os dados de uma denúncia recebida contra a loja do comerciante.
@@ -2748,6 +2754,12 @@ Mudar uma delas muda todas as telas que a usam.
   > "Rótulo de exibição do motivo."
   - 💡 Explicação Leiga: A linha devolve o motivo já traduzido para o texto da tela.
 
+  > "O modelo lia só o suficiente para contar denúncias no painel de métricas e descartava o resto do que o servidor manda. Agora lê foto, data do consumo, item, resposta, data da resposta e prazo — é o que a tela do comerciante precisa para decidir se ainda dá para responder."
+  - 💡 Explicação Leiga: O modelo passou a guardar todos os dados da denúncia, não só o número dela.
+
+  > "As três perguntas que a tela faz viraram método do modelo: já foi respondida, o motivo abre direito de resposta, e o prazo ainda está aberto. O relógio entra como parâmetro para o teste poder fixar o 'agora' em vez de depender do dia em que roda."
+  - 💡 Explicação Leiga: O modelo sabe dizer se a denúncia ainda aceita resposta.
+
 ### 📂 ARQUIVO: lib/features/denuncias/data/services/denuncia_service.dart
 
 - ⚙️ Função: Cria e busca denúncias no servidor.
@@ -2761,6 +2773,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Denúncias recebidas pelas lojas de um comerciante, via GET /denuncias/loja/comerciante/{comercianteId}. Devolve a lista inteira — motivo, status, data e loja de cada uma. A versão anterior deste método descartava tudo isso e devolvia só `data.length`, porque o único consumo era um card de contagem. O painel de Estatísticas usa os campos para dizer por que e quando, que é o que o comerciante pode agir a respeito. Só o dono das lojas (ou um administrador) recebe 200 aqui; a API não expõe a identidade de quem denunciou."
   - 💡 Explicação Leiga: A função busca as denúncias contra as lojas do comerciante. Antes ela só devolvia a quantidade.
+
+  > "Responder é a única escrita desta tela, e o servidor valida tudo: texto obrigatório, até 2000 caracteres, uma resposta por denúncia, dentro do prazo e só o dono da loja. O serviço manda o texto já sem espaços nas pontas e devolve a denúncia atualizada, que a tela usa para trocar o campo pelo texto enviado sem precisar recarregar a lista."
+  - 💡 Explicação Leiga: A função envia a resposta e devolve a denúncia já atualizada.
 
 ### 📂 ARQUIVO: lib/features/denuncias/presentation/pages/consumer_complaints_page.dart
 
@@ -2779,6 +2794,32 @@ Mudar uma delas muda todas as telas que a usam.
 ---
 
 ## ❤️ PARTE 12 — FAVORITOS
+
+  > "A tela ganhou o outro lado da conversa: quando o comerciante responde, a resposta aparece aqui; enquanto o prazo dele corre, aparece até quando ele tem. Era o que faltava para a denúncia pelo app não ser um envio no escuro."
+  - 💡 Explicação Leiga: Quem denunciou passa a ver a resposta do comerciante e o prazo dele.
+
+  > "A tradução dos motivos saiu daqui e passou a vir de [MotivosDenuncia]: eram duas listas de rótulos para a mesma coisa, e a daqui já estava sem o motivo sanitário."
+  - 💡 Explicação Leiga: Os nomes dos motivos agora vêm de um lugar só.
+
+### 📂 ARQUIVO: lib/features/denuncias/presentation/pages/merchant_complaints_page.dart
+
+- ⚙️ Função: Mostra ao comerciante as denúncias feitas contra as lojas dele e recebe a resposta dentro do prazo.
+- 💬 Comentários Removidos:
+
+  > "Antes do app, acusação que suja o nome de quem vende abria 48 horas de prazo e o comerciante só recebia o e-mail: para responder, precisava do site. Esta tela fecha isso — o prazo corre igual para quem só tem celular."
+  - 💡 Explicação Leiga: O comerciante passa a ver e responder as denúncias pelo aplicativo.
+
+  > "O campo de resposta só aparece quando as três condições do servidor valem: existe prazo gravado (ou seja, o motivo abre contraditório), o prazo não venceu e ainda não houve resposta. Fora disso, a tela explica qual é o caso em vez de mostrar um botão que voltaria 409."
+  - 💡 Explicação Leiga: O espaço para responder aparece só quando a denúncia realmente aceita resposta.
+
+  > "As que dão para responder vêm no topo da lista, e o resto desce por data. Quem abre esta tela está com prazo correndo; denúncia antiga e já resolvida não disputa a atenção."
+  - 💡 Explicação Leiga: As denúncias que ainda podem ser respondidas aparecem primeiro.
+
+  > "A recusa do servidor é mostrada com a frase dele (ex.: 'Esta denúncia já foi respondida', 'O prazo de resposta se encerrou em...'). São mensagens que explicam a regra melhor do que qualquer texto genérico nosso, e evitam a tela afirmar o que o servidor negou."
+  - 💡 Explicação Leiga: Se o servidor recusar, a tela mostra o motivo que ele deu.
+
+  > "Quem denunciou não aparece em lugar nenhum: o pacote que o servidor devolve não traz o autor. A tela não tem como expor isso nem por acidente."
+  - 💡 Explicação Leiga: O comerciante vê o motivo e a descrição, nunca quem denunciou.
 
 ### 📂 ARQUIVO: lib/features/favorites/data/services/favorito_service.dart
 
@@ -3217,6 +3258,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Os cards de estatística ('Dias no App', 'Avaliações Recebidas', 'Denúncias Recebidas') saíram daqui: o perfil ficou restrito à conta, e desempenho tem tela própria. Com eles foi embora também a cascata de chamadas que os alimentava — uma busca de avaliações por loja, em série, mais a de denúncias, todas antes de a tela poder aparecer."
   - 💡 Explicação Leiga: Os números foram movidos para a tela de Estatísticas. Isso deixou o perfil abrir mais rápido.
+
+  > "'Denúncias recebidas' fica no menu da conta, acima de 'Fale conosco': é assunto da conta dele, com prazo correndo, e não um canal de suporte."
+  - 💡 Explicação Leiga: O acesso às denúncias recebidas fica no menu do perfil do comerciante.
 
 ### 📂 ARQUIVO: lib/features/merchant/presentation/pages/merchant_store_page.dart
 
