@@ -3586,6 +3586,15 @@ Mudar uma delas muda todas as telas que a usam.
   > "Quantas edições (inserir, remover, trocar) separam duas palavras. Duas linhas em vez da matriz inteira: a busca roda a cada tecla, sobre a lista completa de lojas ativas."
   - 💡 Explicação Leiga: A função conta quantas letras diferem entre duas palavras. Ela é otimizada porque roda a cada tecla digitada.
 
+  > "O plano desempata, não atropela: quem a pessoa procurou pelo nome continua na frente de uma loja em destaque que só casou pela descrição. A Web ordena por destaque acima de tudo; aqui o critério é relevância primeiro, destaque depois, porque busca que não acha o que foi pedido deixa de ser busca."
+  - 💡 Explicação Leiga: Lojas em destaque sobem na lista, mas só entre resultados igualmente relevantes.
+
+  > "Sem termo digitado, a lista inteira sai com os destaques na frente, mantendo a ordem original no resto."
+  - 💡 Explicação Leiga: Quando ninguém digitou nada, as lojas em destaque aparecem primeiro.
+
+  > "Filtro, vitrine e a pergunta 'existe alguma loja em destaque?' moram aqui como funções puras: a tela de busca só as chama. Sem isso, a mesma regra ficaria escrita três vezes dentro de um widget que depende de rede, GPS e sessão para ser testado."
+  - 💡 Explicação Leiga: As regras do destaque ficam separadas da tela, para poderem ser testadas sozinhas.
+
 ### 📂 ARQUIVO: lib/features/search/presentation/pages/search_page.dart
 
 - ⚙️ Função: Tela de busca, com filtros por categoria e as seções "Perto de você" e "Em Alta".
@@ -3659,6 +3668,12 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Idem: cancela um debounce de digitação pendente pra ele não sobrescrever essa troca de categoria depois."
   - 💡 Explicação Leiga: A linha cancela uma busca agendada ao trocar de categoria.
+
+  > "O chip 'Destaques' só aparece quando existe pelo menos uma loja do plano: filtro que nunca acha nada é botão que mente. Ligado, ele conta como recorte — a tela troca as seções pela lista vertical, igual a quando há busca ou categoria."
+  - 💡 Explicação Leiga: O filtro de destaques só aparece se houver lojas em destaque.
+
+  > "A vitrine fica depois de 'Perto de você' e antes de 'Em alta'. A Web põe a vitrine no alto da home; aqui a distância continua em primeiro, porque é a promessa do app, e o plano ganha o segundo lugar da tela, que já é lugar bom."
+  - 💡 Explicação Leiga: A vitrine de lojas em destaque aparece abaixo das lojas mais próximas.
 
 ### 📂 ARQUIVO: lib/features/search/presentation/widgets/category_filters.dart
 
@@ -3840,6 +3855,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Extrai lista de IDs das categorias. Suporta `categorias: [{id, nome}]` ou `categorias: [int]`; entradas sem id (ex: lista de nomes crus vinda de /mobile/api/v1/lojas) são ignoradas — essas telas não editam a loja, só listam/exibem."
   - 💡 Explicação Leiga: A função lê os números das categorias, ignorando entradas que só têm nome.
+
+  > "`tipoLoja` ('GRATUITO' ou 'DESTAQUE') vem junto da lista de lojas ativas desde sempre e o modelo não lia. Entrou como texto cru, com [emDestaque] para quem pergunta — assim um valor novo que a API inventar não quebra o app, só deixa de ser destaque."
+  - 💡 Explicação Leiga: O modelo passou a guardar o plano da loja, que já vinha na resposta do servidor.
 
 ### 📂 ARQUIVO: lib/features/store/data/nearby_filter.dart
 
@@ -4568,6 +4586,20 @@ Mudar uma delas muda todas as telas que a usam.
   > "Bem mais aberto que o AppRadius.xl (24) padrão do resto do app — mesmo valor do card do 'Em Alta', de propósito, pra esses dois se destacarem como os cards 'hero' da home."
   - 💡 Explicação Leiga: A linha usa cantos mais arredondados neste cartão, para ele se destacar.
 
+  > "O selo de destaque entra acima do nome, na versão de vidro escuro, porque aqui o texto vive sobre a foto da loja."
+  - 💡 Explicação Leiga: No carrossel, o selo aparece acima do nome, em cima da foto.
+
+### 📂 ARQUIVO: lib/features/store/presentation/widgets/selo_destaque.dart
+
+- ⚙️ Função: Desenha o selo de "Destaque" das lojas que assinaram o plano.
+- 💬 Comentários Removidos:
+
+  > "O plano da loja já chegava no app pela mesma consulta de sempre e era descartado: a Web mostra selo, vitrine e filtro de destaque, e o app não mostrava nada. Este selo é o lado que o cliente vê — sem ele, pagar pelo plano não muda nada na tela de quem procura comida."
+  - 💡 Explicação Leiga: O selo mostra quais lojas assinaram o plano de destaque.
+
+  > "Duas versões: sobre fundo claro usa o dourado da nota; sobre foto usa vidro escuro e texto branco, porque dourado em cima de imagem desaparece. O leitor de tela ouve 'Loja em destaque' nos dois casos."
+  - 💡 Explicação Leiga: O selo muda de cor quando fica sobre uma foto, para continuar legível.
+
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_card_badges.dart
 
 - ⚙️ Função: Desenha as etiquetas pequenas de nota e categoria sobre os cartões de loja.
@@ -4769,6 +4801,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Botão circular sobre a capa. Superfície do tema (não vidro translúcido) de propósito: ele continua na tela depois que a barra colapsa, e um círculo translúcido sobre a superfície opaca da barra desapareceria."
   - 💡 Explicação Leiga: Esta classe desenha os botões redondos sobre a foto, com fundo sólido.
 
+  > "Na capa, o selo fica acima do nome: é a tela onde a pessoa decide ir, e é o lugar em que o plano mais aparece para quem assinou."
+  - 💡 Explicação Leiga: Na tela da loja, o selo de destaque aparece acima do nome.
+
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/store_detail_overview.dart
 
 - ⚙️ Função: Desenha as ações e o resumo numérico da loja na tela de detalhe.
@@ -4906,6 +4941,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Com o endereço em duas linhas, `center` (o padrão) descolaria o pin do começo do texto."
   - 💡 Explicação Leiga: A linha alinha o ícone de local no topo do endereço.
+
+  > "O nome da loja virou linha com o selo de destaque ao lado, e não mais texto solto: o selo precisa caber sem empurrar o nome, então o nome fica em [Expanded] e corta antes."
+  - 💡 Explicação Leiga: Nas listas, o selo de destaque aparece ao lado do nome da loja.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_markers_layer.dart
 
