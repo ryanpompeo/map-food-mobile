@@ -33,7 +33,7 @@ class AccountTypePage extends StatelessWidget {
               Text('Como você vai usar\no MapFood?', style: AppText.display(context)),
               const SizedBox(height: Spacing.md),
               Text(
-                'Escolha o tipo de conta — dá para criar a outra depois, com o mesmo e-mail',
+                'Escolha o tipo de conta · dá para criar a outra depois, com o mesmo e-mail',
                 style: AppText.body(context).copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: Spacing.xxl),

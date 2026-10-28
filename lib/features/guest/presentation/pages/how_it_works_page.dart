@@ -10,7 +10,7 @@ class HowItWorksPage extends StatelessWidget {
       icone: AppIcons.mapPin,
       titulo: 'Explore o mapa',
       descricao: 'Os comércios abertos aparecem em tempo real, na posição '
-          'de agora — não a de ontem',
+          'de agora · não a de ontem',
     ),
     (
       icone: AppIcons.slidersHorizontal,

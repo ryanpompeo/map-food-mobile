@@ -89,7 +89,7 @@ class _VerificarEmailPageState extends State<VerificarEmailPage> {
   Future<void> _confirmar() async {
     final codigo = _codigo.text.trim();
     if (codigo.length != digitosDoCodigo) {
-      setState(() => _erro = 'Digite os $digitosDoCodigo números do código.');
+      setState(() => _erro = 'Digite os $digitosDoCodigo números do código');
       return;
     }
 
@@ -105,7 +105,7 @@ class _VerificarEmailPageState extends State<VerificarEmailPage> {
     } on AppException catch (e) {
       if (mounted) setState(() => _erro = e.message);
     } catch (_) {
-      if (mounted) setState(() => _erro = 'Não deu para confirmar agora. Tente de novo.');
+      if (mounted) setState(() => _erro = 'Não deu para confirmar agora. Tente de novo');
     } finally {
       if (mounted) setState(() => _confirmando = false);
     }
@@ -134,7 +134,7 @@ class _VerificarEmailPageState extends State<VerificarEmailPage> {
       final aguarde = e.dados?['aguardeSegundos'];
       if (aguarde is num && aguarde > 0) _comecarEspera(aguarde.toInt());
     } catch (_) {
-      if (mounted) setState(() => _erro = 'Não deu para enviar o código agora.');
+      if (mounted) setState(() => _erro = 'Não deu para enviar o código agora');
     } finally {
       if (mounted) setState(() => _reenviando = false);
     }
@@ -167,8 +167,8 @@ class _VerificarEmailPageState extends State<VerificarEmailPage> {
                     const SizedBox(height: Spacing.xs),
                     Text(
                       email.isEmpty
-                          ? 'Enviamos um código de $digitosDoCodigo números para o seu e-mail.'
-                          : 'Enviamos um código de $digitosDoCodigo números para $email.',
+                          ? 'Enviamos um código de $digitosDoCodigo números para o seu e-mail'
+                          : 'Enviamos um código de $digitosDoCodigo números para $email',
                       style: AppText.secondary(context).copyWith(height: 1.4),
                     ),
                     const SizedBox(height: Spacing.lg),
@@ -218,7 +218,7 @@ class _VerificarEmailPageState extends State<VerificarEmailPage> {
                     ),
                     const SizedBox(height: Spacing.sm),
                     Text(
-                      'Sem confirmar, você pode usar o app normalmente — só não dá para avaliar nem denunciar lojas.',
+                      'Sem confirmar, você pode usar o app normalmente · só não dá para avaliar nem denunciar lojas',
                       style: AppText.caption(
                         context,
                       ).copyWith(color: colors.textSecondary, height: 1.4),

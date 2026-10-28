@@ -78,14 +78,14 @@ Future<bool> _confirmarSaida(
 Future<bool> confirmarSaidaSemSalvar(BuildContext context) => _confirmarSaida(
       context,
       titulo: "Sair sem salvar?",
-      mensagem: "Você tem alterações não salvas — se sair agora, elas se perdem",
+      mensagem: "Você tem alterações não salvas · se sair agora, elas se perdem",
       labelConfirmar: "Sair sem salvar",
     );
 
 Future<bool> confirmarSairDuranteCalculoDeRota(BuildContext context) => _confirmarSaida(
       context,
       titulo: "Cálculo de rota em andamento",
-      mensagem: "Estamos traçando a rota até a loja — sair agora cancela o cálculo",
+      mensagem: "Estamos traçando a rota até a loja · sair agora cancela o cálculo",
       labelConfirmar: "Sair mesmo assim",
     );
 

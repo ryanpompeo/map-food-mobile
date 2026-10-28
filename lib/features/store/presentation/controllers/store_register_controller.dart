@@ -227,7 +227,7 @@ class StoreRegisterController extends ChangeNotifier {
           await _storeService.uploadGaleria(loja.id, _galeria);
         }
       } catch (_) {
-        avisoFotos = 'Loja cadastrada, mas as fotos não subiram — tente de novo '
+        avisoFotos = 'Loja cadastrada, mas as fotos não subiram · tente de novo '
             'na edição da loja';
       }
 

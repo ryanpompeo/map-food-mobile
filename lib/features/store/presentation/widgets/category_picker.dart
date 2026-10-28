@@ -55,7 +55,7 @@ class CategoryPicker extends StatelessWidget {
     if (categorias.isEmpty) {
       return const _AvisoCategorias(
         icone: AppIcons.info,
-        mensagem: 'Nenhuma categoria cadastrada — fale com o suporte '
+        mensagem: 'Nenhuma categoria cadastrada · fale com o suporte '
             'para liberar seu cadastro',
         onRetry: null,
       );

@@ -42,7 +42,7 @@ Future<bool> excluirAvaliacaoComUi(
     builder: (dialogo) => AlertDialog(
       title: const Text('Excluir avaliação?'),
       content: const Text(
-        'Sua nota e seu comentário saem do comércio. Não dá para desfazer.',
+        'Sua nota e seu comentário saem do comércio. Não dá para desfazer',
       ),
       actions: [
         TextButton(

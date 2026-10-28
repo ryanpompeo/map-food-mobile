@@ -42,11 +42,11 @@ class StoreRondaController extends ChangeNotifier {
   static const Duration prorrogacao = Duration(hours: 2);
 
   static const String _semGpsParaAbrir =
-      'Sem localização — ative o GPS e permita o acesso pra abrir a loja';
+      'Sem localização · ative o GPS e permita o acesso pra abrir a loja';
   static const String _semGpsParaAcompanhar =
-      'Sem localização — ative o GPS e permita o acesso pra acompanhar sua posição';
+      'Sem localização · ative o GPS e permita o acesso pra acompanhar sua posição';
   static const String _lojaSuspensa =
-      'Sua loja está suspensa pela moderação — fale com o suporte';
+      'Sua loja está suspensa pela moderação · fale com o suporte';
 
   final StoreService _storeService;
   final RondaManager _ronda;
@@ -262,17 +262,17 @@ class StoreRondaController extends ChangeNotifier {
 
   static String? _avisoDaFase(FaseRonda fase) => switch (fase) {
         FaseRonda.semPermissao =>
-          'Sem permissão de localização — libere o acesso nas configurações do aparelho',
-        FaseRonda.gpsDesligado => 'GPS desligado — ative a localização pra voltar a enviar sua posição',
+          'Sem permissão de localização · libere o acesso nas configurações do aparelho',
+        FaseRonda.gpsDesligado => 'GPS desligado · ative a localização pra voltar a enviar sua posição',
         _ => null,
       };
 
   String? _avisoDeTransmissao(EstadoRonda estado) {
     if (estado.falhasSeguidas >= _ronda.configuracao.falhasAteAvisar) {
-      return 'Sua posição não está subindo — verifique a conexão, no mapa '
+      return 'Sua posição não está subindo · verifique a conexão, no mapa '
           'dos clientes você segue no último ponto enviado';
     }
-    if (estado.precisaoBaixa) return 'Sinal de GPS fraco — sua posição no mapa pode estar imprecisa';
+    if (estado.precisaoBaixa) return 'Sinal de GPS fraco · sua posição no mapa pode estar imprecisa';
     return null;
   }
 

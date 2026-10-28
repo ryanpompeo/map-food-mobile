@@ -110,13 +110,13 @@ class _SheetAbrirLojaState extends State<SheetAbrirLoja> {
             Text('Como você vai aparecer?', style: AppText.h2(context)),
             const SizedBox(height: Spacing.xs),
             Text(
-              'Isso muda o que os clientes veem e quanta bateria o app gasta.',
+              'Isso muda o que os clientes veem e quanta bateria o app gasta',
               style: AppText.secondary(context).copyWith(height: 1.4),
             ),
             const SizedBox(height: Spacing.lg),
             _OpcaoDeModo(
               titulo: 'Estou parado aqui',
-              descricao: 'Salva este ponto e economiza bateria. Para quem fica no mesmo lugar.',
+              descricao: 'Salva este ponto e economiza bateria. Para quem fica no mesmo lugar',
               icone: AppIcons.mapPin,
               selecionada: parado,
               onTap: () => setState(() => _modo = ModoRonda.parado),
@@ -124,7 +124,7 @@ class _SheetAbrirLojaState extends State<SheetAbrirLoja> {
             const SizedBox(height: Spacing.sm),
             _OpcaoDeModo(
               titulo: 'Estou em movimento',
-              descricao: 'Seu ponto anda no mapa junto com você, e gasta mais bateria.',
+              descricao: 'Seu ponto anda no mapa junto com você, e gasta mais bateria',
               icone: AppIcons.navigationArrow,
               selecionada: !parado,
               onTap: () => setState(() => _modo = ModoRonda.emMovimento),
@@ -153,7 +153,7 @@ class _SheetAbrirLojaState extends State<SheetAbrirLoja> {
               ),
               const SizedBox(height: Spacing.sm),
               Text(
-                'Você pode encerrar antes quando quiser.',
+                'Você pode encerrar antes quando quiser',
                 style: AppText.caption(context).copyWith(color: colors.textSecondary),
               ),
             ],

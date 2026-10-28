@@ -10,19 +10,19 @@ class MerchantHowItWorksPage extends StatelessWidget {
     (
       icone: AppIcons.storefront,
       titulo: 'Abra sua loja',
-      descricao: 'O botão "Abrir loja" coloca você no mapa — fechada, '
+      descricao: 'O botão "Abrir loja" coloca você no mapa · fechada, '
           'você não aparece para ninguém',
     ),
     (
       icone: AppIcons.navigationArrow,
       titulo: 'Fique em ronda',
-      descricao: 'Com a loja aberta, sua posição segue o seu deslocamento — '
+      descricao: 'Com a loja aberta, sua posição segue o seu deslocamento · '
           'quem está por perto vê você se aproximando',
     ),
     (
       icone: AppIcons.chatCircle,
       titulo: 'Acompanhe as avaliações',
-      descricao: 'Notas e comentários ficam no perfil da loja — reputação alta '
+      descricao: 'Notas e comentários ficam no perfil da loja · reputação alta '
           'traz o próximo cliente',
     ),
   ];

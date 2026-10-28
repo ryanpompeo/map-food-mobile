@@ -11,7 +11,7 @@ const Duration intervaloRondaAndroid = Duration(seconds: 5);
 const Duration intervaloRondaParadaAndroid = Duration(minutes: 2);
 
 const ForegroundNotificationConfig notificacaoDaRonda = ForegroundNotificationConfig(
-  notificationTitle: 'MapFood — loja aberta',
+  notificationTitle: 'MapFood · loja aberta',
   notificationText: 'Sua posição está sendo enviada aos clientes',
   notificationChannelName: 'Loja aberta',
   notificationIcon: AndroidResource(name: 'ic_stat_ronda'),
@@ -21,7 +21,7 @@ const ForegroundNotificationConfig notificacaoDaRonda = ForegroundNotificationCo
 );
 
 const ForegroundNotificationConfig notificacaoDaLojaParada = ForegroundNotificationConfig(
-  notificationTitle: 'MapFood — loja aberta',
+  notificationTitle: 'MapFood · loja aberta',
   notificationText: 'Seus clientes veem sua loja neste ponto',
   notificationChannelName: 'Loja aberta',
   notificationIcon: AndroidResource(name: 'ic_stat_ronda'),

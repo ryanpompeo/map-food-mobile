@@ -106,7 +106,7 @@ class _ConsumerRegisterPageState extends State<ConsumerRegisterPage> {
       } on AppException {
         if (!mounted) return;
         setState(() => _errorMessage =
-            'Conta criada — entre com seu e-mail e senha');
+            'Conta criada · entre com seu e-mail e senha');
         unawaited(Navigator.pushReplacementNamed(context, AppRoutes.login,
             arguments: 'CONSUMIDOR'));
         return;

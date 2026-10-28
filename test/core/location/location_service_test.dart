@@ -100,7 +100,7 @@ void main() {
       final c = configuracaoPara(PerfilLocalizacao.ronda, TargetPlatform.android) as AndroidSettings;
       final notificacao = c.foregroundNotificationConfig;
 
-      expect(notificacao?.notificationTitle, 'MapFood — loja aberta');
+      expect(notificacao?.notificationTitle, 'MapFood · loja aberta');
       expect(notificacao?.notificationIcon.name, 'ic_stat_ronda');
       expect(notificacao?.setOngoing, isTrue);
       expect(notificacao?.enableWakeLock, isTrue);

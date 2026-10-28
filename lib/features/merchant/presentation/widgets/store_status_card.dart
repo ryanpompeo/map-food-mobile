@@ -171,7 +171,7 @@ class StoreStatusCard extends StatelessWidget {
         SituacaoLoja.suspensa => (
             AppIcons.lock,
             'Loja suspensa',
-            'A moderação suspendeu sua loja — fale com o suporte pra entender o motivo',
+            'A moderação suspendeu sua loja · fale com o suporte pra entender o motivo',
           ),
         SituacaoLoja.fechada => (
             AppIcons.eyeSlash,
@@ -274,7 +274,7 @@ class _RondaInfo extends StatelessWidget {
         SituacaoLoja.transmitindo => _metricas(),
         SituacaoLoja.semSinal => _linha(context, AppIcons.wifiSlash, _textoSemSinal()),
         SituacaoLoja.iniciando => _linha(context, AppIcons.gpsFix, 'Obtendo sua posição…'),
-        _ => _linha(context, AppIcons.mapPin, 'Posição fixa — os clientes veem o ponto do cadastro'),
+        _ => _linha(context, AppIcons.mapPin, 'Posição fixa · os clientes veem o ponto do cadastro'),
       };
 
   Widget _linha(BuildContext context, IconData icone, String texto) {
@@ -296,9 +296,9 @@ class _RondaInfo extends StatelessWidget {
     final desde = semSinalHa;
     final restante = fechaEm;
     if (desde == null || restante == null) {
-      return 'Sem sinal — os clientes veem o último ponto enviado';
+      return 'Sem sinal · os clientes veem o último ponto enviado';
     }
-    return 'Sem sinal ${_ha(desde)} — se não voltar, a loja fecha sozinha ${_prazo(restante)}';
+    return 'Sem sinal ${_ha(desde)} · se não voltar, a loja fecha sozinha ${_prazo(restante)}';
   }
 
   static String _ha(Duration desde) =>

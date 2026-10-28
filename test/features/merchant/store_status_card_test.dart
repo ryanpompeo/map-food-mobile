@@ -169,7 +169,7 @@ void main() {
       ));
 
       expect(
-        find.text('Sem sinal há 4 min — se não voltar, a loja fecha sozinha em 11 min'),
+        find.text('Sem sinal há 4 min · se não voltar, a loja fecha sozinha em 11 min'),
         findsOneWidget,
       );
       expect(find.text('AO VIVO'), findsNothing);
@@ -188,7 +188,7 @@ void main() {
     testWidgets('sem nenhum envio ainda, não promete prazo', (tester) async {
       await mostrar(tester, card(situacao: SituacaoLoja.semSinal));
 
-      expect(find.text('Sem sinal — os clientes veem o último ponto enviado'), findsOneWidget);
+      expect(find.text('Sem sinal · os clientes veem o último ponto enviado'), findsOneWidget);
     });
   });
 

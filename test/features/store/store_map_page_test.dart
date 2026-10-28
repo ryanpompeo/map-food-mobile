@@ -154,7 +154,7 @@ void main() {
     unawaited(ActiveStoresManager.instance.load());
     await assentar(tester);
 
-    expect(find.text('A loja saiu do mapa — fechou ou ficou sem sinal'), findsOneWidget);
+    expect(find.text('A loja saiu do mapa · fechou ou ficou sem sinal'), findsOneWidget);
     expect(find.byType(StoreMapPage), findsOneWidget);
 
     await fechar(tester);

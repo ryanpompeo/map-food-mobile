@@ -331,7 +331,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
               Text('Endereço', style: AppText.h2(context)),
               const SizedBox(height: 2),
               Text(
-                'Opcional — sua loja entra no mapa pela localização em tempo real, '
+                'Opcional · sua loja entra no mapa pela localização em tempo real, '
                 'o endereço serve só como área de referência',
                 style: AppText.secondary(context).copyWith(height: 1.4),
               ),
@@ -348,7 +348,7 @@ class _StoreEditPageState extends State<StoreEditPage> {
               Text('Categorias', style: AppText.h2(context)),
               const SizedBox(height: 2),
               Text(
-                'Escolha até $_maxCategorias — é por elas que o cliente filtra no mapa',
+                'Escolha até $_maxCategorias · é por elas que o cliente filtra no mapa',
                 style: AppText.secondary(context).copyWith(height: 1.4),
               ),
               const SizedBox(height: Spacing.base),

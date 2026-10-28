@@ -56,7 +56,7 @@ class _Faixa extends StatelessWidget {
                       Text('Confirme seu e-mail', style: AppText.bodyStrong(context)),
                       const SizedBox(height: 2),
                       Text(
-                        'Enquanto não confirmar, você não consegue avaliar nem denunciar lojas.',
+                        'Enquanto não confirmar, você não consegue avaliar nem denunciar lojas',
                         style: AppText.caption(context).copyWith(
                           color: colors.textSecondary,
                           height: 1.3,

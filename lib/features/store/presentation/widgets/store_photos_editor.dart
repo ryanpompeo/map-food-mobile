@@ -89,7 +89,7 @@ class StorePhotosEditor extends StatelessWidget {
             dense: true,
             icon: AppIcons.imagesSquare,
             title: 'Sem fotos na galeria',
-            description: 'Lojas com fotos recebem mais visitas — toque em '
+            description: 'Lojas com fotos recebem mais visitas · toque em '
                 '"Editar" para adicionar',
           )
         else

@@ -41,7 +41,7 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
       context,
       icone: AppIcons.eyeSlash,
       titulo: 'Inativar loja',
-      mensagem: '"${_store.nome}" sai do mapa e das buscas até você reativá-la — '
+      mensagem: '"${_store.nome}" sai do mapa e das buscas até você reativá-la · '
           'nada é apagado: avaliações, fotos e cadastro continuam como estão',
       labelConfirmar: 'Inativar',
     );
@@ -129,7 +129,7 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
           if (_suspensa)
             _Aviso(
               icone: AppIcons.warningCircle,
-              texto: 'Loja suspensa pela moderação — não aparece no mapa e não pode '
+              texto: 'Loja suspensa pela moderação · não aparece no mapa e não pode '
                   'ser aberta nem excluída por aqui, só a equipe do MapFood reverte',
             )
           else if (_inativando)
@@ -138,13 +138,13 @@ class _StoreAdvancedPageState extends State<StoreAdvancedPage> {
             MenuListTile(
               icon: AppIcons.eyeSlash,
               title: 'Inativar loja',
-              subtitle: 'Sai do mapa até você reativar — nada é apagado',
+              subtitle: 'Sai do mapa até você reativar · nada é apagado',
               onTap: _inativar,
             )
           else
             _Aviso(
               icone: AppIcons.eyeSlash,
-              texto: 'Loja inativa: não aparece no mapa nem nas buscas — use "Abrir '
+              texto: 'Loja inativa: não aparece no mapa nem nas buscas · use "Abrir '
                   'loja" no painel, precisamos da sua localização na hora',
             ),
 

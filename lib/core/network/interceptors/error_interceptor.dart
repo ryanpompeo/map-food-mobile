@@ -33,7 +33,7 @@ class ErrorInterceptor extends Interceptor {
           message ?? 'Erro no servidor',
         ),
         429 => AppException(
-          message ?? 'Muitas tentativas. Aguarde um pouco.',
+          message ?? 'Muitas tentativas. Aguarde um pouco',
           statusCode: 429,
           dados: _comoMapa(data),
         ),

@@ -180,7 +180,7 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
       return AnalyticsSectionCard(
         titulo: 'Como te avaliam',
         child: Text(
-          'Nenhuma avaliação ainda — elas aparecem aqui quando o primeiro '
+          'Nenhuma avaliação ainda · elas aparecem aqui quando o primeiro '
           'cliente avaliar sua loja',
           style: AppText.secondary(context).copyWith(height: 1.4),
         ),
@@ -231,7 +231,7 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
             const SizedBox(width: Spacing.md),
             Expanded(
               child: Text(
-                'Não foi possível carregar as denúncias — puxe para atualizar',
+                'Não foi possível carregar as denúncias · puxe para atualizar',
                 style: AppText.secondary(context).copyWith(height: 1.45),
               ),
             ),

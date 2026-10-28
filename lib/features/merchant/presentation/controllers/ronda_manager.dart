@@ -302,11 +302,11 @@ class RondaManager with WidgetsBindingObserver {
   }
 
   static const String _sessaoExpirada =
-      'Sua sessão expirou. Entre de novo para sua loja voltar ao mapa.';
+      'Sua sessão expirou. Entre de novo para sua loja voltar ao mapa';
   static const String _semPermissaoNoBolso =
-      'A permissão de localização foi retirada. Sua posição parou de ser enviada e a loja sai do mapa em poucos minutos.';
+      'A permissão de localização foi retirada. Sua posição parou de ser enviada e a loja sai do mapa em poucos minutos';
   static const String _gpsDesligadoNoBolso =
-      'O GPS foi desligado. Sua posição parou de ser enviada e a loja sai do mapa em poucos minutos.';
+      'O GPS foi desligado. Sua posição parou de ser enviada e a loja sai do mapa em poucos minutos';
 
   void _definirFaseGps(FaseRonda fase) {
     _faseGps = fase;

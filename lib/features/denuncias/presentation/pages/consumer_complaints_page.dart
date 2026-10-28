@@ -229,7 +229,7 @@ class _DenunciaCard extends StatelessWidget {
           ] else if (denuncia.esperandoResposta(agora())) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'O comerciante tem até ${_formatDate(denuncia.prazoResposta!.toIso8601String())} para responder.',
+              'O comerciante tem até ${_formatDate(denuncia.prazoResposta!.toIso8601String())} para responder',
               style: AppText.legenda(context),
             ),
           ],

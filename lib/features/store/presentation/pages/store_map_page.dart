@@ -190,7 +190,7 @@ class _StoreMapPageState extends State<StoreMapPage> {
 
   Widget? _avisoPara(EstadoDaRota? estado) {
     if (estado?.lojaIndisponivel ?? false) {
-      return _buildPillTexto('A loja saiu do mapa — fechou ou ficou sem sinal');
+      return _buildPillTexto('A loja saiu do mapa · fechou ou ficou sem sinal');
     }
     if (_semPermissao) return _buildPillTexto('Ative a localização para traçar a rota até a loja');
     if (estado == null) return null;

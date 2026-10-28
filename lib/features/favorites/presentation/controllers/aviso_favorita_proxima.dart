@@ -104,7 +104,7 @@ class AvisoFavoritaProxima with WidgetsBindingObserver {
     final distancia = metros >= 1000
         ? '${(metros / 1000).toStringAsFixed(1)} km'
         : '$metros m';
-    return '${perto.loja.nome} está a $distancia de você agora.';
+    return '${perto.loja.nome} está a $distancia de você agora';
   }
 
   static String _diaDe(DateTime quando) =>

@@ -68,7 +68,7 @@ Future<bool> confirmarExclusaoLoja(BuildContext context, String nomeLoja) =>
     _confirmarComPalavraChave(
       context,
       titulo: 'Excluir loja',
-      mensagem: 'Ação irreversível — "$nomeLoja" sai do mapa, e as avaliações, '
+      mensagem: 'Ação irreversível · "$nomeLoja" sai do mapa, e as avaliações, '
           'denúncias e acessos dela somem junto',
       labelBotao: 'Excluir loja',
     );
@@ -76,7 +76,7 @@ Future<bool> confirmarExclusaoLoja(BuildContext context, String nomeLoja) =>
 Future<bool> confirmarExclusaoConta(BuildContext context) => _confirmarComPalavraChave(
       context,
       titulo: 'Excluir conta',
-      mensagem: 'Ação irreversível — sua conta, loja(s), avaliações e denúncias '
+      mensagem: 'Ação irreversível · sua conta, loja(s), avaliações e denúncias '
           'serão apagadas de vez',
       labelBotao: 'Excluir conta',
     );

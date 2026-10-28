@@ -6,12 +6,12 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/features/store/presentation/controllers/active_stores_manager.dart';
 
 String textoDeDadosAntigos(Duration? idade) {
-  if (idade == null) return 'Sem conexão — o mapa pode estar desatualizado';
+  if (idade == null) return 'Sem conexão · o mapa pode estar desatualizado';
   final minutos = idade.inMinutes;
-  if (minutos < 1) return 'Sem conexão — mapa de agora há pouco';
-  if (minutos < 60) return 'Sem conexão — mapa de $minutos min atrás';
+  if (minutos < 1) return 'Sem conexão · mapa de agora há pouco';
+  if (minutos < 60) return 'Sem conexão · mapa de $minutos min atrás';
   final horas = idade.inHours;
-  return 'Sem conexão — mapa de $horas h atrás';
+  return 'Sem conexão · mapa de $horas h atrás';
 }
 
 class FaixaSemConexao extends StatelessWidget {

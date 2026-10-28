@@ -97,7 +97,7 @@ class _StoreRegisterPageState extends State<StoreRegisterPage> {
     if (_controller.nasceuSemLocalizacao) {
       AppToast.success(
         context,
-        'Loja cadastrada como Fechada — abra "Em Ronda" pra ativar',
+        'Loja cadastrada como Fechada · abra "Em Ronda" pra ativar',
       );
     }
 
@@ -291,7 +291,7 @@ class _EtapaLocalizacao extends StatelessWidget {
     return _MolduraEtapa(
       formKey: formKey,
       titulo: 'Onde você fica',
-      apoio: 'Opcional — sua loja entra no mapa pela localização em tempo real, '
+      apoio: 'Opcional · sua loja entra no mapa pela localização em tempo real, '
           'preencha só para indicar uma área de referência',
       filhos: [
         StoreAddressFields(
@@ -347,7 +347,7 @@ class _EtapaExposicao extends StatelessWidget {
             const SizedBox(width: Spacing.md),
             Expanded(
               child: Text(
-                'Depois do cadastro, abra a loja na aba "Ronda" — é aí que sua '
+                'Depois do cadastro, abra a loja na aba "Ronda" · é aí que sua '
                 'posição aparece no mapa e acompanha você enquanto estiver aberta',
                 style: AppText.secondary(context).copyWith(height: 1.45),
               ),

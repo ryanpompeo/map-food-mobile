@@ -238,7 +238,7 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Nossa equipe analisa seu relato — obrigado por manter a plataforma segura',
+                  'Nossa equipe analisa seu relato · obrigado por manter a plataforma segura',
                   style: AppText.secondary(context),
                 ),
                 const SizedBox(height: Spacing.lg),
@@ -289,7 +289,7 @@ class _ReportStoreDialogState extends State<_ReportStoreDialog> {
                 if (_ehSanitario) ...[
                   Text(
                     'Para denúncia de risco sanitário, a plataforma precisa de prova: '
-                    'nós não fazemos perícia do alimento.',
+                    'nós não fazemos perícia do alimento',
                     style: AppText.caption(context),
                   ),
                   const SizedBox(height: Spacing.base),

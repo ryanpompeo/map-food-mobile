@@ -7,19 +7,19 @@ void main() {
   group('texto da faixa', () {
     test('menos de um minuto nao vira "0 min"', () {
       expect(textoDeDadosAntigos(const Duration(seconds: 40)),
-          'Sem conexão — mapa de agora há pouco');
+          'Sem conexão · mapa de agora há pouco');
     });
 
     test('minutos e horas sao escritos por extenso', () {
       expect(textoDeDadosAntigos(const Duration(minutes: 7)),
-          'Sem conexão — mapa de 7 min atrás');
+          'Sem conexão · mapa de 7 min atrás');
       expect(textoDeDadosAntigos(const Duration(hours: 3)),
-          'Sem conexão — mapa de 3 h atrás');
+          'Sem conexão · mapa de 3 h atrás');
     });
 
     test('sem idade conhecida, nao inventa numero', () {
       expect(textoDeDadosAntigos(null),
-          'Sem conexão — o mapa pode estar desatualizado');
+          'Sem conexão · o mapa pode estar desatualizado');
     });
   });
 
@@ -29,12 +29,12 @@ void main() {
         MaterialApp(
           theme: AppTheme.light,
           home: const Scaffold(
-            body: FaixaDeDadosAntigos(texto: 'Sem conexão — mapa de 5 min atrás'),
+            body: FaixaDeDadosAntigos(texto: 'Sem conexão · mapa de 5 min atrás'),
           ),
         ),
       );
 
-      expect(find.text('Sem conexão — mapa de 5 min atrás'), findsOneWidget);
+      expect(find.text('Sem conexão · mapa de 5 min atrás'), findsOneWidget);
 
       final semantica = tester.widget<Semantics>(
         find

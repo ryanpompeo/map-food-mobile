@@ -329,14 +329,14 @@ class _CardDenunciaRecebidaState extends State<CardDenunciaRecebida> {
 
     if (!denuncia.abreDireitoDeResposta) {
       return Text(
-        'Este motivo não abre direito de resposta: a moderação analisa e decide.',
+        'Este motivo não abre direito de resposta: a moderação analisa e decide',
         style: AppText.legenda(context),
       );
     }
 
     if (!denuncia.prazoAberto(widget.agora())) {
       return Text(
-        'O prazo de resposta terminou em ${textoDoPrazo(denuncia.prazoResposta!)}.',
+        'O prazo de resposta terminou em ${textoDoPrazo(denuncia.prazoResposta!)}',
         style: AppText.legenda(context).copyWith(color: MfColor.danger),
       );
     }

@@ -173,8 +173,8 @@ class _StoreOperationSectionState extends State<StoreOperationSection> {
 
   static String _legendaDoMapa(SituacaoLoja situacao) => switch (situacao) {
         SituacaoLoja.suspensa =>
-          'Último ponto registrado — enquanto a loja estiver suspensa, ela não aparece no mapa',
-        SituacaoLoja.fechada => 'Último ponto registrado — abra a loja para voltar ao mapa',
+          'Último ponto registrado · enquanto a loja estiver suspensa, ela não aparece no mapa',
+        SituacaoLoja.fechada => 'Último ponto registrado · abra a loja para voltar ao mapa',
         _ => 'É este o ponto que os clientes veem no mapa',
       };
 }

@@ -129,10 +129,10 @@ class AgendaDeFechamento {
   }
 
   static String _motivoDoFechamento(String nome, DateTime? prazo) {
-    if (prazo == null) return '$nome fechou no horário que você marcou.';
+    if (prazo == null) return '$nome fechou no horário que você marcou';
     final hora = prazo.hour.toString().padLeft(2, '0');
     final minuto = prazo.minute.toString().padLeft(2, '0');
-    return '$nome fechou às $hora:$minuto, como você tinha marcado.';
+    return '$nome fechou às $hora:$minuto, como você tinha marcado';
   }
 
   ValueNotifier<DateTime?> _notificadorDe(int lojaId) =>

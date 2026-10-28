@@ -160,7 +160,7 @@ class _ContatoPageState extends State<ContatoPage> {
                 ),
                 const SizedBox(height: Spacing.sm),
                 Text(
-                  'Escreva para a equipe do MapFood — respondemos no e-mail que '
+                  'Escreva para a equipe do MapFood · respondemos no e-mail que '
                   'você informar aqui',
                   style: AppText.body(context).copyWith(
                     color: colors.textSecondary,
