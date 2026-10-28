@@ -6,8 +6,6 @@ import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
-import 'package:map_food/core/ui/theme/map_food_colors.dart';
-import 'package:map_food/core/ui/utils/text_scale.dart';
 import 'package:map_food/core/ui/utils/ui_utils.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/app_card.dart';
@@ -15,9 +13,10 @@ import 'package:map_food/core/ui/widgets/app_form_field.dart';
 import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/features/auth/presentation/widgets/aviso_email_nao_verificado.dart';
 import 'package:map_food/core/ui/widgets/login_wall_bottom_sheet.dart';
-import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
+import 'package:map_food/features/avaliacoes/presentation/controllers/acoes_da_avaliacao.dart';
+import 'package:map_food/features/avaliacoes/presentation/widgets/seletor_de_estrelas.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/review_card.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/section_header.dart';
 
@@ -145,6 +144,20 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
     }
   }
 
+  Future<void> _editar(AvaliacaoModel avaliacao) async {
+    final mudou = await editarAvaliacaoComUi(context, avaliacao, servico: _avaliacaoService);
+    if (!mudou || !mounted) return;
+    widget.onReviewSubmitted();
+    await _carregarHistorico();
+  }
+
+  Future<void> _excluir(AvaliacaoModel avaliacao) async {
+    final mudou = await excluirAvaliacaoComUi(context, avaliacao, servico: _avaliacaoService);
+    if (!mudou || !mounted) return;
+    widget.onReviewSubmitted();
+    await _carregarHistorico();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -187,7 +200,12 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
                     children: [
                       const SizedBox(height: Spacing.base),
                       for (final review in _minhasAvaliacoes)
-                        ReviewCard(review: review, compact: true),
+                        ReviewCard(
+                          review: review,
+                          compact: true,
+                          onEditar: () => _editar(review),
+                          onExcluir: () => _excluir(review),
+                        ),
                     ],
                   ),
           ),
@@ -214,7 +232,7 @@ class _ConsumerReviewSectionState extends State<ConsumerReviewSection> {
             style: AppText.secondary(context),
           ),
           const SizedBox(height: Spacing.base),
-          _StarPicker(
+          SeletorDeEstrelas(
             rating: _rating,
             onChanged: (nota) {
               setState(() => _rating = nota);
@@ -284,49 +302,3 @@ class _HistoricoCarregando extends StatelessWidget {
   }
 }
 
-class _StarPicker extends StatelessWidget {
-  final int rating;
-  final ValueChanged<int> onChanged;
-
-  const _StarPicker({required this.rating, required this.onChanged});
-
-  static const _rotulos = ['Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var i = 1; i <= 5; i++)
-              SemanticTapArea(
-                label: '$i ${i == 1 ? 'estrela' : 'estrelas'}',
-                selected: rating == i,
-                onTap: () => onChanged(i),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Spacing.xs, vertical: Spacing.sm),
-                  child: Icon(
-                    i <= rating ? AppIcons.starFill : AppIcons.star,
-                    size: escalaIcone(context, 36.0),
-                    color: i <= rating
-                        ? MfColor.rating
-                        : context.mapColors.textTertiary,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        SizedBox(
-          height: escalaComTeto(context, 18.0),
-          child: rating == 0
-              ? null
-              : Text(
-                  _rotulos[rating - 1],
-                  style: AppText.caption(context).copyWith(fontWeight: FontWeight.w600),
-                ),
-        ),
-      ],
-    );
-  }
-}

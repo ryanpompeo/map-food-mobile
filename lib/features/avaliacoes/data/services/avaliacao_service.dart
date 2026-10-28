@@ -25,6 +25,24 @@ class AvaliacaoService {
         .toList();
   }
 
+  Future<void> editarAvaliacao({
+    required int id,
+    required int nota,
+    String? comentario,
+  }) async {
+    final texto = comentario?.trim();
+    await _client.put<dynamic>(
+      '${ApiConstants.avaliacoes}/$id',
+      data: <String, dynamic>{
+        'nota': nota,
+        'comentario': (texto == null || texto.isEmpty) ? null : texto,
+      },
+    );
+  }
+
+  Future<void> excluirAvaliacao(int id) =>
+      _client.delete('${ApiConstants.avaliacoes}/$id');
+
   Future<AvaliacaoModel> enviarAvaliacao({
     required int lojaId,
     required int nota,

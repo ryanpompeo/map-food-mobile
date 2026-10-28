@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
+import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/app_card.dart';
@@ -13,7 +14,19 @@ class ReviewCard extends StatelessWidget {
 
   final bool compact;
 
-  const ReviewCard({super.key, required this.review, this.compact = false});
+  final VoidCallback? onEditar;
+
+  final VoidCallback? onExcluir;
+
+  const ReviewCard({
+    super.key,
+    required this.review,
+    this.compact = false,
+    this.onEditar,
+    this.onExcluir,
+  });
+
+  bool get _temAcoes => onEditar != null || onExcluir != null;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +48,8 @@ class ReviewCard extends StatelessWidget {
                   RatingStars(nota: review.nota),
                   const Spacer(),
                   Text(data, style: AppText.caption(context)),
+                  if (_temAcoes)
+                    MenuDaAvaliacao(onEditar: onEditar, onExcluir: onExcluir),
                 ],
               )
             else ...[
@@ -61,6 +76,8 @@ class ReviewCard extends StatelessWidget {
                   ),
                   const SizedBox(width: Spacing.sm),
                   Text(data, style: AppText.caption(context)),
+                  if (_temAcoes)
+                    MenuDaAvaliacao(onEditar: onEditar, onExcluir: onExcluir),
                 ],
               ),
               const SizedBox(height: Spacing.sm),
@@ -79,6 +96,52 @@ class ReviewCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class MenuDaAvaliacao extends StatelessWidget {
+  final VoidCallback? onEditar;
+  final VoidCallback? onExcluir;
+
+  const MenuDaAvaliacao({super.key, this.onEditar, this.onExcluir});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.mapColors;
+
+    return PopupMenuButton<String>(
+      tooltip: 'Opções da sua avaliação',
+      icon: Icon(AppIcons.dotsThree, size: AppIconSize.md, color: colors.textSecondary),
+      padding: EdgeInsets.zero,
+      onSelected: (escolha) {
+        if (escolha == 'editar') onEditar?.call();
+        if (escolha == 'excluir') onExcluir?.call();
+      },
+      itemBuilder: (context) => [
+        if (onEditar != null)
+          const PopupMenuItem<String>(
+            value: 'editar',
+            child: Row(
+              children: [
+                Icon(AppIcons.pencilSimple, size: AppIconSize.sm),
+                SizedBox(width: Spacing.sm),
+                Text('Editar'),
+              ],
+            ),
+          ),
+        if (onExcluir != null)
+          PopupMenuItem<String>(
+            value: 'excluir',
+            child: Row(
+              children: [
+                const Icon(AppIcons.trash, size: AppIconSize.sm, color: MfColor.danger),
+                const SizedBox(width: Spacing.sm),
+                Text('Excluir', style: TextStyle(color: MfColor.danger)),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

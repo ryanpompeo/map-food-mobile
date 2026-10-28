@@ -12,6 +12,8 @@ import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
+import 'package:map_food/features/avaliacoes/presentation/controllers/acoes_da_avaliacao.dart';
+import 'package:map_food/features/store/presentation/widgets/store_detail/review_card.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
 import 'package:map_food/features/store/presentation/pages/more_info_store.dart';
 
@@ -136,6 +138,16 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
     );
   }
 
+  Future<void> _editar(AvaliacaoModel avaliacao) async {
+    final mudou = await editarAvaliacaoComUi(context, avaliacao, servico: _avaliacaoService);
+    if (mudou && mounted) await _carregarAvaliacoes(mostrarSpinner: false);
+  }
+
+  Future<void> _excluir(AvaliacaoModel avaliacao) async {
+    final mudou = await excluirAvaliacaoComUi(context, avaliacao, servico: _avaliacaoService);
+    if (mudou && mounted) await _carregarAvaliacoes(mostrarSpinner: false);
+  }
+
   Widget _buildItem(AvaliacaoModel avaliacao) {
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -219,6 +231,10 @@ class _ConsumerReviewPageState extends State<ConsumerReviewPage> {
                   ],
                 ],
               ),
+            ),
+            MenuDaAvaliacao(
+              onEditar: () => _editar(avaliacao),
+              onExcluir: () => _excluir(avaliacao),
             ),
           ],
         ),
