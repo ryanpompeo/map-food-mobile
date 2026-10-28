@@ -1939,6 +1939,20 @@ Mudar uma delas muda todas as telas que a usam.
   > "A rota devolve o total e a série por dia; o modelo aceita resposta sem a série (vira lista vazia) porque o painel precisa mostrar o número grande mesmo que o gráfico fique sem pontos."
   - 💡 Explicação Leiga: O modelo guarda as visitas por dia e o total, e não quebra se vier só o total.
 
+### 📂 ARQUIVO: lib/features/analytics/data/relatorio_csv.dart
+
+- ⚙️ Função: Monta o relatório do comerciante em CSV, para ele compartilhar.
+- 💬 Comentários Removidos:
+
+  > "A Web baixa CSV; no celular baixar arquivo quase não serve, então o equivalente é compartilhar — WhatsApp, e-mail, Drive. O conteúdo é o mesmo do painel: resumo, visitas por dia, avaliações por mês e denúncias por motivo."
+  - 💡 Explicação Leiga: O relatório é um arquivo que o comerciante manda para onde quiser.
+
+  > "Separador ponto e vírgula e BOM na frente: é o que o Excel em português abre sem pedir para separar colunas. Vírgula abriria tudo numa coluna só."
+  - 💡 Explicação Leiga: O arquivo abre direto no Excel em português.
+
+  > "O que não carregou sai escrito 'não carregou', nunca zero: relatório que transforma falha de rede em zero visita mente para quem decide."
+  - 💡 Explicação Leiga: Se algum número não carregou, o relatório diz isso em vez de escrever zero.
+
 ### 📂 ARQUIVO: lib/features/analytics/data/services/acesso_service.dart
 
 - ⚙️ Função: Busca no servidor as visitas que a página da loja recebeu num período.
@@ -2027,6 +2041,12 @@ Mudar uma delas muda todas as telas que a usam.
   > "Entrou o período de 15 dias, que a Web já tinha."
   - 💡 Explicação Leiga: Agora existe também o período de 15 dias.
 
+  > "O período deixou de ser só um atalho de dias: quando o comerciante escolhe um intervalo no calendário, o início e o fim passam a mandar, e todo o resto — visitas, comparação com o período anterior, série do gráfico — passou a ler esses dois getters em vez do número de dias do atalho."
+  - 💡 Explicação Leiga: Agora dá para escolher um intervalo de datas qualquer, e todos os números seguem esse intervalo.
+
+  > "A série de 12 meses não filtra pelo período escolhido de propósito: ela responde 'como venho sendo avaliado ao longo do ano', que é outra pergunta. Mês sem avaliação fica com média nula, não zero — média zero seria dizer que o mês foi péssimo."
+  - 💡 Explicação Leiga: O gráfico de 12 meses mostra o ano inteiro, e mês sem avaliação fica vazio, não zerado.
+
 ### 📂 ARQUIVO: lib/features/analytics/presentation/pages/merchant_analytics_page.dart
 
 - ⚙️ Função: Desenha a tela com os gráficos e números da loja do comerciante.
@@ -2082,6 +2102,12 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "O cartão de visitas é o primeiro da tela, antes de avaliações e denúncias: é o número que o comerciante abre o painel para ver, e é o que o painel da Web mostra em destaque."
   - 💡 Explicação Leiga: As visitas aparecem no topo da tela de estatísticas.
+
+  > "O cartão de 12 meses mostra a quantidade de avaliações por mês no gráfico e a média do ano em uma linha de texto. O gráfico é de linha simples e não desenha buraco: plotar a média com mês vazio em zero diria que naquele mês a loja foi mal, quando ninguém avaliou."
+  - 💡 Explicação Leiga: O gráfico do ano mostra quantas avaliações vieram por mês, e a média aparece escrita acima.
+
+  > "O envio do relatório entra por parâmetro: compartilhar abre a folha do sistema, que não existe em teste. A tela monta o CSV e entrega — quem envia é injetável."
+  - 💡 Explicação Leiga: A tela monta o relatório e entrega para o celular compartilhar.
 
 ### 📂 ARQUIVO: lib/features/analytics/presentation/widgets/analytics_scope_selector.dart
 
