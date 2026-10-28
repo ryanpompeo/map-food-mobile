@@ -9,6 +9,7 @@ import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/cofre_de_teste.dart';
 
 class _AdapterFalso implements HttpClientAdapter {
   _AdapterFalso({required this.statusCode, required this.body});
@@ -42,6 +43,7 @@ AuthService _serviceQueResponde({int statusCode = 200, required String body}) {
 void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    usarCofreEmMemoria();
     SharedPreferences.setMockInitialValues({});
   });
 

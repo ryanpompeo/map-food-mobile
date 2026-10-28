@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../support/aguardar.dart';
 import '../../support/api_falsa.dart';
 import '../../support/fonte_posicao_falsa.dart';
+import '../../support/cofre_de_teste.dart';
 
 const _comerciante = AuthResponse(
   token: 'token',
@@ -79,6 +80,7 @@ void main() {
 
   setUp(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+    usarCofreEmMemoria();
     SharedPreferences.setMockInitialValues({});
     await SessionStore.instance.signIn(_comerciante);
     fonte = FontePosicaoFalsa();

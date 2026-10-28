@@ -9,6 +9,7 @@ import 'package:map_food/features/auth/data/models/auth_response.dart';
 import 'package:map_food/features/auth/data/services/verificacao_email_service.dart';
 import 'package:map_food/features/auth/presentation/pages/verificar_email_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/cofre_de_teste.dart';
 
 class _ServicoFalso extends VerificacaoEmailService {
   _ServicoFalso({this.erroAoConfirmar, this.erroAoEnviar, this.situacaoDoServidor})
@@ -88,6 +89,7 @@ void main() {
 
   setUp(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+    usarCofreEmMemoria();
     SharedPreferences.setMockInitialValues({});
     servico = _ServicoFalso();
     await SessionStore.instance.signIn(naoVerificado);

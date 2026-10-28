@@ -7,6 +7,7 @@ import 'package:map_food/features/auth/data/models/auth_response.dart';
 import 'package:map_food/features/auth/presentation/widgets/aviso_email_nao_verificado.dart';
 import 'package:map_food/features/auth/presentation/widgets/faixa_email_nao_verificado.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/cofre_de_teste.dart';
 
 const _pendente = AuthResponse(
   token: 't',
@@ -28,6 +29,7 @@ const _verificado = AuthResponse(
 void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    usarCofreEmMemoria();
     SharedPreferences.setMockInitialValues({});
   });
 

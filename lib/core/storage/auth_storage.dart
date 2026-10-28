@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:map_food/core/storage/cofre_seguro.dart';
 import 'package:map_food/features/auth/data/models/auth_response.dart';
 
 class AuthStorage {
@@ -13,7 +14,8 @@ class AuthStorage {
 
   static Future<void> saveSession(AuthResponse response) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyToken, response.token);
+    await cofreDoApp.gravar(_keyToken, response.token);
+    await prefs.remove(_keyToken);
     await prefs.setInt(_keyUserId, response.id);
     await prefs.setString(_keyUserNome, response.nome);
     await prefs.setString(_keyUserTipo, response.tipo);
@@ -46,14 +48,24 @@ class AuthStorage {
   }
 
   static Future<String?> getToken() async {
+    final doCofre = await cofreDoApp.ler(_keyToken);
+    if (doCofre != null) return doCofre;
+    return _mudarTokenParaOCofre();
+  }
+
+  static Future<String?> _mudarTokenParaOCofre() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyToken);
+    final antigo = prefs.getString(_keyToken);
+    if (antigo == null) return null;
+    await cofreDoApp.gravar(_keyToken, antigo);
+    await prefs.remove(_keyToken);
+    return antigo;
   }
 
   static Future<AuthResponse?> getSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(_keyToken);
+    final token = await getToken();
     if (token == null) return null;
+    final prefs = await SharedPreferences.getInstance();
     return AuthResponse(
       token: token,
       id: prefs.getInt(_keyUserId) ?? 0,
@@ -66,6 +78,7 @@ class AuthStorage {
 
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
+    await cofreDoApp.apagar(_keyToken);
     await prefs.remove(_keyToken);
     await prefs.remove(_keyUserId);
     await prefs.remove(_keyUserNome);

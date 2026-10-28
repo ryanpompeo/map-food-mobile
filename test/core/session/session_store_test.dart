@@ -3,6 +3,7 @@ import 'package:map_food/core/session/session_store.dart';
 import 'package:map_food/core/storage/auth_storage.dart';
 import 'package:map_food/features/auth/data/models/auth_response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/cofre_de_teste.dart';
 
 const _sessaoConsumidor = AuthResponse(
   token: 'jwt-abc',
@@ -15,6 +16,7 @@ const _sessaoConsumidor = AuthResponse(
 void main() {
   setUp(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+    usarCofreEmMemoria();
     SharedPreferences.setMockInitialValues({});
     await SessionStore.instance.signOut();
   });
