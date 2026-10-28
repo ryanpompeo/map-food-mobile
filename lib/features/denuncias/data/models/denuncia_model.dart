@@ -6,6 +6,10 @@ class DenunciaModel {
   final String? dataDenuncia;
   final String lojaNome;
 
+  final String? respostaComerciante;
+  final DateTime? dataResposta;
+  final DateTime? prazoResposta;
+
   const DenunciaModel({
     required this.id,
     required this.motivo,
@@ -13,7 +17,15 @@ class DenunciaModel {
     required this.statusDenuncia,
     this.dataDenuncia,
     required this.lojaNome,
+    this.respostaComerciante,
+    this.dataResposta,
+    this.prazoResposta,
   });
+
+  bool get temResposta => (respostaComerciante?.trim().isNotEmpty) ?? false;
+
+  bool esperandoResposta(DateTime agora) =>
+      !temResposta && prazoResposta != null && prazoResposta!.isAfter(agora);
 
   factory DenunciaModel.fromJson(Map<String, dynamic> json) => DenunciaModel(
         id: (json['id'] as num).toInt(),
@@ -22,11 +34,15 @@ class DenunciaModel {
         statusDenuncia: json['statusDenuncia']?.toString() ?? 'PENDENTE',
         dataDenuncia: json['dataDenuncia']?.toString(),
         lojaNome: (json['loja'] as Map<String, dynamic>?)?['nome']?.toString() ?? 'Comércio removido',
+        respostaComerciante: json['respostaComerciante'] as String?,
+        dataResposta: DateTime.tryParse(json['dataResposta']?.toString() ?? ''),
+        prazoResposta: DateTime.tryParse(json['prazoResposta']?.toString() ?? ''),
       );
 }
 
 class MotivosDenuncia {
   static const Map<String, String> uiParaApi = {
+    'Risco sanitário': 'RISCO_SANITARIO',
     'Conteúdo inapropriado': 'CONTEUDO_INAPROPRIADO',
     'Fraude ou golpe': 'FRAUDE_OU_GOLPE',
     'Informações falsas': 'INFORMACOES_FALSAS',
@@ -44,5 +60,9 @@ class MotivosDenuncia {
     return 'Outro';
   }
 
-  static List<String> get uiLabels => uiParaApi.keys.toList();
+  static const Set<String> motivosQueOAppAindaNaoCria = {'Risco sanitário'};
+
+  static List<String> get uiLabels => uiParaApi.keys
+      .where((rotulo) => !motivosQueOAppAindaNaoCria.contains(rotulo))
+      .toList();
 }

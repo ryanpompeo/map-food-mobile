@@ -10,14 +10,19 @@ import 'package:map_food/features/denuncias/data/models/denuncia_model.dart';
 import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
 
 class ConsumerComplaintsPage extends StatefulWidget {
-  const ConsumerComplaintsPage({super.key});
+  final DenunciaService? servico;
+
+  final DateTime Function()? agora;
+
+  const ConsumerComplaintsPage({super.key, this.servico, this.agora});
 
   @override
   State<ConsumerComplaintsPage> createState() => _ConsumerComplaintsPageState();
 }
 
 class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
-  final _denunciaService = DenunciaService();
+  late final DenunciaService _denunciaService = widget.servico ?? DenunciaService();
+  late final DateTime Function() _agora = widget.agora ?? DateTime.now;
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -103,7 +108,8 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
                           padding: const EdgeInsets.all(AppSpacing.lg),
                           itemCount: _denuncias.length,
                           separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-                          itemBuilder: (context, index) => _DenunciaCard(denuncia: _denuncias[index]),
+                          itemBuilder: (context, index) =>
+                              _DenunciaCard(denuncia: _denuncias[index], agora: _agora),
                         ),
                       ),
       ),
@@ -113,15 +119,8 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
 
 class _DenunciaCard extends StatelessWidget {
   final DenunciaModel denuncia;
-  const _DenunciaCard({required this.denuncia});
-
-  static const _motivoLabels = {
-    'CONTEUDO_INAPROPRIADO': 'Conteúdo inapropriado',
-    'FRAUDE_OU_GOLPE': 'Fraude ou golpe',
-    'INFORMACOES_FALSAS': 'Informações falsas',
-    'SPAM': 'Spam',
-    'OUTRO': 'Outro',
-  };
+  final DateTime Function() agora;
+  const _DenunciaCard({required this.denuncia, required this.agora});
 
   ({String label, Color color}) _statusInfo(String status) {
     switch (status) {
@@ -175,7 +174,7 @@ class _DenunciaCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _motivoLabels[denuncia.motivo] ?? denuncia.motivo,
+                      MotivosDenuncia.fromApi(denuncia.motivo),
                       style: AppText.legenda(context),
                     ),
                   ],
@@ -206,6 +205,34 @@ class _DenunciaCard extends StatelessWidget {
             _formatDate(denuncia.dataDenuncia),
             style: AppText.legenda(context),
           ),
+          if (denuncia.temResposta) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: context.mapColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Resposta do comerciante',
+                    style: AppText.legenda(context).copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(denuncia.respostaComerciante!, style: AppText.corpo(context)),
+                ],
+              ),
+            ),
+          ] else if (denuncia.esperandoResposta(agora())) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'O comerciante tem até ${_formatDate(denuncia.prazoResposta!.toIso8601String())} para responder.',
+              style: AppText.legenda(context),
+            ),
+          ],
         ],
       ),
     );
