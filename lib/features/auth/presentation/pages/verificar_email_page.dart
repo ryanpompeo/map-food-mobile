@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/session/session_store.dart';
+import 'package:map_food/features/auth/presentation/widgets/aviso_email_nao_verificado.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -218,7 +219,9 @@ class _VerificarEmailPageState extends State<VerificarEmailPage> {
                     ),
                     const SizedBox(height: Spacing.sm),
                     Text(
-                      'Sem confirmar, você pode usar o app normalmente · só não dá para avaliar nem denunciar lojas',
+                      motivoCurtoParaConfirmarEmail(
+                        comerciante: SessionStore.instance.isComerciante,
+                      ),
                       style: AppText.caption(
                         context,
                       ).copyWith(color: colors.textSecondary, height: 1.4),

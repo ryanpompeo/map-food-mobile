@@ -16,16 +16,23 @@ class FaixaEmailNaoVerificado extends StatelessWidget {
       valueListenable: SessionStore.instance,
       builder: (context, sessao, filho) {
         if (!SessionStore.instance.precisaVerificarEmail) return const SizedBox.shrink();
-        return _Faixa(onConfirmar: () => abrirConfirmacaoDeEmail(context));
+        return _Faixa(
+          motivo: motivoParaConfirmarEmail(
+            comerciante: SessionStore.instance.isComerciante,
+          ),
+          onConfirmar: () => abrirConfirmacaoDeEmail(context),
+        );
       },
     );
   }
 }
 
 class _Faixa extends StatelessWidget {
+  final String motivo;
+
   final VoidCallback onConfirmar;
 
-  const _Faixa({required this.onConfirmar});
+  const _Faixa({required this.motivo, required this.onConfirmar});
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +63,7 @@ class _Faixa extends StatelessWidget {
                       Text('Confirme seu e-mail', style: AppText.bodyStrong(context)),
                       const SizedBox(height: 2),
                       Text(
-                        'Enquanto não confirmar, você não consegue avaliar nem denunciar lojas',
+                        motivo,
                         style: AppText.caption(context).copyWith(
                           color: colors.textSecondary,
                           height: 1.3,

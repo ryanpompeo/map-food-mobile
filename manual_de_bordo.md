@@ -2291,6 +2291,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "'Confirmar depois' existe por decisão de produto: a exigência da banca é que conta não verificada não possa avaliar nem denunciar, não que não possa usar o app. Quem só quer achar um food truck não esbarra numa parede no primeiro uso, e o bloqueio de verdade está no servidor."
   - 💡 Explicação Leiga: Dá para pular a confirmação e usar o app normalmente, menos para avaliar e denunciar.
 
+  > "A frase do rodapé ('confirmar depois') segue a mesma regra da faixa: ao comerciante ela não promete destravar função nenhuma, porque não destrava."
+  - 💡 Explicação Leiga: O texto embaixo do botão também muda conforme o tipo de conta.
+
 ### 📂 ARQUIVO: lib/features/auth/presentation/widgets/account_type_card.dart
 
 - ⚙️ Função: Desenha os dois cartões de escolha do tipo de conta.
@@ -2354,6 +2357,12 @@ Mudar uma delas muda todas as telas que a usam.
   > "Um 403 de outro motivo continua caindo no erro normal: nem toda recusa é falta de confirmação, e oferecer 'confirmar e-mail' para quem foi barrado por outra razão seria mandar a pessoa para o lugar errado."
   - 💡 Explicação Leiga: Outros tipos de acesso negado continuam mostrando o erro de sempre.
 
+  > "O motivo para confirmar o e-mail mudou com o tipo de conta porque a frase única era falsa para o comerciante: o servidor só aceita avaliação de consumidor, e o app não oferece denúncia nem voto a comerciante. Dizer 'você não consegue avaliar nem denunciar' a quem nunca pôde fazer isso transforma um aviso em ruído."
+  - 💡 Explicação Leiga: A frase do aviso de e-mail é diferente para consumidor e comerciante.
+
+  > "Ao comerciante a frase diz o que é verdade hoje: confirmar garante que o e-mail é dele, que é o canal dos avisos de denúncia e dos assuntos da conta. Nenhuma função do app fica presa nisso para ele."
+  - 💡 Explicação Leiga: Para o comerciante, confirmar o e-mail serve para segurança e avisos, não para liberar funções.
+
 ### 📂 ARQUIVO: lib/features/auth/presentation/widgets/faixa_email_nao_verificado.dart
 
 - ⚙️ Função: Faixa no perfil lembrando de confirmar o e-mail, enquanto estiver pendente.
@@ -2364,6 +2373,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Fica no esqueleto de perfil compartilhado, então vale para o comerciante também — ele é barrado do mesmo jeito ao denunciar uma loja sem ter confirmado o e-mail. Visitante sem conta nunca vê a faixa."
   - 💡 Explicação Leiga: A faixa aparece no perfil do cliente e do comerciante, e nunca para quem não tem conta.
+
+  > "A faixa aparece nos dois perfis, então ela pergunta o tipo de conta à sessão e pede a frase correspondente, em vez de carregar o texto do consumidor para todo mundo."
+  - 💡 Explicação Leiga: A faixa mostra a frase certa para cada tipo de conta.
 
 ### 📂 ARQUIVO: lib/features/auth/presentation/widgets/terms_checkbox.dart
 
