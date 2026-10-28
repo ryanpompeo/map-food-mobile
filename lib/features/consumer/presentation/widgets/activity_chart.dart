@@ -12,7 +12,13 @@ class ActivityPoint {
 class ActivityChart extends StatelessWidget {
   final List<ActivityPoint> points;
 
-  const ActivityChart({super.key, required this.points});
+  final String mensagemVazia;
+
+  const ActivityChart({
+    super.key,
+    required this.points,
+    this.mensagemVazia = 'Nenhuma avaliação neste período',
+  });
 
   static const double _height = 132.0;
 
@@ -28,7 +34,7 @@ class ActivityChart extends StatelessWidget {
           child: vazio
               ? Center(
                   child: Text(
-                    'Nenhuma avaliação neste período',
+                    mensagemVazia,
                     style: AppText.legenda(context),
                   ),
                 )

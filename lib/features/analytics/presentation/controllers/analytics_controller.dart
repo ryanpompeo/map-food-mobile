@@ -3,12 +3,16 @@ import 'package:map_food/core/errors/exception.dart';
 import 'package:map_food/core/ui/utils/async_load_mixin.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
 import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
+import 'package:map_food/features/analytics/data/models/acesso_metricas.dart';
+import 'package:map_food/features/analytics/data/services/acesso_service.dart';
+import 'package:map_food/features/consumer/presentation/widgets/activity_chart.dart';
 import 'package:map_food/features/denuncias/data/models/denuncia_recebida_model.dart';
 import 'package:map_food/features/denuncias/data/services/denuncia_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 
 enum AnalyticsRange {
   seteDias('7 dias', 7),
+  quinzeDias('15 dias', 15),
   trintaDias('30 dias', 30),
   noventaDias('90 dias', 90);
 
@@ -76,6 +80,53 @@ class DenunciaResumo {
 }
 
 @immutable
+class AcessoResumo {
+  final int total;
+
+  final List<AcessoDiario> porDia;
+
+  final bool indisponivel;
+
+  const AcessoResumo({
+    required this.total,
+    required this.porDia,
+    this.indisponivel = false,
+  });
+
+  static const vazio = AcessoResumo(total: 0, porDia: []);
+
+  static const naoCarregou = AcessoResumo(total: 0, porDia: [], indisponivel: true);
+}
+
+List<ActivityPoint> pontosDeAcesso(AcessoResumo acessos, AnalyticsRange range) {
+  if (acessos.porDia.isEmpty) return const [];
+
+  final ordenados = [...acessos.porDia]..sort((a, b) => a.data.compareTo(b.data));
+  if (range == AnalyticsRange.seteDias) {
+    return [
+      for (final dia in ordenados)
+        ActivityPoint(label: _rotuloCurto(dia.data), value: dia.quantidade),
+    ];
+  }
+
+  const blocos = 6;
+  final tamanho = (ordenados.length / blocos).ceil();
+  final pontos = <ActivityPoint>[];
+  for (var inicio = 0; inicio < ordenados.length; inicio += tamanho) {
+    final fim = (inicio + tamanho) > ordenados.length ? ordenados.length : inicio + tamanho;
+    final fatia = ordenados.sublist(inicio, fim);
+    pontos.add(ActivityPoint(
+      label: _rotuloCurto(fatia.first.data),
+      value: fatia.fold(0, (soma, dia) => soma + dia.quantidade),
+    ));
+  }
+  return pontos;
+}
+
+String _rotuloCurto(DateTime data) =>
+    '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}';
+
+@immutable
 class AnalyticsSnapshot {
   final List<RatingBucket> distribuicaoNotas;
 
@@ -84,11 +135,14 @@ class AnalyticsSnapshot {
 
   final DenunciaResumo denuncias;
 
+  final AcessoResumo acessos;
+
   const AnalyticsSnapshot({
     required this.distribuicaoNotas,
     required this.mediaAvaliacao,
     required this.totalAvaliacoes,
     required this.denuncias,
+    this.acessos = AcessoResumo.vazio,
   });
 
   bool get semAvaliacoes => totalAvaliacoes == 0;
@@ -100,14 +154,17 @@ class AnalyticsController extends ChangeNotifier {
     required this.comercianteId,
     AvaliacaoService? avaliacaoService,
     DenunciaService? denunciaService,
+    AcessoService? acessoService,
   })  : _lojas = lojas,
         _avaliacaoService = avaliacaoService ?? AvaliacaoService(),
-        _denunciaService = denunciaService ?? DenunciaService();
+        _denunciaService = denunciaService ?? DenunciaService(),
+        _acessoService = acessoService ?? AcessoService();
 
   final int? comercianteId;
 
   final AvaliacaoService _avaliacaoService;
   final DenunciaService _denunciaService;
+  final AcessoService _acessoService;
 
   List<StoreDto> _lojas;
   List<StoreDto> get lojas => _lojas;
@@ -189,6 +246,22 @@ class AnalyticsController extends ChangeNotifier {
       }),
     );
 
+    var falhasAcessos = 0;
+    final acessos = await Future.wait(
+      lojas.map((loja) async {
+        try {
+          return await _acessoService.buscarMetricas(
+            loja.id,
+            inicio: inicioSerie,
+            fim: hoje,
+          );
+        } catch (_) {
+          falhasAcessos++;
+          return AcessoMetricas.vazio;
+        }
+      }),
+    );
+
     final id = comercianteId;
     List<DenunciaRecebidaModel>? denuncias;
     if (id != null) {
@@ -213,6 +286,7 @@ class AnalyticsController extends ChangeNotifier {
         lojas: lojas,
         avaliacoes: avaliacoes.expand((e) => e).toList(),
         denuncias: denuncias,
+        acessos: falhasAcessos == lojas.length ? null : acessos,
         inicioSerie: inicioSerie,
         hoje: hoje,
       ),
@@ -229,6 +303,7 @@ class AnalyticsController extends ChangeNotifier {
     required List<StoreDto> lojas,
     required List<AvaliacaoModel> avaliacoes,
     required List<DenunciaRecebidaModel>? denuncias,
+    required List<AcessoMetricas>? acessos,
     required DateTime inicioSerie,
     required DateTime hoje,
   }) {
@@ -249,12 +324,36 @@ class AnalyticsController extends ChangeNotifier {
       distribuicaoNotas: distribuicao,
       mediaAvaliacao: mediaAvaliacao,
       totalAvaliacoes: avaliacoes.length,
+      acessos: somarAcessos(acessos),
       denuncias: _resumirDenuncias(
         denuncias: denuncias,
         lojas: lojas,
         inicioSerie: inicioSerie,
         hoje: hoje,
       ),
+    );
+  }
+
+  static AcessoResumo somarAcessos(List<AcessoMetricas>? metricas) {
+    if (metricas == null) return AcessoResumo.naoCarregou;
+    if (metricas.isEmpty) return AcessoResumo.vazio;
+
+    final porDia = <DateTime, int>{};
+    var total = 0;
+    for (final metrica in metricas) {
+      total += metrica.totalAcessos;
+      for (final dia in metrica.porDia) {
+        final chave = DateTime(dia.data.year, dia.data.month, dia.data.day);
+        porDia[chave] = (porDia[chave] ?? 0) + dia.quantidade;
+      }
+    }
+
+    final dias = porDia.keys.toList()..sort();
+    return AcessoResumo(
+      total: total,
+      porDia: [
+        for (final dia in dias) AcessoDiario(data: dia, quantidade: porDia[dia]!),
+      ],
     );
   }
 

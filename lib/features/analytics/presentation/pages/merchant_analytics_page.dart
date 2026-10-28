@@ -13,6 +13,7 @@ import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
 import 'package:map_food/core/ui/widgets/delta_badge.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/analytics/presentation/controllers/analytics_controller.dart';
+import 'package:map_food/features/consumer/presentation/widgets/activity_chart.dart';
 import 'package:map_food/features/analytics/presentation/widgets/analytics_scope_selector.dart';
 import 'package:map_food/features/analytics/presentation/widgets/analytics_section_card.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
@@ -147,6 +148,8 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
         children: [
           _buildPeriodos(context),
           const SizedBox(height: Spacing.lg),
+          _buildCardAcessos(context, snapshot.acessos),
+          const SizedBox(height: Spacing.lg),
           _buildCardAvaliacoes(context, snapshot),
           const SizedBox(height: Spacing.lg),
           _buildCardDenuncias(context, snapshot.denuncias),
@@ -168,6 +171,63 @@ class _MerchantAnalyticsPageState extends State<MerchantAnalyticsPage> {
               onTap: () => _controller.definirPeriodo(range),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardAcessos(BuildContext context, AcessoResumo acessos) {
+    final colors = context.mapColors;
+
+    if (acessos.indisponivel) {
+      return AnalyticsSectionCard(
+        titulo: 'Visitas',
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(AppIcons.wifiSlash, size: AppIconSize.md, color: colors.textTertiary),
+            const SizedBox(width: Spacing.sm),
+            Expanded(
+              child: Text(
+                'Não foi possível carregar as visitas · puxe para atualizar',
+                style: AppText.secondary(context).copyWith(height: 1.4),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AnalyticsSectionCard(
+      titulo: 'Visitas à sua página',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${acessos.total}',
+                style: AppText.numeric(context, size: 28).copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: Spacing.sm),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: Text(
+                  acessos.total == 1 ? 'visita no período' : 'visitas no período',
+                  style: AppText.secondary(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.md),
+          ActivityChart(
+            points: pontosDeAcesso(acessos, _controller.range),
+            mensagemVazia: 'Nenhuma visita neste período',
+          ),
         ],
       ),
     );
