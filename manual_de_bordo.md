@@ -2369,6 +2369,23 @@ Mudar uma delas muda todas as telas que a usam.
   > "Cria uma nova avaliação do consumidor autenticado para a loja, via POST /avaliacoes (rota geral, contrato legado). O backend sempre insere uma nova linha — múltiplas avaliações do mesmo consumidor para a mesma loja são permitidas (histórico), não há upsert. O controller espera o corpo no formato bruto da entidade `Avaliacao` (`nota`, `comentario`, `loja: {id}`) — não um DTO enxuto — pra manter retrocompatibilidade com o painel Web legado, que consome esse mesmo contrato. [lojaId] ID da loja avaliada. [nota] Nota inteira de 1 a 5. [comentario] Comentário opcional."
   - 💡 Explicação Leiga: A função envia uma avaliação nova. O mesmo cliente pode avaliar a mesma loja várias vezes.
 
+  > "Editar manda só nota e comentário, e comentário em branco vai como nulo — string vazia ficaria gravada como comentário existente e apareceria como linha vazia no comércio. O corpo devolvido pelo PUT não tem o formato da listagem (vem sem os votos), então quem chama recarrega a lista em vez de confiar nele."
+  - 💡 Explicação Leiga: A função salva a nota e o comentário novos. Depois a tela busca a lista de novo.
+
+### 📂 ARQUIVO: lib/features/avaliacoes/presentation/controllers/acoes_da_avaliacao.dart
+
+- ⚙️ Função: Conduz editar e excluir a própria avaliação, com confirmação, aviso e tratamento de erro.
+- 💬 Comentários Removidos:
+
+  > "Duas telas mostram as avaliações de quem está logado: a do comércio e a de 'Minhas avaliações'. O fluxo mora aqui para que as duas se comportem igual — mesma folha de edição, mesma confirmação de exclusão, mesma mensagem de erro — e para que a tela só precise recarregar a lista quando algo de fato mudou."
+  - 💡 Explicação Leiga: As duas telas que mostram as suas avaliações usam este mesmo caminho para editar e apagar.
+
+  > "Editar exige e-mail confirmado: o servidor recusa com 403 e uma frase pronta. Em vez de mostrar o erro cru, o fluxo abre a confirmação de e-mail e, se a pessoa confirmar, repete a ação que ela já tinha pedido."
+  - 💡 Explicação Leiga: Se o e-mail ainda não foi confirmado, o app pede a confirmação e depois salva a edição.
+
+  > "Exclusão pede confirmação porque não dá para desfazer, e o texto diz o que acontece: a nota sai da média do comércio."
+  - 💡 Explicação Leiga: Antes de apagar, o app pergunta, porque não existe como voltar atrás.
+
 ### 📂 ARQUIVO: lib/features/avaliacoes/presentation/pages/consumer_review_page.dart
 
 - ⚙️ Função: Mostra a lista de avaliações que o usuário já escreveu.
@@ -2386,6 +2403,25 @@ Mudar uma delas muda todas as telas que a usam.
 ---
 
 ## 🙋 PARTE 9 — O CLIENTE (CONSUMIDOR)
+
+  > "Mesmo menu da seção do comércio, porque esta é a outra porta para a mesma avaliação: quem procura 'onde eu apago isso' vem primeiro para cá, em 'Minhas avaliações'."
+  - 💡 Explicação Leiga: Esta tela também deixa editar e apagar cada avaliação.
+
+### 📂 ARQUIVO: lib/features/avaliacoes/presentation/widgets/folha_editar_avaliacao.dart
+
+- ⚙️ Função: Folha que reabre a nota e o comentário já preenchidos para a pessoa corrigir.
+- 💬 Comentários Removidos:
+
+  > "A folha devolve a escolha e não chama o servidor: quem salva é [acoes_da_avaliacao], e isso deixa a folha testável sem rede. Nota zero desabilita o salvar — o servidor exige nota de 1 a 5 e recusaria o envio."
+  - 💡 Explicação Leiga: Esta folha só coleta a nota e o texto novos. Quem envia é outro arquivo.
+
+### 📂 ARQUIVO: lib/features/avaliacoes/presentation/widgets/seletor_de_estrelas.dart
+
+- ⚙️ Função: As cinco estrelas que a pessoa toca para dar a nota, com o rótulo do que cada nota significa.
+- 💬 Comentários Removidos:
+
+  > "Saiu de dentro da seção de avaliação do comércio para ser usado também na folha de edição: duas réguas de estrelas diferentes dariam notas com aparências diferentes para a mesma coisa. Cada estrela é uma área de toque com rótulo próprio, para o leitor de tela anunciar '4 estrelas' em vez de 'botão'."
+  - 💡 Explicação Leiga: As estrelas viraram peça compartilhada entre a tela do comércio e a folha de edição.
 
 ### 📂 ARQUIVO: lib/features/consumer/data/models/consumer_model.dart
 
@@ -4526,6 +4562,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "O 403 de e-mail não confirmado não vira erro genérico: mostra a frase do servidor com um atalho para confirmar e, se a pessoa confirmar ali mesmo, o envio é refeito sozinho. Sem isso ela perderia a nota e o comentário que acabou de escrever."
   - 💡 Explicação Leiga: Se faltar confirmar o e-mail, o app oferece confirmar na hora e manda a avaliação de novo sozinho.
 
+  > "Depois de editar ou excluir, a seção avisa a tela do comércio (o mesmo gancho do envio) e recarrega o histórico: a nota média e o total de avaliações mudaram, e deixar o número antigo na tela é pior do que uma espera curta."
+  - 💡 Explicação Leiga: Ao editar ou apagar, a tela atualiza a nota média do comércio junto.
+
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/report_store_dialog.dart
 
 - ⚙️ Função: Abre o formulário para denunciar uma loja.
@@ -4580,6 +4619,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Data relativa ('Ontem', 'Há 3 semanas'). Data absoluta numa avaliação diz pouco: o que interessa é se a experiência é recente."
   - 💡 Explicação Leiga: A função escreve há quanto tempo a avaliação foi feita.
+
+  > "O menu de três pontos só existe quando quem chama passa as ações — ou seja, só na avaliação de quem está logado. O cartão não decide isso: ele não sabe quem é o usuário, e perguntar aqui faria cada cartão da lista consultar a sessão."
+  - 💡 Explicação Leiga: O menu de editar e excluir aparece só nas suas próprias avaliações.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_detail/section_header.dart
 
