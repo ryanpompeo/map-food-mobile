@@ -26,8 +26,12 @@ class AppIcons {
   static const IconData gpsFix = PhosphorIconsRegular.gpsFix;
   static const IconData hash = PhosphorIconsRegular.hash;
   static const IconData heart = PhosphorIconsRegular.heart;
+  static const IconData thumbsUp = PhosphorIconsRegular.thumbsUp;
+  static const IconData thumbsDown = PhosphorIconsRegular.thumbsDown;
 
   static const IconData heartFill = PhosphorIconsFill.heart;
+  static const IconData thumbsUpFill = PhosphorIconsFill.thumbsUp;
+  static const IconData thumbsDownFill = PhosphorIconsFill.thumbsDown;
   static const IconData gearSix = PhosphorIconsRegular.gearSix;
   static const IconData house = PhosphorIconsRegular.house;
 

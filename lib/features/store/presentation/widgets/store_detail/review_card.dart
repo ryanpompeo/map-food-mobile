@@ -8,6 +8,7 @@ import 'package:map_food/core/ui/widgets/app_card.dart';
 import 'package:map_food/core/ui/widgets/app_network_image.dart';
 import 'package:map_food/core/ui/widgets/rating_stars.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
+import 'package:map_food/features/avaliacoes/presentation/widgets/voto_avaliacao.dart';
 
 class ReviewCard extends StatelessWidget {
   final AvaliacaoModel review;
@@ -92,6 +93,10 @@ class ReviewCard extends StatelessWidget {
                   height: 1.5,
                 ),
               ),
+            ],
+            if (!compact) ...[
+              const SizedBox(height: Spacing.xs),
+              VotoAvaliacao(avaliacao: review),
             ],
           ],
         ),

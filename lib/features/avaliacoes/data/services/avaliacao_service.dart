@@ -25,6 +25,14 @@ class AvaliacaoService {
         .toList();
   }
 
+  Future<VotosDaAvaliacao> votar(int avaliacaoId, String tipo) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      '${ApiConstants.avaliacoes}/$avaliacaoId/votos',
+      data: <String, dynamic>{'tipo': tipo},
+    );
+    return VotosDaAvaliacao.fromJson(data);
+  }
+
   Future<void> editarAvaliacao({
     required int id,
     required int nota,
