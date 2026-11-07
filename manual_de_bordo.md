@@ -3668,14 +3668,17 @@ Mudar uma delas muda todas as telas que a usam.
 - ⚙️ Função: Tela de boas-vindas mostrada apenas na primeira vez que o aplicativo abre.
 - 💬 Comentários Removidos:
 
+  > "A coluna fica dentro de um SliverFillRemaining sem corpo rolável. Quando cabe, ele dá à coluna a altura exata da tela e os Spacers empurram os botões para o rodapé, como antes. Quando não cabe (celular pequeno, ou fonte do sistema grande), a coluna cresce até o tamanho do conteúdo, os Spacers zeram e a tela rola. A coluna fixa de antes estourava até com fonte normal num celular de 320×568, e com fonte 1,3x num de 360×640 — na primeira tela que o avaliador vê."
+  - 💡 Explicação Leiga: A tela de boas-vindas rola quando o texto não cabe. Quando cabe, fica igual a antes, com os botões embaixo.
+
   > "Boas-vindas da primeira execução. Só aparece quando não há sessão salva e a marca de 'já visto' ainda não existe (ver [main]) — quem já está logado continua caindo direto na home do seu papel, e quem já passou por aqui uma vez nunca mais vê esta tela. 'Continuar sem conta' existe porque o MapFood é navegável sem login: o mapa, a busca e as lojas funcionam como visitante, e o login só é exigido nas ações que precisam de conta (favoritar, avaliar, denunciar). Sem essa saída, o onboarding viraria uma parede de cadastro na frente do app."
   - 💡 Explicação Leiga: Esta classe desenha a tela de boas-vindas. Ela oferece a opção de usar o app sem criar conta.
 
   > "Deixa a home de visitante embaixo da tela de cadastro em vez de substituir a pilha por ela: sem isso, o 'voltar' de dentro do cadastro não teria pra onde ir (o onboarding já foi removido) e fecharia o app."
   - 💡 Explicação Leiga: A função abre o cadastro deixando a tela de visitante embaixo. Assim o botão de voltar funciona.
 
-  > "Quadrado de ícone acima do título: acompanha a escala, mesmo tratamento do AccountTypeCard. A marca de verdade no lugar das iniciais 'MF': este é o primeiro contato de quem abre o app, e duas letras num quadrado não são um logo — são o placeholder de um. O mesmo pin vermelho do ícone do aplicativo (assets/icon/app_icon.png, aqui na cópia já declarada em assets/images/) é o que a pessoa acabou de tocar na tela inicial do celular."
-  - 💡 Explicação Leiga: A linha mostra o logotipo real do aplicativo. Antes apareciam apenas as letras "MF".
+  > "Quadrado de ícone acima do título: acompanha a escala, mesmo tratamento do AccountTypeCard. A marca de verdade no lugar das iniciais 'MF': este é o primeiro contato de quem abre o app, e duas letras num quadrado não são um logo — são o placeholder de um. O pin liso, com o furo redondo, é o mesmo desenho do ícone que a pessoa acabou de tocar no celular (@mipmap/ic_launcher). Ele vem do ícone mapPinFill do Phosphor, e não de imagem: antes a tela usava assets/images/app_icon_copy.png, o pin com hambúrguer, que é a versão antiga do logo e não batia com o ícone do aplicativo. Não existe PNG transparente do pin liso, e o ícone do celular já traz o fundo vermelho, que dentro deste quadrado viraria um ícone dentro de outro."
+  - 💡 Explicação Leiga: A linha mostra o pin vermelho do logotipo, o mesmo desenho do ícone do app no celular.
 
   > "Superfície de marca (vermelho bem diluído) em vez do bloco `ink`: o logo é vermelho sólido e precisa de um fundo que o deixe respirar nos dois temas — `primaryContainer` já é o par brandSurface/brandSurfaceDark do AppTheme."
   - 💡 Explicação Leiga: A linha usa um fundo rosa bem claro atrás do logotipo vermelho.
