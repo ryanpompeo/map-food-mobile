@@ -10,6 +10,7 @@ import 'package:map_food/core/ui/theme/app_typography.dart';
 import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/widgets/unsaved_changes_guard.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
+import 'package:map_food/features/avaliacoes/presentation/widgets/card_resumo_ia.dart';
 import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
 import 'package:map_food/features/store/data/models/store_dto.dart';
 import 'package:map_food/features/store/data/services/store_service.dart';
@@ -52,6 +53,10 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
   final StoreService _storeService = StoreService();
 
   List<AvaliacaoModel> _avaliacoes = [];
+
+  int get _comentarios => _avaliacoes
+      .where((a) => (a.comentario?.trim().isNotEmpty) ?? false)
+      .length;
   bool _isLoadingRatings = true;
   String? _ratingsError;
 
@@ -176,6 +181,16 @@ class _MoreInfoStorePageState extends State<MoreInfoStorePage> {
                     if (store.galeria.isNotEmpty) ...[
                       const SizedBox(height: Spacing.xxl),
                       StoreGalleryStrip(store: store),
+                    ],
+
+                    if (!_isLoadingRatings && _comentarios > 0) ...[
+                      const SizedBox(height: Spacing.xxl),
+                      CardResumoIA(
+                        key: ValueKey('resumo-${store.id}'),
+                        lojaId: store.id,
+                        totalComentarios: _comentarios,
+                        automatico: true,
+                      ),
                     ],
 
                     const SizedBox(height: Spacing.xxl),

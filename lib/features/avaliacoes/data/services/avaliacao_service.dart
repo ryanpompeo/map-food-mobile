@@ -25,6 +25,17 @@ class AvaliacaoService {
         .toList();
   }
 
+  Future<ResumoDeAvaliacoes> resumirAvaliacoes(
+    int lojaId, {
+    String modo = 'publico',
+  }) async {
+    final data = await _client.get<Map<String, dynamic>>(
+      '${ApiConstants.avaliacoes}/loja/$lojaId/resumo',
+      queryParameters: {'modo': modo},
+    );
+    return ResumoDeAvaliacoes.fromJson(data);
+  }
+
   Future<VotosDaAvaliacao> votar(int avaliacaoId, String tipo) async {
     final data = await _client.post<Map<String, dynamic>>(
       '${ApiConstants.avaliacoes}/$avaliacaoId/votos',

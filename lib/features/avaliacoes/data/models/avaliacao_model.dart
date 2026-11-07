@@ -75,6 +75,29 @@ class AvaliacaoModel {
       };
 }
 
+class ResumoDeAvaliacoes {
+  final String resumo;
+  final int totalAvaliacoes;
+  final List<String> alertas;
+
+  const ResumoDeAvaliacoes({
+    required this.resumo,
+    required this.totalAvaliacoes,
+    this.alertas = const [],
+  });
+
+  factory ResumoDeAvaliacoes.fromJson(Map<String, dynamic> json) {
+    final alertas = json['alertas'];
+    return ResumoDeAvaliacoes(
+      resumo: json['resumo']?.toString() ?? '',
+      totalAvaliacoes: (json['totalAvaliacoes'] as num?)?.toInt() ?? 0,
+      alertas: alertas is List
+          ? alertas.map((a) => a.toString()).where((a) => a.trim().isNotEmpty).toList()
+          : const [],
+    );
+  }
+}
+
 class VotosDaAvaliacao {
   final int totalLikes;
   final int totalDeslikes;

@@ -9,6 +9,7 @@ import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/core/ui/widgets/rating_stars.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
+import 'package:map_food/features/avaliacoes/presentation/widgets/filtro_de_estrelas.dart';
 
 class StoreReviewsSection extends StatefulWidget {
   final List<AvaliacaoModel> avaliacoes;
@@ -29,6 +30,12 @@ class StoreReviewsSection extends StatefulWidget {
 
 class _StoreReviewsSectionState extends State<StoreReviewsSection> {
   bool _expandida = false;
+
+  int? _filtroEstrelas;
+
+  List<AvaliacaoModel> get _filtradas => _filtroEstrelas == null
+      ? widget.avaliacoes
+      : widget.avaliacoes.where((a) => a.nota == _filtroEstrelas).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -86,13 +93,29 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
             child: !_expandida
                 ? const SizedBox(width: double.infinity)
                 : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: Spacing.base),
-                      for (final avaliacao in avaliacoes)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: Spacing.md),
-                          child: _CardAvaliacao(avaliacao: avaliacao),
-                        ),
+                      FiltroDeEstrelas(
+                        selecionado: _filtroEstrelas,
+                        onSelecionar: (valor) => setState(() => _filtroEstrelas = valor),
+                      ),
+                      const SizedBox(height: Spacing.base),
+                      if (_filtradas.isEmpty)
+                        EmptyState(
+                          dense: true,
+                          icon: AppIcons.star,
+                          title: 'Nada com ${rotuloEstrelas(_filtroEstrelas!)}',
+                          description: 'Toque em "Todas" para ver as outras avaliações',
+                          actionLabel: 'Ver todas',
+                          onAction: () => setState(() => _filtroEstrelas = null),
+                        )
+                      else
+                        for (final avaliacao in _filtradas)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Spacing.md),
+                            child: _CardAvaliacao(avaliacao: avaliacao),
+                          ),
                     ],
                   ),
           ),

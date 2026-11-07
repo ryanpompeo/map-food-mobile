@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/theme/app_colors.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
-import 'package:map_food/core/ui/utils/text_scale.dart';
-import 'package:map_food/core/ui/widgets/app_choice_chip.dart';
 import 'package:map_food/core/ui/widgets/empty_state.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
+import 'package:map_food/features/avaliacoes/presentation/widgets/filtro_de_estrelas.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/review_card.dart';
 import 'package:map_food/features/store/presentation/widgets/store_detail/section_header.dart';
 
@@ -32,8 +31,6 @@ class StoreReviewsSection extends StatefulWidget {
 }
 
 class _StoreReviewsSectionState extends State<StoreReviewsSection> {
-  static const double _tetoEscalaFiltros = 1.5;
-
   int? _filtroEstrelas;
 
   bool _expandida = true;
@@ -69,7 +66,10 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
                   children: [
                     if (temLista) ...[
                       const SizedBox(height: Spacing.base),
-                      _buildFiltro(context),
+                      FiltroDeEstrelas(
+                        selecionado: _filtroEstrelas,
+                        onSelecionar: (valor) => setState(() => _filtroEstrelas = valor),
+                      ),
                     ],
                     const SizedBox(height: Spacing.base),
                     _buildConteudo(context),
@@ -115,7 +115,7 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
     if (filtradas.isEmpty) {
       return EmptyState(
         icon: AppIcons.star,
-        title: 'Nada com $_filtroEstrelas estrelas',
+        title: 'Nada com ${rotuloEstrelas(_filtroEstrelas!)}',
         description: 'Toque em "Todas" para ver as demais avaliações',
         actionLabel: 'Ver todas',
         onAction: () => setState(() => _filtroEstrelas = null),
@@ -126,36 +126,6 @@ class _StoreReviewsSectionState extends State<StoreReviewsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [for (final review in filtradas) ReviewCard(review: review)],
-    );
-  }
-
-  Widget _buildFiltro(BuildContext context) {
-    return MaxTextScale(
-      max: _tetoEscalaFiltros,
-      child: SizedBox(
-        height: escalaComTeto(context, 38.0, teto: _tetoEscalaFiltros),
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          children: [
-            AppChoiceChip(
-              label: 'Todas',
-              selected: _filtroEstrelas == null,
-              onTap: () => setState(() => _filtroEstrelas = null),
-            ),
-            for (var estrelas = 5; estrelas >= 1; estrelas--) ...[
-              const SizedBox(width: Spacing.sm),
-              AppChoiceChip(
-                label: '$estrelas',
-                icon: AppIcons.starFill,
-                iconColor: MfColor.rating,
-                selected: _filtroEstrelas == estrelas,
-                onTap: () => setState(() => _filtroEstrelas = estrelas),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

@@ -10,6 +10,7 @@ import 'package:map_food/core/ui/widgets/app_card.dart';
 import 'package:map_food/core/ui/widgets/app_refresh.dart';
 import 'package:map_food/core/ui/widgets/menu_list_tile.dart';
 import 'package:map_food/features/avaliacoes/data/models/avaliacao_model.dart';
+import 'package:map_food/features/avaliacoes/presentation/widgets/card_resumo_ia.dart';
 import 'package:map_food/features/avaliacoes/data/services/avaliacao_service.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_operation_section.dart';
 import 'package:map_food/features/merchant/presentation/widgets/store_reviews_section.dart';
@@ -46,6 +47,10 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
   final _storeService = StoreService();
 
   List<AvaliacaoModel> _avaliacoes = [];
+
+  int get _comentarios => _avaliacoes
+      .where((a) => (a.comentario?.trim().isNotEmpty) ?? false)
+      .length;
   bool _carregandoAvaliacoes = true;
   double? _mediaAvaliacao;
 
@@ -175,10 +180,24 @@ class _MerchantStorePageState extends State<MerchantStorePage> {
             const SizedBox(height: Spacing.xxl),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-              child: StoreReviewsSection(
-                avaliacoes: _avaliacoes,
-                carregando: _carregandoAvaliacoes,
-                media: _mediaAvaliacao,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  StoreReviewsSection(
+                    avaliacoes: _avaliacoes,
+                    carregando: _carregandoAvaliacoes,
+                    media: _mediaAvaliacao,
+                  ),
+                  if (!_carregandoAvaliacoes && _comentarios > 0) ...[
+                    const SizedBox(height: Spacing.base),
+                    CardResumoIA(
+                      key: ValueKey('resumo-${_store.id}'),
+                      lojaId: _store.id,
+                      totalComentarios: _comentarios,
+                      modoComerciante: true,
+                    ),
+                  ],
+                ],
               ),
             ),
 
