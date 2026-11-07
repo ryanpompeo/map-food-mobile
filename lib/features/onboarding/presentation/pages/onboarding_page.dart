@@ -23,15 +23,13 @@ class OnboardingPage extends StatelessWidget {
   Future<void> _continuarSemConta(BuildContext context) async {
     await OnboardingStorage.marcarVisto();
     if (!context.mounted) return;
-    unawaited(Navigator.pushNamedAndRemoveUntil(
-        context, AppRoutes.root, (route) => false));
+    unawaited(Navigator.pushNamedAndRemoveUntil(context, AppRoutes.root, (route) => false));
   }
 
   Future<void> _comecar(BuildContext context) async {
     await OnboardingStorage.marcarVisto();
     if (!context.mounted) return;
-    unawaited(Navigator.pushNamedAndRemoveUntil(
-        context, AppRoutes.root, (route) => false));
+    unawaited(Navigator.pushNamedAndRemoveUntil(context, AppRoutes.root, (route) => false));
     unawaited(Navigator.pushNamed(context, AppRoutes.accountType));
   }
 
@@ -41,74 +39,78 @@ class OnboardingPage extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.xl, Spacing.lg, Spacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(flex: 2),
+        child: CustomScrollView(
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(Spacing.lg, Spacing.xl, Spacing.lg, Spacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Spacer(flex: 2),
 
-              Container(
-                height: escalaComTeto(context, 60),
-                width: escalaComTeto(context, 60),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(Radii.lg),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(Spacing.md),
-                  child: Image.asset(
-                    'assets/images/app_icon_copy.png',
-                    fit: BoxFit.contain,
-                    excludeFromSemantics: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: Spacing.xl),
+                    Container(
+                      height: escalaComTeto(context, 60),
+                      width: escalaComTeto(context, 60),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(Radii.lg),
+                      ),
+                      child: Icon(
+                        AppIcons.mapPinFill,
+                        size: escalaComTeto(context, 60) - 2 * Spacing.md,
+                        color: MfColor.brand,
+                      ),
+                    ),
+                    const SizedBox(height: Spacing.xl),
 
-              Text('Comida de rua,\nperto de você', style: AppText.display(context)),
-              const SizedBox(height: Spacing.md),
-              Text(
-                'Encontre vendedores ambulantes em tempo real e veja quem está em rota agora',
-                style: AppText.body(context).copyWith(color: colors.textSecondary),
-              ),
+                    Text('Comida de rua,\nperto de você', style: AppText.display(context)),
+                    const SizedBox(height: Spacing.md),
+                    Text(
+                      'Encontre vendedores ambulantes em tempo real e veja quem está em rota agora',
+                      style: AppText.body(context).copyWith(color: colors.textSecondary),
+                    ),
 
-              const SizedBox(height: Spacing.xxl),
+                    const SizedBox(height: Spacing.xxl),
 
-              for (final destaque in _destaques) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: Spacing.base),
-                  child: Row(
-                    children: [
-                      Icon(destaque.icon, size: AppIconSize.md, color: MfColor.brand),
-                      const SizedBox(width: Spacing.md),
-                      Expanded(
-                        child: Text(
-                          destaque.texto,
-                          style: AppText.body(context).copyWith(color: colors.textSecondary),
+                    for (final destaque in _destaques) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: Spacing.base),
+                        child: Row(
+                          children: [
+                            Icon(destaque.icon, size: AppIconSize.md, color: MfColor.brand),
+                            const SizedBox(width: Spacing.md),
+                            Expanded(
+                              child: Text(
+                                destaque.texto,
+                                style: AppText.body(context).copyWith(color: colors.textSecondary),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
+
+                    const Spacer(flex: 3),
+
+                    AppButton(
+                      label: 'Começar',
+                      icon: AppIcons.arrowRight,
+                      onPressed: () => _comecar(context),
+                    ),
+                    const SizedBox(height: Spacing.sm),
+                    AppButton(
+                      label: 'Continuar sem conta',
+                      variant: AppButtonVariant.ghost,
+                      onPressed: () => _continuarSemConta(context),
+                    ),
+                  ],
                 ),
-              ],
-
-              const Spacer(flex: 3),
-
-              AppButton(
-                label: 'Começar',
-                icon: AppIcons.arrowRight,
-                onPressed: () => _comecar(context),
               ),
-              const SizedBox(height: Spacing.sm),
-              AppButton(
-                label: 'Continuar sem conta',
-                variant: AppButtonVariant.ghost,
-                onPressed: () => _continuarSemConta(context),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

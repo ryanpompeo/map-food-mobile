@@ -44,6 +44,7 @@ class AppIcons {
   static const IconData shieldCheck = PhosphorIconsRegular.shieldCheck;
   static const IconData magnifyingGlass = PhosphorIconsRegular.magnifyingGlass;
   static const IconData mapPin = PhosphorIconsRegular.mapPin;
+  static const IconData mapPinFill = PhosphorIconsFill.mapPin;
 
   static const IconData minus = PhosphorIconsRegular.minus;
   static const IconData mapTrifold = PhosphorIconsRegular.mapTrifold;
