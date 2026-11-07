@@ -2444,6 +2444,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Votar devolve a contagem nova e qual é o meu voto depois da troca, então a tela não precisa recarregar a lista nem adivinhar o resultado do toque."
   - 💡 Explicação Leiga: Ao votar, o servidor devolve os números atualizados.
 
+  > "O resumo aceita o modo: 'comerciante' traz insights e alertas, 'publico' traz o texto que o cliente lê. O servidor guarda o resultado por 15 minutos, então pedir de novo logo depois não gasta outra chamada à IA."
+  - 💡 Explicação Leiga: A função busca o resumo da IA, no modo do cliente ou no do comerciante.
+
 ### 📂 ARQUIVO: lib/features/avaliacoes/presentation/controllers/acoes_da_avaliacao.dart
 
 - ⚙️ Função: Conduz editar e excluir a própria avaliação, com confirmação, aviso e tratamento de erro.
@@ -2478,6 +2481,49 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Mesmo menu da seção do comércio, porque esta é a outra porta para a mesma avaliação: quem procura 'onde eu apago isso' vem primeiro para cá, em 'Minhas avaliações'."
   - 💡 Explicação Leiga: Esta tela também deixa editar e apagar cada avaliação.
+
+### 📂 ARQUIVO: lib/features/avaliacoes/presentation/widgets/card_resumo_ia.dart
+
+- ⚙️ Função: Mostra o resumo que a inteligência artificial faz dos comentários da loja.
+- 💬 Comentários Removidos:
+
+  > "Ao comerciante o resumo é pedido por toque, não gerado sozinho: a chamada custa dinheiro a cada vez, e ele abre a tela da loja muitas vezes por dia por outros motivos. Na visão pública, onde a pessoa chega para decidir se vai, o resumo vem automático — é a mesma divisão que a Web faz."
+  - 💡 Explicação Leiga: O comerciante toca para gerar; para o cliente, o resumo aparece sozinho.
+
+  > "Abaixo de três comentários o cartão nem aparece: é o mínimo que o servidor exige, e mostrar o botão para receber 'ainda não há comentários suficientes' seria gastar o toque da pessoa."
+  - 💡 Explicação Leiga: Com menos de três comentários, o cartão não aparece.
+
+  > "Os alertas vêm em lista separada do texto e aparecem com o ícone de atenção. Eles são o que o modo comerciante acrescenta: padrões que se repetem nas reclamações."
+  - 💡 Explicação Leiga: Os alertas mostram o que se repete nas reclamações.
+
+  > "A última linha diz que o texto foi gerado por IA e sobre quantos comentários. Resumo de máquina apresentado como fato da loja seria enganoso."
+  - 💡 Explicação Leiga: O cartão avisa que o texto foi escrito por inteligência artificial.
+
+  > "Depois de pronto, o resumo ganha um 'gerar de novo': comentário novo muda o que a IA diria. O servidor guarda o resultado por 15 minutos e descarta o cache sozinho quando a contagem de comentários muda, então pedir de novo sem novidade não gasta chamada — devolve o mesmo texto."
+  - 💡 Explicação Leiga: Dá para gerar o resumo de novo quando chegam comentários novos.
+
+  > "Quando chegaram comentários depois do resumo, o cartão diz quantos, comparando a contagem atual com a que o próprio app tinha no momento do pedido. Antes a chave do widget incluía a contagem e o resumo simplesmente desaparecia da tela quando alguém comentava — sumir em silêncio é pior do que avisar que está velho."
+  - 💡 Explicação Leiga: O cartão avisa quando chegaram comentários novos depois do resumo.
+
+  > "A comparação não usa o número que o servidor devolve, porque o servidor descarta os comentários com palavrão antes de mandar para a IA e o app não. Com um comentário descartado, as duas contagens nunca batiam e o cartão dizia para sempre que havia comentário novo."
+  - 💡 Explicação Leiga: O aviso de comentário novo compara com a conta do app, para não mentir quando o servidor esconde um comentário ofensivo.
+
+  > "Se o servidor responde que leu menos de três comentários, o texto dele é a recusa ('ainda não há comentários suficientes'), não um resumo. O cartão mostra a frase como texto simples, sem o rodapé de IA e sem 'gerar de novo', porque nada ali foi escrito por máquina."
+  - 💡 Explicação Leiga: Quando não há comentários suficientes para a IA, o cartão só mostra o aviso, sem dizer que foi a IA que escreveu.
+
+  > "O 'gerar de novo' fica embaixo do rodapé, e não ao lado: com a fonte do sistema grande, o botão ao lado espremia o texto numa coluna estreita."
+  - 💡 Explicação Leiga: O botão fica embaixo do texto para caber bem com letra grande.
+
+### 📂 ARQUIVO: lib/features/avaliacoes/presentation/widgets/filtro_de_estrelas.dart
+
+- ⚙️ Função: A fileira de chips que filtra as avaliações por nota.
+- 💬 Comentários Removidos:
+
+  > "Saiu de dentro da tela da loja para ser usada também pelo comerciante: o filtro por estrelas existia só para o cliente, e quem mais precisa achar as notas baixas é quem recebeu."
+  - 💡 Explicação Leiga: O filtro de estrelas virou peça compartilhada entre a tela do cliente e a do comerciante.
+
+  > "rotuloEstrelas mora aqui porque as duas listas mostram o mesmo aviso de filtro vazio, e ambas escreviam 'Nada com 1 estrelas'. A regra do singular fica num lugar só."
+  - 💡 Explicação Leiga: Esta função escreve "1 estrela" no singular e "2 estrelas" no plural.
 
 ### 📂 ARQUIVO: lib/features/avaliacoes/presentation/widgets/folha_editar_avaliacao.dart
 
@@ -3448,6 +3494,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "Linha de consulta: rótulo pequeno em cima, valor com contraste embaixo. Valor ausente vira 'Não informado' em tom terciário em vez de espaço em branco — vazio silencioso lê como falha de carregamento. O respiro é padding interno (o card que a hospeda tem padding zero): assim os divisores entre as linhas caem no meio do espaço, e não colados na linha de cima."
   - 💡 Explicação Leiga: Esta classe desenha uma linha com rótulo e valor. Campos vazios mostram "Não informado".
 
+  > "O cartão de insights fica embaixo das avaliações e só existe quando há três comentários ou mais — a contagem é de comentários escritos, não de notas, porque é sobre texto que a IA trabalha. A chave do cartão é só o id da loja, sem a contagem: assim um comentário novo não apaga o resumo da tela, e o próprio cartão avisa quantos comentários chegaram depois dele."
+  - 💡 Explicação Leiga: Os insights da IA aparecem embaixo das avaliações, quando há comentários suficientes.
+
 ### 📂 ARQUIVO: lib/features/merchant/presentation/widgets/merchant_bottom_bar.dart
 
 - ⚙️ Função: Desenha a barra de navegação do rodapé para o comerciante.
@@ -3530,6 +3579,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Dois cards fantasma com a forma real do conteúdo. Um spinner centralizado não diz o que está vindo e faz a página saltar de altura quando os cards finalmente chegam."
   - 💡 Explicação Leiga: Esta classe desenha duas caixas cinzas no formato das avaliações enquanto elas carregam.
+
+  > "O comerciante ganhou o mesmo filtro por estrelas que o cliente já tinha: com a lista aberta, quem recebeu as notas é quem mais precisa achar as baixas depressa. Filtro vazio explica e oferece voltar para todas, em vez de deixar a tela em branco."
+  - 💡 Explicação Leiga: O comerciante pode filtrar as avaliações por estrelas.
 
 ### 📂 ARQUIVO: lib/features/merchant/presentation/widgets/store_status_card.dart
 
@@ -4237,6 +4289,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "Visitante também vê o formulário, mas em modo vitrine: qualquer toque abre a parede de login (ver ConsumerReviewSection)."
   - 💡 Explicação Leiga: A linha mostra o formulário de avaliação também para visitantes, mas sem funcionar.
+
+  > "O resumo da IA entra acima da lista de avaliações e é gerado sozinho: aqui a pessoa chegou para decidir se vai, e ler o resumo antes dos comentários é o caminho natural. É a única tela onde a chamada é automática — na do comerciante ela é por toque, porque ele abre a loja muitas vezes por dia."
+  - 💡 Explicação Leiga: Na tela da loja, o resumo da IA aparece sozinho, acima das avaliações.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/pages/store_advanced_page.dart
 
@@ -4970,6 +5025,9 @@ Mudar uma delas muda todas as telas que a usam.
 
   > "O teto entra nos dois lugares de propósito: na altura da faixa e na escala do texto dentro dela. Limitar só um dos dois é o que produz ou texto cortado (faixa parada, texto crescendo) ou faixa com sobra."
   - 💡 Explicação Leiga: A linha limita a altura e o texto ao mesmo tempo.
+
+  > "O filtro por estrelas saiu daqui para [FiltroDeEstrelas], que o comerciante também usa."
+  - 💡 Explicação Leiga: O filtro de estrelas agora vem de um arquivo compartilhado.
 
 ### 📂 ARQUIVO: lib/features/store/presentation/widgets/store_form_fields.dart
 
