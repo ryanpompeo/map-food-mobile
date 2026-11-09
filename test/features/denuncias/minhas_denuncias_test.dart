@@ -105,4 +105,29 @@ void main() {
 
     expect(find.text('Risco sanitário'), findsOneWidget);
   });
+
+  testWidgets('sem ninguém logado, a tela fecha sozinha sem erro', (tester) async {
+    await SessionStore.instance.signOut();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(builder: (_) => ConsumerComplaintsPage(servico: _servicoCom(api))),
+            ),
+            child: const Text('abrir'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(ConsumerComplaintsPage), findsNothing);
+    expect(find.text('abrir'), findsOneWidget);
+  });
 }
