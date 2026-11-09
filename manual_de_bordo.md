@@ -2926,6 +2926,9 @@ Mudar uma delas muda todas as telas que a usam.
 - ⚙️ Função: Mostra a lista de denúncias que o usuário já fez.
 - 💬 Comentários Removidos:
 
+  > "Sem sessão, a tela se fecha — mas só depois do primeiro quadro desenhado e com `maybePop`. Fechar dentro do `initState` funciona quando a tela chega por `push`, mas quando ela é a primeira rota o Navigator ainda está se montando e o Flutter acusa `setState() called during build`. O `maybePop` cobre o outro lado: sendo a única rota, não há para onde voltar, e um `pop` deixaria a tela preta. Quem pegou o caso foi `test/varredura_de_telas_test.dart`."
+  - 💡 Explicação Leiga: Se ninguém estiver logado, a tela espera terminar de aparecer e só então volta para a anterior, sem erro.
+
   > "Estas duas telas tinham cópias privadas de 'vazio' e 'erro', cada uma com seu próprio tamanho de ícone e botão. Agora usam o EmptyState compartilhado."
   - 💡 Explicação Leiga: A linha usa o bloco de tela vazia compartilhado, em vez de uma cópia própria.
 
@@ -2949,6 +2952,9 @@ Mudar uma delas muda todas as telas que a usam.
 
 - ⚙️ Função: Mostra ao comerciante as denúncias feitas contra as lojas dele e recebe a resposta dentro do prazo.
 - 💬 Comentários Removidos:
+
+  > "Sem sessão, a tela se fecha — mas só depois do primeiro quadro desenhado e com `maybePop`. Fechar dentro do `initState` funciona quando a tela chega por `push`, mas quando ela é a primeira rota o Navigator ainda está se montando e o Flutter acusa `setState() called during build`. O `maybePop` cobre o outro lado: sendo a única rota, não há para onde voltar, e um `pop` deixaria a tela preta. Quem pegou o caso foi `test/varredura_de_telas_test.dart`."
+  - 💡 Explicação Leiga: Se ninguém estiver logado, a tela espera terminar de aparecer e só então volta para a anterior, sem erro.
 
   > "Antes do app, acusação que suja o nome de quem vende abria 48 horas de prazo e o comerciante só recebia o e-mail: para responder, precisava do site. Esta tela fecha isso — o prazo corre igual para quem só tem celular."
   - 💡 Explicação Leiga: O comerciante passa a ver e responder as denúncias pelo aplicativo.
@@ -5637,6 +5643,29 @@ Eles conferem sozinhos se o código continua funcionando depois de cada mudança
 
   > "Um 200 com corpo vazio antes produzia `null as List<dynamic>` — TypeError que escapava de todo `on AppException` do app."
   - 💡 Explicação Leiga: O teste confere que uma resposta vazia vira um erro que o aplicativo sabe tratar.
+
+### 📂 ARQUIVO: test/varredura_de_telas_test.dart
+
+- ⚙️ Função: Abre cada tela do app em três tamanhos de celular e três tamanhos de letra, e falha se alguma coisa sair da borda ou der erro.
+- 💬 Comentários Removidos:
+
+  > "Complementa o `dynamic_type_test.dart`: lá cada componente é medido isolado; aqui a tela inteira é montada, que é onde aparecem os estouros de composição — título ao lado de selo, fileira de abas, botão dentro de card. Nasceu no pente fino de 06/11/2026 e achou cinco defeitos reais (boas-vindas, fotos da loja, configurações, perfil do consumidor, card de status) e um sexto de ciclo de vida (denúncias sem sessão)."
+  - 💡 Explicação Leiga: Este arquivo testa a tela inteira, não só pedaços dela, porque é na tela inteira que os textos se espremem uns contra os outros.
+
+  > "Fonte real (Inter) carregada do disco: a fonte padrão de teste desenha cada letra como um quadrado do tamanho da fonte, bem mais largo que a Inter, e acusava cerca de cem estouros que não existem no aparelho."
+  - 💡 Explicação Leiga: O teste usa a mesma letra do aplicativo, para não acusar problema falso.
+
+  > "`ThemeController.load()` no `setUp`: sem ele, as telas que leem o tema quebram antes de desenhar e a falha não tem nada a ver com layout."
+  - 💡 Explicação Leiga: A linha prepara o tema antes de cada teste.
+
+  > "Tamanhos: 320x568 é o menor celular ainda em uso, 360x640 o Android de entrada mais comum, 412x915 um aparelho grande. Escalas: 1,0, 1,3 e 2,0 — 2,0 é o teto que `main.dart` aplica. O tema escuro roda só no tamanho médio com letra normal: ele troca cores, não medidas, e repetir a grade inteira dobraria o tempo sem achar nada novo."
+  - 💡 Explicação Leiga: São 260 combinações de tela, tamanho e letra, e a rodada leva cerca de meio minuto.
+
+  > "Mapa, busca e telas iniciais ficam fora: dependem de GPS e de tiles, e montadas aqui só testariam o simulador de localização."
+  - 💡 Explicação Leiga: As telas com mapa são conferidas no celular de verdade, não aqui.
+
+  > "Como estender: tela nova entra em `_telas` com dados longos de propósito (nome, e-mail, endereço), porque é texto comprido que estoura."
+  - 💡 Explicação Leiga: Quem criar uma tela nova só precisa acrescentar uma linha na lista.
 
 ---
 
