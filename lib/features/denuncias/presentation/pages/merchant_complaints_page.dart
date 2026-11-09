@@ -79,7 +79,9 @@ class _MerchantComplaintsPageState extends State<MerchantComplaintsPage> {
     try {
       final comercianteId = SessionStore.instance.userId;
       if (comercianteId == null) {
-        if (mounted) Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) Navigator.maybePop(context);
+        });
         return;
       }
       final recebidas = await _servico.getRecebidas(comercianteId);

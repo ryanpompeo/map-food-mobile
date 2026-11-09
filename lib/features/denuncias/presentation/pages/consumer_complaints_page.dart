@@ -42,7 +42,9 @@ class _ConsumerComplaintsPageState extends State<ConsumerComplaintsPage> {
     try {
       final consumidorId = SessionStore.instance.userId;
       if (consumidorId == null) {
-        if (mounted) Navigator.pop(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) Navigator.maybePop(context);
+        });
         return;
       }
       final denuncias = await _denunciaService.getMyComplaints(consumidorId);
