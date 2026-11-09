@@ -457,16 +457,20 @@ class _TrocaDeModo extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(Radii.pill),
         child: Container(
-          height: 48,
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
           alignment: Alignment.center,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icone, size: AppIconSize.sm, color: cor),
               const SizedBox(width: Spacing.sm),
-              Text(
-                rotulo,
-                style: AppText.button(context).copyWith(color: cor),
+              Flexible(
+                child: Text(
+                  rotulo,
+                  textAlign: TextAlign.center,
+                  style: AppText.button(context).copyWith(color: cor),
+                ),
               ),
             ],
           ),

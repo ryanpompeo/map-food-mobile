@@ -334,7 +334,8 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
           bottom: 0,
           child: Container(height: 1.0, color: context.mapColors.border),
         ),
-        Padding(
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
           child: Row(
             children: [
@@ -387,7 +388,8 @@ class _ConsumerProfilePageState extends State<ConsumerProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
           child: Row(
             children: [

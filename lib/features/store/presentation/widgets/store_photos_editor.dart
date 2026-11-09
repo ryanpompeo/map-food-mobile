@@ -128,7 +128,7 @@ class _Cabecalho extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(titulo, style: AppText.h2(context)),
+            Flexible(child: Text(titulo, style: AppText.h2(context))),
             if (selo != null) ...[
               const SizedBox(width: Spacing.sm),
               Container(

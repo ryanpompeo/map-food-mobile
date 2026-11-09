@@ -155,13 +155,19 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Spacing.base),
-          Text(
-            "Configurações",
-            style: AppText.h1(context).copyWith(
-              color: context.mapColors.textPrimary,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-              fontSize: 20.0,
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Configurações",
+                style: AppText.h1(context).copyWith(
+                  color: context.mapColors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                  fontSize: 20.0,
+                ),
+              ),
             ),
           ),
         ],
