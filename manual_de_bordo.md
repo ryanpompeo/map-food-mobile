@@ -2644,6 +2644,9 @@ Mudar uma delas muda todas as telas que a usam.
 - ⚙️ Função: Tela de perfil do cliente, com atividade, favoritos e ajustes de conta.
 - 💬 Comentários Removidos:
 
+  > "As abas e os chips de período deslizam para o lado quando não cabem, como o filtro de estrelas. Com a fonte em 2x, as três abas e os três períodos passavam da borda da tela; com a fonte normal nada muda, porque cabem."
+  - 💡 Explicação Leiga: Com letra grande, as abas e os botões de período deslizam para o lado.
+
   > "AuthStorage continua aqui só por `diasNoApp()`: é uma marca local do aparelho (não faz parte da sessão) e por isso não migra para o SessionStore."
   - 💡 Explicação Leiga: A linha importa o arquivo que guarda a data do primeiro uso no celular.
 
@@ -3588,6 +3591,9 @@ Mudar uma delas muda todas as telas que a usam.
 - ⚙️ Função: Desenha o cartão que mostra se a loja está aberta e permite abrir ou fechar.
 - 💬 Comentários Removidos:
 
+  > "O botão de trocar de modo tem altura mínima de 48, não fixa, e o rótulo pode quebrar a linha. Com a fonte em 2x num celular pequeno, o rótulo numa linha só passava da borda do cartão."
+  - 💡 Explicação Leiga: Com letra grande, o texto do botão quebra a linha e o botão cresce para caber.
+
   > "O controle mais importante do app para o comerciante: abrir e fechar a loja, e entender num relance se ela está sendo vista. Três decisões de operação (não de estética) que este card resolve: 1. A ação virou botão, não interruptor. O `Switch` do Material tem ~40×24px de alvo real e nenhum rótulo do que vai acontecer; quem opera isso está na rua, muitas vezes de uma mão só. Um botão de 52px dizendo 'Fechar loja' acerta na primeira e não deixa dúvida sobre o sentido do toque — interruptor obriga a ler o estado atual para deduzir o efeito. 2. Aberta é uma superfície de alto contraste, via `selectedSurface`/`onSelectedSurface` (o mesmo par de chip e segmento ativos). Antes era `Colors.black` fixo com texto `grey.shade400`: no tema escuro o card sumia no fundo e o subtítulo caía abaixo do mínimo de contraste. 3. A ronda de GPS é visível. 'Aberta' e 'sendo localizada' são estados diferentes — dá para estar aberta com o GPS negado, e a loja não aparece no mapa de ninguém. O rodapé mostra quando a última posição subiu e com que precisão, e [avisoPosicao] transforma a falha silenciosa de envio em algo que a pessoa consegue ver e reagir."
   - 💡 Explicação Leiga: Esta classe desenha o cartão de status da loja. A ação é um botão grande com texto, não um interruptor pequeno.
 
@@ -3908,6 +3914,9 @@ Mudar uma delas muda todas as telas que a usam.
 
 - ⚙️ Função: Tela de configurações, com tema, permissões, termos e exclusão de conta.
 - 💬 Comentários Removidos:
+
+  > "O título do cabeçalho encolhe só quando não cabe (FittedBox com scaleDown). É uma palavra só, e quebrar 'Configurações' no meio leria pior do que deixá-la um pouco menor com a fonte do sistema no máximo."
+  - 💡 Explicação Leiga: Com letra muito grande, o título "Configurações" diminui um pouco para caber.
 
   > "Tela dedicada de Configurações — antes estas opções (aparência, permissões de GPS, excluir conta, como funciona, termos) viviam achatadas no meio da lista do Perfil, junto de 'Editar Perfil' e 'Minhas avaliações', misturando ajustes do app com atalhos de conteúdo. Compartilhada entre consumidor e comerciante: o que muda entre os dois é só a página de 'Como funciona' e a chamada de exclusão de conta, ambas injetadas por quem abre a tela."
   - 💡 Explicação Leiga: Esta classe desenha a tela de configurações. Ela é a mesma para cliente e comerciante.
@@ -5223,6 +5232,9 @@ Mudar uma delas muda todas as telas que a usam.
 
 - ⚙️ Função: Permite escolher, ver e remover a foto de capa e as fotos da galeria da loja.
 - 💬 Comentários Removidos:
+
+  > "O título da seção é Flexible: com a fonte do sistema grande, 'Foto de destaque' mais o selo 'Obrigatório' não cabiam numa linha e empurravam o selo para fora da tela. Agora o título quebra a linha e o selo fica ao lado."
+  - 💡 Explicação Leiga: Com letra grande, o título das fotos quebra a linha em vez de sair da tela.
 
   > "Capa + galeria da loja, em um único bloco, usado tanto no cadastro quanto na edição. As duas telas mantinham cópias do mesmo editor com valores diferentes (capa de 160 contra 180 de altura, tile de 100 contra 110, raio `md` contra `lg`, um com sombra e outro não) — vistas em sequência, davam a impressão de duas telas de produtos diferentes. Distinção que a API preserva de propósito: foto salva no servidor (`String` de URL) e foto escolhida agora (`XFile`) apagam de formas diferentes — a primeira faz DELETE e precisa de confirmação, a segunda é só descartar da lista local. Uma lista só de 'fotos' esconderia isso e levaria a chamar DELETE em arquivo que nunca subiu."
   - 💡 Explicação Leiga: Esta classe desenha o editor de fotos da loja. Fotos já salvas e fotos novas são apagadas de formas diferentes.
