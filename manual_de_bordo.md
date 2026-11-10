@@ -2177,6 +2177,9 @@ Mudar uma delas muda todas as telas que a usam.
   > "signIn persiste E publica: nenhuma tela precisa reler o disco depois do login para saber quem entrou."
   - 💡 Explicação Leiga: A linha salva a sessão e avisa todas as telas ao mesmo tempo.
 
+  > "`pedirRedefinicaoSenha` usa a mesma rota da Web (`POST /auth/esqueci-senha`), sem nada novo na API. O servidor responde igual exista ou não a conta — de propósito, para ninguém descobrir quais e-mails estão cadastrados — e o app mostra essa frase como veio. `handle401: false` pelo mesmo motivo do login: é rota pública, um 401 aqui não significa sessão vencida."
+  - 💡 Explicação Leiga: A função pede ao servidor o e-mail de troca de senha. A resposta é sempre a mesma, para não revelar quem tem conta.
+
 ### 📂 ARQUIVO: lib/features/auth/data/services/verificacao_email_service.dart
 
 - ⚙️ Função: Pede o código de verificação por e-mail e confirma o código digitado.
@@ -2222,13 +2225,30 @@ Mudar uma delas muda todas as telas que a usam.
   > "O papel da conta vira um rótulo discreto acima do título, em vez de tingir o próprio título de preto ou vermelho."
   - 💡 Explicação Leiga: A linha escreve "CONTA DE CLIENTE" em letras pequenas acima do título.
 
+### 📂 ARQUIVO: lib/features/auth/presentation/pages/esqueci_senha_page.dart
+
+- ⚙️ Função: Tela onde quem esqueceu a senha informa o e-mail e recebe o link para criar uma senha nova.
+- 💬 Comentários Removidos:
+
+  > "O link do e-mail aponta para a página da Web (`mapfood.web.url` + `/redefinir-senha`): é lá que a senha nova é digitada. O app cuida só do pedido. Trazer a redefinição para dentro do app exigiria abrir o link no celular (deep link) e uma tela a mais — fora do prazo da entrega de 12/11/2026. Na demonstração, o e-mail é aberto no computador onde a Web está rodando."
+  - 💡 Explicação Leiga: O aplicativo pede o e-mail; a senha nova é criada no site, pelo link que chega no e-mail.
+
+  > "Tipo de conta obrigatório porque a API guarda consumidor e comerciante em tabelas separadas: o mesmo e-mail pode existir nas duas."
+  - 💡 Explicação Leiga: A tela pergunta o tipo de conta porque a mesma pessoa pode ter as duas com o mesmo e-mail.
+
+  > "Depois do envio a tela troca o formulário pela confirmação em vez de só mostrar um aviso que some: a pessoa vai sair do app para abrir o e-mail, e ao voltar precisa encontrar o que fazer. 'Enviar de novo' reaproveita o e-mail já validado; um pedido novo invalida o link anterior no servidor."
+  - 💡 Explicação Leiga: Depois de enviar, a tela mostra o que fazer a seguir e deixa pedir o e-mail de novo.
+
+  > "'30 minutos' acompanha `VALIDADE_TOKEN_REDEFINICAO_MINUTOS` no `AuthController` da API. Se a validade mudar lá, muda aqui."
+  - 💡 Explicação Leiga: O prazo de 30 minutos escrito na tela é o mesmo que o servidor usa.
+
 ### 📂 ARQUIVO: lib/features/auth/presentation/pages/login_page.dart
 
 - ⚙️ Função: Tela onde o usuário digita e-mail e senha para entrar.
 - 💬 Comentários Removidos:
 
-  > "Placeholder da recuperação de senha: a entrada já existe na tela para não deixar quem esqueceu a senha sem nenhuma pista do que fazer, mas o fluxo (código por e-mail + redefinição) ainda não tem backend no app."
-  - 💡 Explicação Leiga: A função avisa que recuperar a senha ainda não está disponível no aplicativo.
+  > "'Esqueceu sua senha?' abre a `EsqueciSenhaPage` levando o e-mail já digitado e o tipo de conta marcado no seletor: quem chegou até aqui não precisa digitar de novo. Até 09/11/2026 o link só mostrava 'em desenvolvimento' — e quem esquecia a senha no celular ficava sem saída nenhuma, porque o app não tinha outro caminho."
+  - 💡 Explicação Leiga: O link leva para a tela de recuperar a senha, já com o e-mail e o tipo de conta preenchidos.
 
   > "Validação pelo mesmo FormValidator das telas de cadastro — antes esta tela tinha regra própria (`email.contains('@')`), então 'a@b' passava aqui e era recusado no cadastro."
   - 💡 Explicação Leiga: A linha usa as mesmas regras de validação do cadastro.
@@ -5380,6 +5400,14 @@ Eles conferem sozinhos se o código continua funcionando depois de cada mudança
   > "O dublê do serviço registra o que foi pedido, então dá para provar o que a tela faz e, principalmente, o que ela não faz: código incompleto não chega a chamar o servidor, e 'confirmar depois' não chama nada."
   - 💡 Explicação Leiga: Os testes provam também o que a tela evita fazer, não só o que ela faz.
 
+### 📂 ARQUIVO: test/features/auth/esqueci_senha_page_test.dart
+
+- ⚙️ Função: Confere a tela de recuperar a senha: o que vai para a API, a confirmação, os erros, o reenvio e a ligação com o login.
+- 💬 Comentários Removidos:
+
+  > "Pela `ApiFalsa`, não por um dublê do serviço: assim o teste prova o corpo exato que sai para `/auth/esqueci-senha` — e-mail em minúsculas e o tipo escolhido — que é o contrato com a API."
+  - 💡 Explicação Leiga: Os testes conferem exatamente o que o aplicativo manda para o servidor.
+
 ### 📂 ARQUIVO: test/features/auth/auth_service_test.dart
 
 - ⚙️ Função: Confere se o login funciona e se errar a senha não desconecta a conta atual.
@@ -5659,7 +5687,7 @@ Eles conferem sozinhos se o código continua funcionando depois de cada mudança
   - 💡 Explicação Leiga: A linha prepara o tema antes de cada teste.
 
   > "Tamanhos: 320x568 é o menor celular ainda em uso, 360x640 o Android de entrada mais comum, 412x915 um aparelho grande. Escalas: 1,0, 1,3 e 2,0 — 2,0 é o teto que `main.dart` aplica. O tema escuro roda só no tamanho médio com letra normal: ele troca cores, não medidas, e repetir a grade inteira dobraria o tempo sem achar nada novo."
-  - 💡 Explicação Leiga: São 260 combinações de tela, tamanho e letra, e a rodada leva cerca de meio minuto.
+  - 💡 Explicação Leiga: São 270 combinações de tela, tamanho e letra, e a rodada leva cerca de meio minuto.
 
   > "Mapa, busca e telas iniciais ficam fora: dependem de GPS e de tiles, e montadas aqui só testariam o simulador de localização."
   - 💡 Explicação Leiga: As telas com mapa são conferidas no celular de verdade, não aqui.
