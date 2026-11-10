@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:map_food/core/ui/widgets/semantic_tap_area.dart';
 import 'package:map_food/app/router/app_routes.dart';
 import 'package:map_food/core/errors/exception.dart';
+import 'package:map_food/core/ui/navigation/app_page_route.dart';
 import 'package:map_food/core/ui/theme/app_dimensions.dart';
 import 'package:map_food/core/ui/theme/app_icons.dart';
 import 'package:map_food/core/ui/theme/app_typography.dart';
@@ -11,9 +12,9 @@ import 'package:map_food/core/ui/theme/map_food_colors.dart';
 import 'package:map_food/core/ui/validators/form_validator.dart';
 import 'package:map_food/core/ui/widgets/app_button.dart';
 import 'package:map_food/core/ui/widgets/app_form_field.dart';
-import 'package:map_food/core/ui/widgets/app_toast.dart';
 import 'package:map_food/core/ui/widgets/form_error_banner.dart';
 import 'package:map_food/features/auth/data/services/auth_service.dart';
+import 'package:map_food/features/auth/presentation/pages/esqueci_senha_page.dart';
 import 'package:map_food/features/auth/presentation/widgets/account_type_switch.dart';
 
 class LoginPage extends StatefulWidget {
@@ -55,11 +56,16 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _avisarRecuperacaoIndisponivel() {
-    AppToast.info(
+  void _abrirRecuperacaoDeSenha() {
+    unawaited(Navigator.push(
       context,
-      'Recuperação de senha ainda em desenvolvimento',
-    );
+      appPageRoute(
+        builder: (_) => EsqueciSenhaPage(
+          emailInicial: _emailController.text.trim(),
+          tipoInicial: _tipoLogin,
+        ),
+      ),
+    ));
   }
 
   Future<void> _fazerLogin() async {
@@ -172,8 +178,8 @@ class _LoginPageState extends State<LoginPage> {
                   alignment: Alignment.centerRight,
                   child: SemanticTapArea(
                     label: 'Esqueceu sua senha?',
-                    hint: 'Recuperação de senha, ainda em desenvolvimento',
-                    onTap: _avisarRecuperacaoIndisponivel,
+                    hint: 'Abre a recuperação de senha',
+                    onTap: _abrirRecuperacaoDeSenha,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
                       child: Text(

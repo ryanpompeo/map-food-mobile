@@ -15,6 +15,7 @@ class ApiConstants {
   static const String situacaoVerificacao = '/auth/verificacao-email';
   static const String enviarCodigoVerificacao = '/auth/enviar-codigo-verificacao';
   static const String verificarEmail = '/auth/verificar-email';
+  static const String esqueciSenha = '/auth/esqueci-senha';
   static const String consumidores = '/consumidores';
   static const String comerciantes = '/comerciantes';
   static const String lojas = '/lojas';

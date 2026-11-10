@@ -34,6 +34,18 @@ class AuthService {
     return sessao;
   }
 
+  Future<String> pedirRedefinicaoSenha(String email, String tipo) async {
+    final json = await _client.post<Map<String, dynamic>>(
+      ApiConstants.esqueciSenha,
+      data: {'email': email, 'tipo': tipo},
+      handle401: false,
+    );
+    final mensagem = json['mensagem'];
+    return mensagem is String && mensagem.isNotEmpty
+        ? mensagem
+        : 'Se este e-mail estiver cadastrado, enviaremos um link de redefinição de senha.';
+  }
+
   Future<bool?> conferirEmailVerificado() async {
     if (SessionStore.instance.isGuest) return null;
     try {
