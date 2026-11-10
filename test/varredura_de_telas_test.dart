@@ -10,6 +10,7 @@ import 'package:map_food/core/ui/theme/app_theme.dart';
 import 'package:map_food/core/ui/theme/theme_controller.dart';
 import 'package:map_food/features/auth/presentation/pages/account_type_page.dart';
 import 'package:map_food/features/auth/presentation/pages/consumer_register_page.dart';
+import 'package:map_food/features/auth/presentation/pages/esqueci_senha_page.dart';
 import 'package:map_food/features/auth/presentation/pages/login_page.dart';
 import 'package:map_food/features/auth/presentation/pages/merchant_register_page.dart';
 import 'package:map_food/features/auth/presentation/pages/verificar_email_page.dart';
@@ -68,6 +69,7 @@ final _telas = <String, Widget Function()>{
   'AccountTypePage': () => const AccountTypePage(),
   'ConsumerRegisterPage': () => const ConsumerRegisterPage(),
   'LoginPage': () => const LoginPage(),
+  'EsqueciSenhaPage': () => const EsqueciSenhaPage(emailInicial: _emailLongo),
   'MerchantRegisterPage': () => const MerchantRegisterPage(),
   'VerificarEmailPage': () => const VerificarEmailPage(),
   'ContatoPage': () => const ContatoPage(),
