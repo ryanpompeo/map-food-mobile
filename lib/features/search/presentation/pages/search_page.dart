@@ -110,8 +110,7 @@ class _SearchPageState extends State<SearchPage> {
         _userLng = posicao.longitude;
       });
       _applyFilters();
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> _recarregar() async {
@@ -216,7 +215,10 @@ class _SearchPageState extends State<SearchPage> {
 
     setState(() {
       _filteredStores = lojasFiltradas;
-      _destaqueStores = vitrineDeDestaques(_allStores, limite: _maxSectionItems);
+      _destaqueStores = vitrineDeDestaques(
+        _allStores,
+        limite: _maxSectionItems,
+      );
       _emAltaStores = emAlta.take(_maxSectionItems).toList();
       _pertoDeVoceStores = pertoDeVoce.take(_pertoDeVoceMaxItems).toList();
     });
@@ -232,7 +234,8 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool semRecorte = _categoriaSelecionada == null &&
+    final bool semRecorte =
+        _categoriaSelecionada == null &&
         _searchQuery.isEmpty &&
         !_somenteDestaques;
 
@@ -309,14 +312,38 @@ class _SearchPageState extends State<SearchPage> {
                       if (_temAlgumaLojaEmDestaque) ...[
                         const SizedBox(height: AppSpacing.md),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: AppChoiceChip(
                               label: 'Destaques',
                               selected: _somenteDestaques,
+                              icon: AppIcons.crownFill,
+                              selectedIcon: AppIcons.crownFill,
+                              selectedSurface: MfColor.rating.withValues(
+                                alpha: 0.18,
+                              ),
+                              selectedForeground: MfColor.ratingText,
+                              selectedBorder: MfColor.rating.withValues(
+                                alpha: 0.45,
+                              ),
+                              unselectedSurface: MfColor.rating.withValues(
+                                alpha: 0.06,
+                              ),
+                              unselectedForeground: MfColor.ratingText
+                                  .withValues(alpha: 0.55),
+                              unselectedBorder: MfColor.rating.withValues(
+                                alpha: 0.20,
+                              ),
+                              iconColor: MfColor.ratingText.withValues(
+                                alpha: 0.55,
+                              ),
                               onTap: () {
-                                setState(() => _somenteDestaques = !_somenteDestaques);
+                                setState(
+                                  () => _somenteDestaques = !_somenteDestaques,
+                                );
                                 _applyFilters();
                               },
                             ),
@@ -375,9 +402,13 @@ class _SearchPageState extends State<SearchPage> {
                       title: 'Lojas em destaque',
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.md),
+                  ),
                   EmAltaListSliverWidget(lojas: _destaqueStores),
-                  const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xl),
+                  ),
                 ],
                 const SliverToBoxAdapter(child: EmAltaSectionHeaderWidget()),
                 const SliverToBoxAdapter(

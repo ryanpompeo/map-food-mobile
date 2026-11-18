@@ -20,6 +20,16 @@ class AppChoiceChip extends StatelessWidget {
 
   final IconData? icon;
 
+  final IconData? selectedIcon;
+
+  final Color? selectedBorder;
+
+  final Color? unselectedBorder;
+
+  final Color? selectedForeground;
+
+  final Color? unselectedForeground;
+
   final Color? iconColor;
 
   const AppChoiceChip({
@@ -31,6 +41,11 @@ class AppChoiceChip extends StatelessWidget {
     this.onSelectedSurface,
     this.unselectedSurface,
     this.icon,
+    this.selectedIcon,
+    this.selectedBorder,
+    this.unselectedBorder,
+    this.selectedForeground,
+    this.unselectedForeground,
     this.iconColor,
   });
 
@@ -39,10 +54,17 @@ class AppChoiceChip extends StatelessWidget {
     final colors = context.mapColors;
 
     final fundoAtivo = selectedSurface ?? colors.selectedSurface;
-    final conteudoAtivo = onSelectedSurface ?? colors.onSelectedSurface;
+    final conteudoAtivo =
+        selectedForeground ?? onSelectedSurface ?? colors.onSelectedSurface;
     final fundoInativo = unselectedSurface ?? colors.surface;
+    final bordaAtiva = selectedBorder ?? fundoAtivo;
+    final bordaInativa = unselectedBorder ?? colors.border;
 
-    final conteudo = selected ? conteudoAtivo : colors.textSecondary;
+    final conteudo = selected
+        ? conteudoAtivo
+        : unselectedForeground ?? colors.textSecondary;
+
+    final iconeSelecionado = selectedIcon ?? AppIcons.check;
 
     return SemanticTapArea(
       label: label,
@@ -50,11 +72,14 @@ class AppChoiceChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: Motion.fast,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.base, vertical: 9.0),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.base,
+          vertical: 9.0,
+        ),
         decoration: BoxDecoration(
           color: selected ? fundoAtivo : fundoInativo,
           borderRadius: BorderRadius.circular(Radii.pill),
-          border: Border.all(color: selected ? fundoAtivo : colors.border),
+          border: Border.all(color: selected ? bordaAtiva : bordaInativa),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -62,7 +87,7 @@ class AppChoiceChip extends StatelessWidget {
             if (selected) ...[
               ExcludeSemantics(
                 child: Icon(
-                  AppIcons.check,
+                  iconeSelecionado,
                   size: escalaIcone(context, 14.0),
                   color: conteudoAtivo,
                 ),
@@ -80,10 +105,9 @@ class AppChoiceChip extends StatelessWidget {
             ],
             Text(
               label,
-              style: AppText.caption(context).copyWith(
-                fontWeight: FontWeight.w700,
-                color: conteudo,
-              ),
+              style: AppText.caption(
+                context,
+              ).copyWith(fontWeight: FontWeight.w700, color: conteudo),
             ),
           ],
         ),

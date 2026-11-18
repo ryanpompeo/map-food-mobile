@@ -1,23 +1,23 @@
 const Map<String, String> categoriaImagens = {
-  'Lanches e Hot Dogs': 'assets/images/category/hamburguer.png',
-  'Espetinhos': 'assets/images/category/espetinho.png',
+  'Lanches': 'assets/images/category/snack.png',
+  'Pastel': 'assets/images/category/pastry.png',
+  'Espetinho': 'assets/images/category/espetinho.png',
+  'Açaí': 'assets/images/category/gelatos.png',
   'Pizzas': 'assets/images/category/pizza.png',
-  'Pastel e Salgados': 'assets/images/category/pastel.png',
-  'Marmitas e Comida Caseira': 'assets/images/category/marmita.png',
-  'Padaria e Bolos': 'assets/images/category/bolos.png',
-  'Doces e Sobremesas': 'assets/images/category/doces.png',
-  'Gelatos e Açaí': 'assets/images/category/gelatos.png',
-  'Milho e Pamonha': 'assets/images/category/milho.png',
-  'Pipoca': 'assets/images/category/popcorn.png',
-  'Bebidas': 'assets/images/category/bebida.png',
-  'Food Truck': 'assets/images/category/food_truck.png',
+  'Doces': 'assets/images/category/doces.png',
+  'Hambúrguer': 'assets/images/category/burguer.png',
+  'Hot Dog': 'assets/images/category/hotdog.png',
 
-  'Produtos Artesanais': 'assets/images/category/artesanal.png',
-  'Vestuario e Acessórios': 'assets/images/category/vestuario.png',
-  'Vestuário': 'assets/images/category/vestuario.png',
-  'Pet Shop': 'assets/images/category/petshop.png',
-  'Serviços': 'assets/images/category/services.png',
-  'Outros': 'assets/images/category/more.png',
+  'Comida Japonesa': 'assets/images/category/japonesa.png',
+  'Crepe': 'assets/images/category/crepe.png',
+  'Tapioca': 'assets/images/category/tapioca.png',
+  'Comida Caseira': 'assets/images/category/marmita.png',
+  'Pizza': 'assets/images/category/pizza.png',
+
+  'Bebidas': 'assets/images/category/bebida.png',
+
+  'Churros': 'assets/images/category/churros.png',
+  'Salgados': 'assets/images/category/salgados.png',
 };
 
 String? imagemParaCategoria(String nome) => categoriaImagens[nome];

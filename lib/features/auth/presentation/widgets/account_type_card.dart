@@ -40,7 +40,9 @@ class AccountTypeCard extends StatelessWidget {
 
     final destaqueSolido = highlighted && !isDark;
 
-    final Color titleColor = destaqueSolido ? ColorsPalette.white : colors.textPrimary;
+    final Color titleColor = destaqueSolido
+        ? ColorsPalette.white
+        : colors.textPrimary;
     final Color bodyColor = destaqueSolido
         ? ColorsPalette.white.withValues(alpha: 0.72)
         : colors.textSecondary;
@@ -49,7 +51,9 @@ class AccountTypeCard extends StatelessWidget {
     return AppCard(
       onTap: onTap,
       color: destaqueSolido ? MfColor.ink : null,
-      elevation: highlighted && isDark ? AppCardElevation.flat : AppCardElevation.raised,
+      elevation: highlighted && isDark
+          ? AppCardElevation.flat
+          : AppCardElevation.raised,
       bordered: !destaqueSolido,
       padding: const EdgeInsets.all(Spacing.lg),
       child: Column(
@@ -68,7 +72,11 @@ class AccountTypeCard extends StatelessWidget {
                       : MfColor.brand.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(Radii.md),
                 ),
-                child: Icon(icon, size: escalaIcone(context, AppIconSize.lg), color: accent),
+                child: Icon(
+                  icon,
+                  size: escalaIcone(context, AppIconSize.lg),
+                  color: accent,
+                ),
               ),
               const SizedBox(width: Spacing.md),
               Expanded(
@@ -85,7 +93,9 @@ class AccountTypeCard extends StatelessWidget {
           const SizedBox(height: Spacing.xs),
           Text(
             description,
-            style: AppText.secondary(context).copyWith(color: bodyColor, height: 1.45),
+            style: AppText.secondary(
+              context,
+            ).copyWith(color: bodyColor, height: 1.45),
           ),
           const SizedBox(height: Spacing.lg),
 
@@ -95,12 +105,18 @@ class AccountTypeCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(AppIcons.checkCircle, size: AppIconSize.sm, color: accent),
+                  Icon(
+                    AppIcons.checkCircle,
+                    size: AppIconSize.sm,
+                    color: accent,
+                  ),
                   const SizedBox(width: Spacing.sm),
                   Expanded(
                     child: Text(
                       benefit,
-                      style: AppText.secondary(context).copyWith(color: bodyColor, height: 1.35),
+                      style: AppText.secondary(
+                        context,
+                      ).copyWith(color: bodyColor, height: 1.35),
                     ),
                   ),
                 ],
